@@ -56,33 +56,18 @@ export default {
       ctx.set('Cross-Origin-Resource-Policy', 'same-origin');
       }
 
+      if (ctx.path === '/' && ctx.method === 'GET') {
+        ctx.redirect('/admin');
+        return;
+      }
+
       await next();
     });
 
     console.log('✅ Security headers middleware registered (Koa-compatible)');
 
-    // Rate Limiting (защита от brute-force и DDoS)
-    const rateLimit = require('koa-ratelimit');
-
-    // Global rate limiting (500 requests/minute per IP)
-    strapi.server.use(
-      rateLimit({
-        driver: 'memory',
-        db: new Map(),
-        duration: 60000, // 1 minute
-        max: 500, // 500 requests per minute
-        errorMessage: 'Too many requests. Please try again later.',
-        id: (ctx) => ctx.ip || ctx.request.ip || 'unknown',
-        headers: {
-          remaining: 'Rate-Limit-Remaining',
-          reset: 'Rate-Limit-Reset',
-          total: 'Rate-Limit-Total',
-        },
-        disableHeader: false,
-      })
-    );
-
-    console.log('✅ Rate limiting middleware registered (memory only)');
+    // Rate Limiting temporarily disabled (see DISABLED_RATE_LIMIT_NOTE.md)
+    console.warn('⚠️ Rate limiting middleware temporarily disabled for admin testing');
 
     // CSRF Protection (защита от Cross-Site Request Forgery)
     const { csrfTokenService } = require('./services/csrf-token');

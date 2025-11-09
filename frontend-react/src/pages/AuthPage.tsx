@@ -46,7 +46,7 @@ export default function AuthPage() {
       sessionStorage.setItem('auth_redirect', redirectTarget)
     }
 
-    window.location.href = `${API_BASE}/connect/google`
+    window.location.href = `${API_BASE}/api/connect/google`
   }
 
   return (

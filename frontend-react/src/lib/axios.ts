@@ -158,9 +158,16 @@ apiClient.interceptors.response.use(
       }
     }
     
+    // Только пытаемся обновить токен если:
+    // 1. Это 401 ошибка
+    // 2. Запрос еще не повторялся
+    // 3. Изначально был токен (не публичный запрос)
+    const hadAuthHeader = originalRequest.headers?.Authorization
+    
     if (
       status === 401 &&
       !originalRequest._retry &&
+      hadAuthHeader && // Только если изначально был токен
       err.name !== 'AbortError' &&
       err.name !== 'CanceledError'
     ) {

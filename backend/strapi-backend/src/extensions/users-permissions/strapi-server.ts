@@ -186,15 +186,19 @@ export default (plugin) => {
       });
 
       // Обмениваем authorization code на access_token
-      // ВАЖНО: Увеличиваем таймаут для fetch запросов к Google API (30 секунд)
+      // ВАЖНО: Увеличиваем таймаут для fetch запросов к Google API (60 секунд)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 секунд таймаут
       
       let tokenResponse: Response;
       try {
+        // Используем fetch с явным указанием таймаута подключения
         tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Connection': 'keep-alive',
+        },
         body: new URLSearchParams({
           code: ctx.query.code as string,
           client_id: googleConfig.key,
@@ -203,10 +207,20 @@ export default (plugin) => {
           grant_type: 'authorization_code',
         }),
           signal: controller.signal,
+          // @ts-ignore - undici specific options
+          headersTimeout: 60000,
+          bodyTimeout: 60000,
+          connectTimeout: 30000, // 30 секунд на подключение
       });
         clearTimeout(timeoutId);
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
+        console.error('❌ Fetch error details:', {
+          name: fetchError.name,
+          code: fetchError.code,
+          message: fetchError.message,
+          cause: fetchError.cause,
+        });
         if (fetchError.name === 'AbortError' || fetchError.code === 'UND_ERR_CONNECT_TIMEOUT') {
           console.error('❌ Google OAuth token exchange timeout:', fetchError.message);
           throw new Error('Connection timeout: Unable to reach Google OAuth server. Please check your internet connection and try again.');
@@ -227,21 +241,32 @@ export default (plugin) => {
       });
 
       // Получаем данные пользователя от Google
-      // ВАЖНО: Увеличиваем таймаут для fetch запросов к Google API (30 секунд)
+      // ВАЖНО: Увеличиваем таймаут для fetch запросов к Google API (60 секунд)
       const userInfoController = new AbortController();
-      const userInfoTimeoutId = setTimeout(() => userInfoController.abort(), 30000); // 30 секунд таймаут
+      const userInfoTimeoutId = setTimeout(() => userInfoController.abort(), 60000); // 60 секунд таймаут
       
       let userInfoResponse: Response;
       try {
         userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
+          'Connection': 'keep-alive',
         },
           signal: userInfoController.signal,
+          // @ts-ignore - undici specific options
+          headersTimeout: 60000,
+          bodyTimeout: 60000,
+          connectTimeout: 30000, // 30 секунд на подключение
       });
         clearTimeout(userInfoTimeoutId);
       } catch (fetchError: any) {
         clearTimeout(userInfoTimeoutId);
+        console.error('❌ User info fetch error details:', {
+          name: fetchError.name,
+          code: fetchError.code,
+          message: fetchError.message,
+          cause: fetchError.cause,
+        });
         if (fetchError.name === 'AbortError' || fetchError.code === 'UND_ERR_CONNECT_TIMEOUT') {
           console.error('❌ Google user info fetch timeout:', fetchError.message);
           throw new Error('Connection timeout: Unable to fetch user info from Google. Please check your internet connection and try again.');

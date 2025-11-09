@@ -6,7 +6,7 @@
 const axios = require('axios');
 
 const STRAPI_URL = 'http://localhost:1337';
-const ADMIN_EMAIL = 'admin@example.com';
+const ADMIN_EMAIL = 'fluy1337@gmail.com';
 const ADMIN_PASSWORD = 'Admin123!';
 
 async function fixPermissions() {

@@ -5,16 +5,19 @@
 export default [
   'strapi::logger',
   'strapi::errors',
-  'strapi::security', // REQUIRED by Strapi v5
+  {
+    name: 'strapi::security',
+    config: {
+      hsts: false,
+    },
+  },
   
   // CORS с строгими настройками
   {
     name: 'strapi::cors',
     config: {
       origin: [
-        process.env.FRONTEND_URL || 'http://localhost:5174',
-        'http://localhost:5173', // Старый порт для совместимости
-        'http://localhost:5174', // Новый порт React приложения
+        process.env.FRONTEND_URL || 'http://localhost:5173',
         process.env.PUBLIC_URL || 'http://localhost:1337',
       ],
       headers: [
