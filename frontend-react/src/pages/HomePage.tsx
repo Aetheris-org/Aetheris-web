@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, SlidersHorizontal, Flame, LayoutGrid, List, Rows, PenSquare } from 'lucide-react'
-import { getAllArticles, getTrendingArticles } from '@/api/articles'
+import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,16 @@ import { ArticleCardLine } from '@/components/ArticleCardLine'
 import { ArticleCardSquare } from '@/components/ArticleCardSquare'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { Separator } from '@/components/ui/separator'
+import { Label } from '@/components/ui/label'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -23,13 +33,32 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
+  const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
   const [page, setPage] = useState(1)
   const pageSize = 10
+  const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
 
   // Queries
   const { data: articlesData, isLoading } = useQuery({
-    queryKey: ['articles', page, pageSize],
-    queryFn: () => getAllArticles(user?.id, (page - 1) * pageSize, pageSize),
+    queryKey: [
+      'articles',
+      {
+        page,
+        pageSize,
+        tags: selectedTags.slice().sort(),
+        difficulty: difficultyFilter,
+        sort: sortOption,
+      },
+    ],
+    queryFn: () =>
+      getAllArticles({
+        start: (page - 1) * pageSize,
+        limit: pageSize,
+        tags: selectedTags.length ? selectedTags : undefined,
+        difficulty: difficultyFilter,
+        sort: sortOption,
+      }),
   })
 
   const { data: trendingArticles = [], isLoading: loadingTrending } = useQuery({
@@ -50,11 +79,15 @@ export default function HomePage() {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     )
+    setPage(1)
   }
 
   const handleClearFilters = () => {
     setSearchQuery('')
     setSelectedTags([])
+    setDifficultyFilter('all')
+    setSortOption('newest')
+    setPage(1)
   }
 
   return (
@@ -112,6 +145,22 @@ export default function HomePage() {
         </div>
       </header>
 
+      <FiltersDrawer
+        open={showFilters}
+        onOpenChange={setShowFilters}
+        selectedTags={selectedTags}
+        difficulty={difficultyFilter}
+        sortOption={sortOption}
+        allTags={popularTags}
+        onApply={({ tags, difficulty, sort }) => {
+          setSelectedTags(tags)
+          setDifficultyFilter(difficulty)
+          setSortOption(sort)
+          setPage(1)
+        }}
+        onClear={handleClearFilters}
+      />
+
       <div className="container py-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
           {/* Main Content */}
@@ -160,6 +209,22 @@ export default function HomePage() {
                     className="h-7 text-xs"
                   >
                     Clear all
+                  </Button>
+                </div>
+              )}
+              {difficultyFilter !== 'all' && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="text-muted-foreground">Difficulty:</span>
+                  <Badge variant="outline" className="capitalize">
+                    {difficultyFilter}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDifficultyFilter('all')}
+                    className="h-7 px-2 text-xs"
+                  >
+                    reset
                   </Button>
                 </div>
               )}
@@ -322,18 +387,16 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui'].map(
-                    (tag) => (
-                      <Badge
-                        key={tag}
-                        variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
-                        className="cursor-pointer"
-                        onClick={() => handleTagClick(tag)}
-                      >
-                        {tag}
-                      </Badge>
-                    )
-                  )}
+                  {popularTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
+                      className="cursor-pointer"
+                      onClick={() => handleTagClick(tag)}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -341,5 +404,216 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+interface FiltersDrawerProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedTags: string[]
+  difficulty: ArticleDifficulty | 'all'
+  sortOption: ArticleSortOption
+  allTags: string[]
+  onApply: (filters: { tags: string[]; difficulty: ArticleDifficulty | 'all'; sort: ArticleSortOption }) => void
+  onClear: () => void
+}
+
+function FiltersDrawer({
+  open,
+  onOpenChange,
+  selectedTags,
+  difficulty,
+  sortOption,
+  allTags,
+  onApply,
+  onClear,
+}: FiltersDrawerProps) {
+  const [localTags, setLocalTags] = useState<string[]>(selectedTags)
+  const [localDifficulty, setLocalDifficulty] = useState<ArticleDifficulty | 'all'>(difficulty)
+  const [localSort, setLocalSort] = useState<ArticleSortOption>(sortOption)
+  const [tagInput, setTagInput] = useState('')
+
+  const resetLocalState = useCallback(() => {
+    setLocalTags(selectedTags)
+    setLocalDifficulty(difficulty)
+    setLocalSort(sortOption)
+    setTagInput('')
+  }, [selectedTags, difficulty, sortOption])
+
+  useEffect(() => {
+    if (open) {
+      resetLocalState()
+    }
+  }, [open, resetLocalState])
+
+  const handleClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetLocalState()
+    }
+    onOpenChange(nextOpen)
+  }
+
+  const handleAddTag = () => {
+    const value = tagInput.trim()
+    if (!value) return
+    if (!localTags.includes(value)) {
+      setLocalTags([...localTags, value])
+    }
+    setTagInput('')
+  }
+
+  const handleRemoveTag = (tag: string) => {
+    setLocalTags(localTags.filter((item) => item !== tag))
+  }
+
+  const handleApply = () => {
+    onApply({
+      tags: localTags,
+      difficulty: localDifficulty,
+      sort: localSort,
+    })
+    onOpenChange(false)
+  }
+
+  const handleClearAll = () => {
+    setLocalTags([])
+    setLocalDifficulty('all')
+    setLocalSort('newest')
+    onClear()
+    onOpenChange(false)
+  }
+
+  const difficultyOptions: Array<{ label: string; value: ArticleDifficulty | 'all' }> = [
+    { label: 'All', value: 'all' },
+    { label: 'Beginner', value: 'easy' },
+    { label: 'Intermediate', value: 'medium' },
+    { label: 'Advanced', value: 'hard' },
+  ]
+
+  const sortOptions: Array<{ label: string; value: ArticleSortOption; description: string }> = [
+    { label: 'Newest first', value: 'newest', description: 'Latest publications appear first' },
+    { label: 'Oldest first', value: 'oldest', description: 'Chronological order from oldest to newest' },
+    { label: 'Most popular', value: 'popular', description: 'Articles with most reactions first' },
+  ]
+
+  return (
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent side="right" className="w-full max-w-lg space-y-6">
+        <SheetHeader className="items-start text-left">
+          <SheetTitle>Refine results</SheetTitle>
+          <SheetDescription>
+            Narrow down the article feed by difficulty, popularity, or topic tags. Updated results will load
+            instantly.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Difficulty</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {difficultyOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  variant={localDifficulty === option.value ? 'default' : 'outline'}
+                  className="justify-start"
+                  onClick={() => setLocalDifficulty(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Sort by</Label>
+            <div className="space-y-2">
+              {sortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setLocalSort(option.value)}
+                  className={`w-full rounded-lg border p-3 text-left transition ${
+                    localSort === option.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <p className="font-medium">{option.label}</p>
+                  <p className="text-xs text-muted-foreground">{option.description}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tags</Label>
+            <div className="flex gap-2">
+              <Input
+                value={tagInput}
+                onChange={(event) => setTagInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    handleAddTag()
+                  }
+                }}
+                placeholder="Add custom tag"
+              />
+              <Button variant="outline" onClick={handleAddTag}>
+                Add
+              </Button>
+            </div>
+            {localTags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {localTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="cursor-pointer"
+                    onClick={() => handleRemoveTag(tag)}
+                  >
+                    {tag} ×
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No tags selected yet.</p>
+            )}
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Quick pick</p>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant={localTags.includes(tag) ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setLocalTags((prev) =>
+                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      )
+                    }
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <SheetFooter className="space-x-0 sm:space-x-0 sm:space-y-0">
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <Button variant="ghost" className="sm:flex-1" onClick={handleClearAll}>
+              Reset filters
+            </Button>
+            <Button className="sm:flex-1" onClick={handleApply}>
+              Apply filters
+            </Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }

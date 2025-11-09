@@ -3,7 +3,6 @@ import type { Article } from '@/types/article'
 import {
   unwrapStrapiCollectionResponse,
   unwrapStrapiResponse,
-  wrapStrapiData,
   getStrapiMediaUrl,
   unwrapAuthor,
   type StrapiResponse,
@@ -48,23 +47,73 @@ export interface ArticlesResponse {
   total: number
 }
 
-export async function getAllArticles(userId?: number, start: number = 0, limit: number = 10): Promise<ArticlesResponse> {
-  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles', {
-    params: {
-      populate: {
-        author: {
-          fields: ['id', 'username'],
-          populate: {
-            avatar: { fields: ['url'] }
-          }
-        },
-        preview_image: { fields: ['url'] }
+export type ArticleDifficulty = 'easy' | 'medium' | 'hard'
+
+export type ArticleSortOption = 'newest' | 'oldest' | 'popular'
+
+export interface ArticleQueryOptions {
+  start?: number
+  limit?: number
+  tags?: string[]
+  difficulty?: ArticleDifficulty | 'all'
+  sort?: ArticleSortOption
+}
+
+function buildArticleQueryParams(options: ArticleQueryOptions = {}) {
+  const {
+    start = 0,
+    limit = 10,
+    tags,
+    difficulty,
+    sort = 'newest',
+  } = options
+
+  const params: Record<string, any> = {
+    populate: {
+      author: {
+        fields: ['id', 'username'],
+        populate: {
+          avatar: { fields: ['url'] }
+        }
       },
-      'filters[publishedAt][$notNull]': true,
-      'pagination[start]': start,
-      'pagination[limit]': limit,
-      'pagination[withCount]': true
-    }
+      preview_image: { fields: ['url'] }
+    },
+    'filters[publishedAt][$notNull]': true,
+    'pagination[start]': start,
+    'pagination[limit]': limit,
+    'pagination[withCount]': true
+  }
+
+  if (tags && tags.length > 0) {
+    tags.forEach((tag, index) => {
+      params[`filters[$and][${index}][tags][$containsi]`] = tag
+    })
+  }
+
+  if (difficulty && difficulty !== 'all') {
+    params['filters[difficulty][$eq]'] = difficulty
+  }
+
+  switch (sort) {
+    case 'oldest':
+      params['sort[0]'] = 'createdAt:asc'
+      break
+    case 'popular':
+      params['sort[0]'] = 'likes_count:desc'
+      params['sort[1]'] = 'createdAt:desc'
+      break
+    case 'newest':
+    default:
+      params['sort[0]'] = 'createdAt:desc'
+      break
+  }
+
+  return params
+}
+
+export async function getAllArticles(options: ArticleQueryOptions = {}): Promise<ArticlesResponse> {
+  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles', {
+    params: buildArticleQueryParams(options)
   })
   
   const articles = unwrapStrapiCollectionResponse(res.data).map(transformArticle)
@@ -76,7 +125,7 @@ export async function getAllArticles(userId?: number, start: number = 0, limit: 
   }
 }
 
-export async function searchArticles(query: string, userId?: number, skip: number = 0, limit: number = 100): Promise<Article[]> {
+export async function searchArticles(query: string, _userId?: number, skip: number = 0, limit: number = 100): Promise<Article[]> {
   const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles/search', {
     params: { 
       q: query,
@@ -88,7 +137,7 @@ export async function searchArticles(query: string, userId?: number, skip: numbe
   return unwrapStrapiCollectionResponse(res.data).map(transformArticle)
 }
 
-export async function getTrendingArticles(userId?: number, limit: number = 3): Promise<Article[]> {
+export async function getTrendingArticles(_userId?: number, limit: number = 3): Promise<Article[]> {
   const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles', {
     params: {
       populate: {
@@ -109,7 +158,7 @@ export async function getTrendingArticles(userId?: number, limit: number = 3): P
   return unwrapStrapiCollectionResponse(res.data).map(transformArticle)
 }
 
-export async function getArticle(id: number, userId?: number): Promise<Article> {
+export async function getArticle(id: number, _userId?: number): Promise<Article> {
   const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/api/articles/${id}`, {
     params: {
       populate: {
@@ -129,7 +178,7 @@ export async function getArticle(id: number, userId?: number): Promise<Article> 
 
 export async function reactArticle(
   articleId: number,
-  userId: number,
+  _userId: number,
   reaction: 'like' | 'dislike'
 ): Promise<Article> {
   const res = await apiClient.post<StrapiResponse<any>>(`/api/articles/${articleId}/react`, {
