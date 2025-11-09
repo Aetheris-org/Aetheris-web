@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, SlidersHorizontal, Flame, LayoutGrid, List, Rows, PenSquare } from 'lucide-react'
@@ -24,6 +24,15 @@ import {
 } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -68,7 +77,41 @@ export default function HomePage() {
 
   const articles = articlesData?.data || []
   const totalRecords = articlesData?.total || 0
-  const totalPages = Math.ceil(totalRecords / pageSize)
+  const rawTotalPages = Math.ceil(totalRecords / pageSize)
+  const totalPages = Math.max(1, rawTotalPages || 1)
+  const hasMultiplePages = totalRecords > pageSize
+
+  useEffect(() => {
+    if (totalRecords === 0 && page !== 1) {
+      setPage(1)
+    } else if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages, totalRecords])
+
+  const paginationPages = useMemo(() => {
+    const pages: Array<number | 'ellipsis'> = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i += 1) {
+        pages.push(i)
+      }
+    } else {
+      pages.push(1)
+      const start = Math.max(2, page - 1)
+      const end = Math.min(totalPages - 1, page + 1)
+      if (start > 2) {
+        pages.push('ellipsis')
+      }
+      for (let i = start; i <= end; i += 1) {
+        pages.push(i)
+      }
+      if (end < totalPages - 1) {
+        pages.push('ellipsis')
+      }
+      pages.push(totalPages)
+    }
+    return pages
+  }, [page, totalPages])
 
   // Handlers
   const handleSearch = useCallback(() => {
@@ -295,41 +338,61 @@ export default function HomePage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                    >
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = i + 1
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={page === pageNum ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setPage(pageNum)}
-                            className="h-9 w-9 p-0"
-                          >
-                            {pageNum}
-                          </Button>
+                {hasMultiplePages && (
+                  <Pagination className="pt-6">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={page === 1 ? 'pointer-events-none opacity-50' : undefined}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            if (page > 1) {
+                              setPage((prev) => Math.max(1, prev - 1))
+                            }
+                          }}
+                        >
+                          Prev
+                        </PaginationPrevious>
+                      </PaginationItem>
+                      {paginationPages.map((item, idx) =>
+                        item === 'ellipsis' ? (
+                          <PaginationItem key={`ellipsis-${idx}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={item}>
+                            <PaginationLink
+                              href="#"
+                              isActive={page === item}
+                              onClick={(event) => {
+                                event.preventDefault()
+                                setPage(item)
+                              }}
+                            >
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
                         )
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={page === totalPages ? 'pointer-events-none opacity-50' : undefined}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            if (page < totalPages) {
+                              setPage((prev) => Math.min(totalPages, prev + 1))
+                            }
+                          }}
+                        >
+                          Next
+                        </PaginationNext>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 )}
               </>
             )}
