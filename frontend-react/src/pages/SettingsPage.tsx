@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
 
 const settingsNav = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -40,7 +41,10 @@ export default function SettingsPage() {
             <Separator orientation="vertical" className="h-6" />
             <h1 className="text-lg font-semibold">Settings</h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountSheet />
+          </div>
         </div>
       </header>
 

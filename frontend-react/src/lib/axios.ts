@@ -87,16 +87,24 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   config.headers = config.headers || {}
   
-  // Только добавляем токен если он явно запрошен или для защищенных методов
+  // Добавляем токен если он есть И:
+  // - Это защищенный метод (POST, PUT, DELETE, PATCH), ИЛИ
+  // - URL требует авторизации (/api/users/me, /api/articles/*/react, и т.д.), ИЛИ
+  // - Явно указано X-Require-Auth
   const token = getTokenFromCookie()
   const isProtectedMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase() || '')
+  const requiresAuth = config.url?.includes('/api/me') ||
+                       config.url?.includes('/users/me') || 
+                       config.url?.includes('/react') ||
+                       config.url?.includes('/user-reaction') ||
+                       config.headers['X-Require-Auth']
   
-  // Добавляем токен только если:
-  // 1. Это защищенный метод (POST, PUT, DELETE, PATCH)
-  // 2. Или явно указано requireAuth в конфиге
-  if (token && (isProtectedMethod || config.headers['X-Require-Auth'])) {
+  if (token && (isProtectedMethod || requiresAuth)) {
     config.headers.Authorization = `Bearer ${token}`
+    console.log('🔐 Adding Authorization header for:', config.url, 'token length:', token.length)
     delete config.headers['X-Require-Auth'] // Удаляем служебный заголовок
+  } else if (!token && requiresAuth) {
+    console.warn('⚠️ No token found but request requires auth:', config.url)
   }
   
   if (!(config.data instanceof FormData) && !config.headers['Content-Type']) {

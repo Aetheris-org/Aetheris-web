@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -137,7 +138,10 @@ export default function ArticlePage() {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountSheet />
+          </div>
         </div>
       </header>
 

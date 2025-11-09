@@ -9,18 +9,16 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/components/ui/use-toast'
 import { ArticleCard } from '@/components/ArticleCard'
 import { ArticleCardLine } from '@/components/ArticleCardLine'
 import { ArticleCardSquare } from '@/components/ArticleCardSquare'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
 
 export default function HomePage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
-  const { toast } = useToast()
-
   // State
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -109,16 +107,7 @@ export default function HomePage() {
             </div>
 
             <ThemeToggle />
-
-            {!user && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/auth')}
-              >
-                Sign In
-              </Button>
-            )}
+            <AccountSheet />
           </div>
         </div>
       </header>

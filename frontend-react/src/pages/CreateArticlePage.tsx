@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
+import apiClient from '@/lib/axios'
 
 export default function CreateArticlePage() {
   const navigate = useNavigate()
@@ -62,8 +64,28 @@ export default function CreateArticlePage() {
     setIsPublishing(true)
 
     try {
-      // TODO: Implement publish logic
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log('📝 Publishing article...', { title, tags, difficulty })
+
+      const response = await apiClient.post(
+        '/api/articles',
+        {
+          data: {
+            title: title.trim(),
+            content: content.trim(),
+            excerpt: excerpt.trim() || null,
+            tags,
+            difficulty,
+            publishedAt: new Date().toISOString(),
+          },
+        },
+        {
+          headers: {
+            'X-Require-Auth': 'true',
+          },
+        }
+      )
+
+      console.log('✅ Article published successfully:', response.data)
       
       toast({
         title: 'Article published!',
@@ -71,10 +93,11 @@ export default function CreateArticlePage() {
       })
       
       navigate('/')
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Failed to publish article:', error)
       toast({
         title: 'Error',
-        description: 'Failed to publish article',
+        description: error.response?.data?.error?.message || 'Failed to publish article',
         variant: 'destructive',
       })
     } finally {
@@ -121,6 +144,7 @@ export default function CreateArticlePage() {
               {isPublishing ? 'Publishing...' : 'Publish'}
             </Button>
             <ThemeToggle />
+            <AccountSheet />
           </div>
         </div>
       </header>

@@ -1,4 +1,5 @@
 import { mergeConfig, type UserConfig } from 'vite';
+import { adminFixPlugin } from './vite-plugin';
 
 export default (config: UserConfig) => {
   // Important: always return the modified config
@@ -13,6 +14,7 @@ export default (config: UserConfig) => {
         '@': '/src',
       },
     },
+    plugins: [adminFixPlugin()],
   });
 };
 
