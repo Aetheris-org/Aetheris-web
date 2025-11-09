@@ -1,0 +1,581 @@
+{
+  "labels": {
+    "you": "Tú"
+  },
+  "nav": {
+    "brand": "Aetheris Comunidad",
+    "navigation": "Navegación",
+    "home": "Página de inicio",
+    "articlesNav": "Artículos",
+    "interactive": "Interactivo",
+    "companies": "Leaders",
+    "faq": "FAQ",
+    "help": "Ayuda",
+    "changes": "Cambios del sitio",
+    "rules": "Reglas del foro",
+    "profile": "Perfil",
+    "notifications": "Notificaciones",
+    "stared": "Favoritos",
+    "settings": "Configuración",
+    "articles": {
+      "yours": "Tus artículos"
+    },
+    "draft": "Borrador",
+    "analytics": "Analíticas",
+    "balance": "Saldo",
+    "subscription": "Suscripción",
+    "shop": "Tienda",
+    "signout": "Cerrar sesión"
+  },
+  "header": {
+    "navigation": {
+      "button": "Navegación",
+      "title1": "Página de inicio",
+      "title2": "Artículos",
+      "title3": "Interactivo",
+      "title4": "Leaders",
+      "title5": "Eventos"
+    },
+    "faq": {
+      "button": "Otro",
+      "title1": "FAQ",
+      "title2": "Ayuda",
+      "title3": "Cambios",
+      "title4": "Reglas"
+    }
+  },
+  "navigation": {
+    "title": "Navegación",
+    "articles": "Artículos",
+    "news": "Noticias",
+    "research": "Investigación",
+    "development": "Desarrollo"
+  },
+  "profile": {
+    "info": {
+      "title": "Información del usuario",
+      "id": "ID",
+      "nickname": "Apodo",
+      "joined": "Se unió"
+    },
+    "userNotFound": "Usuario no encontrado"
+  },
+  "page": {
+    "home": {
+      "title": "Aetheris",
+      "subtitle": "Una comunidad de desarrolladores de TI, científicos de redes neuronales e ingenieros de ML",
+      "cta": "¡Únete a nuestra comunidad para crear!",
+      "register": "Registrarse"
+    },
+    "articles": {
+      "title": "Artículos",
+      "search": "Buscar cualquier cosa",
+      "searchResults": {
+        "title": "Resultados de búsqueda para \"{query}\"",
+        "count": "Artículos encontrados: {count}",
+        "noResults": "No se encontraron resultados para \"{query}\"",
+        "noResultsDescription": "Intenta cambiar tu consulta de búsqueda o usar palabras clave diferentes",
+        "showAll": "Mostrar todos los artículos",
+        "resetFilters": "Restablecer filtros"
+      },
+      "info": "Información del artículo",
+      "similar": "Artículos similares",
+      "date": "Fecha:",
+      "likes": "Me gusta:",
+      "views": "Vistas:",
+      "comments": "Comentarios:",
+      "symbols": "Símbolos:",
+    "filters": {
+      "difficulty": "Dificultad",
+      "readingTime": "Tiempo de lectura",
+      "tags": "Etiquetas",
+      "searchTags": "Buscar etiquetas...",
+      "from": "Desde",
+      "to": "Hasta",
+      "minutes": "minutos",
+      "reset": "Restablecer",
+      "close": "Cerrar"
+    }
+    },
+    "your-articles": {
+      "title": "Tus artículos"
+    },
+    "analytics": {
+      "title": "Analíticas"
+    },
+    "balance": {
+      "title": "Saldo"
+    },
+    "development": "Esta página está en desarrollo"
+  },
+  "create-article": {
+    "path": "Crear tema en: ",
+    "h1": "Antes de crear un artículo, lee las reglas de la sección",
+    "h2": "Por violación de las reglas tu artículo puede ser restringido o eliminado.",
+    "button1": "Leer las reglas",
+    "h4": "Título del artículo",
+    "h5": "Proporciona una breve descripción del artículo",
+    "h6": "Etiquetas del artículo",
+    "h7": "Selecciona hasta 5 etiquetas para tu artículo",
+    "button2": "Crear",
+    "button3": "Vista previa",
+    "button4": "Guardar en borrador",
+    "button5": "Actualizar",
+    "tagsCounter": "Seleccionado: {count}/{max}",
+    "h8": "Dificultad del artículo",
+    "h9": "Selecciona el nivel de dificultad de tu artículo",
+    "categoryTitle": "Categoría del artículo",
+    "categorySubtitle": "Selecciona una categoría para tu artículo",
+    "difficulty": {
+      "easy": "Fácil",
+      "medium": "Medio",
+      "hard": "Difícil"
+    }
+  },
+  "settings": {
+    "appearance": {
+      "title": "Apariencia",
+      "theme": {
+        "title": "Tema de color",
+        "subtitle": "Elige tu tema de color favorito para este sitio web",
+        "system": "Tema del sistema",
+        "white": "Blanco",
+        "oled": "OLED",
+        "dark": "Oscuro"
+      },
+      "language": {
+        "title": "Idioma",
+        "subtitle": "Elige tu idioma preferido para la interfaz"
+      },
+      "font": {
+        "title": "Fuente del artículo",
+        "subtitle": "Elige una fuente que te sea conveniente, que se usará en el artículo como principal",
+        "select": "Seleccionar fuente",
+        "preview": "Ejemplo de texto de artículo. Aquí existen más palabras diferentes, que se pueden usar en cualquier artículo y noticias, hechos científicos y otros lugares"
+      }
+    },
+    "sidebar": {
+      "sections": {
+        "display": "Visualización",
+        "account": "Cuenta",
+        "another": "Otro"
+      },
+      "buttons": {
+        "appearance": "Apariencia",
+        "displayProfile": "Perfil",
+        "privacySecurity": "Seguridad",
+        "sessions": "Sesiones",
+        "subscription": "Suscripción",
+        "supportInfo": "Soporte",
+        "another": "Otro"
+      }
+    }
+  },
+  "auth": {
+    "title": "Bienvenido",
+    "subtitle": "Inicia sesión para continuar",
+    "button": {
+      "loading": "Cargando...",
+      "continue": "Continuar con Google"
+    },
+    "footer": {
+      "text": "Al iniciar sesión, aceptas nuestros",
+      "terms": "Términos de uso",
+      "and": "y",
+      "privacy": "Política de privacidad"
+    }
+  },
+
+  "authFinalize": {
+    "brandCaption": "Aetheris Community",
+    "title": "Último paso",
+    "subtitle": "Elige un apodo único. Otros miembros de la comunidad lo verán.",
+    "input": {
+      "label": "Apodo",
+      "placeholder": "Introduce un apodo",
+      "hint": "Se permiten letras latinas, números y los símbolos «-» y «_», con una longitud de 3 a 24 caracteres.",
+      "errors": {
+        "empty": "El apodo no puede estar vacío",
+        "min": "Mínimo 3 caracteres",
+        "max": "Máximo 24 caracteres",
+        "pattern": "Solo letras, números, guion y guion bajo"
+      }
+    },
+    "button": {
+      "submit": "Continuar",
+      "saving": "Guardando..."
+    },
+    "errors": {
+      "duplicate": "Este apodo ya está ocupado",
+      "generic": "No se pudo guardar el apodo. Inténtalo de nuevo."
+    },
+    "footer": "Podrás cambiar el apodo más tarde en la configuración del perfil."
+  },
+  "form": {
+    "signin": {
+      "title": "Registrarse",
+      "nickname": "Apodo",
+      "nicknamePlaceholder": "Ingresa tu apodo",
+      "email": "Correo",
+      "emailPlaceholder": "Ingresa tu correo",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "submit": "Registrarse",
+      "loginLink": "O iniciar sesión"
+    }
+  },
+  "validation": {
+    "nickname": {
+      "required": "El apodo es obligatorio",
+      "length": "El apodo debe tener máximo 50 caracteres",
+      "invalid": "El apodo solo puede contener letras latinas, cirílicas y espacios"
+    },
+    "email": {
+      "required": "El correo es obligatorio",
+      "invalid": "El correo debe contener @"
+    },
+    "password": {
+      "required": "La contraseña es obligatoria",
+      "length": "La contraseña debe tener al menos 6 caracteres",
+      "invalid": "La contraseña es inválida (ASCII imprimible, máx 48)"
+    },
+    "bio": {
+      "length": "La biografía debe tener máximo 300 caracteres"
+    }
+  },
+  "comments": {
+    "placeholder": "Escribe un comentario...",
+    "replyPlaceholder": "Escribe tu respuesta...",
+    "submit": "Publicar",
+    "reply": "Responder",
+    "posting": "Publicando..."
+  },
+  "notifications": {
+    "profile": {
+      "copyLink": {
+        "success": { "summary": "Éxito", "detail": "Enlace del perfil copiado al portapapeles" }
+      },
+      "copyId": {
+        "success": { "summary": "Éxito", "detail": "ID de usuario copiado al portapapeles" }
+      },
+      "reportUser": {
+        "success": { "summary": "Reporte enviado", "detail": "Revisaremos el reporte sobre \"{username}\"." }
+      }
+    },
+    "reportUser": {
+      "title": "Reportar usuario",
+      "subtitle": "¿Por qué estás reportando a este usuario?",
+      "cancel": "Cancelar",
+      "submit": "Enviar",
+      "reasons": {
+        "spam": "Spam",
+        "spamDesc": "Contenido comercial no deseado o mensajes repetitivos",
+        "harassment": "Acoso",
+        "harassmentDesc": "Acoso, amenazas o ataques personales",
+        "inappropriate": "Contenido inapropiado",
+        "inappropriateDesc": "Contenido no apto para esta comunidad (p. ej., NSFW)",
+        "other": "Otro",
+        "otherDesc": "Otra razón no listada arriba"
+      }
+    },
+    "comment": {
+      "posted": { "summary": "Listo", "detail": "Comentario publicado" },
+      "replyPosted": { "summary": "Listo", "detail": "Respuesta publicada" },
+      "error": { "summary": "Error", "detail": "No se pudo publicar. Inténtalo de nuevo" },
+      "edit": {
+        "empty": {
+          "summary": "Error",
+          "detail": "El comentario no puede estar vacío"
+        },
+        "authRequired": {
+          "summary": "Autenticación requerida",
+          "detail": "Por favor, inicia sesión para editar comentarios"
+        },
+        "success": {
+          "summary": "Éxito",
+          "detail": "Comentario actualizado exitosamente"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "No se pudo actualizar el comentario"
+        },
+        "authFailed": {
+          "summary": "Error",
+          "detail": "Error de autenticación. Por favor, inicia sesión nuevamente."
+        }
+      },
+      "delete": {
+        "error": {
+          "summary": "Error al eliminar",
+          "detail": "No se pudo eliminar el comentario"
+        },
+        "cancelled": {
+          "summary": "Eliminación cancelada",
+          "detail": "El comentario no fue eliminado"
+        }
+      }
+    },
+    "authRequired": {
+      "summary": "Autenticación requerida",
+      "detail": "Necesitas iniciar sesión para leer materiales de la comunidad",
+      "actionRequired": {
+        "summary": "Autenticación requerida",
+        "detail": "Necesitas iniciar sesión o registrarte para continuar"
+      }
+    },
+    "ownArticle": {
+      "summary": "Este es tu artículo",
+      "detail": "No puedes ir a tu perfil desde tu propio artículo"
+    },
+    "ownComment": {
+      "summary": "Este es tu comentario",
+      "detail": "No puedes ir a tu perfil desde tu propio comentario"
+    },
+    "bookmark": {
+      "added": {
+        "summary": "Artículo agregado a favoritos",
+        "detail": "Puedes encontrarlo en la página de favoritos"
+      },
+      "removed": {
+        "summary": "Artículo eliminado de favoritos",
+        "detail": "El artículo ya no está en tu lista de favoritos"
+      },
+      "error": {
+        "summary": "Error",
+        "detail": "No se pudo cambiar el estado del marcador"
+      }
+    },
+    "article": {
+      "delete": {
+        "cancelled": {
+          "summary": "Eliminación cancelada",
+          "detail": "El artículo no fue eliminado"
+        }
+      }
+    },
+    "undoDelete": {
+      "article": {
+        "message": "El artículo será eliminado"
+      },
+      "comment": {
+        "message": "El comentario será eliminado"
+      }
+    },
+    "editArticle": {
+      "validation": {
+        "title": "Verifique el formulario",
+        "intro": "Necesita corregir:",
+        "titleRequired": "Ingrese el título del artículo",
+        "contentRequired": "Agregue el contenido del artículo",
+        "tagsRequired": "Seleccione al menos una etiqueta",
+        "fillFields": {
+          "summary": "Complete los campos",
+          "detail": "Corrija los campos marcados"
+        }
+      },
+      "upload": {
+        "loading": "Cargando imagen...",
+        "processing": "Procesando imagen...",
+        "previewNotLoaded": {
+          "summary": "Vista previa no cargada",
+          "detail": "Continuando sin vista previa"
+        },
+        "fileTooLarge": {
+          "summary": "Archivo demasiado grande",
+          "detail": "Tamaño máximo de archivo: 10MB"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "No se pudo procesar la imagen"
+        },
+        "cropError": {
+          "summary": "Error",
+          "detail": "No se pudo recortar la imagen"
+        }
+      },
+      "publish": {
+        "success": {
+          "summary": "Artículo publicado",
+          "detail": "Su artículo ha sido publicado exitosamente y está disponible en la página principal"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "No se pudo crear el artículo. Por favor, inténtelo de nuevo"
+        }
+      },
+      "update": {
+        "error": {
+          "summary": "Error",
+          "detail": "No se pudo actualizar el artículo. Por favor, inténtelo de nuevo"
+        }
+      },
+      "draft": {
+        "noTitle": {
+          "summary": "Sin título",
+          "detail": "Ingrese un título para guardar el borrador"
+        },
+        "saved": {
+          "summary": "Borrador guardado",
+          "detail": "El artículo se guardó como borrador en su página de artículos"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "No se pudo guardar el borrador. Por favor, inténtelo de nuevo"
+        }
+      },
+      "loadError": {
+        "summary": "Error",
+        "detail": "No se pudo cargar el artículo para editar"
+      },
+      "defaultTitle": "Título del artículo",
+      "removeTag": "Eliminar etiqueta {tag}"
+    }
+  },
+  "common": {
+    "unknown": "desconocido",
+    "sameArticle": "mismo artículo",
+    "read_more": "Leer más",
+    "favorites": "Favoritos",
+    "totalFavorites_one": "{count} artículo",
+    "totalFavorites_other": "{count} artículos",
+    "guest": "Invitado",
+    "user": "usuario",
+    "close": "Cerrar",
+    "loading": "Cargando..."
+  },
+  "privacyConsent": {
+    "message": "Usamos cookies para hacer funcionar el sitio y mejorar el servicio. Al continuar, aceptas nuestra política de privacidad.",
+    "agree": "Aceptar",
+    "read": "Leer"
+  },
+  "legal": {
+    "sidebar": {
+      "pageTitle": "Página de Política del Sitio",
+      "forumRules": "Reglas del foro",
+      "legal": "Legal",
+      "contentRules": "Reglas de contenido",
+      "termsOfUse": "Términos de uso",
+      "copyrightPolicy": "Política de derechos de autor",
+      "another": "Otro",
+      "communityRules": "Reglas de la comunidad",
+      "security": "Seguridad",
+      "privacyPolicy": "Política de Privacidad"
+    },
+    "common": {
+      "lastUpdated": "Última actualización:"
+    },
+    "communityRules": {
+      "title": "Reglas de la Comunidad Aetheris",
+      "sections": {
+        "philosophy": {
+          "title": "1. Filosofía de la Comunidad",
+          "content": "Aetheris Community es un lugar para el crecimiento profesional, el intercambio de conocimientos y la comunicación constructiva. Nos esforzamos por crear un ambiente inclusivo donde todos puedan aprender, compartir experiencias y crecer juntos con la comunidad."
+        },
+        "principles": {
+          "title": "2. Principios Fundamentales",
+          "respect": "Respeto: Trata a otros participantes con respeto y comprensión",
+          "constructiveness": "Constructividad: Lleva las discusiones de manera positiva",
+          "professionalism": "Profesionalismo: Mantén altos estándares de comunicación",
+          "openness": "Apertura: Está dispuesto a aprender y compartir experiencias",
+          "tolerance": "Tolerancia: Acepta diferentes puntos de vista y enfoques"
+        },
+        "communication": {
+          "title": "3. Reglas de Comunicación",
+          "allowed": {
+            "title": "3.1 Comportamiento Permitido:",
+            "constructiveCriticism": "Crítica constructiva con sugerencias de mejora",
+            "questions": "Preguntas para aclaración y comprensión",
+            "sharing": "Intercambio de experiencias y conocimientos",
+            "support": "Apoyo a otros participantes",
+            "professionalDiscussions": "Discusiones profesionales"
+          },
+          "prohibited": {
+            "title": "3.2 Comportamiento Prohibido:",
+            "insults": "Insultos, amenazas o humillaciones",
+            "discrimination": "Discriminación por cualquier motivo",
+            "spam": "Spam o publicidad no deseada",
+            "trolling": "Trolling o provocaciones",
+            "falseInfo": "Difusión de información falsa",
+            "privacyViolation": "Violación de privacidad"
+          }
+        },
+        "moderation": {
+          "title": "4. Moderación y Gestión",
+          "content": "Nuestro equipo de moderación garantiza el cumplimiento de las reglas:",
+          "monitoring": "Monitoreo activo de discusiones",
+          "complaints": "Respuesta a quejas de usuarios",
+          "warnings": "Advertencias sobre violaciones",
+          "restrictions": "Restricciones temporales y permanentes",
+          "explanations": "Explicación de decisiones de moderación"
+        },
+        "reputation": {
+          "title": "5. Sistema de Reputación",
+          "content": "Utilizamos un sistema de reputación para fomentar la participación de calidad:",
+          "ratings": "Calificaciones positivas por contenido útil",
+          "bonuses": "Bonos por ayudar a otros participantes",
+          "recognition": "Reconocimiento de experiencia en ciertas áreas",
+          "privileges": "Privilegios adicionales para participantes activos",
+          "transparency": "Sistema transparente de puntuación"
+        },
+        "conflictResolution": {
+          "title": "6. Resolución de Conflictos",
+          "content": "Cuando surgen conflictos:",
+          "direct": "Intenta resolver el problema directamente con el participante",
+          "moderators": "Contacta a los moderadores si es necesario",
+          "examples": "Proporciona ejemplos específicos de violaciones",
+          "dialogue": "Está dispuesto al diálogo constructivo",
+          "decisions": "Cumple con las decisiones de moderación"
+        },
+        "privacySecurity": {
+          "title": "7. Privacidad y Seguridad",
+          "content": "Protege la privacidad de la comunidad:",
+          "personalInfo": "No compartas información personal de otros participantes",
+          "suspicious": "Reporta actividad sospechosa",
+          "passwords": "Usa contraseñas seguras",
+          "account": "No compartas el acceso a tu cuenta",
+          "data": "Cumple con las reglas de procesamiento de datos"
+        },
+        "intellectualProperty": {
+          "title": "8. Propiedad Intelectual",
+          "content": "Respeta los derechos de propiedad intelectual:",
+          "copying": "No copies contenido sin permiso",
+          "sources": "Cita fuentes al citar",
+          "licenses": "Usa licencias abiertas",
+          "violations": "Reporta violaciones de derechos de autor",
+          "original": "Crea contenido original"
+        },
+        "specialPrograms": {
+          "title": "9. Programas Especiales",
+          "content": "Participa en programas de la comunidad:",
+          "mentoring": "Programa de mentoría",
+          "workshops": "Talleres técnicos",
+          "contests": "Concursos y desafíos",
+          "research": "Proyectos de investigación",
+          "volunteer": "Iniciativas voluntarias"
+        },
+        "violations": {
+          "title": "10. Violaciones y Sanciones",
+          "content": "Cuando se violan las reglas, pueden aplicarse:",
+          "warning": "Advertencia con explicación de la violación",
+          "restriction": "Restricción temporal de funciones de cuenta",
+          "temporaryBan": "Prohibición temporal (1-30 días)",
+          "permanentBan": "Prohibición permanente por violaciones repetidas",
+          "removal": "Eliminación de contenido que viola las reglas"
+        },
+        "appeals": {
+          "title": "11. Apelaciones",
+          "content": "Si no estás de acuerdo con una decisión de moderación:",
+          "appeal": "Presenta una apelación dentro de 7 días",
+          "evidence": "Proporciona evidencia de tu caso",
+          "seniorModerator": "Contacta a un moderador senior",
+          "investigation": "Está dispuesto a una investigación adicional",
+          "decision": "Acepta la decisión final"
+        },
+        "contact": {
+          "title": "12. Información de Contacto",
+          "content": "Para preguntas de la comunidad, contacta: community@aetheris-community.com"
+        }
+      }
+    }
+  }
+}

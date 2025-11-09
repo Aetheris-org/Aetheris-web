@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "article_bookmarks",
+  "info": {
+    "singularName": "article-bookmark",
+    "pluralName": "article-bookmarks",
+    "displayName": "Article Bookmark",
+    "description": "User bookmarks for articles"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "bookmarks"
+    },
+    "article": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::article.article",
+      "inversedBy": "bookmarks"
+    }
+  }
+}
+

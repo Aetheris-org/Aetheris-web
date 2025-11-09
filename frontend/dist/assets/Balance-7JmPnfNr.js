@@ -1,0 +1,1 @@
+import{d as t,u as a,i as s,j as n,t as o,E as c,_}from"./index-Cha8mMNk.js";const l={class:"development-text"},p=t({__name:"Balance",setup(r){const{t:d}=a();return(e,m)=>(c(),s("div",null,[n("h1",l,o(e.$t("common.in_development")),1)]))}}),u=_(p,[["__scopeId","data-v-b559fd8e"]]);export{u as default};

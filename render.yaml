@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: aetheris-community
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: |
+      # Install Python dependencies
+      pip install -r backend/requirements.txt
+      
+      # Install Node.js dependencies and build frontend
+      cd frontend
+      npm install
+      echo "VITE_API_BASE_URL=https://aetheris-community.onrender.com" > .env
+      npm run build
+      cd ..
+      
+      # Copy frontend build to backend static directory
+      mkdir -p backend/static
+      cp -r frontend/dist/* backend/static/
+      
+      # Copy public assets (like logo.svg) to static directory
+      cp frontend/public/* backend/static/ 2>/dev/null || echo "No public files to copy"
+      
+      # Create __init__.py files for proper Python imports
+      touch backend/__init__.py
+      touch backend/routers/__init__.py
+      
+      # Try to run database migrations (optional)
+      cd backend
+      alembic upgrade head || echo "⚠️  Migrations failed, will use fallback database"
+      cd ..
+    startCommand: cd backend && python run.py
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres.tlrbcosqunqdbuvovgog:uYRqNyva7vhczzEW@aws-1-eu-central-1.pooler.supabase.com:6543/postgres
+      - key: FRONTEND_URL
+        value: https://aetheris-community-0wve.onrender.com
+      - key: VITE_API_BASE_URL
+        value: https://aetheris-community.onrender.com
+      - key: JWT_SECRET
+        value: aetheris-super-secret-jwt-key-2024-production-ready
+      - key: JWT_EXPIRES_MINUTES
+        value: "10080"
+    healthCheckPath: /api/articles/
+    autoDeploy: true

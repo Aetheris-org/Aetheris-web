@@ -1,0 +1,1067 @@
+{
+  "labels": {
+    "you": "You"
+  },
+  "home": {
+    "title": "Aetheris",
+    "subtitle": "A community of IT developers, neural network scientists and ML engineers",
+    "h1": "Find ways to solve problems more effectively",
+    "subtitle2": "Ask questions and work with others to find the best solutions to anything.",
+    "h2": "Develop and improve yourself by testing your skills on real projects",
+    "subtitle3": "Write articles, delve into a new topic for you and become stronger",
+    "h3": "Solve problems together to achieve the desired result",
+    "subtitle4": "Got an error or don't know how it works? Ask others!",
+    "h4": "Collaborate and join teams to turn ideas into reality",
+    "subtitle5": "Join teams to bring the most complex projects to life!",
+    "h5": "Join our community to create!",
+    "register": "Register"
+  },
+
+  "profile_page": {
+    "title1": "articles",
+    "title2": "comments",
+    "title3": "joined",
+    "title4": "rank",
+    "button1": "Edit"
+  },
+
+
+
+
+  "navigation": {
+    "title": "Navigation",
+    "articles": "Articles",
+    "news": "News",
+    "research": "Research",
+    "development": "Development"
+  },
+  "articles": {
+    "title": "Articles",
+    "search": "Find articles...",
+    "searchResults": {
+      "title": "Search results for \"{query}\"",
+      "count": "Found articles: {count}",
+      "noResults": "No results found for \"{query}\"",
+      "noResultsDescription": "Try changing your search query or using different keywords",
+      "showAll": "Show all articles",
+      "resetFilters": "Reset filters"
+    },
+    "info": {
+      "title": "Article info",
+      "date": "Date:",
+      "likes": "Likes:",
+      "views": "Views:",
+      "comments": "Comments:",
+      "symbols": "Symbols:"
+    },
+    "trending": {
+      "title": "Popular today",
+      "empty": "No popular articles today yet"
+    },
+    "filters": {
+      "difficulty": "Difficulty",
+      "readingTime": "Reading time",
+      "tags": "Tags",
+      "searchTags": "Search tags...",
+      "from": "From",
+      "to": "To",
+      "minutes": "minutes",
+      "reset": "Reset",
+      "close": "Close"
+    }
+    
+  },
+  "cropper": {
+    "scale": "Scale",
+    "scaleHint": "(mouse wheel or slider)",
+    "control": "Control",
+    "controlHint": "(drag with mouse to move)",
+    "reset": "Reset"
+  },
+  "create-article": {
+    "path": "Create theme in: ",
+    "h1": "Before making an article, read the section rules",
+    "h2": "For violation of the rules your article may be restricted or deleted.",
+    "subtitle1": "For violation of the rules your article may be restricted or deleted.",
+    "button1": "Read the rules",
+    "h4": "Article title",
+    "h5": "Give a brief description of the article",
+    "subtitle2": "Give a brief description of the article",
+    "input1": "Enter title...",
+    "h6": "Article tags",
+    "h7": "Select up to 5 tags for your article",
+    "subtitle3": "Add a tag for better promotion of the article",
+    "input2": "Enter tags (separated by commas)...",
+    "button2": "Create",
+    "button3": "Preview",
+    "button4": "Save in draft",
+    "button5": "Update",
+    "subtitle4": "Add a tag for better promotion of the article",
+    "input3": "ddmmyy",
+    "tagsCounter": "Selected: {count}/{max}",
+    "h8": "Article difficulty",
+    "h9": "Select the difficulty level of your article",
+    "categoryTitle": "Article category",
+    "categorySubtitle": "Select a category for your article",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium", 
+      "hard": "Hard"
+    },
+    "previewPanel": {
+      "title": "Article preview",
+      "subtitle": "Upload an image or edit the current preview",
+      "upload": "Upload",
+      "edit": "Edit",
+      "previewTitle": "Preview:",
+      "uploading": "Uploading preview... Please wait"
+    },
+    "previewModal": {
+      "title": "Article preview",
+      "close": "Close preview",
+      "imageAlt": "Article preview"
+    },
+    "cropperModal": {
+      "title": "Edit preview",
+      "selectAll": "Full area",
+      "cancel": "Cancel",
+      "apply": "Apply",
+      "close": "Close editor"
+    },
+    "validation": {
+      "title": "Check form",
+      "intro": "Need to fix:",
+      "close": "Close"
+    },
+    "tags": {
+      "placeholder": "Enter tag...",
+      "placeholderMax": "Maximum 5 tags",
+      "removeLabel": "Remove tag {tag}",
+      "limitToast": "Maximum 5 tags",
+      "limitTitle": "Limit"
+    },
+    "content": {
+      "placeholder": "Article content has not been added yet..."
+    },
+    "imageButtons": {
+      "crop": "Crop",
+      "replace": "Replace",
+      "remove": "Remove"
+    },
+    "imageUpload": {
+      "title": "Article preview",
+      "subtitle": "Upload an image for article preview",
+      "clickToChange": "Click to change",
+      "clickToUpload": "Click to upload image",
+      "formats": "PNG, JPG up to 10MB"
+    }
+  },
+
+  "edit-article": {
+    "title": "Edit Article",
+    "subtitle": "Make changes to your article",
+    "loading": "Loading article...",
+    "error": {
+      "title": "Error loading article",
+      "retry": "Try again",
+      "save": "Failed to save changes",
+      "publish": "Failed to publish article",
+      "draft": "Failed to save as draft"
+    },
+    "form": {
+      "title": "Article title",
+      "content": "Article content",
+      "tags": "Article tags",
+      "difficulty": "Difficulty level",
+      "status": "Publication status"
+    },
+    "buttons": {
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "publish": "Publish",
+      "draft": "Save as Draft"
+    },
+    "success": {
+      "saved": "Article updated successfully!",
+      "published": "Article published successfully!",
+      "draft": "Article saved as draft!"
+    }
+  },
+
+
+
+
+  "your-articles": {
+    "title": "Your articles",
+    "empty": {
+      "title": "You don't have any articles yet",
+      "subtitle": "Create your first article for it to appear here"
+    }
+  },
+
+
+
+  "notifications_page": {
+    "title": "Notifications",
+    "loading": "Loading notifications...",
+    "error": "Failed to load notifications",
+    "retry": "Try again",
+    "sections": {
+      "unread": "Unread ({count})",
+      "read": "Read ({count})"
+    },
+    "empty": {
+      "title": "No notifications",
+      "subtitle": "You don't have any new notifications yet"
+    }
+  },
+  "settings": {
+    "appearance": {
+      "title": "Appearance",
+      "theme": {
+        "title": "Color theme",
+        "subtitle": "Choose your favorite color theme for this web-site",
+        "system": "System theme",
+        "white": "White",
+        "oled": "OLED",
+        "dark": "Dark"
+      },
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your preferred language for the interface"
+      },
+      "font": {
+        "title": "Article font",
+        "subtitle": "Choose a font that is convenient for you, which will be used in the article as the main one",
+        "select": "Select font",
+        "preview": "Example of text article. Here exist more different words,which can use in any article and news,science facts and another places"
+      },
+      "viewLayout": {
+        "title": "Article list layouts",
+        "subtitle": "Select your preferred layout for each page that displays articles on this device",
+        "default": "Default",
+        "line": "Rows",
+        "square": "Grid"
+      }
+    },
+    "sidebar": {
+      "sections": {
+        "display": "Display",
+        "account": "Account",
+        "another": "Another"
+      },
+      "buttons": {
+        "appearance": "Appearance",
+        "displayProfile": "Display profile",
+        "privacySecurity": "Privacy & Security",
+        "sessions": "Sessions",
+        "subscription": "Subscription",
+        "supportInfo": "Support & info",
+        "another": "Another"
+      }
+    },
+    "display_profile": {
+      "title": "Display profile",
+      "h1": "Profile information",
+      "subtitle": "Menu for changing profile information that is displayed to all users",
+      "h2": "Avatar",
+      "button1": "Upload image",
+      "button2": "Remove image",
+      "button3": "reset",
+      "notRegistered": {
+        "title": "You're not registered",
+        "subtitle": "This page is only available for authorized users.",
+        "loginButton": "Sign in"
+      },
+      "uploading": "Uploading...",
+      "uploadAvatar": "Upload avatar",
+      "h3": "Nickname",
+      "subtitle3": "Change the name displayed on your account",
+      "input_text1": "Enter your nickname",
+      "h4": "Bio",
+      "subtitle4": "Add information about you and your hobbies and skills",
+      "input_text2": "Input your bio",
+      "upload_panel": {
+        "h1": "Upload avatar",
+        "h2": "Drag & Drop your image here",
+        "subtitle": "or click to browse files",
+        "info": "Supports: JPG, PNG, GIF (max 5MB)",
+        "browse_button": "Browse Files",
+        "upload_button": "Upload Avatar"
+      },
+      "remove_panel": {
+        "h1": "Delete avatar?",
+        "subtitle": "Are you sure you want to delete your avatar?",
+        "warning": "This action cannot be undone. Your profile will display the default avatar after deletion.",
+        "button1": "Cancel",
+        "button2": "Remove"
+      },
+      "reset_panel": {
+        "h1": "Reset profile settings?",
+        "button1": "Cancel",
+        "button2": "Reset"
+      }
+    },
+    "privacy": {
+      "title": "Privacy & Security",
+      "h1": "Account security",
+      "subtitle": "settings to enhance the security of your account",
+      "h2": "Email",
+      "subtitle2": "change your account email to receive confirmation code and announcements",
+      "h3": "Password",
+      "subtitle3": "create a new password for account security",
+      "h4": "2FA",
+      "subtitle4": "set up a second layer of protection for your account(recommended)",
+      "h5": "Download data",
+      "subtitle5": "Download the data we store",
+      "h6": "Deleting and hiding data",
+      "subtitle6": "section for completely deleting all information from our community",
+      "h7": "Delete account",
+      "subtitle7": "deleting account and information about it",
+      "h8": "Hide profile",
+      "subtitle8": "hide profile and all info about it",
+      "h9": "Extra lock",
+      "subtitle9": "Have you been hacked? Isolate your profile completely for a while",
+      "buttons": {
+        "changeEmail": "Change email",
+        "changePassword": "Change password",
+        "add2FA": "add 2FA",
+        "downloadData": "Download",
+        "deleteAccount": "Delete",
+        "hideProfile": "Hide",
+        "lockProfile": "Lock"
+      },
+      "panels": {
+        "email": {
+          "title": "Change email",
+          "h1": "Current email",
+          "h2": "New email",
+          "h3": "Password",
+          "button1": "Cancel",
+          "button2": "Change email",
+          "input1": "Enter current email",
+          "input2": "Enter new email",
+          "input3": "Enter password"
+        },
+        "password": {
+          "title": "Change password",
+          "h1": "Current password",
+          "h2": "New password",
+          "h3": "Confirm new password",
+          "button1": "Cancel",
+          "button2": "Change password",
+          "input1": "Enter current password",
+          "input2": "Enter new password",
+          "input3": "Confirm new password"
+        },
+        "2FA": {
+          "title": "Setup 2FA",
+          "subtitle": "Scan this QR code with your authenticator app:",
+          "subtitle2": "Or enter this code manually:",
+          "h1": "Verification Code",
+          "button1": "Cancel",
+          "button2": "Enable 2FA",
+          "input2": "Enter 6-digit code"
+        },
+        "deleteAccount": {
+          "title": "Delete account",
+          "subtitle": "Are you sure you want to delete your account?",
+          "warning": "This action cannot be undone. Your account will be deleted and all your data will be lost.",
+          "h1": "Type \"DELETE\" to confirm",
+          "h2": "Password",
+          "input1": "Type \"DELETE\"",
+          "button1": "Cancel",
+          "button2": "Delete account",
+          "input2": "Enter password"
+        },
+        "hideProfile": {
+          "title": "Hide profile",
+          "h1": "Your profile will be hidden from other users",
+          "subtitle": "You can unhide it anytime from settings",
+          "h2": "Password",
+          "button1": "Cancel",
+          "button2": "Hide profile",
+          "input1": "Enter your password"
+        },
+        "lockProfile": {
+          "title": "Extra Lock",
+          "h1": "Your profile will be completely locked",
+          "subtitle": "No one will be able to access your profile or data for the selected period",
+          "h2": "Lock Duration",
+          "h3": "Password",
+          "button1": "Cancel",
+          "button2": "Lock profile",
+          "input1": "Enter password",
+          "lockDuration": {
+            "1": "1 hour",
+            "24": "24 hours",
+            "168": "1 week",
+            "720": "1 month"
+          }
+        }
+      },
+      "errors": {
+        "email": {
+          "required": "Email is required",
+          "invalid": "Email must contain @"
+        },
+        "password": {
+          "required": "Password is required",
+          "length": "Password must be at least 6 characters",
+          "invalid": "Password is invalid (printable ASCII, max 48)"
+        },
+        "2FA": {
+          "required": "2FA code is required",
+          "invalid": "2FA code must be 6 digits"
+        },
+        "deleteAccount": {
+          "required": "Delete account is required",
+          "invalid": "Delete account must be exactly \"DELETE\""
+        },
+        "hideProfile": {
+          "required": "Hide profile is required",
+          "invalid": "Hide profile must be exactly \"DELETE\""
+        }
+      }
+    },
+    "sessions": {
+      "title": "Sessions",
+      "h1": "Active sessions",
+      "subtitle": "This section contains all active sessions that you can manage.",
+      "subtitle2": "If you notice a session whose details you don't know or notice a new suspicious login, we recommend changing the password and activating 2FA",
+      "button1": "Delete all sessions and leave"
+    },
+    "support": {
+      "title": "Support",
+      "h1": "Support",
+      "h2": "Github",
+      "subtitle": "You can support our project on various platforms, thereby helping in the further development of the community and improvement of technologies",
+      "subtitle2": "By supporting us, you become a volunteer and an active member of the community, you will have access to increased privileges",
+      "subtitle3": "We are an open community and encourage improvements and suggestions from our users, and also host interesting projects and code on our Github",
+      "button1": "Click to go or copy",
+      "button2": "Report a bug",
+      "github": {
+        "title": "Aetheris-Community",
+        "subtitle": "0 stars",
+        "subtitle2": "0 commits",
+        "subtitle3": "0 activity"
+      }
+    }
+  },
+
+
+  "policy_page":{
+    "panel1": {
+      "title1" : "Legal",
+      "btn1": "Content rules",
+      "btn2": "Terms of use",
+      "btn3": "Copyright policy",
+      "btn4": "Another"
+    },
+    "panel2": {
+      "title": "Community rules"
+    },
+    "panel3": {
+      "title": "Security",
+      "btn1": "Privacy policy",
+      "btn2": "Another"
+    }
+  },
+
+  "auth": {
+    "title": "Welcome",
+    "subtitle": "Log in to continue",
+    "button": {
+      "loading": "Loading...",
+      "continue": "Continue with Google"
+    },
+    "footer": {
+      "text": "By logging in, you agree to our",
+      "terms": "Terms of use",
+      "and": "and",
+      "privacy": "Privacy Policy"
+    }
+  },
+
+  "authFinalize": {
+    "brandCaption": "Aetheris Community",
+    "title": "Final step",
+    "subtitle": "Choose a unique nickname. Other community members will see it.",
+    "input": {
+      "label": "Nickname",
+      "placeholder": "Enter a nickname",
+      "hint": "Allowed: Latin letters, numbers, \"-\" and \"_\", length from 3 to 24 characters.",
+      "errors": {
+        "empty": "Nickname cannot be empty",
+        "min": "Minimum 3 characters",
+        "max": "Maximum 24 characters",
+        "pattern": "Only letters, numbers, hyphen and underscore"
+      }
+    },
+    "button": {
+      "submit": "Continue",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "duplicate": "This nickname is already taken",
+      "generic": "Could not save the nickname. Please try again."
+    },
+    "footer": "You can change the nickname later in profile settings."
+  },
+
+
+  "form": {
+    "signin": {
+      "title": "Sign in",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "Enter your nickname",
+      "email": "Mail",
+      "emailPlaceholder": "Enter your mail",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign in",
+      "loginLink": "Or log in"
+    }
+  },
+  "validation": {
+    "nickname": {
+      "required": "Nickname is required",
+      "length": "Nickname must be no more than 50 characters",
+      "invalid": "Nickname can only contain Latin letters, Cyrillic letters and spaces"
+    },
+    "email": {
+      "required": "Email is required",
+      "invalid": "Email must contain @"
+    },
+    "password": {
+      "required": "Password is required",
+      "length": "Password must be at least 6 characters",
+      "invalid": "Password is invalid (printable ASCII, max 48)"
+    },
+    "bio": {
+      "length": "Bio must be no more than 300 characters"
+    }
+  },
+
+
+
+  "common": {
+    "unknown": "unknown",
+    "sameArticle": "same article",
+    "not_registered": "You're not logged in",
+    "in_development": "This page in development now",
+    "no_articles": "The user has not created any articles yet!",
+    "read_more": "Read more",
+    "favorites": "Favorites",
+    "totalFavorites_one": "{count} article",
+    "totalFavorites_other": "{count} articles",
+    "articlePreview": "Article preview",
+    "guest": "Guest",
+    "user": "user",
+    "close": "Close",
+    "loading": "Loading..."
+  },
+
+
+
+
+  "header": {
+    "navigation": {
+      "button": "Navigation",
+      "title1": "Start Page",
+      "title2": "Articles",
+      "title3": "Interaction",
+      "title4": "Leaders",
+      "title5": "Events"
+    },
+    "faq": {
+      "button": "Other",
+      "title1": "FAQ",
+      "title2": "Help",
+      "title3": "Changes",
+      "title4": "Rules"
+    },
+    "additional": {
+      "button": "Additional",
+      "title1": "New article",
+      "title2": "List",
+      "title3": "Grid",
+      "title4": "Default"
+    },
+    "profile": {
+      "title1": "Profile",
+      "title2": "Notifications",
+      "title3": "Stared",
+      "title4": "Settings",
+      "title5": "Your articles",
+      "title6": "Draft",
+      "title7": "Analytics",
+      "title8": "Balance",
+      "title9": "Subscription",
+      "title10": "Shop",
+      "title11": "Sign out"
+    }
+  },
+  "profile": {
+    "info": {
+      "title": "User info",
+      "id": "ID",
+      "nickname": "Nickname",
+      "joined": "Joined"
+    },
+    "userNotFound": "User not found"
+  },
+
+  "share": {
+    "title": "Share Article",
+    "subtitle": "Choose how to share",
+    "copyLink": "Copy link",
+    "twitter": "Twitter",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "cancel": "Cancel",
+    "success": {
+      "summary": "Link copied",
+      "detail": "Article link copied to clipboard"
+    },
+    "error": {
+      "summary": "Error",
+      "detail": "Failed to copy link"
+    }
+  },
+  "comments": {
+    "placeholder": "Write a comment...",
+    "replyPlaceholder": "Write your reply...",
+    "submit": "Publish",
+    "reply": "Reply",
+    "posting": "Publishing..."
+  },
+  "notifications": {
+    "profile": {
+      "copyLink": {
+        "success": {
+          "summary": "Success",
+          "detail": "Profile link copied to clipboard"
+        }
+      },
+      "copyId": {
+        "success": {
+          "summary": "Success",
+          "detail": "User ID copied to clipboard"
+        }
+      },
+      "reportUser": {
+        "success": {
+          "summary": "Report submitted",
+          "detail": "We will review the report on \"{username}\"."
+        }
+      }
+    },
+    "reportUser": {
+      "title": "Report User",
+      "subtitle": "Why are you reporting this user?",
+      "cancel": "Cancel",
+      "submit": "Submit",
+      "reasons": {
+        "spam": "Spam",
+        "spamDesc": "Unwanted commercial content or repetitive messages",
+        "harassment": "Harassment",
+        "harassmentDesc": "Bullying, threats, or personal attacks",
+        "inappropriate": "Inappropriate content",
+        "inappropriateDesc": "Content not suitable for this community (e.g., NSFW)",
+        "other": "Other",
+        "otherDesc": "Another reason not listed above"
+      }
+    },
+    "comment": {
+      "posted": {
+        "summary": "Done",
+        "detail": "Comment published"
+      },
+      "replyPosted": {
+        "summary": "Done",
+        "detail": "Reply published"
+      },
+      "error": {
+        "summary": "Error",
+        "detail": "Failed to publish. Please try again"
+      },
+      "edit": {
+        "empty": {
+          "summary": "Error",
+          "detail": "Comment cannot be empty"
+        },
+        "authRequired": {
+          "summary": "Authentication Required",
+          "detail": "Please log in to edit comments"
+        },
+        "success": {
+          "summary": "Success",
+          "detail": "Comment updated successfully"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "Failed to update comment"
+        },
+        "authFailed": {
+          "summary": "Error",
+          "detail": "Authentication failed. Please log in again."
+        }
+      },
+      "delete": {
+        "error": {
+          "summary": "Delete error",
+          "detail": "Failed to delete comment"
+        },
+        "cancelled": {
+          "summary": "Deletion cancelled",
+          "detail": "Comment was not deleted"
+        }
+      }
+    },
+    "login": {
+      "success": {
+        "summary": "Logged in",
+        "detail": "Welcome back, {user}!"
+      },
+      "error": {
+        "summary": "Login failed",
+        "detail": "Check your username and password and try again"
+      }
+    },
+    "register": {
+      "success": {
+        "summary": "Registration successful",
+        "detail": "Account {user} created. Please log in"
+      },
+      "error": {
+        "summary": "Registration failed",
+        "detail": "Could not create an account. Please try again"
+      }
+    },
+    "logout": {
+      "success": {
+        "summary": "Signed out",
+        "detail": "See you soon!"
+      }
+    },
+    "copyLink": {
+      "success": {
+        "summary": "Link copied",
+        "detail": "Article link copied to clipboard"
+      },
+      "error": {
+        "summary": "Error",
+        "detail": "Failed to copy link"
+      }
+    },
+    "deleteArticle": {
+      "title": "Delete Article",
+      "subtitle": "This action cannot be undone",
+      "message": "Are you sure you want to delete the article",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting...",
+      "success": {
+        "summary": "Article deleted",
+        "detail": "Article has been successfully deleted"
+      },
+      "error": {
+        "summary": "Delete error",
+        "detail": "Failed to delete article"
+      }
+    },
+    "reportArticle": {
+      "title": "Report Article",
+      "subtitle": "Why are you reporting this article?",
+      "cancel": "Cancel",
+      "submit": "Submit Report",
+      "reasons": {
+        "spam": "Spam",
+        "spamDesc": "Unwanted commercial content or repetitive messages",
+        "harassment": "Harassment",
+        "harassmentDesc": "Bullying, threats, or personal attacks",
+        "hate": "Hate Speech",
+        "hateDesc": "Content promoting violence or hatred",
+        "inappropriate": "Inappropriate Content",
+        "inappropriateDesc": "Content not suitable for this community",
+        "misinformation": "Misinformation",
+        "misinformationDesc": "False or misleading information",
+        "copyright": "Copyright Violation",
+        "copyrightDesc": "Unauthorized use of copyrighted material",
+        "other": "Other",
+        "otherDesc": "Other reason not listed above"
+      }
+    },
+    "authRequired": {
+      "summary": "Authentication Required",
+      "detail": "You need to log in to read community materials",
+      "actionRequired": {
+        "summary": "Authentication Required",
+        "detail": "You need to log in or register to continue"
+      }
+    },
+    "ownArticle": {
+      "summary": "This is your article",
+      "detail": "You cannot go to your profile from your own article"
+    },
+    "ownComment": {
+      "summary": "This is your comment",
+      "detail": "You cannot go to your profile from your own comment"
+    },
+    "bookmark": {
+      "added": {
+        "summary": "Article added to favorites",
+        "detail": "You can find it on the favorites page"
+      },
+      "removed": {
+        "summary": "Article removed from favorites",
+        "detail": "Article is no longer in your favorites list"
+      },
+      "error": {
+        "summary": "Error",
+        "detail": "Failed to change bookmark status"
+      }
+    },
+    "article": {
+      "delete": {
+        "cancelled": {
+          "summary": "Deletion cancelled",
+          "detail": "Article was not deleted"
+        }
+      }
+    },
+    "undoDelete": {
+      "article": {
+        "message": "Article will be deleted"
+      },
+      "comment": {
+        "message": "Comment will be deleted"
+      }
+    },
+    "editArticle": {
+      "validation": {
+        "title": "Check form",
+        "intro": "Need to fix:",
+        "titleRequired": "Enter article title",
+        "contentRequired": "Add article content",
+        "tagsRequired": "Select at least one tag",
+        "fillFields": {
+          "summary": "Fill in fields",
+          "detail": "Fix marked fields"
+        }
+      },
+      "upload": {
+        "loading": "Loading image...",
+        "processing": "Processing image...",
+        "previewNotLoaded": {
+          "summary": "Preview not loaded",
+          "detail": "Continuing without preview"
+        },
+        "fileTooLarge": {
+          "summary": "File too large",
+          "detail": "Maximum file size: 10MB"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "Failed to process image"
+        },
+        "cropError": {
+          "summary": "Error",
+          "detail": "Failed to crop image"
+        }
+      },
+      "publish": {
+        "success": {
+          "summary": "Article published",
+          "detail": "Your article has been successfully published and is available on the homepage"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "Failed to create article. Please try again"
+        }
+      },
+      "update": {
+        "error": {
+          "summary": "Error",
+          "detail": "Failed to update article. Please try again"
+        }
+      },
+      "draft": {
+        "noTitle": {
+          "summary": "No title",
+          "detail": "Enter a title to save draft"
+        },
+        "saved": {
+          "summary": "Draft saved",
+          "detail": "Article saved as draft on your articles page"
+        },
+        "error": {
+          "summary": "Error",
+          "detail": "Failed to save draft. Please try again"
+        }
+      },
+      "loadError": {
+        "summary": "Error",
+        "detail": "Failed to load article for editing"
+      },
+      "defaultTitle": "Article title",
+      "removeTag": "Remove tag {tag}"
+    }
+  },
+
+
+  "footer": {
+    "h1": "About",
+    "h2": "Resources",
+    "h3": "Legal",
+    "block1": "News",
+    "block2": "Changelog",
+    "block3": "Help Center",
+    "block4": "FAQ",
+    "block5": "Terms of use",
+    "block6": "Privacy Policy",
+    "block7": "Content rules",
+    "block8": "Copyright policy",
+    "subtitle1": "Eternity in our hands",
+    "subtitle2": "Community is",
+    "subtitle3": "open source"
+  },
+  "privacyConsent": {
+    "message": "We use cookies to run the site and improve our service. By continuing, you agree to our privacy policy.",
+    "agree": "Agree",
+    "read": "Read"
+  },
+  "legal": {
+    "sidebar": {
+      "pageTitle": "Site Policy Page",
+      "forumRules": "Forum rules",
+      "legal": "Legal",
+      "contentRules": "Content rules",
+      "termsOfUse": "Terms of use",
+      "copyrightPolicy": "Copyright policy",
+      "another": "Another",
+      "communityRules": "Community rules",
+      "security": "Security",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "common": {
+      "lastUpdated": "Last updated:"
+    },
+    "communityRules": {
+      "title": "Aetheris Community Rules",
+      "sections": {
+        "philosophy": {
+          "title": "1. Community Philosophy",
+          "content": "Aetheris Community is a place for professional growth, knowledge sharing, and constructive communication. We strive to create an inclusive environment where everyone can learn, share experiences, and grow together with the community."
+        },
+        "principles": {
+          "title": "2. Core Principles",
+          "respect": "Respect: Treat other participants with respect and understanding",
+          "constructiveness": "Constructiveness: Conduct discussions in a positive manner",
+          "professionalism": "Professionalism: Maintain high standards of communication",
+          "openness": "Openness: Be ready to learn and share experiences",
+          "tolerance": "Tolerance: Accept different viewpoints and approaches"
+        },
+        "communication": {
+          "title": "3. Communication Rules",
+          "allowed": {
+            "title": "3.1 Allowed Behavior:",
+            "constructiveCriticism": "Constructive criticism with improvement suggestions",
+            "questions": "Questions for clarification and understanding",
+            "sharing": "Sharing experiences and knowledge",
+            "support": "Supporting other participants",
+            "professionalDiscussions": "Professional discussions"
+          },
+          "prohibited": {
+            "title": "3.2 Prohibited Behavior:",
+            "insults": "Insults, threats, or humiliation",
+            "discrimination": "Discrimination on any grounds",
+            "spam": "Spam or unwanted advertising",
+            "trolling": "Trolling or provocation",
+            "falseInfo": "Spreading false information",
+            "privacyViolation": "Privacy violation"
+          }
+        },
+        "moderation": {
+          "title": "4. Moderation and Management",
+          "content": "Our moderation team ensures compliance with rules:",
+          "monitoring": "Active monitoring of discussions",
+          "complaints": "Responding to user complaints",
+          "warnings": "Warnings about violations",
+          "restrictions": "Temporary and permanent restrictions",
+          "explanations": "Explaining moderation decisions"
+        },
+        "reputation": {
+          "title": "5. Reputation System",
+          "content": "We use a reputation system to encourage quality participation:",
+          "ratings": "Positive ratings for useful content",
+          "bonuses": "Bonuses for helping other participants",
+          "recognition": "Recognition of expertise in certain areas",
+          "privileges": "Additional privileges for active participants",
+          "transparency": "Transparent scoring system"
+        },
+        "conflictResolution": {
+          "title": "6. Conflict Resolution",
+          "content": "When conflicts arise:",
+          "direct": "Try to resolve the issue directly with the participant",
+          "moderators": "Contact moderators if necessary",
+          "examples": "Provide specific examples of violations",
+          "dialogue": "Be ready for constructive dialogue",
+          "decisions": "Comply with moderation decisions"
+        },
+        "privacySecurity": {
+          "title": "7. Privacy and Security",
+          "content": "Protect community privacy:",
+          "personalInfo": "Do not share personal information of other participants",
+          "suspicious": "Report suspicious activity",
+          "passwords": "Use strong passwords",
+          "account": "Do not share access to your account",
+          "data": "Comply with data processing rules"
+        },
+        "intellectualProperty": {
+          "title": "8. Intellectual Property",
+          "content": "Respect intellectual property rights:",
+          "copying": "Do not copy content without permission",
+          "sources": "Cite sources when quoting",
+          "licenses": "Use open licenses",
+          "violations": "Report copyright violations",
+          "original": "Create original content"
+        },
+        "specialPrograms": {
+          "title": "9. Special Programs",
+          "content": "Participate in community programs:",
+          "mentoring": "Mentoring program",
+          "workshops": "Technical workshops",
+          "contests": "Contests and challenges",
+          "research": "Research projects",
+          "volunteer": "Volunteer initiatives"
+        },
+        "violations": {
+          "title": "10. Violations and Sanctions",
+          "content": "When rules are violated, the following may apply:",
+          "warning": "Warning with explanation of violation",
+          "restriction": "Temporary restriction of account functions",
+          "temporaryBan": "Temporary ban (1-30 days)",
+          "permanentBan": "Permanent ban for repeated violations",
+          "removal": "Removal of content violating rules"
+        },
+        "appeals": {
+          "title": "11. Appeals",
+          "content": "If you disagree with a moderation decision:",
+          "appeal": "File an appeal within 7 days",
+          "evidence": "Provide evidence of your case",
+          "seniorModerator": "Contact a senior moderator",
+          "investigation": "Be ready for additional investigation",
+          "decision": "Accept the final decision"
+        },
+        "contact": {
+          "title": "12. Contact Information",
+          "content": "For community questions, contact: community@aetheris-community.com"
+        }
+      }
+    }
+  }
+}

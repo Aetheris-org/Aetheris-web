@@ -1,0 +1,5 @@
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="500" fill="#4B5563" stroke="#6B7280" stroke-width="2" stroke-dasharray="10,5"/>
+  <text x="250" y="250" text-anchor="middle" fill="#9CA3AF" font-family="Arial, sans-serif" font-size="24" font-weight="bold">cubes1.png</text>
+  <text x="250" y="280" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="16">500x500</text>
+</svg>
