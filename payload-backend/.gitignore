@@ -1,7 +1,0 @@
-node_modules
-.env
-payload-types.ts
-dist
-media
-payload.sqlite
-payload-data.sqlite

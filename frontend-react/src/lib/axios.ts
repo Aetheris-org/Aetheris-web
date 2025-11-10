@@ -73,27 +73,10 @@ export function deleteTokenCookie() {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  try {
-    console.log('🔄 Refreshing access token...')
-    
-    const response = await axios.post(
-      `${baseURL}/api/auth/refresh`,
-      {},
-      {
-        withCredentials: true,
-      }
-    )
-    
-    if (response.data?.jwt) {
-      console.log('✅ Access token refreshed successfully')
-      return response.data.jwt
-    }
-    
-    return null
-  } catch (error) {
-    console.error('❌ Failed to refresh token:', error)
-    return null
-  }
+  // Users & Permissions плагин Strapi не поддерживает refresh-токены из коробки.
+  // Если понадобится собственная реализация — добавить здесь.
+  console.warn('🔄 Refresh token flow is not implemented for Strapi users-permissions')
+  return null
 }
 
 const pendingRequests = new Set<AbortController>()

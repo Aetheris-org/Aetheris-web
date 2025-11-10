@@ -41,7 +41,7 @@ export function unwrapStrapiEntity<T>(response: any): T & { id: number } {
  * Unwrap a collection of Strapi entities
  */
 export function unwrapStrapiCollection<T>(entities: any[]): Array<T & { id: number }> {
-  return entities.map(unwrapStrapiEntity)
+  return entities.map((entity) => unwrapStrapiEntity<T>(entity)) as Array<T & { id: number }>
 }
 
 /**

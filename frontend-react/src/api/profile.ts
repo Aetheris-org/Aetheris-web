@@ -5,7 +5,7 @@ import type { Article } from '@/types/article'
 import type { UserProfile } from '@/types/profile'
 
 interface BackendUser {
-  id: number
+  id: number | string
   username: string
   email?: string | null
   bio?: string | null
@@ -18,7 +18,7 @@ export function adaptBackendUser(backendUser: BackendUser): User {
   const avatar = getStrapiMediaUrl(backendUser.avatar)
 
   return {
-    id: backendUser.id,
+    id: typeof backendUser.id === 'string' ? Number(backendUser.id) : backendUser.id,
     nickname: backendUser.username,
     email: backendUser.email ?? '',
     avatar: avatar ?? undefined,
@@ -48,18 +48,29 @@ export async function getCurrentUser(): Promise<User> {
     throw new Error('Access token is missing')
   }
 
-  console.log('🔵 Getting current user from /api/me')
-  const response = await apiClient.get<{ data: BackendUser }>('/api/me', {
-    timeout: 10000,
-  })
+  console.log('🔵 Getting current user from /api/users/me')
+  try {
+    const response = await apiClient.get<BackendUser>('/api/users/me', {
+      timeout: 10000,
+    })
 
-  if (!response.data?.data) {
-    console.error('❌ No data in response:', response.data)
-    throw new Error('Failed to load user profile')
+    const backendUser = response.data
+
+    if (!backendUser || !backendUser.id || !backendUser.username) {
+      console.error('❌ No data in response:', response.data)
+      throw new Error('Failed to load user profile')
+    }
+
+    console.log('✅ User data loaded:', backendUser.username)
+    return adaptBackendUser(backendUser)
+  } catch (error: any) {
+    console.error(
+      '❌ Failed to load current user:',
+      error?.response?.status,
+      error?.response?.data ?? error,
+    )
+    throw error
   }
-
-  console.log('✅ User data loaded:', response.data.data.username)
-  return adaptBackendUser(response.data.data)
 }
 
 interface BackendProfileResponse {
