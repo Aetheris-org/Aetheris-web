@@ -40,17 +40,36 @@ const processQueue = (error: any, token: string | null = null) => {
 
 function getTokenFromCookie(): string | null {
   const cookies = document.cookie.split(';')
+  console.log('🍪 All cookies:', document.cookie)
+
+  // Prefer accessToken over jwtToken since it's our internal token format
   for (const cookie of cookies) {
     const [name, value] = cookie.trim().split('=')
+    console.log('🍪 Checking cookie:', name, value ? 'present' : 'empty')
     if (name === 'accessToken') {
-      return decodeURIComponent(value)
+      const token = decodeURIComponent(value)
+      console.log(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
+      return token
     }
   }
+
+  // Fallback to jwtToken if no accessToken
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=')
+    if (name === 'jwtToken') {
+      const token = decodeURIComponent(value)
+      console.log(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
+      return token
+    }
+  }
+
+  console.log('❌ No jwtToken or accessToken cookie found')
   return null
 }
 
 export function deleteTokenCookie() {
   document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
+  document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -94,10 +113,11 @@ apiClient.interceptors.request.use(async (config) => {
   const token = getTokenFromCookie()
   const isProtectedMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase() || '')
   const requiresAuth = config.url?.includes('/api/me') ||
-                       config.url?.includes('/users/me') || 
+                       config.url?.includes('/users/me') ||
                        config.url?.includes('/react') ||
                        config.url?.includes('/user-reaction') ||
-                       config.headers['X-Require-Auth']
+                       config.headers['X-Require-Auth'] ||
+                       config.headers['x-require-auth']
   
   if (token && (isProtectedMethod || requiresAuth)) {
     config.headers.Authorization = `Bearer ${token}`

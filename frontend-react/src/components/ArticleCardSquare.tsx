@@ -32,6 +32,16 @@ export function ArticleCardSquare({
       className="group overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col"
       onClick={() => onArticleClick?.(article.id)}
     >
+      {article.previewImage && (
+        <div className="relative h-40 w-full overflow-hidden border-b border-border/40">
+          <img
+            src={article.previewImage}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )}
       <div className="p-5 space-y-3 flex-1 flex flex-col">
         {/* Header */}
         <div className="space-y-2 flex-1">

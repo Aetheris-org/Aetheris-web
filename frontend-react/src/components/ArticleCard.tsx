@@ -33,6 +33,17 @@ export function ArticleCard({
       className="group relative overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer"
       onClick={() => onArticleClick?.(article.id)}
     >
+      {article.previewImage && (
+        <div className="relative h-48 w-full overflow-hidden border-b border-border/40">
+          <img
+            src={article.previewImage}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <div className="p-6 space-y-4">
         {/* Header */}
         <div className="space-y-3">
@@ -63,6 +74,12 @@ export function ArticleCard({
         {article.excerpt && (
           <p className="text-muted-foreground leading-relaxed line-clamp-2">
             {article.excerpt}
+          </p>
+        )}
+
+        {!article.previewImage && article.excerpt === undefined && (
+          <p className="text-muted-foreground leading-relaxed line-clamp-3">
+            {article.content.slice(0, 150)}…
           </p>
         )}
 

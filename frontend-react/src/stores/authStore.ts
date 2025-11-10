@@ -48,23 +48,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     if (get().initializing) return
 
+    console.log('🔐 AuthStore initialize called')
     set({ initializing: true })
 
     try {
+      console.log('🔐 Loading user from storage...')
       get().loadFromStorage()
 
       const token = getTokenFromCookie()
+      console.log('🔐 Token from cookie:', !!token)
+
       if (!token) {
+        console.log('🔐 No token found, skipping user fetch')
         set({ initializing: false })
         return
       }
 
+      console.log('🔐 Fetching current user...')
       const user = await getCurrentUser()
+      console.log('🔐 Setting user:', user.nickname)
       get().setUser(user)
     } catch (error) {
       console.warn('Failed to initialize auth state:', error)
       get().setUser(null)
     } finally {
+      console.log('🔐 AuthStore initialize completed')
       set({ initializing: false })
     }
   },

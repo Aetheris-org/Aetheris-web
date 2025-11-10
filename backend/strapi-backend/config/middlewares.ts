@@ -25,6 +25,7 @@ export default [
         'Authorization',
         'X-CSRF-Token',
         'X-Requested-With',
+        'x-require-auth',
       ],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true,

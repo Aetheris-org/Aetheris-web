@@ -45,8 +45,9 @@
 
 ### Backend (одной командой из корня):
 ```bash
-cd /Users/zimbazo/WebstormProjects/Aetheris-community
-ENV=development FRONTEND_URL=http://localhost:5173 uvicorn backend.main:app --reload
+cd backend/strapi-backend
+npm install
+npm run build & npm run start
 ```
 
 ### Frontend:

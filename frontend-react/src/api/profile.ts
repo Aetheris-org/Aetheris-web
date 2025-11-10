@@ -42,6 +42,8 @@ export function adaptBackendUser(backendUser: BackendUser): User {
 
 export async function getCurrentUser(): Promise<User> {
   const token = getTokenFromCookie()
+  console.log('👤 getCurrentUser called, token present:', !!token)
+
   if (!token) {
     throw new Error('Access token is missing')
   }
@@ -52,6 +54,7 @@ export async function getCurrentUser(): Promise<User> {
   })
 
   if (!response.data?.data) {
+    console.error('❌ No data in response:', response.data)
     throw new Error('Failed to load user profile')
   }
 

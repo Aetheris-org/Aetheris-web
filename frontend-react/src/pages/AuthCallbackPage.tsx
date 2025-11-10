@@ -27,11 +27,18 @@ export default function AuthCallbackPage() {
         return
       }
 
+      console.log('🔐 OAuth callback - checking tokens...')
+      console.log('🔐 Fallback token present:', !!fallbackToken)
+
       if (!getTokenFromCookie() && fallbackToken) {
+        console.log('🔐 Setting fallback token to accessToken cookie...')
         document.cookie = `accessToken=${fallbackToken}; path=/; SameSite=Lax`
       }
 
-      if (!getTokenFromCookie()) {
+      const token = getTokenFromCookie()
+      console.log('🔐 Final token check:', !!token)
+
+      if (!token) {
         setErrorMessage('Токен авторизации не найден. Попробуйте войти снова.')
         setTimeout(() => navigate('/auth', { replace: true }), 3000)
         return

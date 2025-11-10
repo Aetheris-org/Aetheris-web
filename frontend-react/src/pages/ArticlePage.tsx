@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Calendar, Clock, User, Heart, MessageCircle, Share2, Bookmark } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, User, Heart, Share2, Bookmark } from 'lucide-react'
 import { getArticle, reactArticle } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
@@ -147,6 +147,16 @@ export default function ArticlePage() {
 
       <div className="container py-8">
         <article className="mx-auto max-w-4xl">
+          {article.previewImage && (
+            <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
+              <img
+                src={article.previewImage}
+                alt={article.title}
+                className="max-h-[460px] w-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Article Header */}
           <div className="space-y-6">
             {/* Title */}

@@ -387,211 +387,6 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiArticleBookmarkArticleBookmark extends Struct.CollectionTypeSchema {
-  collectionName: 'article_bookmarks';
-  info: {
-    description: 'User bookmarks for articles';
-    displayName: 'Article Bookmark';
-    pluralName: 'article-bookmarks';
-    singularName: 'article-bookmark';
-  };
-  options: {
-    comment: '';
-    draftAndPublish: false;
-  };
-  attributes: {
-    article: Schema.Attribute.Relation<'manyToOne', 'api::article.article'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::article-bookmark.article-bookmark'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
-  };
-}
-
-export interface ApiArticleReactionArticleReaction extends Struct.CollectionTypeSchema {
-  collectionName: 'article_reactions';
-  info: {
-    description: 'User reactions (like/dislike) for articles';
-    displayName: 'Article Reaction';
-    pluralName: 'article-reactions';
-    singularName: 'article-reaction';
-  };
-  options: {
-    comment: '';
-    draftAndPublish: false;
-  };
-  attributes: {
-    article: Schema.Attribute.Relation<'manyToOne', 'api::article.article'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::article-reaction.article-reaction'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    reaction: Schema.Attribute.Enumeration<['like', 'dislike']> & Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
-  };
-}
-
-export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
-  collectionName: 'articles';
-  info: {
-    description: 'Articles content type with reactions, bookmarks, and comments';
-    displayName: 'Article';
-    pluralName: 'articles';
-    singularName: 'article';
-  };
-  options: {
-    comment: '';
-    draftAndPublish: true;
-  };
-  attributes: {
-    author: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
-    bookmarks: Schema.Attribute.Relation<'oneToMany', 'api::article-bookmark.article-bookmark'>;
-    comments: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'>;
-    comments_count: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    content: Schema.Attribute.Text & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    difficulty: Schema.Attribute.Enumeration<['easy', 'medium', 'hard']> &
-      Schema.Attribute.DefaultTo<'medium'>;
-    dislikes_count: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    excerpt: Schema.Attribute.Text;
-    likes_count: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::article.article'> &
-      Schema.Attribute.Private;
-    preview_image: Schema.Attribute.Media<'images'>;
-    publishedAt: Schema.Attribute.DateTime;
-    tags: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMaxLength<{
-        maxLength: 255;
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-  };
-}
-
-export interface ApiCommentComment extends Struct.CollectionTypeSchema {
-  collectionName: 'comments';
-  info: {
-    description: 'Comments with threading support and reactions';
-    displayName: 'Comment';
-    pluralName: 'comments';
-    singularName: 'comment';
-  };
-  options: {
-    comment: '';
-    draftAndPublish: false;
-  };
-  attributes: {
-    article: Schema.Attribute.Relation<'manyToOne', 'api::article.article'>;
-    author: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    dislikes_count: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    likes_count: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'> &
-      Schema.Attribute.Private;
-    parent: Schema.Attribute.Relation<'manyToOne', 'api::comment.comment'>;
-    publishedAt: Schema.Attribute.DateTime;
-    replies: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'>;
-    text: Schema.Attribute.Text & Schema.Attribute.Required;
-    updated_at_custom: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-  };
-}
-
-export interface ApiNotificationNotification extends Struct.CollectionTypeSchema {
-  collectionName: 'notifications';
-  info: {
-    description: 'User notifications for various events';
-    displayName: 'Notification';
-    pluralName: 'notifications';
-    singularName: 'notification';
-  };
-  options: {
-    comment: '';
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    is_read: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::notification.notification'> &
-      Schema.Attribute.Private;
-    message: Schema.Attribute.Text & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    related_article: Schema.Attribute.Relation<'manyToOne', 'api::article.article'>;
-    related_comment: Schema.Attribute.Relation<'manyToOne', 'api::comment.comment'>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMaxLength<{
-        maxLength: 255;
-      }>;
-    type: Schema.Attribute.Enumeration<
-      ['comment_reply', 'article_like', 'comment_like', 'article_milestone', 'comment_on_article']
-    > &
-      Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
-  };
-}
-
 export interface PluginContentReleasesRelease extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
   info: {
@@ -973,17 +768,10 @@ export interface PluginUsersPermissionsUser extends Struct.CollectionTypeSchema 
   };
   options: {
     draftAndPublish: false;
+    timestamps: true;
   };
   attributes: {
-    articles: Schema.Attribute.Relation<'oneToMany', 'api::article.article'>;
-    avatar: Schema.Attribute.Media<'images'>;
-    bio: Schema.Attribute.Text &
-      Schema.Attribute.SetMinMaxLength<{
-        maxLength: 300;
-      }>;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    bookmarks: Schema.Attribute.Relation<'oneToMany', 'api::article-bookmark.article-bookmark'>;
-    comments: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
@@ -996,7 +784,6 @@ export interface PluginUsersPermissionsUser extends Struct.CollectionTypeSchema 
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'plugin::users-permissions.user'> &
       Schema.Attribute.Private;
-    notifications: Schema.Attribute.Relation<'oneToMany', 'api::notification.notification'>;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
@@ -1028,11 +815,6 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::article-bookmark.article-bookmark': ApiArticleBookmarkArticleBookmark;
-      'api::article-reaction.article-reaction': ApiArticleReactionArticleReaction;
-      'api::article.article': ApiArticleArticle;
-      'api::comment.comment': ApiCommentComment;
-      'api::notification.notification': ApiNotificationNotification;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

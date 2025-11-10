@@ -1,0 +1,52 @@
+{
+  "node": {
+    "406df1b3f6c1a386f2f5dc999fda4d87e5a2947037": {
+      "workers": {
+        "app/(payload)/admin/[[...segments]]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        },
+        "app/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        },
+        "app/_not-found/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        }
+      },
+      "layer": {
+        "app/(payload)/admin/[[...segments]]/page": "rsc",
+        "app/page": "rsc",
+        "app/_not-found/page": "rsc"
+      },
+      "filename": "app/layout.tsx",
+      "exportedName": "$$RSC_SERVER_ACTION_0"
+    },
+    "6044eb4e08cb6afb2ab0d7d93860e7fc75378a587b": {
+      "workers": {
+        "app/(payload)/admin/[[...segments]]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        },
+        "app/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        },
+        "app/_not-found/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fsrc%2Fapp%2Flayout.tsx%22%2C%5B%7B%22id%22%3A%22406df1b3f6c1a386f2f5dc999fda4d87e5a2947037%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Flayout.tsx%22%7D%5D%5D%2C%5B%22%2FUsers%2Fzimbazo%2FWebstormProjects%2FAetheris%20shadcn%2Fpayload-backend%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%2C%5B%7B%22id%22%3A%226044eb4e08cb6afb2ab0d7d93860e7fc75378a587b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22..%2Fnode_modules%2F%40payloadcms%2Fnext%2Fdist%2Flayouts%2FRoot%2Findex.js%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": true
+        }
+      },
+      "layer": {
+        "app/(payload)/admin/[[...segments]]/page": "rsc",
+        "app/page": "rsc",
+        "app/_not-found/page": "rsc"
+      },
+      "filename": "../node_modules/@payloadcms/next/dist/layouts/Root/index.js",
+      "exportedName": "$$RSC_SERVER_ACTION_0"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "jYG2VoXpYsJNEPizC0NeqxQ4HYS1O8P5RelTU12FHuc="
+}

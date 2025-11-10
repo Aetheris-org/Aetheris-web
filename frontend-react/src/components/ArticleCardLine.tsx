@@ -34,6 +34,16 @@ export function ArticleCardLine({
     >
       <div className="p-4">
         <div className="flex items-center gap-4">
+          {article.previewImage && (
+            <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border border-border/40">
+              <img
+                src={article.previewImage}
+                alt={article.title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+          )}
           {/* Content */}
           <div className="flex-1 min-w-0 space-y-2">
             <h3 className="font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-1">
@@ -51,6 +61,10 @@ export function ArticleCardLine({
                 <span>{estimateReadTime(article.content)} min</span>
               </div>
             </div>
+
+            <p className="text-xs text-muted-foreground/80 line-clamp-2">
+              {article.excerpt || article.content.slice(0, 110) + '…'}
+            </p>
 
             {/* Tags */}
             {article.tags.length > 0 && (
