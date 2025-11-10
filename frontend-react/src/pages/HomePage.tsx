@@ -1,13 +1,15 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, Flame, LayoutGrid, List, Rows, PenSquare } from 'lucide-react'
+import { Search, SlidersHorizontal, Flame, LayoutGrid, List, Rows, PenSquare, Bell, Hash } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
+import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArticleCard } from '@/components/ArticleCard'
 import { ArticleCardLine } from '@/components/ArticleCardLine'
@@ -33,11 +35,42 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
 export default function HomePage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
+  const unreadNotifications = useNotificationsStore(selectUnreadCount)
+  const viewModeOptions: Array<{
+    id: 'default' | 'line' | 'square'
+    label: string
+    icon: LucideIcon
+  }> = [
+    {
+      id: 'default',
+      label: 'Standard cards',
+      icon: Rows,
+    },
+    {
+      id: 'line',
+      label: 'Compact list',
+      icon: List,
+    },
+    {
+      id: 'square',
+      label: 'Grid view',
+      icon: LayoutGrid,
+    },
+  ]
+  const currentViewOption = viewModeOptions.find((option) => option.id === viewMode) ?? viewModeOptions[0]
+  const CurrentViewIcon = currentViewOption.icon
   // State
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -143,6 +176,24 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/notifications')}
+              aria-label={
+                unreadNotifications > 0
+                  ? `Open notifications, ${unreadNotifications} unread`
+                  : 'Open notifications'
+              }
+              className="relative"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadNotifications > 0 && (
+                <span className="absolute right-1 top-1 inline-flex h-2 w-2">
+                  <span className="h-full w-full rounded-full bg-destructive" />
+                </span>
+              )}
+            </Button>
             {user && (
               <Button
                 size="sm"
@@ -154,33 +205,44 @@ export default function HomePage() {
               </Button>
             )}
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 rounded-lg border p-1">
-              <Button
-                variant={viewMode === 'default' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('default')}
-                className="h-8 w-8 p-0"
+            {/* View Mode Selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  aria-label="Toggle article view"
+                >
+                  <CurrentViewIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={4}
+                className="w-9 min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background p-0"
               >
-                <Rows className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'line' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('line')}
-                className="h-8 w-8 p-0"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'square' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('square')}
-                className="h-8 w-8 p-0"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
+                <div className="flex flex-col">
+                  {viewModeOptions
+                    .filter((option) => option.id !== viewMode)
+                    .map((option) => {
+                      const Icon = option.icon
+
+                      return (
+                        <DropdownMenuItem
+                          key={option.id}
+                          onSelect={() => setViewMode(option.id)}
+                          className="flex h-9 w-9 items-center justify-center rounded-none p-0 px-0 data-[highlighted]:bg-muted/50"
+                          aria-label={option.label}
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="sr-only">{option.label}</span>
+                        </DropdownMenuItem>
+                      )
+                    })}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <ThemeToggle />
             <AccountSheet />
@@ -444,22 +506,34 @@ export default function HomePage() {
             </Card>
 
             {/* Popular Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Popular Tags</CardTitle>
+            <Card className="border-border/70">
+              <CardHeader className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Hash className="h-4 w-4" />
+                  Popular Tags
+                </CardTitle>
+                <CardDescription className="text-xs">Select a tag to filter your feed.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {popularTags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? 'default' : 'secondary'}
-                      className="cursor-pointer"
-                      onClick={() => handleTagClick(tag)}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {popularTags.map((tag) => {
+                    const isActive = selectedTags.includes(tag)
+
+                    return (
+                      <Badge
+                        key={tag}
+                        variant={isActive ? 'default' : 'secondary'}
+                        className={cn(
+                          'cursor-pointer rounded-md font-normal transition-colors',
+                          isActive ? 'shadow-sm' : 'hover:bg-secondary/80'
+                        )}
+                        onClick={() => handleTagClick(tag)}
+                        aria-pressed={isActive}
+                      >
+                        {tag}
+                      </Badge>
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>

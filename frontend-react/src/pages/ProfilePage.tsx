@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -30,26 +30,28 @@ const formatDate = (date: string) =>
 function ProfileSkeleton() {
   return (
     <div className="space-y-8 animate-pulse">
-      <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent" />
-        <CardContent className="-mt-12 pb-8">
+      <Card className="overflow-hidden border-border/60 shadow-lg">
+        <div className="relative h-36 w-full bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background" />
+        </div>
+        <CardContent className="pb-10 pt-10 md:pt-14">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-24 w-24 rounded-full bg-muted" />
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:gap-8">
+              <div className="-mt-20 h-24 w-24 rounded-full border-4 border-background bg-muted md:-mt-24" />
               <div className="space-y-3">
-                <div className="h-6 w-40 rounded bg-muted" />
-                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-6 w-40 rounded bg-muted/70" />
+                <div className="h-4 w-24 rounded bg-muted/60" />
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="h-10 w-28 rounded-lg bg-muted" />
-              <div className="h-10 w-28 rounded-lg bg-muted" />
+              <div className="h-10 w-28 rounded-lg bg-muted/70" />
+              <div className="h-10 w-28 rounded-lg bg-muted/50" />
             </div>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <div className="h-24 rounded-xl bg-muted" />
-            <div className="h-24 rounded-xl bg-muted" />
-            <div className="h-24 rounded-xl bg-muted" />
+            <div className="h-24 rounded-xl bg-muted/60" />
+            <div className="h-24 rounded-xl bg-muted/60" />
+            <div className="h-24 rounded-xl bg-muted/60" />
           </div>
         </CardContent>
       </Card>
@@ -67,6 +69,7 @@ function ProfileSkeleton() {
 export default function ProfilePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user: currentUser } = useAuthStore()
 
   const routeProfileId = id ? Number(id) : undefined
@@ -91,6 +94,7 @@ export default function ProfilePage() {
   })
 
   const isOwnProfile = profile?.user.id === currentUser?.id
+  const coverImageUrl = profile?.user.coverImageUrl ?? null
 
   if (!profileId && !isLoading) {
     return (
@@ -174,26 +178,43 @@ export default function ProfilePage() {
         {profile && !isLoading && (
           <div className="space-y-10">
             <Card className="overflow-hidden border-border/60 shadow-lg">
-              <div className="relative h-32 w-full bg-gradient-to-r from-primary/15 via-primary/10 to-transparent" />
-              <CardContent className="-mt-16 pb-10">
-                <div className="flex flex-col-reverse gap-6 md:flex-row md:items-end md:justify-between">
+              {coverImageUrl ? (
+                <div className="relative h-36 w-full">
+                  <img
+                    src={coverImageUrl}
+                    alt={`${profile.user.username} cover`}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background/90" />
+                </div>
+              ) : (
+                <div className="relative h-32 w-full bg-gradient-to-r from-primary/15 via-primary/10 to-transparent">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background/80" />
+                </div>
+              )}
+              <CardContent
+                className={`pb-10 ${coverImageUrl ? 'pt-10 md:pt-14' : 'pt-6 md:pt-8'}`}
+              >
+                <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                   <div className="flex flex-col gap-6 md:flex-row md:items-end md:gap-8">
-                    <div className="flex items-center justify-center">
+                    <div
+                      className={`${coverImageUrl ? '-mt-20 md:-mt-24' : '-mt-16 md:-mt-20'} shrink-0`}
+                    >
                       {profile.user.avatarUrl ? (
                         <img
                           src={profile.user.avatarUrl}
                           alt={profile.user.username}
-                          className="h-24 w-24 rounded-full border-4 border-background object-cover shadow-md"
+                          className="h-24 w-24 rounded-full border-4 border-background object-cover shadow-md md:h-28 md:w-28"
                         />
                       ) : (
-                        <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-primary/15 text-3xl font-semibold text-primary shadow-md">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-primary/15 text-3xl font-semibold text-primary shadow-md md:h-28 md:w-28">
                           {profile.user.username.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-3xl font-bold tracking-tight">
                           {profile.user.username}
                         </h1>
@@ -215,12 +236,12 @@ export default function ProfilePage() {
                           <NotebookPen className="h-4 w-4" />
                           {profile.stats.publishedArticles} published articles
                         </span>
-                        <Separator orientation="vertical" className="h-4" />
+                        <Separator orientation="vertical" className="hidden h-4 md:flex" />
                         <span className="flex items-center gap-1.5">
                           <MessageCircle className="h-4 w-4" />
                           {profile.stats.totalComments} comments received
                         </span>
-                        <Separator orientation="vertical" className="h-4" />
+                        <Separator orientation="vertical" className="hidden h-4 md:flex" />
                         <span className="flex items-center gap-1.5">
                           <Flame className="h-4 w-4" />
                           {profile.stats.totalLikes} total reactions
@@ -229,7 +250,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button
                       variant="outline"
                       size="sm"
@@ -244,13 +265,17 @@ export default function ProfilePage() {
                       variant={isOwnProfile ? 'secondary' : 'default'}
                       className="gap-2"
                       onClick={() =>
-                        isOwnProfile ? navigate('/settings/profile') : navigate('/auth')
+                        isOwnProfile
+                          ? navigate('/settings/profile', {
+                              state: { from: location.pathname },
+                            })
+                          : navigate('/auth')
                       }
                     >
                       {isOwnProfile ? (
                         <>
                           <Settings className="h-4 w-4" />
-                          Edit profile
+                          Customize profile
                         </>
                       ) : (
                         <>

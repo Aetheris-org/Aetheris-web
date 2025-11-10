@@ -3,6 +3,7 @@ export interface User {
   nickname: string
   email: string
   avatar?: string
+  coverImage?: string
   firstName?: string
   lastName?: string
   bio?: string

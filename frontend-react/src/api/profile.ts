@@ -12,16 +12,19 @@ interface BackendUser {
   createdAt?: string
   created_at?: string
   avatar?: any
+  coverImage?: any
 }
 
 export function adaptBackendUser(backendUser: BackendUser): User {
   const avatar = getStrapiMediaUrl(backendUser.avatar)
+  const coverImage = getStrapiMediaUrl(backendUser.coverImage)
 
   return {
     id: typeof backendUser.id === 'string' ? Number(backendUser.id) : backendUser.id,
     nickname: backendUser.username,
     email: backendUser.email ?? '',
     avatar: avatar ?? undefined,
+    coverImage: coverImage ?? undefined,
     bio: backendUser.bio ?? undefined,
     articlesCount: 0,
     commentsCount: 0,
@@ -51,15 +54,15 @@ export async function getCurrentUser(): Promise<User> {
   console.log('🔵 Getting current user from /api/users/me')
   try {
     const response = await apiClient.get<BackendUser>('/api/users/me', {
-      timeout: 10000,
-    })
+    timeout: 10000,
+  })
 
     const backendUser = response.data
 
     if (!backendUser || !backendUser.id || !backendUser.username) {
-      console.error('❌ No data in response:', response.data)
-      throw new Error('Failed to load user profile')
-    }
+    console.error('❌ No data in response:', response.data)
+    throw new Error('Failed to load user profile')
+  }
 
     console.log('✅ User data loaded:', backendUser.username)
     return adaptBackendUser(backendUser)
@@ -81,6 +84,7 @@ interface BackendProfileResponse {
       bio?: string | null
       memberSince: string
       avatarUrl?: string | null
+      coverImageUrl?: string | null
     }
     stats: {
       publishedArticles: number
@@ -149,6 +153,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
   }
 
   const avatarUrl = getStrapiMediaUrl(payload.user.avatarUrl) || undefined
+  const coverImageUrl = getStrapiMediaUrl(payload.user.coverImageUrl) || undefined
 
   const profile: UserProfile = {
     user: {
@@ -157,6 +162,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
       bio: payload.user.bio ?? undefined,
       memberSince: payload.user.memberSince,
       avatarUrl,
+      coverImageUrl,
     },
     stats: {
       publishedArticles: payload.stats.publishedArticles,
@@ -172,4 +178,54 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
   }
 
   return profile
+}
+
+interface UploadResponseItem {
+  id: number
+  url?: string
+}
+
+export async function uploadProfileMedia(file: File): Promise<UploadResponseItem> {
+  const formData = new FormData()
+  formData.append('files', file)
+
+  const response = await apiClient.post<UploadResponseItem[]>('/api/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'X-Require-Auth': 'true',
+    },
+  })
+
+  const [uploaded] = response.data ?? []
+  if (!uploaded?.id) {
+    throw new Error('Failed to upload media')
+  }
+
+  return uploaded
+}
+
+interface UpdateUserProfilePayload {
+  username: string
+  bio?: string | null
+  avatarId?: number | null
+  coverImageId?: number | null
+}
+
+export async function updateUserProfile(userId: number, payload: UpdateUserProfilePayload): Promise<User> {
+  const response = await apiClient.put<BackendUser>(
+    `/api/users/${userId}`,
+    {
+      username: payload.username,
+      bio: payload.bio ?? null,
+      avatar: payload.avatarId ?? null,
+      coverImage: payload.coverImageId ?? null,
+    },
+    {
+      headers: {
+        'X-Require-Auth': 'true',
+      },
+    }
+  )
+
+  return adaptBackendUser(response.data)
 }

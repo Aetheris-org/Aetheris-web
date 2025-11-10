@@ -8,8 +8,10 @@ import ProfilePage from '@/pages/ProfilePage'
 import AuthPage from '@/pages/AuthPage'
 import CreateArticlePage from '@/pages/CreateArticlePage'
 import SettingsPage from '@/pages/SettingsPage'
+import NotificationsPage from '@/pages/NotificationsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,15 +24,11 @@ const queryClient = new QueryClient({
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initialize)
+  const initializeTheme = useThemeStore((state) => state.initialize)
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [])
+    initializeTheme()
+  }, [initializeTheme])
 
   useEffect(() => {
     void initializeAuth()
@@ -47,6 +45,7 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/create" element={<CreateArticlePage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
         <Toaster />
       </BrowserRouter>

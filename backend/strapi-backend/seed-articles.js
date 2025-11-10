@@ -1,5 +1,5 @@
 /**
- * Скрипт для создания тестовых статей в Strapi v5
+ * Скрипт для создания тестовых статей в Strapi v5 (через SQLite)
  */
 
 const sqlite3 = require('sqlite3').verbose();
@@ -8,9 +8,17 @@ const crypto = require('crypto');
 
 const DB_PATH = path.join(__dirname, '.tmp', 'data.db');
 
+const slugify = (value) =>
+  value
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .substring(0, 200);
+
 function runAsync(db, sql, params = []) {
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve(this);
     });
@@ -32,24 +40,35 @@ async function seedArticles() {
   const db = new sqlite3.Database(DB_PATH);
 
   try {
-    // 1. Получаем первого пользователя (автора)
-    console.log('1️⃣ Поиск пользователя для автора...');
+    console.log('1️⃣ Поиск пользователя (автора)...');
     const author = await getAsync(db, `SELECT id FROM up_users LIMIT 1`);
-    
+
     if (!author) {
       console.error('❌ Пользователь не найден. Сначала авторизуйтесь через Google OAuth.');
-      db.close();
       return;
     }
-    
-    console.log(`✅ Автор найден (User ID: ${author.id})\n`);
 
-    // 2. Создаем тестовые статьи
-    console.log('2️⃣ Создание статей...');
-    
+    console.log(`✅ Автор найден (ID: ${author.id})\n`);
+
+    const existing = await getAsync(
+      db,
+      `SELECT id FROM articles_author_lnk WHERE user_id = ? LIMIT 1`,
+      [author.id]
+    );
+
+    if (existing) {
+      console.log('ℹ️  Статьи уже существуют. Пропускаем сидинг.\n');
+      return;
+    }
+
+    const now = new Date().toISOString();
     const articles = [
       {
         title: 'Getting Started with React and TypeScript',
+        excerpt:
+          'Learn how to combine React with TypeScript for building type-safe web applications.',
+        difficulty: 'easy',
+        tags: ['react', 'typescript', 'tutorial'],
         content: `# Introduction to React with TypeScript
 
 React and TypeScript are a powerful combination for building modern web applications. TypeScript adds static typing to JavaScript, which helps catch errors early and improves code quality.
@@ -88,12 +107,13 @@ const UserCard: React.FC<Props> = ({ name, age }) => {
 \`\`\`
 
 This is just the beginning of your TypeScript journey with React!`,
-        excerpt: 'Learn how to combine React with TypeScript for building type-safe web applications.',
-        difficulty: 'beginner',
-        tags: ['react', 'typescript', 'tutorial']
       },
       {
         title: 'Advanced State Management with Zustand',
+        excerpt:
+          'Discover Zustand, a lightweight and powerful state management solution for React applications.',
+        difficulty: 'medium',
+        tags: ['react', 'zustand', 'state-management'],
         content: `# Zustand: A Minimalist State Management Solution
 
 Zustand is a small, fast, and scalable state management library for React. It's simpler than Redux and more flexible than Context API.
@@ -138,12 +158,12 @@ function Controls() {
 \`\`\`
 
 Zustand makes state management simple and enjoyable!`,
-        excerpt: 'Discover Zustand, a lightweight and powerful state management solution for React applications.',
-        difficulty: 'intermediate',
-        tags: ['react', 'zustand', 'state-management']
       },
       {
         title: 'Building RESTful APIs with Strapi',
+        excerpt: 'Learn how to build powerful RESTful APIs quickly using Strapi headless CMS.',
+        difficulty: 'medium',
+        tags: ['strapi', 'api', 'cms', 'backend'],
         content: `# Strapi: The Leading Open-Source Headless CMS
 
 Strapi is a flexible, open-source headless CMS that gives developers the freedom to choose their favorite tools and frameworks.
@@ -185,12 +205,12 @@ Strapi automatically generates REST endpoints:
 Configure who can access what in Settings → Users & Permissions Plugin → Roles.
 
 Start building your API in minutes with Strapi!`,
-        excerpt: 'Learn how to build powerful RESTful APIs quickly using Strapi headless CMS.',
-        difficulty: 'intermediate',
-        tags: ['strapi', 'api', 'cms', 'backend']
       },
       {
         title: 'Mastering Tailwind CSS',
+        excerpt: 'Master the utility-first approach to CSS with Tailwind and build beautiful UIs faster.',
+        difficulty: 'easy',
+        tags: ['css', 'tailwind', 'design', 'frontend'],
         content: `# Tailwind CSS: Utility-First CSS Framework
 
 Tailwind CSS is a utility-first CSS framework that provides low-level utility classes to build custom designs without leaving your HTML.
@@ -225,28 +245,13 @@ npx tailwindcss init -p
 </div>
 \`\`\`
 
-## Custom Configuration
-
-\`\`\`javascript
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        primary: '#3B82F6',
-        secondary: '#10B981',
-      },
-    },
-  },
-}
-\`\`\`
-
 Tailwind makes styling enjoyable and productive!`,
-        excerpt: 'Master the utility-first approach to CSS with Tailwind and build beautiful UIs faster.',
-        difficulty: 'beginner',
-        tags: ['css', 'tailwind', 'design', 'frontend']
       },
       {
         title: 'Understanding React Hooks in Depth',
+        excerpt: 'A comprehensive guide to React Hooks, from basics to advanced patterns.',
+        difficulty: 'medium',
+        tags: ['react', 'hooks', 'javascript', 'tutorial'],
         content: `# Deep Dive into React Hooks
 
 React Hooks revolutionized how we write React components. Let's explore the most important hooks and their use cases.
@@ -305,76 +310,70 @@ useEffect(() => {
 }, []);
 \`\`\`
 
-## Custom Hooks
-
-Create reusable logic:
-
-\`\`\`typescript
-function useLocalStorage<T>(key: string, initialValue: T) {
-  const [value, setValue] = useState<T>(() => {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : initialValue;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
-
-  return [value, setValue] as const;
-}
-\`\`\`
-
 Master these hooks and you'll be a React pro!`,
-        excerpt: 'A comprehensive guide to React Hooks, from basics to advanced patterns.',
-        difficulty: 'intermediate',
-        tags: ['react', 'hooks', 'javascript', 'tutorial']
-      }
+      },
     ];
 
-    const now = new Date().toISOString();
-
+    console.log(`2️⃣ Создание ${articles.length} статей...`);
     for (const article of articles) {
       const documentId = crypto.randomUUID();
-      
-      // Вставляем статью
+      const slug = slugify(article.title);
+
       const result = await runAsync(
         db,
         `INSERT INTO articles (
-          document_id, title, content, excerpt, difficulty, 
-          created_at, updated_at, published_at, locale
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          document_id,
+          title,
+          slug,
+          excerpt,
+          content,
+          status,
+          tags,
+          difficulty,
+          likes_count,
+          dislikes_count,
+          comments_count,
+          views,
+          published_at,
+          created_at,
+          updated_at,
+          locale
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           documentId,
           article.title,
-          article.content,
+          slug,
           article.excerpt,
+          article.content,
+          'published',
+          JSON.stringify(article.tags),
           article.difficulty,
+          0,
+          0,
+          0,
+          0,
           now,
           now,
-          now, // published_at - делаем статью опубликованной
-          'en'
+          now,
+          'en',
         ]
       );
 
       const articleId = result.lastID;
 
-      // Связываем статью с автором
       await runAsync(
         db,
-        `INSERT INTO articles_author_lnk (article_id, user_id, article_ord) 
-         VALUES (?, ?, ?)`,
-        [articleId, author.id, 1]
+        `INSERT INTO articles_author_lnk (article_id, user_id)
+         VALUES (?, ?)`,
+        [articleId, author.id]
       );
 
-      console.log(`✅ Создана: "${article.title}" (ID: ${articleId})`);
+      console.log(`   ✅ ${article.title}`);
     }
 
-    console.log(`\n🎉 Создано ${articles.length} статей!\n`);
-    console.log('📋 Все статьи опубликованы и готовы к просмотру.\n');
-    console.log('🔄 Обновите страницу фронтенда для просмотра статей.\n');
-
+    console.log('\n🎉 Статьи успешно добавлены!');
   } catch (error) {
-    console.error('❌ Ошибка:', error.message);
+    console.error('❌ Ошибка при создании статей:', error.message);
   } finally {
     db.close();
   }

@@ -19,6 +19,7 @@ export interface UserProfile {
     bio?: string | null
     memberSince: string
     avatarUrl?: string | null
+    coverImageUrl?: string | null
   }
   stats: ProfileStats
   highlights: ProfileHighlights

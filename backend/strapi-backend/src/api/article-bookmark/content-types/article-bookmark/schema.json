@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "article_bookmarks",
+  "info": {
+    "displayName": "Article Bookmark",
+    "singularName": "article-bookmark",
+    "pluralName": "article-bookmarks",
+    "description": "Bookmarks created by users for articles"
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "article": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::article.article",
+      "inversedBy": "bookmarks"
+    },
+    "publishedAt": {
+      "type": "datetime"
+    }
+  }
+}
+

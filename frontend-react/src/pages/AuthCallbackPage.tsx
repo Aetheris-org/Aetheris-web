@@ -132,17 +132,17 @@ export default function AuthCallbackPage() {
       }
 
       if (!userFromExchange) {
-        try {
-          const user = await getCurrentUser()
-          setUser(user)
+      try {
+        const user = await getCurrentUser()
+        setUser(user)
 
-          const redirect = sessionStorage.getItem('auth_redirect') || '/'
-          sessionStorage.removeItem('auth_redirect')
-          navigate(redirect, { replace: true })
-        } catch (error) {
-          console.error('Failed to finalize OAuth callback:', error)
-          setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
-          setTimeout(() => navigate('/auth', { replace: true }), 3000)
+        const redirect = sessionStorage.getItem('auth_redirect') || '/'
+        sessionStorage.removeItem('auth_redirect')
+        navigate(redirect, { replace: true })
+      } catch (error) {
+        console.error('Failed to finalize OAuth callback:', error)
+        setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
+        setTimeout(() => navigate('/auth', { replace: true }), 3000)
         }
       } else {
         const redirect = sessionStorage.getItem('auth_redirect') || '/'

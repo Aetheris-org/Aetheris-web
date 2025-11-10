@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,13 +35,20 @@ export default function CreateArticlePage() {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [isPublishing, setIsPublishing] = useState(false)
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null)
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [isProcessingImage, setIsProcessingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const originalImageUrlRef = useRef<string | null>(null)
+  const selectedImageUrlRef = useRef<string | null>(null)
+  const croppedImageUrlRef = useRef<string | null>(null)
+
+  const effectiveImageUrl = selectedImageUrl ?? originalImageUrl
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -70,13 +77,17 @@ export default function CreateArticlePage() {
     }
   }
 
-  const resetPreviewImage = () => {
-    if (selectedImageUrl) {
+  const resetPreviewImage = useCallback(() => {
+    if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
       URL.revokeObjectURL(selectedImageUrl)
+    }
+    if (originalImageUrl) {
+      URL.revokeObjectURL(originalImageUrl)
     }
     if (croppedImageUrl) {
       URL.revokeObjectURL(croppedImageUrl)
     }
+    setOriginalImageUrl(null)
     setSelectedImageUrl(null)
     setCroppedImageUrl(null)
     setCroppedImageBlob(null)
@@ -86,7 +97,9 @@ export default function CreateArticlePage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
+    setIsCropDialogOpen(false)
+    setIsProcessingImage(false)
+  }, [croppedImageUrl, originalImageUrl, selectedImageUrl])
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -101,16 +114,16 @@ export default function CreateArticlePage() {
       return
     }
 
-    if (selectedImageUrl) {
-      URL.revokeObjectURL(selectedImageUrl)
-    }
+    resetPreviewImage()
 
     const url = URL.createObjectURL(file)
+    setOriginalImageUrl(url)
     setSelectedImageUrl(url)
     setCrop({ x: 0, y: 0 })
     setZoom(1)
     setCroppedAreaPixels(null)
     setIsCropDialogOpen(true)
+    event.target.value = ''
   }
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
@@ -118,21 +131,24 @@ export default function CreateArticlePage() {
   }, [])
 
   const handleConfirmCrop = useCallback(async () => {
-    if (!selectedImageUrl || !croppedAreaPixels) {
+    const sourceUrl = selectedImageUrl ?? originalImageUrl
+    if (!sourceUrl || !croppedAreaPixels) {
       return
     }
 
     try {
-      const blob = await createCroppedImageBlob(selectedImageUrl, croppedAreaPixels)
+      setIsProcessingImage(true)
+      const blob = await createCroppedImageBlob(sourceUrl, croppedAreaPixels)
       if (croppedImageUrl) {
         URL.revokeObjectURL(croppedImageUrl)
       }
       const objectUrl = URL.createObjectURL(blob)
       setCroppedImageBlob(blob)
       setCroppedImageUrl(objectUrl)
-      URL.revokeObjectURL(selectedImageUrl)
-      setSelectedImageUrl(null)
       setIsCropDialogOpen(false)
+      setSelectedImageUrl(null)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -143,33 +159,69 @@ export default function CreateArticlePage() {
         description: 'We could not process this image. Try another one.',
         variant: 'destructive',
       })
+    } finally {
+      setIsProcessingImage(false)
     }
-  }, [croppedAreaPixels, croppedImageUrl, selectedImageUrl, toast])
+  }, [croppedAreaPixels, croppedImageUrl, originalImageUrl, selectedImageUrl, toast])
 
   const handleCancelCrop = useCallback(() => {
     setIsCropDialogOpen(false)
-    if (selectedImageUrl) {
-      URL.revokeObjectURL(selectedImageUrl)
-      setSelectedImageUrl(null)
+    setIsProcessingImage(false)
+    if (!croppedImageUrl && originalImageUrl) {
+      URL.revokeObjectURL(originalImageUrl)
+      setOriginalImageUrl(null)
+      setCroppedImageBlob(null)
     }
+    if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
+      URL.revokeObjectURL(selectedImageUrl)
+    }
+    setSelectedImageUrl(null)
     setCrop({ x: 0, y: 0 })
     setZoom(1)
     setCroppedAreaPixels(null)
     if (!croppedImageBlob && !croppedImageUrl && fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }, [croppedImageBlob, croppedImageUrl, selectedImageUrl])
+  }, [croppedImageBlob, croppedImageUrl, originalImageUrl, selectedImageUrl])
+
+  const handleAdjustCrop = useCallback(() => {
+    if (!originalImageUrl) return
+    setSelectedImageUrl(originalImageUrl)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    setIsCropDialogOpen(true)
+  }, [originalImageUrl])
+
+  useEffect(() => {
+    originalImageUrlRef.current = originalImageUrl
+  }, [originalImageUrl])
+
+  useEffect(() => {
+    selectedImageUrlRef.current = selectedImageUrl
+  }, [selectedImageUrl])
+
+  useEffect(() => {
+    croppedImageUrlRef.current = croppedImageUrl
+  }, [croppedImageUrl])
 
   useEffect(() => {
     return () => {
-      if (selectedImageUrl) {
-        URL.revokeObjectURL(selectedImageUrl)
+      const originalUrl = originalImageUrlRef.current
+      const selectedUrl = selectedImageUrlRef.current
+      const croppedUrl = croppedImageUrlRef.current
+
+      if (selectedUrl) {
+        URL.revokeObjectURL(selectedUrl)
       }
-      if (croppedImageUrl) {
-        URL.revokeObjectURL(croppedImageUrl)
+      if (originalUrl && originalUrl !== selectedUrl) {
+        URL.revokeObjectURL(originalUrl)
+      }
+      if (croppedUrl && croppedUrl !== originalUrl && croppedUrl !== selectedUrl) {
+        URL.revokeObjectURL(croppedUrl)
       }
     }
-  }, [selectedImageUrl, croppedImageUrl])
+  }, [])
 
   const handlePublish = async () => {
     console.log('🚀 handlePublish called')
@@ -429,25 +481,36 @@ export default function CreateArticlePage() {
             <CardHeader>
               <CardTitle className="text-lg">Preview image</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               {croppedImageUrl ? (
-                <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-xl border bg-muted/20">
+                <>
+                  <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
                     <img
                       src={croppedImageUrl}
                       alt="Article preview"
                       className="aspect-video w-full object-cover"
                     />
+                    <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
+                      <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                        16:9
+                      </Badge>
+                      Perfect for social previews
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"
                       className="gap-2"
-                      onClick={() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.click()
-                        }
-                      }}
+                      onClick={handleAdjustCrop}
+                      disabled={!originalImageUrl}
+                    >
+                      <Crop className="h-4 w-4" />
+                      Adjust crop
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => fileInputRef.current?.click()}
                     >
                       <RefreshCw className="h-4 w-4" />
                       Replace image
@@ -461,15 +524,21 @@ export default function CreateArticlePage() {
                       Remove
                     </Button>
                   </div>
-                </div>
+                  <p className="text-xs text-muted-foreground">
+                    Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
+                  </p>
+                </>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 py-12 text-center">
-                  <ImagePlus className="h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Add a hero image to make your article stand out. Recommended size 1200×630px.
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-6 py-12 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/40">
+                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h4 className="mt-4 text-base font-semibold">Add a hero image</h4>
+                  <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+                    The preview appears on article cards, the homepage, and social shares. Recommended size 1200×630px.
                   </p>
                   <Button
-                    className="mt-4 gap-2"
+                    className="mt-6 gap-2"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -491,42 +560,118 @@ export default function CreateArticlePage() {
       </div>
 
       <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Adjust preview image</DialogTitle>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="space-y-2 text-left">
+            <DialogTitle>Refine your hero image</DialogTitle>
             <DialogDescription>
-              Drag to reframe the shot. Use the slider to zoom. We’ll crop it to a 16:9 ratio.
+              Drag to reframe the focus area. The preview below keeps a cinematic 16:9 ratio for article cards
+              and social sharing.
             </DialogDescription>
           </DialogHeader>
-          <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl bg-muted/40">
-            {selectedImageUrl && (
-              <Cropper
-                image={selectedImageUrl}
-                crop={crop}
-                zoom={zoom}
-                aspect={16 / 9}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-                restrictPosition={false}
-              />
-            )}
+
+          <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-muted/40">
+                {effectiveImageUrl ? (
+                  <>
+                    <Cropper
+                      image={effectiveImageUrl}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={16 / 9}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                      restrictPosition={false}
+                    />
+                    <div className="pointer-events-none absolute inset-0 border border-white/20" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/10" />
+                  </>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                    Waiting for image...
+                  </div>
+                )}
+                <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
+                  <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                    16:9
+                  </Badge>
+                  Balanced framing
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
+                <div className="flex items-center justify-between text-sm font-medium">
+                  <span>Zoom</span>
+                  <span className="text-muted-foreground">{zoom.toFixed(1)}×</span>
+                </div>
+                <Slider
+                  value={[zoom]}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  onValueChange={(value) => setZoom(value[0] ?? 1)}
+                  disabled={isProcessingImage}
+                  className="mt-3"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Card className="h-full border-border/60 bg-muted/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold">Cropping tips</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">Aim for clarity</p>
+                    <p>
+                      Keep the subject centered and avoid placing important details near the frame edges. The crop is
+                      responsive and scales across devices.
+                    </p>
+                  </div>
+                  <Separator className="bg-border/60" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">Resolution matters</p>
+                    <p>
+                      Higher resolution assets deliver sharper cards. For best results use images at least{' '}
+                      <span className="font-medium text-foreground">1200×630px</span>.
+                    </p>
+                  </div>
+                  <Separator className="bg-border/60" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">Need adjustments later?</p>
+                    <p>
+                      You can reopen this editor anytime after uploading. The original image stays intact until you
+                      confirm the crop.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <div className="mt-6 space-y-2">
-            <Label className="text-xs uppercase text-muted-foreground">Zoom</Label>
-            <Slider
-              value={[zoom]}
-              min={1}
-              max={3}
-              step={0.1}
-              onValueChange={(value) => setZoom(value[0] ?? 1)}
-            />
-          </div>
+
           <DialogFooter className="mt-6">
-            <Button variant="ghost" onClick={handleCancelCrop}>
+            <Button variant="ghost" onClick={handleCancelCrop} disabled={isProcessingImage}>
               Cancel
             </Button>
-            <Button onClick={handleConfirmCrop}>Use image</Button>
+            <Button
+              onClick={handleConfirmCrop}
+              disabled={isProcessingImage || !croppedAreaPixels}
+              className="gap-2"
+            >
+              {isProcessingImage ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Use image
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

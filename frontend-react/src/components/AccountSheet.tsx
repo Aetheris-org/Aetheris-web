@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Bell, PenSquare, Settings, User } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -12,15 +13,19 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 
 export function AccountSheet() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, logout } = useAuthStore((state) => ({
     user: state.user,
     logout: state.logout,
   }))
+  const unreadNotifications = useNotificationsStore(selectUnreadCount)
 
   const initials = useMemo(() => {
     if (!user?.nickname) return ''
@@ -93,6 +98,7 @@ export function AccountSheet() {
                   className="justify-start gap-2"
                   onClick={() => navigate(`/profile/${user.id}`)}
                 >
+                  <User className="h-4 w-4" />
                   View profile
                 </Button>
               </SheetClose>
@@ -102,6 +108,7 @@ export function AccountSheet() {
                   className="justify-start gap-2"
                   onClick={() => navigate('/create')}
                 >
+                  <PenSquare className="h-4 w-4" />
                   Write a story
                 </Button>
               </SheetClose>
@@ -109,9 +116,31 @@ export function AccountSheet() {
                 <Button
                   variant="ghost"
                   className="justify-start gap-2"
-                  onClick={() => navigate('/settings/profile')}
+                  onClick={() =>
+                    navigate('/settings/profile', {
+                      state: { from: location.pathname },
+                    })
+                  }
                 >
+                  <Settings className="h-4 w-4" />
                   Account settings
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button
+                  variant="ghost"
+                  className="justify-between gap-2"
+                  onClick={() => navigate('/notifications')}
+                >
+                  <span className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Notifications
+                  </span>
+                  {unreadNotifications > 0 && (
+                    <Badge variant="secondary" className="rounded-md px-2 py-0 text-xs font-medium">
+                      {unreadNotifications}
+                    </Badge>
+                  )}
                 </Button>
               </SheetClose>
             </div>

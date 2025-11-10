@@ -76,7 +76,7 @@ async function refreshAccessToken(): Promise<string | null> {
   // Users & Permissions плагин Strapi не поддерживает refresh-токены из коробки.
   // Если понадобится собственная реализация — добавить здесь.
   console.warn('🔄 Refresh token flow is not implemented for Strapi users-permissions')
-  return null
+    return null
 }
 
 const pendingRequests = new Set<AbortController>()
