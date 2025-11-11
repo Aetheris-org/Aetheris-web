@@ -264,7 +264,7 @@ function AppearanceOptionCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-border/60 bg-background shadow-sm">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background shadow-sm">
             {leading}
           </div>
           <div>
@@ -275,7 +275,7 @@ function AppearanceOptionCard({
         {active && <Check className="h-4 w-4 text-primary" />}
       </div>
       {preview ? (
-        <div className="rounded-md border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
+        <div className="mt-auto rounded-md border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
           {preview}
         </div>
       ) : null}
@@ -2584,7 +2584,7 @@ function AppearanceSettings() {
                           active={accent === option.value}
                           leading={
                             <span
-                              className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
+                              className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
                               style={{ background: `hsl(${option.tone})` }}
                             />
                           }
@@ -2607,7 +2607,7 @@ function AppearanceSettings() {
                 active={accent === customAccentOption.value}
                 leading={
                   <span
-                    className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
+                    className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
                     style={{ background: `hsl(${customAccentOption.tone})` }}
                   />
                 }
@@ -2692,12 +2692,10 @@ function AppearanceSettings() {
                           key={option.value}
                           active={surface === option.value}
                           leading={
-                            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-border/40 bg-background">
-                              <span
-                                className="h-4 w-4 rounded-sm"
-                                style={{ backgroundColor: `hsl(${option.tone.background})` }}
-                              />
-                            </div>
+                            <span
+                              className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
+                              style={{ backgroundColor: `hsl(${option.tone.background})` }}
+                            />
                           }
                           label={option.label}
                           description={option.description}
@@ -2915,15 +2913,19 @@ function AppearanceSettings() {
                           </div>
                         </div>
                       ) : option.value === 'line' ? (
-                        <div className="space-y-1">
-                          <span className="block h-1.5 w-full rounded-full bg-muted/70" />
-                          <span className="block h-1.5 w-11/12 rounded-full bg-muted/60" />
-                          <span className="block h-1.5 w-9/12 rounded-full bg-muted/50" />
+                        <div className="space-y-1.5">
+                          {[0, 1].map((row) => (
+                            <div key={row} className="space-y-0.5">
+                              <span className="block h-1.5 w-full rounded-full bg-muted/70" />
+                              <span className="block h-1.5 w-11/12 rounded-full bg-muted/60" />
+                              <span className="block h-1.5 w-8/12 rounded-full bg-muted/50" />
+                            </div>
+                          ))}
                         </div>
                       ) : (
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {[0, 1, 2, 3, 4, 5].map((index) => (
-                            <div key={index} className="h-6 rounded-sm bg-muted/50" />
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {[0, 1, 2, 3].map((index) => (
+                            <div key={index} className="h-7 rounded-sm bg-muted/50" />
                           ))}
                         </div>
                       )}
