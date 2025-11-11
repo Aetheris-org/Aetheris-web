@@ -270,11 +270,11 @@ export default function HomePage() {
 
           <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
             {viewModeOptions.map((option) => {
-              const Icon = option.icon
+                      const Icon = option.icon
               const isActive = option.id === viewMode
-              return (
+                      return (
                 <Button
-                  key={option.id}
+                          key={option.id}
                   variant={isActive ? 'secondary' : 'ghost'}
                   size="sm"
                   className={cn('gap-2 px-3 text-xs', isActive && 'shadow-sm')}
@@ -321,7 +321,7 @@ export default function HomePage() {
                     type="button"
                     className="flex flex-col gap-2 rounded-2xl border border-transparent bg-background/70 px-4 py-4 text-left transition hover:border-border hover:bg-muted/30"
                     onClick={() => navigate(`/article/${spotlight.id}`)}
-                  >
+                        >
                     <span className="text-sm font-semibold text-foreground leading-tight">{spotlight.title}</span>
                     <span className="text-xs text-muted-foreground line-clamp-2">{spotlight.summary}</span>
                     <span className="text-xs text-muted-foreground">{spotlight.author} · {spotlight.reads.toLocaleString()} reads</span>
@@ -392,7 +392,7 @@ export default function HomePage() {
                 <Terminal className="h-4 w-4" />
                 Review dev updates
               </Button>
-            </div>
+        </div>
           )}
         </section>
 
@@ -558,11 +558,24 @@ export default function HomePage() {
 
           <aside className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex items-start justify-between">
+                <div className="space-y-1">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Flame className="h-5 w-5" />
-                  Trending
+                    <Flame className="h-5 w-5 text-primary" />
+                    Trending now
                 </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Quick hits from the guild—updated every few hours.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={() => navigate('/trending')}
+                >
+                  View leaderboard
+                </Button>
               </CardHeader>
               <CardContent className="space-y-3">
                 {loadingTrending ? (
@@ -570,24 +583,32 @@ export default function HomePage() {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 ) : trendingArticles.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground py-4">No trending articles</p>
+                  <div className="rounded-xl border border-dashed bg-muted/20 py-6 text-center text-xs text-muted-foreground">
+                    Nothing trending yet.
+                  </div>
                 ) : (
                   trendingArticles.map((article, index) => (
-                    <div
+                    <button
                       key={article.id}
-                      className="group cursor-pointer space-y-1 rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-accent/50"
+                      type="button"
+                      className="w-full rounded-xl border border-border/40 bg-background/70 px-3 py-3 text-left transition hover:border-primary/50 hover:bg-muted/40"
                       onClick={() => navigate(`/article/${article.id}`)}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl font-bold text-muted-foreground/30">{index + 1}</span>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+                          #{index + 1}
+                        </span>
                         <div className="flex-1 space-y-1">
-                          <h4 className="font-medium leading-tight line-clamp-2 transition-colors group-hover:text-primary">
-                            {article.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground">{article.author.username}</p>
+                          <p className="text-sm font-semibold text-foreground line-clamp-2">{article.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
                         </div>
                       </div>
+                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{article.views?.toLocaleString?.() ?? '—'} views</span>
+                        <span>•</span>
+                        <span>{article.reactions ?? '—'} reactions</span>
                     </div>
+                    </button>
                   ))
                 )}
               </CardContent>

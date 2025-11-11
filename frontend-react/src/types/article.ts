@@ -25,6 +25,7 @@ export interface Article {
   userReaction?: 'like' | 'dislike' | null
   isBookmarked?: boolean
   previewImage?: string
+  previewImageId?: number | null
   difficulty?: string
   author_id?: number
   views?: number

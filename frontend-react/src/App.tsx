@@ -14,7 +14,9 @@ import SettingsPage from '@/pages/SettingsPage'
 import ReadingListPage from '@/pages/ReadingListPage'
 import HelpCenterPage from '@/pages/HelpCenterPage'
 import NotificationsPage from '@/pages/NotificationsPage'
+import DraftsPage from '@/pages/DraftsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
+import TrendingPage from '@/pages/TrendingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 
@@ -47,6 +49,7 @@ function App() {
           <Route path="/networking" element={<NetworkingPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/developers" element={<DevelopersPage />} />
+          <Route path="/trending" element={<TrendingPage />} />
           <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
@@ -55,6 +58,7 @@ function App() {
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/reading-list" element={<ReadingListPage />} />
           <Route path="/help" element={<HelpCenterPage />} />
+          <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
         <Toaster />

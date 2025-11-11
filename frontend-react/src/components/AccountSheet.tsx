@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   Bookmark,
+  FileText,
   HelpCircle,
   LogOut,
   PenSquare,
@@ -267,6 +268,16 @@ export function AccountSheet() {
                       {readingListCount}
                     </Badge>
                   )}
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2"
+                  onClick={() => navigate('/drafts')}
+                >
+                  <FileText className="h-4 w-4" />
+                  Drafts
                 </Button>
               </SheetClose>
               <Button

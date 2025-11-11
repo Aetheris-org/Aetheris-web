@@ -266,6 +266,115 @@ export default factories.createCoreController(ARTICLE_UID as any, ({ strapi }) =
     return transformed;
   },
 
+  async userDrafts(ctx) {
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized('Необходима авторизация');
+    }
+
+    const limit = Math.min(Number(ctx.query?.limit ?? 50), 100);
+    const start = Math.max(Number(ctx.query?.start ?? 0), 0);
+
+    strapi.log.info(
+      `📝 Article.userDrafts requested by user ${user.id} with limit=${limit} start=${start}`,
+    );
+
+    const [entries, total] = await Promise.all([
+      strapi.entityService.findMany(ARTICLE_UID, {
+        filters: {
+          author: user.id,
+          publishedAt: { $null: true },
+        },
+        populate: {
+          author: {
+            fields: ['username'],
+            populate: { avatar: true },
+          },
+          preview_image: true,
+        },
+        sort: [{ updatedAt: 'desc' }],
+        offset: start,
+        limit,
+      }),
+      strapi.entityService.count(ARTICLE_UID, {
+        filters: {
+          author: user.id,
+          publishedAt: { $null: true },
+        },
+      }),
+    ]);
+
+    const response = await this.transformResponse(entries);
+    await this.enrichArticlesWithUserState(ctx, response?.data);
+
+    const pageSize = limit || total || 1;
+    const pagination = {
+      page: Math.floor(start / pageSize) + 1,
+      pageSize,
+      pageCount: Math.max(Math.ceil(total / pageSize), 1),
+      total,
+    };
+
+    strapi.log.info(
+      `📝 Article.userDrafts returning ${Array.isArray(response?.data) ? response.data.length : 0} item(s)`
+    );
+    if (strapi.log.debug) {
+      strapi.log.debug(`[Article.userDrafts] raw response: ${JSON.stringify(response, null, 2)}`);
+    }
+
+    ctx.body = {
+      ...response,
+      meta: {
+        ...(response?.meta ?? {}),
+        pagination,
+      },
+    };
+  },
+
+  async draftById(ctx) {
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized('Необходима авторизация');
+    }
+
+    const idParam = ctx.params?.id;
+    const draftId = Number(idParam);
+
+    if (!draftId || Number.isNaN(draftId)) {
+      strapi.log.warn(`⚠️ Article.draftById called with invalid id param=${idParam}`);
+      return ctx.badRequest('Некорректный идентификатор черновика');
+    }
+
+    strapi.log.info(`📝 Article.draftById requested by user ${user.id} for draft ${draftId}`);
+
+    const [entry] = await strapi.entityService.findMany(ARTICLE_UID, {
+      filters: {
+        id: draftId,
+        author: user.id,
+      },
+      populate: {
+        author: {
+          fields: ['username'],
+          populate: { avatar: true },
+        },
+        preview_image: true,
+      },
+      limit: 1,
+    });
+
+    if (!entry) {
+      strapi.log.warn(`⚠️ Article.draftById could not find draft=${draftId} for user=${user.id}`);
+      return ctx.notFound('draft.notFound');
+    }
+
+    const response = await this.transformResponse(entry);
+    if (response?.data) {
+      await this.enrichArticlesWithUserState(ctx, [response.data]);
+    }
+
+    ctx.body = response;
+  },
+
   async enrichArticlesWithUserState(
     ctx,
     entries: Array<{ id: number; attributes: Record<string, any> }>

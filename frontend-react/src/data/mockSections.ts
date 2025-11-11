@@ -202,6 +202,19 @@ export interface CourseCatalogSection {
   courseIds: string[]
 }
 
+export interface TrendingArticle {
+  id: string
+  title: string
+  author: string
+  summary: string
+  rank: number
+  publishedAt: string
+  views: number
+  reactions: number
+  comments: number
+  tags: string[]
+}
+
 export interface DeveloperResource {
   id: string
   title: string
@@ -858,6 +871,80 @@ export const courseCatalogSections: CourseCatalogSection[] = [
     courseIds: ['course-3', 'course-6'],
   },
 ]
+
+export const trendingArticlesMock: TrendingArticle[] = [
+  {
+    id: 'trending-1',
+    title: 'Designing resilient multi-tenant Strapi APIs',
+    author: 'Elena Kovalenko',
+    summary:
+      'A walkthrough on structuring content types, migrations, and RBAC for multi-tenant platforms.',
+    rank: 1,
+    publishedAt: '2025-02-18T09:00:00Z',
+    views: 1580,
+    reactions: 214,
+    comments: 42,
+    tags: ['Strapi', 'Architecture'],
+  },
+  {
+    id: 'trending-2',
+    title: 'From soft launch to scale: forum growth playbook',
+    author: 'Ravi Nathan',
+    summary: 'Lessons learned when scaling Aetheris from 20 beta users to 20k monthly discussions.',
+    rank: 2,
+    publishedAt: '2025-02-16T10:30:00Z',
+    views: 910,
+    reactions: 167,
+    comments: 27,
+    tags: ['Community', 'Operations'],
+  },
+  {
+    id: 'trending-3',
+    title: 'Crafting async mentoring systems with guild guardrails',
+    author: 'Mira Chen',
+    summary: 'Build reliable review queues, keep mentors happy, and measure learner sentiment without burnout.',
+    rank: 3,
+    publishedAt: '2025-02-14T12:00:00Z',
+    views: 720,
+    reactions: 142,
+    comments: 19,
+    tags: ['Mentorship', 'DX'],
+  },
+  {
+    id: 'trending-4',
+    title: 'shadcn/ui layout recipes for cohesive course dashboards',
+    author: 'Aetheris Studio',
+    summary: 'Reusable layout primitives for analytics, content authoring, and live cohort dashboards.',
+    rank: 4,
+    publishedAt: '2025-02-12T08:20:00Z',
+    views: 640,
+    reactions: 121,
+    comments: 23,
+    tags: ['UI', 'Design systems'],
+  },
+  {
+    id: 'trending-5',
+    title: 'Async monetisation playbook for course creators',
+    author: 'Northwind Collective',
+    summary: 'Recurring revenue frameworks, partner bundles, and pricing experiments that actually stick.',
+    rank: 5,
+    publishedAt: '2025-02-10T15:45:00Z',
+    views: 580,
+    reactions: 109,
+    comments: 18,
+    tags: ['Monetisation', 'Growth'],
+  },
+]
+
+/**
+ * TRENDING ARTICLES MOCK NOTE
+ *
+ * When replacing `trendingArticlesMock` with live data:
+ * - Create a Strapi collection type `trending-article` or derive from article metrics (views, reactions, recency).
+ * - Expose an endpoint (e.g. `/api/articles/trending`) that returns ranked articles with the fields used below.
+ * - Update `src/api/articles.ts` with a `getTrendingRanked` method and swap the page component to fetch data via TanStack Query.
+ * - Remove the mock import from the trending page and handle loading/error skeletons.
+ */
 
 export const developerResources: DeveloperResource[] = [
   {

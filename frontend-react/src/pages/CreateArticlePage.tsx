@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
+import { RichTextEditor } from '@/components/RichTextEditor'
 import { useAuthStore } from '@/stores/authStore'
 import {
   Dialog,
@@ -22,6 +23,36 @@ import {
 } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
+import { createDraftArticle, updateDraftArticle, publishArticle, getDraftArticle } from '@/api/articles'
+
+const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
+
+function normalizeRichText(value: string | null | undefined): string {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (HTML_DETECTION_REGEX.test(trimmed)) {
+    return trimmed
+  }
+  const paragraphs = trimmed
+    .split(/\n{2,}/)
+    .map((paragraph) => {
+      const safeParagraph = paragraph.replace(/\n/g, '<br />')
+      return `<p>${safeParagraph}</p>`
+    })
+    .join('')
+  return paragraphs || ''
+}
+
+function getPlainTextFromHtml(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<\/?[^>]+(>|$)/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 export default function CreateArticlePage() {
   const navigate = useNavigate()
@@ -43,12 +74,40 @@ export default function CreateArticlePage() {
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [isProcessingImage, setIsProcessingImage] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isLoadingDraft, setIsLoadingDraft] = useState(false)
+  const [draftId, setDraftId] = useState<number | null>(null)
+  const [existingPreviewImageId, setExistingPreviewImageId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
   const croppedImageUrlRef = useRef<string | null>(null)
+  const loadedDraftIdRef = useRef<number | null>(null)
 
   const effectiveImageUrl = selectedImageUrl ?? originalImageUrl
+  const [searchParams, setSearchParams] = useSearchParams()
+  const draftParam = searchParams.get('draft')
+  const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
+
+  const uploadPreviewImageAsset = useCallback(async (): Promise<number | null> => {
+    if (!croppedImageBlob) {
+      return existingPreviewImageId ?? null
+    }
+
+    const formData = new FormData()
+    formData.append('files', croppedImageBlob, `article-preview-${Date.now()}.jpg`)
+
+    const uploadResponse = await apiClient.post('/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    const newId = uploadResponse.data?.[0]?.id ?? null
+    setExistingPreviewImageId(newId)
+    setCroppedImageBlob(null)
+    return newId
+  }, [croppedImageBlob, existingPreviewImageId])
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -62,30 +121,112 @@ export default function CreateArticlePage() {
   }
 
   const handleSaveDraft = async () => {
-    try {
-      // TODO: Implement save draft logic
+    const currentUser = useAuthStore.getState().user
+
+    if (!currentUser) {
       toast({
-        title: 'Draft saved',
-        description: 'Your article has been saved as a draft.',
-      })
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save draft',
+        title: 'Authentication required',
+        description: 'Sign in to save drafts.',
         variant: 'destructive',
       })
+      navigate('/auth')
+      return
+    }
+
+    const hasTitle = Boolean(title.trim())
+    const plainText = getPlainTextFromHtml(content)
+    const hasBody = plainText.length > 0
+    const sanitizedContent = content.trim()
+
+    if (!hasTitle && !hasBody) {
+      toast({
+        title: 'Add content first',
+        description: 'Start by adding a title or some content before saving.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsSavingDraft(true)
+
+    try {
+      let previewImageId: number | null = null
+
+      try {
+        previewImageId = await uploadPreviewImageAsset()
+      } catch (error) {
+        console.error('Preview upload failed', error)
+        toast({
+          title: 'Image upload failed',
+          description: 'We could not upload the preview image. Try again or continue without it.',
+          variant: 'destructive',
+        })
+        setIsSavingDraft(false)
+        return
+      }
+
+      const payload = {
+        title: title.trim() || 'Untitled draft',
+        content: sanitizedContent || (hasBody ? content : ''),
+        excerpt: excerpt.trim() || null,
+        tags,
+        difficulty,
+        previewImageId,
+      }
+
+      const saved = draftId
+        ? await updateDraftArticle(draftId, payload)
+        : await createDraftArticle(payload)
+
+      setDraftId(saved.databaseId)
+      setExistingPreviewImageId(saved.previewImageId ?? null)
+      if (saved.previewImage) {
+        setCroppedImageUrl(saved.previewImage)
+        croppedImageUrlRef.current = saved.previewImage
+      }
+
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('draft', String(saved.databaseId))
+      setSearchParams(nextParams, { replace: true })
+      loadedDraftIdRef.current = saved.databaseId
+
+      toast({
+        title: 'Draft saved',
+        description: 'Your latest changes are safe.',
+      })
+    } catch (error: unknown) {
+      console.error('Failed to save draft', error)
+      const message =
+        typeof error === 'object' && error && 'response' in error
+          ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+          : error instanceof Error
+            ? error.message
+            : undefined
+      toast({
+        title: 'Unable to save draft',
+        description: message || 'Please try again or copy your content before leaving.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSavingDraft(false)
     }
   }
 
   const resetPreviewImage = useCallback(() => {
+    const revokeIfObjectUrl = (url: string | null) => {
+      if (url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url)
+      }
+    }
+
     if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
-      URL.revokeObjectURL(selectedImageUrl)
+      revokeIfObjectUrl(selectedImageUrl)
     }
     if (originalImageUrl) {
-      URL.revokeObjectURL(originalImageUrl)
+      revokeIfObjectUrl(originalImageUrl)
     }
     if (croppedImageUrl) {
-      URL.revokeObjectURL(croppedImageUrl)
+      revokeIfObjectUrl(croppedImageUrl)
     }
     setOriginalImageUrl(null)
     setSelectedImageUrl(null)
@@ -99,6 +240,7 @@ export default function CreateArticlePage() {
     }
     setIsCropDialogOpen(false)
     setIsProcessingImage(false)
+    setExistingPreviewImageId(null)
   }, [croppedImageUrl, originalImageUrl, selectedImageUrl])
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,12 +310,16 @@ export default function CreateArticlePage() {
     setIsCropDialogOpen(false)
     setIsProcessingImage(false)
     if (!croppedImageUrl && originalImageUrl) {
-      URL.revokeObjectURL(originalImageUrl)
+      if (originalImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(originalImageUrl)
+      }
       setOriginalImageUrl(null)
       setCroppedImageBlob(null)
     }
     if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
-      URL.revokeObjectURL(selectedImageUrl)
+      if (selectedImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(selectedImageUrl)
+      }
     }
     setSelectedImageUrl(null)
     setCrop({ x: 0, y: 0 })
@@ -194,6 +340,67 @@ export default function CreateArticlePage() {
   }, [originalImageUrl])
 
   useEffect(() => {
+    if (!draftIdFromQuery) {
+      loadedDraftIdRef.current = null
+      return
+    }
+
+    if (loadedDraftIdRef.current === draftIdFromQuery) {
+      return
+    }
+
+    let cancelled = false
+
+    const loadDraft = async () => {
+      setIsLoadingDraft(true)
+      try {
+        const draft = await getDraftArticle(draftIdFromQuery)
+        if (cancelled) return
+
+        loadedDraftIdRef.current = draftIdFromQuery
+        setDraftId(draft.databaseId)
+        setTitle(draft.title ?? '')
+        setContent(normalizeRichText(draft.content))
+        setExcerpt(draft.excerpt ?? '')
+        setTags(draft.tags ?? [])
+        const nextDifficulty =
+          draft.difficulty && ['easy', 'medium', 'hard'].includes(draft.difficulty)
+            ? (draft.difficulty as typeof difficulty)
+            : 'medium'
+        setDifficulty(nextDifficulty)
+        setExistingPreviewImageId(draft.previewImageId ?? null)
+        setOriginalImageUrl(null)
+        setSelectedImageUrl(null)
+        setCroppedImageBlob(null)
+        setCroppedAreaPixels(null)
+        if (draft.previewImage) {
+          setCroppedImageUrl(draft.previewImage)
+          croppedImageUrlRef.current = draft.previewImage
+        }
+      } catch (error) {
+        console.error('Failed to load draft', error)
+        if (!cancelled) {
+          toast({
+            title: 'Unable to load draft',
+            description: 'We could not open this draft. It may have been removed.',
+            variant: 'destructive',
+          })
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDraft(false)
+        }
+      }
+    }
+
+    void loadDraft()
+
+    return () => {
+      cancelled = true
+    }
+  }, [draftIdFromQuery, toast])
+
+  useEffect(() => {
     originalImageUrlRef.current = originalImageUrl
   }, [originalImageUrl])
 
@@ -211,27 +418,25 @@ export default function CreateArticlePage() {
       const selectedUrl = selectedImageUrlRef.current
       const croppedUrl = croppedImageUrlRef.current
 
-      if (selectedUrl) {
+      if (selectedUrl && selectedUrl.startsWith('blob:')) {
         URL.revokeObjectURL(selectedUrl)
       }
-      if (originalUrl && originalUrl !== selectedUrl) {
+      if (originalUrl && originalUrl !== selectedUrl && originalUrl.startsWith('blob:')) {
         URL.revokeObjectURL(originalUrl)
       }
-      if (croppedUrl && croppedUrl !== originalUrl && croppedUrl !== selectedUrl) {
+      if (
+        croppedUrl &&
+        croppedUrl !== originalUrl &&
+        croppedUrl !== selectedUrl &&
+        croppedUrl.startsWith('blob:')
+      ) {
         URL.revokeObjectURL(croppedUrl)
       }
     }
   }, [])
 
   const handlePublish = async () => {
-    console.log('🚀 handlePublish called')
     const currentUser = useAuthStore.getState().user
-    console.log('🚀 Current state:', {
-      title: title.trim(),
-      content: content.trim(),
-      hasImage: !!croppedImageBlob,
-      user: currentUser?.nickname
-    })
 
     if (!currentUser) {
       toast({
@@ -243,10 +448,15 @@ export default function CreateArticlePage() {
       return
     }
 
-    if (!title.trim() || !content.trim()) {
+    const hasTitle = Boolean(title.trim())
+    const plainText = getPlainTextFromHtml(content)
+    const hasBody = plainText.length > 0
+    const sanitizedContent = content.trim()
+
+    if (!hasTitle || !hasBody) {
       toast({
-        title: 'Missing fields',
-        description: 'Please fill in title and content',
+        title: 'Missing information',
+        description: 'Add a title and the main content before publishing.',
         variant: 'destructive',
       })
       return
@@ -255,62 +465,32 @@ export default function CreateArticlePage() {
     setIsPublishing(true)
 
     try {
-      console.log('📝 Publishing article...', { title, tags, difficulty })
       let previewImageId: number | null = null
 
-      if (croppedImageBlob) {
-        try {
-          console.log('🖼️ Starting preview upload...')
-          console.log('🖼️ Cropped image blob size:', croppedImageBlob.size, 'bytes')
-
-          const formData = new FormData()
-          formData.append('files', croppedImageBlob, `article-preview-${Date.now()}.jpg`)
-
-          console.log('🖼️ FormData created, sending upload request...')
-
-          const uploadResponse = await apiClient.post('/api/upload', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          })
-
-          console.log('🖼️ Upload response:', uploadResponse)
-          previewImageId = uploadResponse.data?.[0]?.id ?? null
-          console.log('🖼️ Preview image ID:', previewImageId)
-        } catch (error) {
-          console.error('❌ Preview upload failed:', error)
-          toast({
-            title: 'Image upload failed',
-            description: 'Preview upload did not complete. You can retry or proceed without it.',
-            variant: 'destructive',
-          })
-          setIsPublishing(false)
-          return
-        }
+      try {
+        previewImageId = await uploadPreviewImageAsset()
+      } catch (error) {
+        console.error('Preview upload failed', error)
+        toast({
+          title: 'Image upload failed',
+          description: 'Preview upload did not complete. You can retry or publish without it.',
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
       }
 
-      const response = await apiClient.post(
-        '/api/articles',
-        {
-          data: {
-            title: title.trim(),
-            content: content.trim(),
-            excerpt: excerpt.trim() || null,
-            tags,
-            difficulty,
-            publishedAt: new Date().toISOString(),
-            preview_image: previewImageId,
-          },
-        },
-        {
-          headers: {
-            'X-Require-Auth': 'true',
-          },
-        }
-      )
+      const payload = {
+        title: title.trim(),
+        content: sanitizedContent,
+        excerpt: excerpt.trim() || null,
+        tags,
+        difficulty,
+        previewImageId,
+      }
 
-      console.log('✅ Article published successfully:', response.data)
-      
+      const publishedArticle = await publishArticle(payload, draftId)
+
       toast({
         title: 'Article published!',
         description: 'Your article is now live.',
@@ -322,13 +502,26 @@ export default function CreateArticlePage() {
       setTags([])
       setTagInput('')
       setDifficulty('medium')
+      setDraftId(null)
+      setExistingPreviewImageId(null)
 
-      navigate('/')
-    } catch (error: any) {
-      console.error('❌ Failed to publish article:', error)
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('draft')
+      setSearchParams(nextParams, { replace: true })
+      loadedDraftIdRef.current = null
+
+      navigate(`/article/${publishedArticle.databaseId}`)
+    } catch (error: unknown) {
+      console.error('Failed to publish article:', error)
+      const message =
+        typeof error === 'object' && error && 'response' in error
+          ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+          : error instanceof Error
+            ? error.message
+            : undefined
       toast({
-        title: 'Error',
-        description: error.response?.data?.error?.message || 'Failed to publish article',
+        title: 'Publication failed',
+        description: message || 'Something went wrong while publishing your article.',
         variant: 'destructive',
       })
     } finally {
@@ -361,14 +554,15 @@ export default function CreateArticlePage() {
               size="sm"
               onClick={handleSaveDraft}
               className="gap-2"
+              disabled={isSavingDraft || isPublishing || isLoadingDraft}
             >
               <Save className="h-4 w-4" />
-              Save Draft
+              {isSavingDraft ? 'Saving...' : 'Save Draft'}
             </Button>
             <Button
               size="sm"
               onClick={handlePublish}
-              disabled={isPublishing}
+              disabled={isPublishing || isSavingDraft || isLoadingDraft}
               className="gap-2"
             >
               <Eye className="h-4 w-4" />
@@ -406,14 +600,22 @@ export default function CreateArticlePage() {
           </div>
 
           {/* Content */}
-          <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
-            <textarea
-              id="content"
-              placeholder="Write your article content here..."
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <Label id="content-editor-label" htmlFor="content-editor" className="text-base font-medium">
+                Content
+              </Label>
+              <span className="text-xs text-muted-foreground">
+                Compose with rich formatting, keyboard shortcuts, and live previews.
+              </span>
+            </div>
+            <RichTextEditor
+              id="content-editor"
+              ariaLabelledBy="content-editor-label"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full min-h-[400px] p-4 rounded-lg border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
+              onChange={setContent}
+              placeholder="Write your article content here..."
+              characterLimit={20000}
             />
           </div>
 

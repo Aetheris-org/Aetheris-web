@@ -101,3 +101,78 @@
   transition-duration: 0.001ms !important;
 }
 
+@layer base {
+  .tiptap {
+    @apply leading-relaxed text-foreground;
+  }
+
+  .tiptap:focus-visible {
+    @apply outline-none;
+  }
+
+  .tiptap p {
+    @apply mb-4;
+  }
+
+  .tiptap p:last-child {
+    @apply mb-0;
+  }
+
+  .tiptap h1 {
+    @apply mt-8 text-3xl font-bold tracking-tight first:mt-0;
+  }
+
+  .tiptap h2 {
+    @apply mt-6 text-2xl font-semibold tracking-tight first:mt-0;
+  }
+
+  .tiptap h3 {
+    @apply mt-5 text-xl font-semibold tracking-tight first:mt-0;
+  }
+
+  .tiptap ul,
+  .tiptap ol {
+    @apply my-4 ml-6 space-y-2;
+  }
+
+  .tiptap ul {
+    @apply list-disc;
+  }
+
+  .tiptap ol {
+    @apply list-decimal;
+  }
+
+  .tiptap blockquote {
+    @apply my-6 border-l-4 border-border/60 bg-muted/30 py-2 pl-4 pr-3 italic text-muted-foreground;
+  }
+
+  .tiptap code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm;
+  }
+
+  .tiptap pre {
+    @apply mb-6 overflow-x-auto rounded-lg border border-border/70 bg-muted/20 p-4 text-sm;
+  }
+
+  .tiptap pre code {
+    @apply bg-transparent p-0 text-sm;
+  }
+
+  .tiptap hr {
+    @apply my-10 border-border/70;
+  }
+
+  .tiptap a {
+    @apply font-medium text-primary underline underline-offset-4;
+  }
+
+  .tiptap img {
+    @apply my-6 w-full rounded-lg border border-border/60 object-cover;
+  }
+
+  .tiptap strong {
+    @apply font-semibold;
+  }
+}
+

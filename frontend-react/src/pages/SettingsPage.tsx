@@ -50,6 +50,8 @@ import {
   Wallet,
   Users,
   Sparkles,
+  CornerDownRight,
+  Flame,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -79,15 +81,24 @@ import {
   buildCustomAccentOption,
   DEFAULT_RADIUS,
   TYPOGRAPHY_SCALES,
+  SURFACE_PRESETS,
   type ThemeMode,
   type AppearancePreset,
   type TypographyScale,
   type ContrastMode,
   type DepthStyle,
   type MotionPreference,
+  type SurfaceStyle,
+  type AccentColor,
 } from '@/stores/themeStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { cn } from '@/lib/utils'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 const settingsNav = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -147,6 +158,60 @@ const viewModeOptions: Array<{
     label: 'Grid view',
     description: 'Visual tiles for inspiration',
     icon: LayoutGrid,
+  },
+]
+
+const SURFACE_GROUPS: Array<{ id: string; label: string; description: string; palettes: SurfaceStyle[] }> = [
+  {
+    id: 'luminous',
+    label: 'Bright & airy',
+    description: 'High-key canvases for daylight dashboards and editorial homes.',
+    palettes: ['daylight', 'lumen', 'glacier', 'harbor', 'zenith'],
+  },
+  {
+    id: 'earthy',
+    label: 'Warm & grounded',
+    description: 'Organic neutrals that pair well with writing-led experiences.',
+    palettes: ['sunset', 'moss', 'canyon', 'terracotta', 'ember'],
+  },
+  {
+    id: 'expressive',
+    label: 'Soft & expressive',
+    description: 'Gradient-ready palettes with gentle colour cast for calm products.',
+    palettes: ['mist', 'nebula', 'twilight', 'aurora', 'solstice'],
+  },
+  {
+    id: 'deep',
+    label: 'Deep focus',
+    description: 'Immersive dark surfaces for reading in low light.',
+    palettes: ['midnight', 'nightfall', 'noir', 'obsidian', 'eclipse', 'void', 'inkwell', 'cosmos', 'onyx'],
+  },
+]
+
+const ACCENT_GROUPS: Array<{ id: string; label: string; description: string; accents: AccentColor[] }> = [
+  {
+    id: 'vivid',
+    label: 'Vivid energy',
+    description: 'High-contrast tones that stand out in busy layouts.',
+    accents: ['indigo', 'violet', 'magenta', 'crimson', 'cobalt', 'azure'],
+  },
+  {
+    id: 'botanical',
+    label: 'Fresh & botanical',
+    description: 'Nature-inspired greens and blues suited to calm products.',
+    accents: ['emerald', 'teal', 'seafoam', 'sage', 'cyan'],
+  },
+  {
+    id: 'warm',
+    label: 'Warm & welcoming',
+    description: 'Sunset oranges and blush tones for storytelling moments.',
+    accents: ['amber', 'saffron', 'sunset', 'peach', 'coral', 'rose'],
+  },
+  {
+    id: 'muted',
+    label: 'Sophisticated neutrals',
+    description: 'Soft plums and greys that stay out of the way.',
+    accents: ['plum', 'orchid', 'mono', 'graphite'],
   },
 ]
 
@@ -1265,7 +1330,7 @@ function ProfileSettings() {
               <span className="text-xs text-muted-foreground">
                 {bioRemaining} characters left
               </span>
-            </div>
+        </div>
             <textarea
               id="settings-bio"
               value={bio}
@@ -1288,7 +1353,7 @@ function ProfileSettings() {
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+        <div className="space-y-2">
               <Label htmlFor="settings-first-name">First name</Label>
               <Input
                 id="settings-first-name"
@@ -1487,15 +1552,15 @@ function ProfileSettings() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="settings-focus">Focus areas</Label>
-              <textarea
+          <textarea
                 id="settings-focus"
                 value={focusAreas}
                 onChange={(event) => setFocusAreas(event.target.value)}
                 placeholder="Calm product strategy, accessibility systems, editorial tooling, long-form craft."
                 className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 maxLength={320}
-              />
-            </div>
+          />
+        </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="settings-learning">Currently exploring</Label>
               <textarea
@@ -1972,6 +2037,8 @@ function AppearanceSettings() {
     setTheme,
     accent,
     setAccent,
+    surface,
+    setSurface,
     radius,
     setRadius,
     customAccent,
@@ -1996,6 +2063,8 @@ function AppearanceSettings() {
     setTheme: state.setTheme,
     accent: state.accent,
     setAccent: state.setAccent,
+    surface: state.surface,
+    setSurface: state.setSurface,
     radius: state.radius,
     setRadius: state.setRadius,
     customAccent: state.customAccent,
@@ -2017,9 +2086,28 @@ function AppearanceSettings() {
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
 
+  const surfaceOptions = useMemo(() => {
+    return Object.entries(SURFACE_PRESETS).map(([value, config]) => {
+      const tone = config.values[resolvedTheme]
+      return {
+        value: value as SurfaceStyle,
+        label: config.label,
+        description: config.description,
+        tone,
+      }
+    })
+  }, [resolvedTheme])
+
+  const surfaceOptionsByValue = useMemo(() => {
+    return surfaceOptions.reduce((acc, option) => {
+      acc[option.value] = option
+      return acc
+    }, {} as Record<SurfaceStyle, (typeof surfaceOptions)[number]>)
+  }, [surfaceOptions])
+
   const accentOptions = useMemo(() => {
     const base = ACCENT_COLOR_PRESETS.map((preset) => ({
-      value: preset.value,
+      value: preset.value as AccentColor,
       label: preset.label,
       description: preset.description,
       gradient: `linear-gradient(135deg, hsl(${preset.preview}) 0%, hsl(${preset.values.dark.primary}) 100%)`,
@@ -2037,6 +2125,17 @@ function AppearanceSettings() {
     })
     return base
   }, [customAccent, resolvedTheme])
+
+  const accentOptionsByValue = useMemo(() => {
+    return accentOptions.reduce<Record<string, (typeof accentOptions)[number]>>((acc, option) => {
+      acc[option.value] = option
+      return acc
+    }, {})
+  }, [accentOptions])
+
+  const activeAccent = accentOptions.find((option) => option.value === accent)
+  const activeSurface = surfaceOptions.find((option) => option.value === surface)
+  const typographyLabel = TYPOGRAPHY_SCALES[typography]?.label ?? 'Default'
 
   const typographyOptions = useMemo(
     () => [
@@ -2146,7 +2245,7 @@ function AppearanceSettings() {
     elevated: '0 30px 70px rgba(15, 23, 42, 0.22)',
   }
   const previewShadow = previewShadowMap[depth]
-  const previewBackground = resolvedTheme === 'dark' ? '#0f172a' : '#ffffff'
+  const previewBackground = 'hsl(var(--background))'
   const previewGap = 18 * density
   const previewPadding = 24 * density
   const previewBadgeClass = contrast === 'bold' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
@@ -2185,6 +2284,40 @@ function AppearanceSettings() {
     })
   }
 
+  const feedPreviewItems = [
+    {
+      title: 'Collaborative editing spaces',
+      meta: 'Mentor thread · 24 replies',
+      status: 'Saved',
+    },
+    {
+      title: 'Async rituals that actually work',
+      meta: 'Course cohort · 18 learners',
+      status: 'Followed',
+    },
+    {
+      title: 'Starter kit: API-first newsroom',
+      meta: 'Developer hub · Updated today',
+      status: 'Pinned',
+    },
+  ]
+  const trendingPreviewItems = [
+    {
+      title: 'Staging calm product launches',
+      subtitle: 'Nova Rivera · 4.8k reads',
+    },
+    {
+      title: 'Composable newsroom workflows',
+      subtitle: 'Aetheris Labs · 3.9k reads',
+    },
+    {
+      title: 'From idea to shipped in 48 hours',
+      subtitle: 'Community panel · 3.1k reads',
+    },
+  ]
+
+  const customAccentOption = accentOptionsByValue['custom']
+
   return (
     <Card>
       <CardHeader>
@@ -2209,7 +2342,7 @@ function AppearanceSettings() {
           <div className="grid gap-3 md:grid-cols-3">
             {themeModeOptions.map((option) => (
               <AppearanceOptionCard
-                  key={option.value}
+                key={option.value}
                 active={theme === option.value}
                 leading={<option.icon className="h-5 w-5" />}
                 label={option.label}
@@ -2217,73 +2350,374 @@ function AppearanceSettings() {
                 onSelect={() => setTheme(option.value)}
               />
             ))}
-                      </div>
+          </div>
         </section>
 
         <Separator />
 
         <section className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold">Live preview</p>
+              <p className="text-sm text-muted-foreground">
+                Review how your appearance choices influence the interface.
+              </p>
+            </div>
+            <Badge variant="secondary">{resolvedTheme === 'dark' ? 'Dark theme' : 'Light theme'}</Badge>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <div
+              className="rounded-xl border border-border/70 bg-background/95 text-foreground shadow-lg ring-1 ring-border/30 backdrop-blur-sm"
+              style={{
+                background: previewBackground,
+                padding: `${previewPadding}px`,
+                boxShadow: previewShadow,
+                fontSize: `${previewScale}rem`,
+              }}
+            >
+              <div className="flex flex-col" style={{ gap: `${previewGap}px` }}>
+                <div className="flex flex-col gap-4 rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                        AE
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold leading-none">Aetheris community</p>
+                        <p className="text-xs text-muted-foreground">
+                          Header chrome adapts to your accent ({activeAccent?.label ?? 'Accent'}).
+                        </p>
+                      </div>
+                    </div>
+                    <div className="hidden items-center gap-2 sm:flex">
+                      <Button size="sm" className="gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        New post
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <Bell className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="px-2 py-0.5 text-[11px] uppercase tracking-wide">
+                      {activeSurface?.label ?? 'Surface'} surface
+                    </Badge>
+                    <span className="inline-flex items-center gap-1">
+                      <Rows className="h-3 w-3" />
+                      {typographyLabel}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <LayoutGrid className="h-3 w-3" />
+                      {densityLabel}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="relative overflow-hidden rounded-xl border border-border/70 bg-card/95 p-5 shadow-sm">
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-[0.9]"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, hsl(var(--primary) / 0.18), hsl(var(--accent) / 0.08))',
+                    }}
+                  />
+                  <div className="relative z-10 space-y-4">
+                    <Badge className="w-fit rounded-full bg-primary/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary">
+                      Hero spotlight
+                    </Badge>
+                    <div className="flex flex-col gap-2">
+                      <h4 className="text-lg font-semibold leading-snug">
+                        Calmer surfaces, confident content.
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        The hero mirrors the forum layout—accent, density, depth, and contrast applied instantly.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="border-primary/40 bg-primary/10 text-xs font-medium text-primary">
+                          #product-design
+                        </Badge>
+                        <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs font-medium text-primary">
+                          #community
+                        </Badge>
+                        <Badge variant="outline" className="border-primary/20 bg-primary/5 text-xs font-medium text-primary">
+                          #developer-tools
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
+                        Nova Rivera
+                      </div>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        6 min read
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-primary">
+                        <Flame className="h-3.5 w-3.5" />
+                        Trending
+            </span>
+          </div>
+                    <Button variant="outline" size="sm" className="w-full justify-between">
+                      Continue reading
+                      <CornerDownRight className="h-4 w-4" />
+                    </Button>
+        </div>
+                </div>
+
+                <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-sm font-semibold">
+                    <span>Article feed</span>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                      Live
+                    </Badge>
+                  </div>
+                  <ul className="mt-4 flex flex-col" style={{ gap: `${previewGap * 0.6}px` }}>
+                    {feedPreviewItems.map((item, index) => (
+                      <li key={item.title}>
+                        <button
+                          type="button"
+                          className="group flex w-full items-start gap-3 rounded-lg border border-transparent bg-muted/20 p-3 text-left transition hover:border-primary/40 hover:bg-muted/30"
+                        >
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-primary transition group-hover:scale-110" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium transition group-hover:text-primary">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">{item.meta}</p>
+                          </div>
+                          <Badge variant="outline" className="border-primary/30 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary">
+                            {index === 0 ? 'New' : item.status}
+                          </Badge>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <Card className="border-border/70 bg-card/90 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold">Trending preview</CardTitle>
+                  <CardDescription>Leaderboard widgets follow the accent tone.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {trendingPreviewItems.map((item, index) => (
+                    <button
+                      key={item.title}
+                      type="button"
+                      className="group flex w-full items-center justify-between rounded-lg border border-transparent bg-muted/20 px-3 py-2 text-left transition hover:border-primary/40 hover:bg-muted/30"
+                    >
+                      <div>
+                        <p className="text-sm font-medium transition group-hover:text-primary">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                      </div>
+                      <Badge variant="secondary" className="bg-primary/12 px-3 py-0.5 text-xs font-semibold text-primary">
+                        #{index + 1}
+                      </Badge>
+                    </button>
+                  ))}
+      </CardContent>
+    </Card>
+
+              <Card className="border-border/70 bg-card/90 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold">Your adjustments</CardTitle>
+                  <CardDescription className="text-xs">
+                    Snapshot of the settings reflected in this preview.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Palette className="h-4 w-4 text-primary" />
+                    {activeAccent?.label ?? 'Accent'} accent
+                  </div>
+                  <p>Surface palette: {activeSurface?.label ?? '—'}</p>
+                  <p>Typography scale: {typographyLabel}</p>
+                  <p>Density: {densityLabel}</p>
+                  <p>Motion: {previewMotionNote}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-6">
           <div className="space-y-1">
             <Label className="text-sm font-semibold">Accent color</Label>
             <p className="text-sm text-muted-foreground">
               Set the brand hue used for primary actions and highlights.
             </p>
-                    </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {accentOptions.map((option) => {
-              const isCustom = option.value === 'custom'
+          </div>
+          <Accordion
+            type="multiple"
+            defaultValue={ACCENT_GROUPS.map((group) => group.id)}
+            className="space-y-3"
+          >
+            {ACCENT_GROUPS.map((group) => {
+              const groupAccents = group.accents
+                .map((value) => accentOptionsByValue[value])
+                .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
+
+              if (groupAccents.length === 0) return null
+
               return (
-                <AppearanceOptionCard
-                  key={option.value}
-                  active={accent === option.value}
-                  leading={
-                    <span
-                      className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
-                      style={{ background: `hsl(${option.tone})` }}
-                    />
-                  }
-                  label={option.label}
-                  description={option.description}
-                  onSelect={() => setAccent(option.value)}
-                  preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
-                  footer={
-                    isCustom ? (
-                      <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex items-center justify-between gap-3">
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="uppercase tracking-wide">Light</span>
-                            <input
-                              type="color"
-                              value={customAccent.light}
-                              onChange={(event) => {
-                                setAccent('custom')
-                                setCustomAccentColor('light', event.target.value)
-                              }}
-                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                              aria-label="Pick accent color for light theme"
-                            />
-                          </label>
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="uppercase tracking-wide">Dark</span>
-                            <input
-                              type="color"
-                              value={customAccent.dark}
-                              onChange={(event) => {
-                                setAccent('custom')
-                                setCustomAccentColor('dark', event.target.value)
-                              }}
-                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                              aria-label="Pick accent color for dark theme"
-                            />
-                          </label>
-                  </div>
+                <AccordionItem
+                  key={group.id}
+                  value={group.id}
+                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10"
+                >
+                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold">
+                    <div className="flex w-full flex-col gap-0.5 pr-6">
+                      <span>{group.label}</span>
+                      <span className="text-xs font-normal text-muted-foreground">{group.description}</span>
                     </div>
-                    ) : undefined
-                  }
-                />
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                      {groupAccents.map((option) => (
+                        <AppearanceOptionCard
+                          key={option.value}
+                          active={accent === option.value}
+                          leading={
+                            <span
+                              className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
+                              style={{ background: `hsl(${option.tone})` }}
+                            />
+                          }
+                          label={option.label}
+                          description={option.description}
+                          onSelect={() => setAccent(option.value)}
+                          preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
               )
             })}
+          </Accordion>
+          {customAccentOption ? (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <AppearanceOptionCard
+                key={customAccentOption.value}
+                active={accent === customAccentOption.value}
+                leading={
+                  <span
+                    className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
+                    style={{ background: `hsl(${customAccentOption.tone})` }}
+                  />
+                }
+                label={customAccentOption.label}
+                description={customAccentOption.description}
+                onSelect={() => setAccent('custom')}
+                preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
+                footer={
+                  <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="uppercase tracking-wide">Light</span>
+                        <input
+                          type="color"
+                          value={customAccent.light}
+                          onChange={(event) => {
+                            setAccent('custom')
+                            setCustomAccentColor('light', event.target.value)
+                          }}
+                          className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                          aria-label="Pick accent color for light theme"
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="uppercase tracking-wide">Dark</span>
+                        <input
+                          type="color"
+                          value={customAccent.dark}
+                          onChange={(event) => {
+                            setAccent('custom')
+                            setCustomAccentColor('dark', event.target.value)
+                          }}
+                          className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                          aria-label="Pick accent color for dark theme"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                }
+              />
+            </div>
+          ) : null}
+        </section>
+
+        <Separator />
+
+        <section className="space-y-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Surface palette</Label>
+            <p className="text-sm text-muted-foreground">
+              Pick the background system for cards, popovers, and muted states.
+            </p>
           </div>
+          <Accordion
+            type="multiple"
+            defaultValue={SURFACE_GROUPS.map((group) => group.id)}
+            className="space-y-3"
+          >
+            {SURFACE_GROUPS.map((group) => {
+              const palettes = group.palettes
+                .map((value) => surfaceOptionsByValue[value])
+                .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
+
+              if (palettes.length === 0) return null
+
+              return (
+                <AccordionItem
+                  key={group.id}
+                  value={group.id}
+                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10"
+                >
+                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold">
+                    <div className="flex w-full flex-col gap-0.5 pr-6">
+                      <span>{group.label}</span>
+                      <span className="text-xs font-normal text-muted-foreground">{group.description}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                      {palettes.map((option) => (
+                        <AppearanceOptionCard
+                          key={option.value}
+                          active={surface === option.value}
+                          leading={
+                            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-border/40 bg-background">
+                              <span
+                                className="h-4 w-4 rounded-sm"
+                                style={{ backgroundColor: `hsl(${option.tone.background})` }}
+                              />
+                            </div>
+                          }
+                          label={option.label}
+                          description={option.description}
+                          onSelect={() => setSurface(option.value)}
+                          preview={
+                            <div className="grid grid-cols-4 gap-1">
+                              <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
+                              <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
+                              <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
+                              <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
+                            </div>
+                          }
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
         </section>
 
         <Separator />
@@ -2298,7 +2732,7 @@ function AppearanceSettings() {
           <div className="grid gap-3 md:grid-cols-3">
             {typographyOptions.map((option) => (
               <AppearanceOptionCard
-                  key={option.value}
+                key={option.value}
                 active={typography === option.value}
                 leading={<option.icon className="h-5 w-5" />}
                 label={option.label}
@@ -2312,7 +2746,7 @@ function AppearanceSettings() {
                 }
               />
             ))}
-                      </div>
+          </div>
         </section>
 
         <Separator />
@@ -2323,7 +2757,7 @@ function AppearanceSettings() {
             <p className="text-sm text-muted-foreground">
               Tune clarity for different environments and accessibility preferences.
             </p>
-                    </div>
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             {contrastOptions.map((option) => (
               <AppearanceOptionCard
@@ -2335,7 +2769,7 @@ function AppearanceSettings() {
                 onSelect={() => setContrast(option.value)}
               />
             ))}
-                  </div>
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             {motionOptions.map((option) => (
               <AppearanceOptionCard
@@ -2377,11 +2811,11 @@ function AppearanceSettings() {
 
         <section className="space-y-4">
           <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1">
-            <Label className="text-sm font-semibold">Interface shape</Label>
-            <p className="text-sm text-muted-foreground">
-              Adjust corner rounding for cards, dialogs, and buttons.
-            </p>
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold">Interface shape</Label>
+              <p className="text-sm text-muted-foreground">
+                Adjust corner rounding for cards, dialogs, and buttons.
+              </p>
             </div>
             <Button
               variant="ghost"
@@ -2451,68 +2885,6 @@ function AppearanceSettings() {
         <Separator />
 
         <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold">Live preview</p>
-              <p className="text-sm text-muted-foreground">
-                Review how your appearance choices influence the interface.
-              </p>
-            </div>
-            <Badge variant="secondary">{resolvedTheme === 'dark' ? 'Dark theme' : 'Light theme'}</Badge>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-            <div
-              className="rounded-xl border transition-all"
-              style={{
-                background: previewBackground,
-                boxShadow: previewShadow,
-                padding: `${previewPadding}px`,
-                borderColor: contrast === 'bold' ? 'rgba(15, 23, 42, 0.22)' : undefined,
-                fontSize: `${previewScale}rem`,
-              }}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide', previewBadgeClass)}>
-                  Featured
-                </div>
-                <span className="text-xs text-muted-foreground">{densityLabel}</span>
-              </div>
-              <h4 className="mt-4 text-lg font-semibold">Designing a calmer reading experience</h4>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Accent colors, typography, spacing, and depth adapt instantly so you can discover the mood that fits your publication.
-              </p>
-              <div className="mt-4 grid gap-3 md:grid-cols-2" style={{ gap: `${previewGap}px` }}>
-                <div className="rounded-lg border bg-background p-4 shadow-sm transition-all" style={{ boxShadow: previewShadow }}>
-                  <p className="text-sm font-medium">Primary action</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{previewMotionNote}</p>
-                  <Button size="sm" className="mt-4 w-full">
-                    Publish
-                  </Button>
-                </div>
-                <div className="rounded-lg border border-dashed bg-background/60 p-4 transition-all" style={{ boxShadow: depth === 'flat' ? 'none' : previewShadow }}>
-                  <p className="text-sm font-medium">Article digest</p>
-                  <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
-                    <li>• Visual hierarchy stays clear.</li>
-                    <li>• Shadows reinforce emphasis.</li>
-                    <li>• Contrast supports accessibility.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">Tips</p>
-              <ul className="mt-3 space-y-2">
-                <li>• Combine comfortable typography with higher density for large screens.</li>
-                <li>• Use bold contrast with flat depth to keep things airy but legible.</li>
-                <li>• Save presets for different contexts like "Writing mode" or "Presentation".</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-4">
           <div className="space-y-1">
             <Label className="text-sm font-semibold">Article layout</Label>
             <p className="text-sm text-muted-foreground">
@@ -2568,10 +2940,10 @@ function AppearanceSettings() {
         <section className="space-y-4">
           <div className="space-y-1">
             <Label className="text-sm font-semibold">Presets</Label>
-              <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Save and recall appearance combinations for different workflows.
-              </p>
-            </div>
+            </p>
+          </div>
           <Card className="border-dashed">
             <CardHeader className="pb-4">
               <CardTitle className="text-base">Save current appearance</CardTitle>

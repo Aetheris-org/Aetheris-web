@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
@@ -18,13 +19,12 @@ import {
   Linkedin,
   ChevronDown,
   ChevronRight,
-  ListTree,
   CornerUpLeft,
   CornerDownRight,
   Minimize2,
   MoreHorizontal,
-  ThumbsUp,
-  ThumbsDown,
+  Plus,
+  Minus,
   Info,
   Flag,
   Pencil,
@@ -54,6 +54,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   selectLocalComments,
   useLocalCommentsStore,
 } from '@/stores/localCommentsStore'
@@ -70,23 +76,17 @@ interface CommentNode extends UnifiedComment {
 }
 
 interface CommentReactionState {
-  upvotes: number
-  downvotes: number
+  score: number
+  positive: number
+  negative: number
   userReaction: 'up' | 'down' | null
 }
 
-const MAX_VISIBLE_STRIPE_DEPTH = 6
-const STRIPE_WIDTH = 2
-const STRIPE_GAP = 4
-const BASE_COMMENT_PADDING = 16
-const STRIPE_CLASSNAMES = [
-  'bg-border/80',
-  'bg-border/70',
-  'bg-border/60',
-  'bg-border/50',
-  'bg-border/40',
-  'bg-border/30',
-]
+const THREAD_LINE_WIDTH = 1.5
+const THREAD_LINE_GAP = 20
+const THREAD_BASE_OFFSET = 22
+const THREAD_ELBOW_LENGTH = 16
+const THREAD_ELBOW_Y = 34
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -109,6 +109,10 @@ export default function ArticlePage() {
   const [threadRootId, setThreadRootId] = useState<string | null>(null)
   const replyHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [reactionState, setReactionState] = useState<Record<string, CommentReactionState>>({})
+  const [infoComment, setInfoComment] = useState<CommentNode | null>(null)
+  const [isInfoOpen, setIsInfoOpen] = useState(false)
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
+  const replyInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -125,7 +129,7 @@ export default function ArticlePage() {
   // Fetch article
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id],
-    queryFn: () => getArticle(id as string, user?.id),
+    queryFn: () => getArticle(id as string, { userId: user?.id }),
     enabled: !!id,
   })
 
@@ -209,7 +213,7 @@ export default function ArticlePage() {
     }
 
     if (!article) {
-    toast({
+      toast({
         title: 'Подождите',
         description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
         variant: 'destructive',
@@ -407,10 +411,11 @@ export default function ArticlePage() {
     setReactionState((prev) => {
       const next: Record<string, CommentReactionState> = { ...prev }
       combinedComments.forEach((comment) => {
-        if (!next[comment.id]) {
+      if (!next[comment.id]) {
           next[comment.id] = {
-            upvotes: 0,
-            downvotes: 0,
+          score: 0,
+          positive: 0,
+          negative: 0,
             userReaction: null,
           }
         }
@@ -480,6 +485,9 @@ export default function ArticlePage() {
   const descendantCountById = commentGraph.descendantCountById
   const maxCommentDepth = commentGraph.maxDepth
 
+  const infoReactions = infoComment ? reactionState[infoComment.id] : undefined
+  const infoParent = infoComment?.parentId ? nodeLookup.get(infoComment.parentId) : undefined
+
   const hoverContext = useMemo(() => {
     if (!hoveredCommentId || !nodeLookup.has(hoveredCommentId)) {
       return {
@@ -530,6 +538,17 @@ export default function ArticlePage() {
     }
   }, [nodeLookup, threadRootId])
 
+  useEffect(() => {
+    if (!activeReply?.parentId) return
+    const target = replyInputRefs.current.get(activeReply.parentId)
+    if (target) {
+      requestAnimationFrame(() => {
+        target.focus()
+        target.selectionStart = target.selectionEnd = target.value.length
+      })
+    }
+  }, [activeReply])
+
   const formatCommentTimestamp = (date: string) =>
     new Date(date).toLocaleString('ru-RU', {
       day: '2-digit',
@@ -551,29 +570,41 @@ export default function ArticlePage() {
     }
 
     setReactionState((prev) => {
-      const current = prev[commentId] ?? { upvotes: 0, downvotes: 0, userReaction: null }
-      let { upvotes, downvotes, userReaction } = current
+      const current =
+        prev[commentId] ?? { score: 0, positive: 0, negative: 0, userReaction: null }
+      let {
+        score = 0,
+        positive = 0,
+        negative = 0,
+        userReaction,
+      } = current
 
       if (reaction === 'up') {
         if (userReaction === 'up') {
-          upvotes = Math.max(0, upvotes - 1)
+          positive = Math.max(0, positive - 1)
+          score = Math.max(-999, score - 1)
           userReaction = null
         } else {
-          upvotes += 1
           if (userReaction === 'down') {
-            downvotes = Math.max(0, downvotes - 1)
+            negative = Math.max(0, negative - 1)
+            score += 1
           }
+          positive += 1
+          score += 1
           userReaction = 'up'
         }
       } else {
         if (userReaction === 'down') {
-          downvotes = Math.max(0, downvotes - 1)
+          negative = Math.max(0, negative - 1)
+          score = Math.min(999, score + 1)
           userReaction = null
         } else {
-          downvotes += 1
           if (userReaction === 'up') {
-            upvotes = Math.max(0, upvotes - 1)
+            positive = Math.max(0, positive - 1)
+            score -= 1
           }
+          negative += 1
+          score -= 1
           userReaction = 'down'
         }
       }
@@ -581,8 +612,9 @@ export default function ArticlePage() {
       return {
         ...prev,
         [commentId]: {
-          upvotes,
-          downvotes,
+          score,
+          positive,
+          negative,
           userReaction,
         },
       }
@@ -615,10 +647,8 @@ export default function ArticlePage() {
         })
         break
       case 'info':
-        toast({
-          title: 'Информация о комментарии',
-          description: `Комментарий оставил @${comment.author.username} ${formatCommentTimestamp(comment.createdAt)}.`,
-        })
+        setInfoComment(comment)
+        setIsInfoOpen(true)
         break
     }
   }
@@ -626,30 +656,19 @@ export default function ArticlePage() {
   const renderCommentThread = (
     nodes: CommentNode[],
     depth = 0,
-    options: { showStripes?: boolean; threadMode?: boolean } = {}
+    options: { showConnectors?: boolean; threadMode?: boolean } = {}
   ): JSX.Element[] => {
-    const { showStripes = true, threadMode = false } = options
+    const { showConnectors = true, threadMode = false } = options
 
     return nodes.flatMap((node) => {
       const initials = (node.author.username ?? 'U').slice(0, 2).toUpperCase()
-      const isLocal = node.source === 'local'
-      const stripeCount = showStripes ? Math.min(depth, MAX_VISIBLE_STRIPE_DEPTH) : 0
-      const overflowDepth = Math.max(depth - MAX_VISIBLE_STRIPE_DEPTH, 0)
-      const gutterWidth = stripeCount * (STRIPE_WIDTH + STRIPE_GAP)
-      const paddingLeft = showStripes
-        ? depth > 0
-          ? BASE_COMMENT_PADDING + gutterWidth
-          : 0
-        : depth > 0
-          ? BASE_COMMENT_PADDING + depth * 10
-          : 0
-
-      const containerStyle: CSSProperties = {
-        paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined,
-        boxSizing: 'border-box',
-      }
 
       const commentDepth = depth
+      const paddingLeft =
+        showConnectors && commentDepth > 0
+          ? THREAD_BASE_OFFSET + commentDepth * THREAD_LINE_GAP
+          : 0
+
       const isHoverTarget = hoveredCommentId === node.id
       const isInHoverPath =
         hoverContext.ancestors.has(node.id) || hoverContext.descendants.has(node.id)
@@ -659,62 +678,86 @@ export default function ArticlePage() {
       const parentId = parentById.get(node.id) ?? null
       const parentNode = parentId ? nodeLookup.get(parentId) : undefined
       const replyDescendants = descendantCountById.get(node.id) ?? node.replies.length
+      const isOwnComment = user ? String(node.author.id) === String(user.id) : false
+      const isDimmedByHover = hoveredCommentId !== null && !isHoverTarget && !isInHoverPath
+      const isDimmedByDepth =
+        highlightDepth !== null &&
+        commentDepth < highlightDepth &&
+        !isHoverTarget &&
+        !isInHoverPath
+      const dimClass = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-60' : undefined
+      const connectorOpacity = isDimmedByHover ? 0.35 : isDimmedByDepth ? 0.6 : 1
+
+      const resolveConnectorTone = (level: number) => {
+        if (highlightDepth !== null && level < highlightDepth) {
+          return 'bg-border/30'
+        }
+        if (isHoverTarget) {
+          return 'bg-primary/60'
+        }
+        if (isInHoverPath) {
+          return 'bg-primary/50'
+        }
+        return 'bg-border/60'
+      }
 
       const commentElement = (
         <div
           key={`comment-${node.id}`}
           id={`comment-${node.id}`}
           className="relative space-y-3"
-          style={containerStyle}
+          style={paddingLeft ? ({ paddingLeft } as CSSProperties) : undefined}
           onMouseEnter={() => setHoveredCommentId(node.id)}
           onMouseLeave={() => setHoveredCommentId((prev) => (prev === node.id ? null : prev))}
         >
-          {showStripes && stripeCount > 0 && (
-            <div aria-hidden className="pointer-events-auto absolute left-0 top-4 bottom-4 flex">
-              {Array.from({ length: stripeCount }).map((_, stripeIndex) => {
-                const stripeDepth = stripeIndex + 1
-                const stripeActive =
-                  highlightDepth !== null ? stripeDepth >= highlightDepth : true
+          {showConnectors && commentDepth > 0 && (
+            <>
+              {Array.from({ length: commentDepth }).map((_, index) => {
+                const depthLevel = index + 1
+                const tone = resolveConnectorTone(depthLevel)
+                const left = THREAD_BASE_OFFSET + index * THREAD_LINE_GAP - THREAD_LINE_WIDTH / 2
                 return (
                   <span
-                    key={`stripe-${node.id}-${stripeIndex}`}
+                    key={`thread-line-${node.id}-${depthLevel}`}
+                    aria-hidden
                     className={cn(
-                      'h-full cursor-pointer rounded-full transition-opacity',
-                      STRIPE_CLASSNAMES[stripeIndex % STRIPE_CLASSNAMES.length],
-                      stripeActive ? 'opacity-60 hover:opacity-90' : 'opacity-20'
+                      'pointer-events-none absolute rounded-full transition-opacity duration-[800ms]',
+                      tone
                     )}
                     style={{
-                      width: STRIPE_WIDTH,
-                      marginRight: stripeIndex === stripeCount - 1 ? 0 : STRIPE_GAP,
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setHighlightDepth((prev) =>
-                        prev === stripeDepth ? null : stripeDepth
-                      )
+                      left,
+                      top: 0,
+                      bottom: THREAD_ELBOW_Y,
+                      width: THREAD_LINE_WIDTH,
+                      opacity: connectorOpacity,
                     }}
                   />
                 )
               })}
-            </div>
-          )}
-          {overflowDepth > 0 && (
-            <span className="pointer-events-none absolute left-0 top-2 inline-flex -translate-x-3 select-none rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              +{overflowDepth}
-            </span>
+              <span
+                aria-hidden
+                className={cn(
+                  'pointer-events-none absolute z-10 rounded-full transition-all duration-[800ms]',
+                  resolveConnectorTone(commentDepth)
+                )}
+                style={{
+                  left:
+                    THREAD_BASE_OFFSET + (commentDepth - 1) * THREAD_LINE_GAP - THREAD_LINE_WIDTH / 2,
+                  top: THREAD_ELBOW_Y - THREAD_LINE_WIDTH / 2,
+                  width: THREAD_ELBOW_LENGTH,
+                  height: THREAD_LINE_WIDTH,
+                  borderTopLeftRadius: 999,
+                  borderBottomLeftRadius: 999,
+                  opacity: connectorOpacity,
+                }}
+              />
+            </>
           )}
           <Card
             className={cn(
-              'transition-colors border-border/60 bg-card/70',
-              threadMode && 'shadow-sm',
-              isLocal && 'border-primary/40 bg-primary/5',
-              isHoverTarget && 'ring-2 ring-primary/50 ring-offset-0',
-              !isHoverTarget && isInHoverPath && 'border-primary/50 bg-primary/10',
-              highlightDepth !== null &&
-                commentDepth < highlightDepth &&
-                !isHoverTarget &&
-                !isInHoverPath &&
-                'opacity-60'
+              'border-none bg-transparent shadow-none transition-colors transition-opacity duration-[800ms]',
+              isHoverTarget && 'ring-2 ring-primary/60 ring-offset-0',
+              dimClass
             )}
           >
             <CardContent className="pt-4 space-y-3">
@@ -758,7 +801,7 @@ export default function ArticlePage() {
                           }, 2500)
                         }
                       }}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/60 px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted hover:text-foreground"
                     >
                       <CornerUpLeft className="h-3 w-3" />
                       В ответ @{parentNode.author.username}
@@ -828,80 +871,120 @@ export default function ArticlePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant={reactionState[node.id]?.userReaction === 'up' ? 'default' : 'ghost'}
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleCommentReaction(node.id, 'up')}
-                      disabled={!user}
-                      aria-label="Понравилось"
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="flex items-center gap-1 rounded-[calc(var(--radius)*1.4)] bg-background/35 px-1.5 py-1 shadow-sm ring-1 ring-border/60 backdrop-blur-sm">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
+                            reactionState[node.id]?.userReaction === 'up' &&
+                              'bg-primary text-primary-foreground hover:bg-primary/90'
+                          )}
+                          onClick={() => handleCommentReaction(node.id, 'up')}
+                          disabled={!user}
+                          aria-label="Поддержать"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                        <span
+                          className={cn(
+                            'min-w-[36px] px-2 py-1 text-center text-xs font-semibold tabular-nums',
+                            (reactionState[node.id]?.score ?? 0) > 0 && 'text-emerald-400',
+                            (reactionState[node.id]?.score ?? 0) < 0 && 'text-destructive',
+                            (reactionState[node.id]?.score ?? 0) === 0 && 'text-foreground/70'
+                          )}
+                        >
+                          {reactionState[node.id]?.score ?? 0}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
+                            reactionState[node.id]?.userReaction === 'down' &&
+                              'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                          )}
+                          onClick={() => handleCommentReaction(node.id, 'down')}
+                          disabled={!user}
+                          aria-label="Против"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="center"
+                      sideOffset={28}
+                      className="flex items-center gap-3 rounded-[calc(var(--radius)*1.05)] border border-border/70 bg-popover/95 px-3 py-1.5 text-xs font-semibold tabular-nums shadow-lg backdrop-blur-sm"
                     >
-                      <ThumbsUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <span className="min-w-[24px] text-center text-xs font-medium">
-                      {reactionState[node.id]?.upvotes ?? 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant={
-                        reactionState[node.id]?.userReaction === 'down' ? 'destructive' : 'ghost'
-                      }
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleCommentReaction(node.id, 'down')}
-                      disabled={!user}
-                      aria-label="Не понравилось"
-                    >
-                      <ThumbsDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <span className="min-w-[24px] text-center text-xs font-medium">
-                      {reactionState[node.id]?.downvotes ?? 0}
-                    </span>
-                  </div>
+                      <span className="text-emerald-400">
+                        +{reactionState[node.id]?.positive ?? 0}
+                      </span>
+                      <span className="text-destructive">
+                        -{reactionState[node.id]?.negative ?? 0}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Действия">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
-                      <DropdownMenuLabel>Действия</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {user && node.author.id !== user.id && (
+                    <DropdownMenuContent
+                      align="end"
+                      sideOffset={8}
+                      className="w-60 rounded-[calc(var(--radius)*1.05)] border border-border/60 bg-popover/95 p-2 shadow-lg backdrop-blur"
+                    >
+                      <DropdownMenuLabel className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        @{node.author.username}
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        className="flex items-start gap-2 px-2 py-2 text-xs text-muted-foreground"
+                        disabled
+                      >
+                        <Clock className="mt-0.5 h-3.5 w-3.5" />
+                        <span>{formatCommentTimestamp(node.createdAt)}</span>
+                      </DropdownMenuItem>
+                      {!isOwnComment && user && (
+                        <DropdownMenuSeparator className="my-1" />
+                      )}
+                      {!isOwnComment && user && (
                         <DropdownMenuItem
                           onClick={() => handleCommentAction(node, 'report')}
-                          className="gap-2"
+                          className="flex items-center gap-2 px-2 py-2 text-sm"
                         >
-                          <Flag className="h-3.5 w-3.5" />
+                          <Flag className="h-3.5 w-3.5 text-muted-foreground" />
                           <span>Пожаловаться</span>
                         </DropdownMenuItem>
                       )}
-                      {user && node.author.id === user.id && (
+                      {isOwnComment && (
                         <>
                           <DropdownMenuItem
                             onClick={() => handleCommentAction(node, 'edit')}
-                            className="gap-2"
+                            className="flex items-center gap-2 px-2 py-2 text-sm"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>Изменить</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleCommentAction(node, 'delete')}
-                            className="gap-2 text-destructive focus:text-destructive"
+                            className="flex items-center gap-2 px-2 py-2 text-sm text-destructive focus:text-destructive"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             <span>Удалить</span>
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuSeparator />
+                      {user && <DropdownMenuSeparator className="my-1" />}
                       <DropdownMenuItem
                         onClick={() => handleCommentAction(node, 'info')}
-                        className="gap-2"
+                        className="flex items-center gap-2 px-2 py-2 text-sm"
                       >
-                        <Info className="h-3.5 w-3.5" />
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>Информация</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -915,6 +998,19 @@ export default function ArticlePage() {
                     className="w-full min-h-[100px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                     value={replyText}
                     onChange={(event) => setReplyText(event.target.value)}
+                    ref={(el) => {
+                      if (el) {
+                        replyInputRefs.current.set(node.id, el)
+                      } else {
+                        replyInputRefs.current.delete(node.id)
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault()
+                        handleSubmitReply()
+                      }
+                    }}
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={handleCancelReply}>
@@ -952,7 +1048,7 @@ export default function ArticlePage() {
 
       return [
         commentElement,
-        ...renderCommentThread(node.replies, depth + 1, { showStripes, threadMode }),
+        ...renderCommentThread(node.replies, depth + 1, { showConnectors, threadMode }),
       ]
     })
   }
@@ -1027,6 +1123,7 @@ export default function ArticlePage() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -1137,7 +1234,7 @@ export default function ArticlePage() {
           {/* Article Content */}
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <div
-              className="text-foreground leading-relaxed"
+              className="text-foreground leading-relaxed break-words"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
           </div>
@@ -1146,55 +1243,11 @@ export default function ArticlePage() {
 
           {/* Comments Section */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between gap-2">
             <h2 className="text-2xl font-bold tracking-tight">
-                Комментарии ({combinedComments.length})
+              Комментарии ({combinedComments.length})
             </h2>
-              {localComments.length > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  Local preview
-                </Badge>
-              )}
-            </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {maxCommentDepth > 0 && (
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <ListTree className="h-3.5 w-3.5" />
-                    Глубина:
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {Array.from({ length: maxCommentDepth + 1 }).map((_, depth) => (
-                      <Button
-                        key={`depth-toggle-${depth}`}
-                        variant={highlightDepth === depth ? 'default' : 'ghost'}
-                        size="sm"
-                        className={cn(
-                          'h-7 rounded-full px-2 text-xs font-medium',
-                          highlightDepth === depth ? '' : 'text-muted-foreground'
-                        )}
-                        onClick={() =>
-                          setHighlightDepth((prev) => (prev === depth ? null : depth))
-                        }
-                      >
-                        {depth}
-                      </Button>
-                    ))}
-                    {highlightDepth !== null && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 rounded-full px-2 text-xs"
-                        onClick={() => setHighlightDepth(null)}
-                      >
-                        Сброс
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-
+            <div className="flex flex-wrap items-center justify-end gap-3">
               {threadRootId && nodeLookup.has(threadRootId) && (
                 <div className="flex flex-1 flex-wrap items-center justify-end gap-2 text-xs">
                   <span className="text-muted-foreground">Фокус ветки:</span>
@@ -1239,7 +1292,7 @@ export default function ArticlePage() {
               )}
             </div>
 
-            <Card>
+            <Card className="border border-border/60 bg-card">
               <CardContent className="pt-6 space-y-3">
                 <textarea
                   placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
@@ -1247,6 +1300,13 @@ export default function ArticlePage() {
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
                   disabled={!user}
+                  ref={commentInputRef}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault()
+                      handleSubmitComment()
+                    }
+                  }}
                 />
                 <div className="flex justify-end gap-2">
                   {!user && (
@@ -1271,7 +1331,7 @@ export default function ArticlePage() {
                   Загружаем комментарии…
                 </CardContent>
               </Card>
-            ) : combinedComments.length === 0 ? (
+              ) : combinedComments.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   Пока нет комментариев. Будьте первым!
@@ -1279,21 +1339,128 @@ export default function ArticlePage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {renderCommentThread(
-                  threadRootId && nodeLookup.has(threadRootId)
-                    ? [nodeLookup.get(threadRootId)!]
-                    : commentTree,
-                  0,
-                  {
-                    showStripes: !(threadRootId && nodeLookup.has(threadRootId)),
-                    threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
-                  }
-                )}
-              </div>
+                  {renderCommentThread(
+                    threadRootId && nodeLookup.has(threadRootId)
+                      ? [nodeLookup.get(threadRootId)!]
+                      : commentTree,
+                    0,
+                    {
+                      showStripes: !(threadRootId && nodeLookup.has(threadRootId)),
+                      threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
+                    }
+                  )}
+                      </div>
             )}
           </div>
         </article>
       </div>
+
+      <Dialog
+        open={isInfoOpen && !!infoComment}
+        onOpenChange={(open) => {
+          setIsInfoOpen(open)
+          if (!open) {
+            setInfoComment(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="space-y-1.5">
+            <DialogTitle>Информация о комментарии</DialogTitle>
+            <DialogDescription>
+              Сводка для модерации и будущей интеграции со Strapi.
+            </DialogDescription>
+          </DialogHeader>
+          {infoComment && (
+            <div className="space-y-5">
+              <div className="flex items-start gap-3 rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/30 p-3">
+                <Avatar className="h-10 w-10">
+                  {infoComment.author.avatar ? (
+                    <AvatarImage src={infoComment.author.avatar} alt={infoComment.author.username} />
+                  ) : null}
+                  <AvatarFallback>
+                    {infoComment.author.username
+                      .split(' ')
+                      .map((word) => word[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    @{infoComment.author.username}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatCommentTimestamp(infoComment.createdAt)} · ID {infoComment.id}
+                  </p>
+                  {infoParent && (
+                    <p className="text-xs text-muted-foreground">
+                      Ответ на @{infoParent.author.username}
+                    </p>
+                  )}
+              </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Текст комментария
+                </p>
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-background/70 p-3 text-sm leading-relaxed">
+                  {infoComment.text}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
+                  <p className="text-xs text-muted-foreground">Источник</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {infoComment.source === 'local' ? 'Локальное хранилище (только у текущего пользователя)' : 'Strapi (общедоступно)'}
+                  </p>
+                </div>
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
+                  <p className="text-xs text-muted-foreground">Ответов</p>
+                  <p className="text-sm font-medium text-foreground">{infoComment.replies.length}</p>
+                </div>
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
+                  <p className="text-xs text-muted-foreground">Реакции (рейтинг)</p>
+                  <p
+                    className={cn(
+                      'text-sm font-medium',
+                      (infoReactions?.score ?? 0) > 0 && 'text-emerald-500',
+                      (infoReactions?.score ?? 0) < 0 && 'text-destructive'
+                    )}
+                  >
+                    {infoReactions?.score ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
+                  </p>
+          </div>
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
+                  <p className="text-xs text-muted-foreground">Статус синхронизации</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {infoComment.source === 'local'
+                      ? 'Ожидает отправки в Strapi'
+                      : 'Получен из Strapi'}
+                  </p>
+      </div>
+    </div>
+
+              <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
+                TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и
+                синхронизировать реакции через `/api/comment-reactions`.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="sm:justify-end">
+            <Button variant="ghost" onClick={() => setIsInfoOpen(false)}>
+              Закрыть
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isShareOpen}
@@ -1330,7 +1497,7 @@ export default function ArticlePage() {
                   {copySuccess ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copySuccess ? 'Copied' : 'Copy'}
                 </Button>
-              </div>
+    </div>
             </div>
 
             {shareTargets.length > 0 && (
@@ -1370,7 +1537,8 @@ export default function ArticlePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }
 
