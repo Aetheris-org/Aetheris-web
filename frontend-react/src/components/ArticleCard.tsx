@@ -6,7 +6,7 @@ import type { Article } from '@/types/article'
 interface ArticleCardProps {
   article: Article
   onTagClick?: (tag: string) => void
-  onArticleClick?: (articleId: number) => void
+  onArticleClick?: (articleId: string) => void
 }
 
 export function ArticleCard({
@@ -34,13 +34,15 @@ export function ArticleCard({
       onClick={() => onArticleClick?.(article.id)}
     >
       {article.previewImage && (
-        <div className="relative h-48 w-full overflow-hidden border-b border-border/40">
+        <div className="relative w-full overflow-hidden border-b border-border/40">
+          <div className="aspect-video w-full">
           <img
             src={article.previewImage}
             alt={article.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
+          </div>
         </div>
       )}
 

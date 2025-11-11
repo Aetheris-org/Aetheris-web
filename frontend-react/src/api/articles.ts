@@ -15,9 +15,20 @@ import {
 function transformArticle(strapiArticle: any): Article {
   const author = unwrapAuthor(strapiArticle.author)
   const previewUrl = getStrapiMediaUrl(strapiArticle.preview_image)
-  
+
+  const documentId =
+    strapiArticle.documentId ||
+    strapiArticle.document_id ||
+    (typeof strapiArticle.id !== 'undefined' ? String(strapiArticle.id) : '')
+  const databaseId =
+    typeof strapiArticle.id === 'number'
+      ? strapiArticle.id
+      : Number.parseInt(strapiArticle.id, 10) || 0
+
   return {
-    id: strapiArticle.id,
+    id: documentId,
+    documentId,
+    databaseId,
     title: strapiArticle.title,
     content: strapiArticle.content,
     excerpt: strapiArticle.excerpt || undefined,
@@ -158,7 +169,7 @@ export async function getTrendingArticles(_userId?: number, limit: number = 3): 
   return unwrapStrapiCollectionResponse(res.data).map(transformArticle)
 }
 
-export async function getArticle(id: number, _userId?: number): Promise<Article> {
+export async function getArticle(id: string, _userId?: number): Promise<Article> {
   const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/api/articles/${id}`, {
     params: {
       populate: {
@@ -176,15 +187,11 @@ export async function getArticle(id: number, _userId?: number): Promise<Article>
   return transformArticle(unwrapStrapiResponse(res.data))
 }
 
-export async function reactArticle(
-  articleId: number,
-  _userId: number,
-  reaction: 'like' | 'dislike'
-): Promise<Article> {
+export async function reactArticle(articleId: string, reaction: 'like' | 'dislike'): Promise<Article> {
   const res = await apiClient.post<StrapiResponse<any>>(`/api/articles/${articleId}/react`, {
-    reaction
+    reaction,
   })
-  
+
   return transformArticle(res.data.data)
 }
 

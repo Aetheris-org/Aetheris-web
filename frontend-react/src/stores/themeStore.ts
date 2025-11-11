@@ -1,5 +1,10 @@
 import { create } from 'zustand'
 
+type TypographyScale = 'default' | 'comfortable' | 'compact'
+type ContrastMode = 'standard' | 'bold'
+type DepthStyle = 'flat' | 'soft' | 'elevated'
+type MotionPreference = 'default' | 'reduced'
+
 type ThemeMode = 'light' | 'dark' | 'system'
 export type AccentColor =
   | 'indigo'
@@ -34,11 +39,36 @@ export interface CustomAccentColors {
   dark: string
 }
 
+interface AppearancePresetSettings {
+  theme: ThemeMode
+  accent: AccentColor
+  customAccent: CustomAccentColors
+  radius: number
+  typography: TypographyScale
+  contrast: ContrastMode
+  density: number
+  depth: DepthStyle
+  motion: MotionPreference
+}
+
+export interface AppearancePreset {
+  id: string
+  name: string
+  createdAt: number
+  settings: AppearancePresetSettings
+}
+
 interface StoredPreferences {
   theme: ThemeMode
   accent: AccentColor
   radius: number
   customAccent: CustomAccentColors
+  typography: TypographyScale
+  contrast: ContrastMode
+  density: number
+  depth: DepthStyle
+  motion: MotionPreference
+  presets: AppearancePreset[]
 }
 
 interface ThemeState extends StoredPreferences {
@@ -48,6 +78,14 @@ interface ThemeState extends StoredPreferences {
   setAccent: (accent: AccentColor) => void
   setRadius: (radius: number) => void
   setCustomAccentColor: (mode: ResolvedTheme, color: string) => void
+  setTypography: (value: TypographyScale) => void
+  setContrast: (value: ContrastMode) => void
+  setDensity: (value: number) => void
+  setDepth: (value: DepthStyle) => void
+  setMotion: (value: MotionPreference) => void
+  savePreset: (name: string) => AppearancePreset | null
+  deletePreset: (id: string) => void
+  applyPreset: (id: string) => void
 }
 
 const STORAGE_KEY = 'aetheris:appearance'
@@ -64,10 +102,23 @@ const DEFAULT_PREFERENCES: StoredPreferences = {
   accent: 'indigo',
   radius: 0.5,
   customAccent: DEFAULT_CUSTOM_ACCENT,
+  typography: 'default',
+  contrast: 'standard',
+  density: 1,
+  depth: 'soft',
+  motion: 'default',
+  presets: [],
 }
 
 export const DEFAULT_RADIUS = DEFAULT_PREFERENCES.radius
 export const DEFAULT_CUSTOM_ACCENT_COLORS = DEFAULT_CUSTOM_ACCENT
+
+
+export const TYPOGRAPHY_SCALES: Record<TypographyScale, { label: string; description: string; scale: number }> = {
+  default: { label: 'Default', description: 'Balanced reading size', scale: 1 },
+  comfortable: { label: 'Comfortable', description: 'Slightly larger type for relaxing reading', scale: 1.06 },
+  compact: { label: 'Compact', description: 'A tighter, more data-dense layout', scale: 0.94 },
+}
 
 export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig> = {
   indigo: {
@@ -395,6 +446,44 @@ function loadPreferences(): StoredPreferences {
         accent: isAccentValid ? (accent as AccentColor) : DEFAULT_PREFERENCES.accent,
         radius: clampRadius(parsed.radius ?? DEFAULT_PREFERENCES.radius),
         customAccent: normalizeCustomAccent(parsed.customAccent),
+        typography: (parsed.typography as TypographyScale) ?? DEFAULT_PREFERENCES.typography,
+        contrast: (parsed.contrast as ContrastMode) ?? DEFAULT_PREFERENCES.contrast,
+        density: typeof parsed.density === 'number' ? parsed.density : DEFAULT_PREFERENCES.density,
+        depth: (parsed.depth as DepthStyle) ?? DEFAULT_PREFERENCES.depth,
+        motion: (parsed.motion as MotionPreference) ?? DEFAULT_PREFERENCES.motion,
+        presets: Array.isArray(parsed.presets)
+          ? (parsed.presets as AppearancePreset[]).map((preset) => {
+              const settings = preset.settings ?? ({} as Partial<AppearancePresetSettings>)
+              const presetAccent = settings.accent
+              const presetAccentValid =
+                presetAccent === 'indigo' ||
+                presetAccent === 'violet' ||
+                presetAccent === 'emerald' ||
+                presetAccent === 'amber' ||
+                presetAccent === 'rose' ||
+                presetAccent === 'cyan' ||
+                presetAccent === 'mono' ||
+                presetAccent === 'peach' ||
+                presetAccent === 'custom'
+              return {
+                ...preset,
+                settings: {
+                  theme:
+                    settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system'
+                      ? settings.theme
+                      : DEFAULT_PREFERENCES.theme,
+                  accent: presetAccentValid ? (presetAccent as AccentColor) : DEFAULT_PREFERENCES.accent,
+                  customAccent: normalizeCustomAccent(settings.customAccent),
+                  radius: clampRadius(settings.radius ?? DEFAULT_PREFERENCES.radius),
+                  typography: (settings.typography as TypographyScale) ?? DEFAULT_PREFERENCES.typography,
+                  contrast: (settings.contrast as ContrastMode) ?? DEFAULT_PREFERENCES.contrast,
+                  density: typeof settings.density === 'number' ? settings.density : DEFAULT_PREFERENCES.density,
+                  depth: (settings.depth as DepthStyle) ?? DEFAULT_PREFERENCES.depth,
+                  motion: (settings.motion as MotionPreference) ?? DEFAULT_PREFERENCES.motion,
+                },
+              }
+            })
+          : DEFAULT_PREFERENCES.presets,
       }
     } catch {
       // ignore corrupted storage
@@ -418,12 +507,31 @@ function savePreferences(preferences: StoredPreferences) {
   window.localStorage.setItem('theme', preferences.theme)
 }
 
+function extractPreferences(state: ThemeState): StoredPreferences {
+  return {
+    theme: state.theme,
+    accent: state.accent,
+    radius: state.radius,
+    customAccent: state.customAccent,
+    typography: state.typography,
+    contrast: state.contrast,
+    density: state.density,
+    depth: state.depth,
+    motion: state.motion,
+    presets: state.presets,
+  }
+}
+
 function applyThemePreferences(state: ThemeState) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
   const resolved = state.resolvedTheme
   root.classList.toggle('dark', resolved === 'dark')
   root.dataset.theme = state.theme
+  root.dataset.contrast = state.contrast
+  root.dataset.depth = state.depth
+  root.dataset.motion = state.motion
+  root.dataset.typography = state.typography
 
   const accentValues =
     state.accent === 'custom'
@@ -436,6 +544,13 @@ function applyThemePreferences(state: ThemeState) {
   root.style.setProperty('--accent-foreground', accentValues.accentForeground)
   root.style.setProperty('--ring', accentValues.ring)
   root.style.setProperty('--radius', `${state.radius}rem`)
+  const typographyScale = TYPOGRAPHY_SCALES[state.typography]?.scale ?? 1
+  root.style.setProperty('--aetheris-font-scale', typographyScale.toString())
+  root.style.setProperty('--aetheris-density', state.density.toString())
+
+  root.style.removeProperty('--aetheris-surface')
+  root.style.removeProperty('--aetheris-surface-flat')
+  root.style.removeProperty('--aetheris-surface-gradient')
 }
 
 let isInitialized = false
@@ -492,12 +607,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         resolvedTheme,
       }
       applyThemePreferences(nextState)
-      savePreferences({
-        theme: mode,
-        accent: state.accent,
-        radius: state.radius,
-        customAccent: state.customAccent,
-      })
+      savePreferences(extractPreferences(nextState))
       return {
         theme: mode,
         resolvedTheme,
@@ -511,12 +621,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         accent,
       }
       applyThemePreferences(nextState)
-      savePreferences({
-        theme: state.theme,
-        accent,
-        radius: state.radius,
-        customAccent: state.customAccent,
-      })
+      savePreferences(extractPreferences(nextState))
       return { accent }
     })
   },
@@ -528,12 +633,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         radius: nextRadius,
       }
       applyThemePreferences(nextState)
-      savePreferences({
-        theme: state.theme,
-        accent: state.accent,
-        radius: nextRadius,
-        customAccent: state.customAccent,
-      })
+      savePreferences(extractPreferences(nextState))
       return { radius: nextRadius }
     })
   },
@@ -549,15 +649,140 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         customAccent,
       }
       applyThemePreferences(nextState)
-      savePreferences({
-        theme: state.theme,
-        accent: state.accent,
-        radius: state.radius,
-        customAccent,
-      })
+      savePreferences(extractPreferences(nextState))
       return { customAccent }
+    })
+  },
+  setTypography: (value) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        typography: value,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { typography: value }
+    })
+  },
+  setContrast: (value) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        contrast: value,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { contrast: value }
+    })
+  },
+  setDensity: (value) => {
+    const nextDensity = Math.min(1.15, Math.max(0.85, value))
+    set((state) => {
+      const nextState = {
+        ...state,
+        density: nextDensity,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { density: nextDensity }
+    })
+  },
+  setDepth: (value) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        depth: value,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { depth: value }
+    })
+  },
+  setMotion: (value) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        motion: value,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { motion: value }
+    })
+  },
+  savePreset: (name) => {
+    const trimmed = name.trim()
+    if (!trimmed) return null
+    let createdPreset: AppearancePreset | null = null
+    set((state) => {
+      const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `preset-${Date.now()}-${Math.floor(Math.random()*1e4)}`;
+      const preset: AppearancePreset = {
+        id: id,
+        name: trimmed,
+        createdAt: Date.now(),
+        settings: {
+          theme: state.theme,
+          accent: state.accent,
+          customAccent: state.customAccent,
+          radius: state.radius,
+          typography: state.typography,
+          contrast: state.contrast,
+          density: state.density,
+          depth: state.depth,
+          motion: state.motion,
+        },
+      }
+      createdPreset = preset
+      const presets = [...state.presets, preset]
+      const nextState = {
+        ...state,
+        presets,
+      }
+      savePreferences(extractPreferences(nextState))
+      return { presets }
+    })
+    return createdPreset
+  },
+  deletePreset: (id) => {
+    set((state) => {
+      const presets = state.presets.filter((preset) => preset.id !== id)
+      const nextState = {
+        ...state,
+        presets,
+      }
+      savePreferences(extractPreferences(nextState))
+      return { presets }
+    })
+  },
+  applyPreset: (id) => {
+    set((state) => {
+      const preset = state.presets.find((item) => item.id === id)
+      if (!preset) {
+        return {}
+      }
+      const nextState = {
+        ...state,
+        ...preset.settings,
+        customAccent: normalizeCustomAccent(preset.settings.customAccent),
+        resolvedTheme: resolveTheme(preset.settings.theme),
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return {
+        ...preset.settings,
+        resolvedTheme: nextState.resolvedTheme,
+        customAccent: nextState.customAccent,
+      }
     })
   },
 }))
 
-export type { ThemeMode, ThemeState, ResolvedTheme }
+export type {
+  ThemeMode,
+  ThemeState,
+  ResolvedTheme,
+  TypographyScale,
+  ContrastMode,
+  DepthStyle,
+  MotionPreference,
+  AppearancePreset,
+}

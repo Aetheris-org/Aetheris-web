@@ -6,7 +6,7 @@ import type { Article } from '@/types/article'
 interface ArticleCardLineProps {
   article: Article
   onTagClick?: (tag: string) => void
-  onArticleClick?: (articleId: number) => void
+  onArticleClick?: (articleId: string) => void
 }
 
 export function ArticleCardLine({
@@ -35,13 +35,15 @@ export function ArticleCardLine({
       <div className="p-4">
         <div className="flex items-center gap-4">
           {article.previewImage && (
-            <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border border-border/40">
+            <div className="relative w-32 shrink-0 overflow-hidden rounded-lg border border-border/40">
+              <div className="aspect-video w-full">
               <img
                 src={article.previewImage}
                 alt={article.title}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
+              </div>
             </div>
           )}
           {/* Content */}

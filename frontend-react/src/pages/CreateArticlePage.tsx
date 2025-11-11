@@ -574,16 +574,16 @@ export default function CreateArticlePage() {
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-muted/40">
                 {effectiveImageUrl ? (
                   <>
-                    <Cropper
+              <Cropper
                       image={effectiveImageUrl}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={16 / 9}
-                      onCropChange={setCrop}
-                      onZoomChange={setZoom}
-                      onCropComplete={onCropComplete}
-                      restrictPosition={false}
-                    />
+                crop={crop}
+                zoom={zoom}
+                aspect={16 / 9}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                restrictPosition={false}
+              />
                     <div className="pointer-events-none absolute inset-0 border border-white/20" />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/10" />
                   </>
@@ -604,13 +604,13 @@ export default function CreateArticlePage() {
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span>Zoom</span>
                   <span className="text-muted-foreground">{zoom.toFixed(1)}×</span>
-                </div>
-                <Slider
-                  value={[zoom]}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  onValueChange={(value) => setZoom(value[0] ?? 1)}
+          </div>
+            <Slider
+              value={[zoom]}
+              min={1}
+              max={3}
+              step={0.1}
+              onValueChange={(value) => setZoom(value[0] ?? 1)}
                   disabled={isProcessingImage}
                   className="mt-3"
                 />

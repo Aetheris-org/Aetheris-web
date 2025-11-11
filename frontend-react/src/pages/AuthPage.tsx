@@ -1,11 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  AlertCircle,
+  Apple,
+  Github,
+  Loader2,
+  Shield,
+  Smartphone,
+  Sparkles,
+  Twitter,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
 
@@ -50,57 +67,179 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <div className="relative min-h-screen app-surface flex items-center justify-center px-4 py-12">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
 
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-bold">Aetheris</CardTitle>
-          <CardDescription className="text-sm">
-            Войдите через Google, чтобы продолжить
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {errorMessage && (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          <Button
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full gap-3"
-            variant="outline"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Перенаправляем…</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
-                  <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
-                  <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
-                  <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335" />
-                </svg>
-                <span>Продолжить с Google</span>
-              </>
+      <div className="grid w-full max-w-4xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <Card className="shadow-lg border-border/60">
+          <CardHeader className="space-y-2">
+            <CardTitle className="flex items-center justify-between text-2xl font-bold">
+              <span>Aetheris Account</span>
+              <Badge variant="secondary" className="gap-1 text-[11px] uppercase tracking-wide">
+                <Shield className="h-3 w-3" />
+                Secure OAuth
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Sign in to sync your reading list, publish stories, and keep track of your stats.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {errorMessage && (
+              <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <span>{errorMessage}</span>
+              </div>
             )}
-          </Button>
 
-          <Separator />
+            <Tabs defaultValue="oauth" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="oauth">One-click sign-in</TabsTrigger>
+                <TabsTrigger value="coming-soon">Coming soon</TabsTrigger>
+              </TabsList>
+              <TabsContent value="oauth" className="space-y-4">
+                <Button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  className="w-full gap-3 bg-white text-foreground hover:bg-muted"
+                  variant="outline"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Перенаправляем…</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
+                        <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
+                        <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042л3.007-2.332z" fill="#FBBC05" />
+                        <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958л3.007 2.332z" fill="#EA4335" />
+                      </svg>
+                      <span>Continue with Google</span>
+                    </>
+                  )}
+                </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
-            Продолжая, вы соглашаетесь с нашими условиями использования и политикой конфиденциальности.
-          </p>
-        </CardContent>
-      </Card>
+                <div className="space-y-2 rounded-lg border border-muted-foreground/10 bg-muted/20 p-3 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-primary" />
+                    We never store your Google password. Authentication flows through Google OAuth.
+                  </p>
+                  <p>
+                    Two-factor authentication is enforced on admin accounts. You can enable it inside settings once logged in.
+                  </p>
+                </div>
+              </TabsContent>
+              <TabsContent value="coming-soon" className="space-y-4">
+                {[
+                  {
+                    label: 'Continue with GitHub',
+                    icon: Github,
+                  },
+                  {
+                    label: 'Continue with Apple ID',
+                    icon: Apple,
+                  },
+                  {
+                    label: 'Continue with Twitter',
+                    icon: Twitter,
+                  },
+                ].map((provider) => (
+                  <Button
+                    key={provider.label}
+                    variant="outline"
+                    className="w-full justify-between gap-3"
+                    disabled
+                  >
+                    <span className="flex items-center gap-2">
+                      <provider.icon className="h-4 w-4" />
+                      {provider.label}
+                    </span>
+                    <Badge variant="secondary" className="gap-1 text-[10px] uppercase tracking-wide">
+                      Soon
+                    </Badge>
+                  </Button>
+                ))}
+                <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Additional providers are in development. Want to request one? Let us know via support chat after signing in.
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <Separator />
+
+            <div className="grid gap-4 text-sm text-muted-foreground">
+              <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
+                <Smartphone className="mt-0.5 h-4 w-4 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Where you left off</p>
+                  <p>We restore your reading list, in-progress drafts, and editor preferences on every device.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
+                <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Invite-only beta</p>
+                  <p>
+                    Using Aetheris during the beta ensures your feedback directly shapes the product. More integrations are rolling out soon.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/50 bg-gradient-to-br from-primary/10 via-background to-background shadow-xl">
+          <CardHeader className="space-y-4">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Shield className="h-5 w-5 text-primary" />
+              Why sign in?
+            </CardTitle>
+            <CardDescription>
+              A tailored experience with synced workspace, private drafts, and analytics tailored to your writing.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              {[
+                {
+                  title: 'Synced reading list',
+                  description: 'Save articles to revisit later and keep them synced across devices.',
+                },
+                {
+                  title: 'Author dashboard',
+                  description: 'Track article views, reactions, and community engagement at a glance.',
+                },
+                {
+                  title: 'Instant editor access',
+                  description: 'Jump straight into the draft editor without losing your last edits.',
+                },
+              ].map((feature) => (
+                <div key={feature.title} className="rounded-lg border border-border/60 bg-background/70 p-3 text-sm">
+                  <p className="font-medium text-foreground">{feature.title}</p>
+                  <p className="text-xs text-muted-foreground">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3 text-xs text-muted-foreground">
+              <p>
+                By continuing, you agree to our Terms of Service and Privacy Policy. We only use your email for authentication and account recovery.
+              </p>
+              <p className="flex items-center gap-2 text-muted-foreground/80">
+                <Shield className="h-3.5 w-3.5" />
+                Need help? Reach us at <span className="font-medium text-primary">hello@aetheris.dev</span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

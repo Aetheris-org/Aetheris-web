@@ -52,7 +52,8 @@ async function fixPermissions() {
       'api::article.article.findOne',
       'api::article.article.count',
       'api::article.article.search',
-      'api::profile.profile.findOne'
+      'api::profile.profile.findOne',
+      'api::comment.comment.findForArticle'
     ];
 
     for (const action of actions) {
@@ -107,7 +108,8 @@ async function fixPermissions() {
         'plugin::upload.content-api.upload',
         'api::article.article.create',
         'api::article.article.update',
-        'api::article.article.delete'
+        'api::article.article.delete',
+        'api::comment.comment.createForArticle'
       ];
 
       for (const action of uploadActions) {
@@ -152,7 +154,9 @@ async function fixPermissions() {
     console.log('   ✅ Upload → content-api.upload (POST /api/upload)');
     console.log('   ✅ Article → create (POST /api/articles)');
     console.log('   ✅ Article → update (PUT /api/articles/:id)');
-    console.log('   ✅ Article → delete (DELETE /api/articles/:id)\n');
+    console.log('   ✅ Article → delete (DELETE /api/articles/:id)');
+    console.log('   ✅ Comment → findForArticle (GET /api/articles/:documentId/comments)');
+    console.log('   ✅ Comment → createForArticle (POST /api/articles/:documentId/comments)\n');
     console.log('⚠️  Перезапустите Strapi для применения изменений!\n');
 
   } catch (error) {

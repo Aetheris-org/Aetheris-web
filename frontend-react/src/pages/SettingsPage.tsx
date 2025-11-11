@@ -1,28 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type ChangeEvent } from 'react'
+import type { KeyboardEvent } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
+  AlertTriangle,
   ArrowLeft,
-  User,
-  Palette,
-  Shield,
-  Monitor,
+  AtSign,
   Bell,
-  CreditCard,
+  BellRing,
+  Briefcase,
+  CalendarClock,
   Camera,
-  ImagePlus,
-  Trash2,
-  Loader2,
-  Crop,
   Check,
-  RefreshCw,
-  Sun,
-  Moon,
-  Rows,
-  List,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Crown,
+  Crop,
+  Download,
+  Eye,
+  EyeOff,
+  Github,
+  Globe,
+  ImagePlus,
+  Laptop,
   LayoutGrid,
+  Linkedin,
+  List,
+  Loader2,
+  LogOut,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Monitor,
+  Moon,
+  Palette,
+  RefreshCw,
+  RotateCcw,
+  Rows,
+  Search,
+  Shield,
+  ShieldCheck,
+  Smartphone,
+  Sun,
+  Trash2,
+  Twitter,
+  User,
+  Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,8 +75,13 @@ import {
   ACCENT_COLOR_PRESETS,
   buildCustomAccentOption,
   DEFAULT_RADIUS,
+  TYPOGRAPHY_SCALES,
   type ThemeMode,
-  type ResolvedTheme,
+  type AppearancePreset,
+  type TypographyScale,
+  type ContrastMode,
+  type DepthStyle,
+  type MotionPreference,
 } from '@/stores/themeStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { cn } from '@/lib/utils'
@@ -69,24 +99,24 @@ const themeModeOptions: Array<{
   value: ThemeMode
   label: string
   description: string
-  icon: LucideIcon
+  icon: typeof Sun
 }> = [
   {
     value: 'light',
     label: 'Light',
-    description: 'Bright surfaces with crisp contrast',
+    description: 'Bright surfaces with crisp contrast.',
     icon: Sun,
   },
   {
     value: 'dark',
     label: 'Dark',
-    description: 'Low-light friendly interface',
+    description: 'Low-light friendly palette.',
     icon: Moon,
   },
   {
     value: 'system',
     label: 'System',
-    description: 'Match your OS preference automatically',
+    description: 'Follow your device preference automatically.',
     icon: Monitor,
   },
 ]
@@ -95,7 +125,7 @@ const viewModeOptions: Array<{
   value: 'default' | 'line' | 'square'
   label: string
   description: string
-  icon: LucideIcon
+  icon: typeof Rows
 }> = [
   {
     value: 'default',
@@ -106,7 +136,7 @@ const viewModeOptions: Array<{
   {
     value: 'line',
     label: 'Compact list',
-    description: 'Dense layout, great for scanning',
+    description: 'Dense list optimized for scanning',
     icon: List,
   },
   {
@@ -116,6 +146,75 @@ const viewModeOptions: Array<{
     icon: LayoutGrid,
   },
 ]
+
+interface AppearanceOptionCardProps {
+  active: boolean
+  leading: ReactNode
+  label: string
+  description: string
+  onSelect: () => void
+  preview?: ReactNode
+  footer?: ReactNode
+  disabled?: boolean
+}
+
+function AppearanceOptionCard({
+  active,
+  leading,
+  label,
+  description,
+  onSelect,
+  preview,
+  footer,
+  disabled,
+}: AppearanceOptionCardProps) {
+  const handleActivate = () => {
+    if (disabled) return
+    onSelect()
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onSelect()
+    }
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      onClick={handleActivate}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        'group relative flex h-full cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        disabled && 'pointer-events-none opacity-60',
+        active && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-border/60 bg-background shadow-sm">
+            {leading}
+          </div>
+          <div>
+            <p className="text-sm font-semibold">{label}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        {active && <Check className="h-4 w-4 text-primary" />}
+      </div>
+      {preview ? (
+        <div className="rounded-md border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
+          {preview}
+        </div>
+      ) : null}
+      {footer ? <div className="text-xs text-muted-foreground">{footer}</div> : null}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -220,6 +319,19 @@ function ProfileSettings() {
 
   const [nickname, setNickname] = useState(user?.nickname ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
+  const [firstName, setFirstName] = useState(user?.firstName ?? '')
+  const [lastName, setLastName] = useState(user?.lastName ?? '')
+  const [contactEmail, setContactEmail] = useState(user?.email ?? '')
+  const [website, setWebsite] = useState(user?.website ?? '')
+  const [locationValue, setLocationValue] = useState(user?.location ?? '')
+  const [headline, setHeadline] = useState('')
+  const [availability, setAvailability] = useState('')
+  const [twitterHandle, setTwitterHandle] = useState('')
+  const [githubHandle, setGithubHandle] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [portfolioUrl, setPortfolioUrl] = useState('')
+  const [contactSaving, setContactSaving] = useState(false)
+  const [socialSaving, setSocialSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar ?? null)
   const [coverPreview, setCoverPreview] = useState<string | null>(user?.coverImage ?? null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -237,6 +349,11 @@ function ProfileSettings() {
   const initialBio = user?.bio ?? ''
   const initialAvatar = user?.avatar ?? null
   const initialCover = user?.coverImage ?? null
+  const initialFirstName = user?.firstName ?? ''
+  const initialLastName = user?.lastName ?? ''
+  const initialContactEmail = user?.email ?? ''
+  const initialWebsite = user?.website ?? ''
+  const initialLocation = user?.location ?? ''
 
   const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null)
   const [coverCropSource, setCoverCropSource] = useState<string | null>(null)
@@ -248,6 +365,21 @@ function ProfileSettings() {
   const [coverZoom, setCoverZoom] = useState(1)
   const [avatarCroppedArea, setAvatarCroppedArea] = useState<Area | null>(null)
   const [coverCroppedArea, setCoverCroppedArea] = useState<Area | null>(null)
+  const contactInitialRef = useRef({
+    firstName: initialFirstName,
+    lastName: initialLastName,
+    contactEmail: initialContactEmail,
+    website: initialWebsite,
+    location: initialLocation,
+    headline: '',
+    availability: '',
+  })
+  const socialInitialRef = useRef({
+    twitterHandle: '',
+    githubHandle: '',
+    linkedinUrl: '',
+    portfolioUrl: '',
+  })
 
   const revokeObjectUrl = (url: string | null) => {
     if (url && url.startsWith('blob:')) {
@@ -262,7 +394,34 @@ function ProfileSettings() {
     setCoverRemoved(false)
     setAvatarFile(null)
     setCoverFile(null)
-
+    contactInitialRef.current = {
+      firstName: initialFirstName,
+      lastName: initialLastName,
+      contactEmail: initialContactEmail,
+      website: initialWebsite,
+      location: initialLocation,
+      headline: '',
+      availability: '',
+    }
+    socialInitialRef.current = {
+      twitterHandle: '',
+      githubHandle: '',
+      linkedinUrl: '',
+      portfolioUrl: '',
+    }
+    setFirstName(contactInitialRef.current.firstName)
+    setLastName(contactInitialRef.current.lastName)
+    setContactEmail(contactInitialRef.current.contactEmail)
+    setWebsite(contactInitialRef.current.website)
+    setLocationValue(contactInitialRef.current.location)
+    setHeadline(contactInitialRef.current.headline)
+    setAvailability(contactInitialRef.current.availability)
+    setTwitterHandle(socialInitialRef.current.twitterHandle)
+    setGithubHandle(socialInitialRef.current.githubHandle)
+    setLinkedinUrl(socialInitialRef.current.linkedinUrl)
+    setPortfolioUrl(socialInitialRef.current.portfolioUrl)
+    setContactSaving(false)
+    setSocialSaving(false)
     setAvatarPreview((prev) => {
       if (prev && prev.startsWith('blob:')) {
         revokeObjectUrl(prev)
@@ -277,17 +436,35 @@ function ProfileSettings() {
       return initialCover
     })
 
-    revokeObjectUrl(avatarCropSource)
-    revokeObjectUrl(coverCropSource)
-    setAvatarCropSource(null)
-    setCoverCropSource(null)
+    setAvatarCropSource((prev) => {
+      if (prev && prev.startsWith('blob:')) {
+        revokeObjectUrl(prev)
+      }
+      return null
+    })
+    setCoverCropSource((prev) => {
+      if (prev && prev.startsWith('blob:')) {
+        revokeObjectUrl(prev)
+      }
+      return null
+    })
     setAvatarCrop({ x: 0, y: 0 })
     setCoverCrop({ x: 0, y: 0 })
     setAvatarZoom(1)
     setCoverZoom(1)
     setAvatarCroppedArea(null)
     setCoverCroppedArea(null)
-  }, [initialNickname, initialBio, initialAvatar, initialCover])
+  }, [
+    initialNickname,
+    initialBio,
+    initialAvatar,
+    initialCover,
+    initialFirstName,
+    initialLastName,
+    initialContactEmail,
+    initialWebsite,
+    initialLocation,
+  ])
 
   useEffect(() => {
     return () => {
@@ -420,7 +597,7 @@ function ProfileSettings() {
       setAvatarZoom(1)
       setAvatarCroppedArea(null)
       setIsAvatarCropOpen(false)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to crop avatar image', error)
       toast({
         title: 'Image processing failed',
@@ -455,7 +632,7 @@ function ProfileSettings() {
       setCoverZoom(1)
       setCoverCroppedArea(null)
       setIsCoverCropOpen(false)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to crop cover image', error)
       toast({
         title: 'Image processing failed',
@@ -512,7 +689,26 @@ function ProfileSettings() {
     setCoverZoom(1)
     setAvatarCroppedArea(null)
     setCoverCroppedArea(null)
+    handleContactReset()
+    handleSocialReset()
+    setContactSaving(false)
+    setSocialSaving(false)
   }
+
+  const contactHasChanges =
+    firstName.trim() !== contactInitialRef.current.firstName ||
+    lastName.trim() !== contactInitialRef.current.lastName ||
+    contactEmail.trim() !== contactInitialRef.current.contactEmail ||
+    website.trim() !== contactInitialRef.current.website ||
+    locationValue.trim() !== contactInitialRef.current.location ||
+    headline.trim() !== contactInitialRef.current.headline ||
+    availability.trim() !== contactInitialRef.current.availability
+
+  const socialHasChanges =
+    twitterHandle.trim() !== socialInitialRef.current.twitterHandle ||
+    githubHandle.trim() !== socialInitialRef.current.githubHandle ||
+    linkedinUrl.trim() !== socialInitialRef.current.linkedinUrl ||
+    portfolioUrl.trim() !== socialInitialRef.current.portfolioUrl
 
   const hasTextChanges =
     nickname.trim() !== initialNickname || (bio ?? '').trim() !== (initialBio ?? '')
@@ -525,6 +721,59 @@ function ProfileSettings() {
   const hasChanges = hasTextChanges || hasImageChanges
   const bioLength = bio?.length ?? 0
   const bioRemaining = BIO_LIMIT - bioLength
+
+  const handleContactReset = () => {
+    setFirstName(contactInitialRef.current.firstName)
+    setLastName(contactInitialRef.current.lastName)
+    setContactEmail(contactInitialRef.current.contactEmail)
+    setWebsite(contactInitialRef.current.website)
+    setLocationValue(contactInitialRef.current.location)
+    setHeadline(contactInitialRef.current.headline)
+    setAvailability(contactInitialRef.current.availability)
+  }
+
+  const handleContactSave = async () => {
+    setContactSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    contactInitialRef.current = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      contactEmail: contactEmail.trim(),
+      website: website.trim(),
+      location: locationValue.trim(),
+      headline: headline.trim(),
+      availability: availability.trim(),
+    }
+    setContactSaving(false)
+    toast({
+      title: 'Contact details saved',
+      description:
+        'Contact information will sync with Strapi once corresponding fields are implemented.',
+    })
+  }
+
+  const handleSocialReset = () => {
+    setTwitterHandle(socialInitialRef.current.twitterHandle)
+    setGithubHandle(socialInitialRef.current.githubHandle)
+    setLinkedinUrl(socialInitialRef.current.linkedinUrl)
+    setPortfolioUrl(socialInitialRef.current.portfolioUrl)
+  }
+
+  const handleSocialSave = async () => {
+    setSocialSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    socialInitialRef.current = {
+      twitterHandle: twitterHandle.trim(),
+      githubHandle: githubHandle.trim(),
+      linkedinUrl: linkedinUrl.trim(),
+      portfolioUrl: portfolioUrl.trim(),
+    }
+    setSocialSaving(false)
+    toast({
+      title: 'Social links saved',
+      description: 'TODO: connect social profiles with backend once it supports them.',
+    })
+  }
 
   const handleSave = async () => {
     if (!user) return
@@ -606,12 +855,13 @@ function ProfileSettings() {
         title: 'Profile updated',
         description: 'Your profile information was saved successfully.',
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update profile', error)
       toast({
         title: 'Update failed',
         description:
-          error?.response?.data?.error?.message ?? 'Something went wrong while saving your profile.',
+          (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
+          'Something went wrong while saving your profile.',
         variant: 'destructive',
       })
     } finally {
@@ -623,7 +873,9 @@ function ProfileSettings() {
     <Card>
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
-        <CardDescription>Update how your profile appears to other readers.</CardDescription>
+        <CardDescription>
+          Update how your profile appears to other readers.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
         <section className="space-y-3">
@@ -773,6 +1025,216 @@ function ProfileSettings() {
               maxLength={BIO_LIMIT + 10}
               disabled={isSaving}
             />
+          </div>
+        </section>
+
+        <Separator className="border-dashed" />
+
+        <section className="space-y-4 pt-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Contact details</Label>
+            <p className="text-sm text-muted-foreground">
+              Share how editors and collaborators can reach you. These fields will sync with the backend in a future release.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="settings-first-name">First name</Label>
+              <Input
+                id="settings-first-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                placeholder="Alex"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-last-name">Last name</Label>
+              <Input
+                id="settings-last-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                placeholder="Rivera"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-contact-email">Contact email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-contact-email"
+                  value={contactEmail}
+                  onChange={(event) => setContactEmail(event.target.value)}
+                  placeholder="hello@aetheris.dev"
+                  className="pl-9"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Shown to editors only. Account login email remains unchanged.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-website">Website</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-website"
+                  value={website}
+                  onChange={(event) => setWebsite(event.target.value)}
+                  placeholder="https://aetheris.dev"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-location">Location</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-location"
+                  value={locationValue}
+                  onChange={(event) => setLocationValue(event.target.value)}
+                  placeholder="Valencia, Spain"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-headline">Headline</Label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-headline"
+                  value={headline}
+                  onChange={(event) => setHeadline(event.target.value)}
+                  placeholder="Frontend engineer & technical writer"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-availability">Availability note</Label>
+              <Input
+                id="settings-availability"
+                value={availability}
+                onChange={(event) => setAvailability(event.target.value)}
+                placeholder="Open for mentoring requests and podcast interviews."
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleContactReset}
+              disabled={!contactHasChanges || contactSaving}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleContactSave}
+              disabled={!contactHasChanges || contactSaving}
+              className="gap-2"
+            >
+              {contactSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save contact info'
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <Separator className="border-dashed" />
+
+        <section className="space-y-4 pt-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Social profiles</Label>
+            <p className="text-sm text-muted-foreground">
+              Display external profiles on your public page. Add full URLs for best results.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="settings-twitter">Twitter / X</Label>
+              <div className="relative">
+                <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-twitter"
+                  value={twitterHandle}
+                  onChange={(event) => setTwitterHandle(event.target.value)}
+                  placeholder="@aetheris"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-github">GitHub</Label>
+              <div className="relative">
+                <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-github"
+                  value={githubHandle}
+                  onChange={(event) => setGithubHandle(event.target.value)}
+                  placeholder="github.com/aetheris"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-linkedin">LinkedIn</Label>
+              <div className="relative">
+                <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-linkedin"
+                  value={linkedinUrl}
+                  onChange={(event) => setLinkedinUrl(event.target.value)}
+                  placeholder="linkedin.com/in/aetheris"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-portfolio">Portfolio</Label>
+              <div className="relative">
+                <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="settings-portfolio"
+                  value={portfolioUrl}
+                  onChange={(event) => setPortfolioUrl(event.target.value)}
+                  placeholder="dribbble.com/aetheris"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSocialReset}
+              disabled={!socialHasChanges || socialSaving}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSocialSave}
+              disabled={!socialHasChanges || socialSaving}
+              className="gap-2"
+            >
+              {socialSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save social links'
+              )}
+            </Button>
           </div>
         </section>
 
@@ -996,6 +1458,7 @@ function ProfileSettings() {
 }
 
 function AppearanceSettings() {
+  const { toast } = useToast()
   const {
     theme,
     resolvedTheme,
@@ -1006,6 +1469,20 @@ function AppearanceSettings() {
     setRadius,
     customAccent,
     setCustomAccentColor,
+    typography,
+    setTypography,
+    contrast,
+    setContrast,
+    density,
+    setDensity,
+    depth,
+    setDepth,
+    motion,
+    setMotion,
+    presets,
+    savePreset,
+    deletePreset,
+    applyPreset,
   } = useThemeStore((state) => ({
     theme: state.theme,
     resolvedTheme: state.resolvedTheme,
@@ -1016,32 +1493,189 @@ function AppearanceSettings() {
     setRadius: state.setRadius,
     customAccent: state.customAccent,
     setCustomAccentColor: state.setCustomAccentColor,
+    typography: state.typography,
+    setTypography: state.setTypography,
+    contrast: state.contrast,
+    setContrast: state.setContrast,
+    density: state.density,
+    setDensity: state.setDensity,
+    depth: state.depth,
+    setDepth: state.setDepth,
+    motion: state.motion,
+    setMotion: state.setMotion,
+    presets: state.presets,
+    savePreset: state.savePreset,
+    deletePreset: state.deletePreset,
+    applyPreset: state.applyPreset,
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
 
-  const accentOptions = useMemo(
-    () => [...ACCENT_COLOR_PRESETS, buildCustomAccentOption(customAccent)],
-    [customAccent]
+  const accentOptions = useMemo(() => {
+    const base = ACCENT_COLOR_PRESETS.map((preset) => ({
+      value: preset.value,
+      label: preset.label,
+      description: preset.description,
+      gradient: `linear-gradient(135deg, hsl(${preset.preview}) 0%, hsl(${preset.values.dark.primary}) 100%)`,
+      tone: preset.values[resolvedTheme].primary,
+      values: preset.values,
+    }))
+    const custom = buildCustomAccentOption(customAccent)
+    base.push({
+      value: custom.value,
+      label: custom.label,
+      description: custom.description,
+      gradient: `linear-gradient(135deg, hsl(${custom.values.light.primary}) 0%, hsl(${custom.values.dark.primary}) 100%)`,
+      tone: custom.values[resolvedTheme].primary,
+      values: custom.values,
+    })
+    return base
+  }, [customAccent, resolvedTheme])
+
+  const typographyOptions = useMemo(
+    () => [
+      {
+        value: 'default' as TypographyScale,
+        label: TYPOGRAPHY_SCALES.default.label,
+        description: TYPOGRAPHY_SCALES.default.description,
+        icon: Rows,
+      },
+      {
+        value: 'comfortable' as TypographyScale,
+        label: TYPOGRAPHY_SCALES.comfortable.label,
+        description: TYPOGRAPHY_SCALES.comfortable.description,
+        icon: Monitor,
+      },
+      {
+        value: 'compact' as TypographyScale,
+        label: TYPOGRAPHY_SCALES.compact.label,
+        description: TYPOGRAPHY_SCALES.compact.description,
+        icon: Smartphone,
+      },
+    ],
+    []
   )
 
-  const radiusInPixels = Math.round(radius * 16)
-  const radiusIsDefault = Math.abs(radius - DEFAULT_RADIUS) < 0.005
-  const activeAccent =
-    accentOptions.find((option) => option.value === accent) ?? accentOptions[0]
-  const previewAccentHsl = activeAccent.values[resolvedTheme].primary
+  const contrastOptions = useMemo(
+    () => [
+      {
+        value: 'standard' as ContrastMode,
+        label: 'Standard contrast',
+        description: 'Balanced tone for everyday reading.',
+        icon: Eye,
+      },
+      {
+        value: 'bold' as ContrastMode,
+        label: 'Bold contrast',
+        description: 'Higher contrast for more dramatic separation.',
+        icon: AlertTriangle,
+      },
+    ],
+    []
+  )
 
-  const handleAccentKeyDown = (event: KeyboardEvent<HTMLDivElement>, value: AccentColor) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      setAccent(value)
+  const motionOptions = useMemo(
+    () => [
+      {
+        value: 'default' as MotionPreference,
+        label: 'Animated',
+        description: 'Retain smooth transitions and micro-interactions.',
+        icon: RefreshCw,
+      },
+      {
+        value: 'reduced' as MotionPreference,
+        label: 'Reduced motion',
+        description: 'Minimize motion for people sensitive to animation.',
+        icon: EyeOff,
+      },
+    ],
+    []
+  )
+
+  const depthOptions = useMemo(
+    () => [
+      {
+        value: 'flat' as DepthStyle,
+        label: 'Flat',
+        description: 'Minimal outlines with no drop shadows.',
+        icon: Shield,
+      },
+      {
+        value: 'soft' as DepthStyle,
+        label: 'Soft',
+        description: 'Gentle ambient shadows for subtle depth.',
+        icon: ShieldCheck,
+      },
+      {
+        value: 'elevated' as DepthStyle,
+        label: 'Elevated',
+        description: 'Pronounced shadows suited for hero moments.',
+        icon: Crown,
+      },
+    ],
+    []
+  )
+
+  const [presetName, setPresetName] = useState('')
+
+  const presetList = useMemo<AppearancePreset[]>(
+    () => [...presets].sort((a, b) => b.createdAt - a.createdAt),
+    [presets]
+  )
+
+  const radiusIsDefault = Math.abs(radius - DEFAULT_RADIUS) < 0.005
+  const densityIsDefault = Math.abs(density - 1) < 0.001
+
+  const densityPercent = Math.round((density - 1) * 100)
+  const densityLabel =
+    densityPercent === 0
+      ? 'Standard spacing'
+      : densityPercent > 0
+        ? `Expanded by ${densityPercent}%`
+        : `Condensed by ${Math.abs(densityPercent)}%`
+  const previewScale = TYPOGRAPHY_SCALES[typography]?.scale ?? 1
+  const previewShadowMap: Record<DepthStyle, string> = {
+    flat: '0 1px 2px rgba(15, 23, 42, 0.05)',
+    soft: '0 18px 40px rgba(15, 23, 42, 0.12)',
+    elevated: '0 30px 70px rgba(15, 23, 42, 0.22)',
+  }
+  const previewShadow = previewShadowMap[depth]
+  const previewBackground = resolvedTheme === 'dark' ? '#0f172a' : '#ffffff'
+  const previewGap = 18 * density
+  const previewPadding = 24 * density
+  const previewBadgeClass = contrast === 'bold' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+  const previewMotionNote = motion === 'reduced' ? 'Motion minimized' : 'Animations enabled'
+
+  const handleSavePreset = () => {
+    const preset = savePreset(presetName)
+    if (!preset) {
+      toast({
+        title: 'Preset name required',
+        description: 'Give your preset a name before saving it.',
+        variant: 'destructive',
+      })
+      return
     }
+    setPresetName('')
+    toast({
+      title: 'Preset saved',
+      description: `"${preset.name}" is ready to use.`,
+    })
   }
 
-  const handleCustomAccentChange = (mode: ResolvedTheme, value: string) => {
-    if (accent !== 'custom') {
-      setAccent('custom')
-    }
-    setCustomAccentColor(mode, value)
+  const handleApplyPreset = (preset: AppearancePreset) => {
+    applyPreset(preset.id)
+    toast({
+      title: 'Preset applied',
+      description: `Appearance updated to "${preset.name}".`,
+    })
+  }
+
+  const handleDeletePreset = (preset: AppearancePreset) => {
+    deletePreset(preset.id)
+    toast({
+      title: 'Preset removed',
+      description: `Deleted "${preset.name}".`,
+    })
   }
 
   return (
@@ -1049,7 +1683,7 @@ function AppearanceSettings() {
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
         <CardDescription>
-          Fine-tune theme, accent colors, and reading layout preferences.
+          Fine-tune theme, accent colors, backgrounds, and layout preferences.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-10">
@@ -1066,51 +1700,17 @@ function AppearanceSettings() {
             </Badge>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            {themeModeOptions.map((option) => {
-              const Icon = option.icon
-              const isActive = theme === option.value
-              return (
-                <button
+            {themeModeOptions.map((option) => (
+              <AppearanceOptionCard
                   key={option.value}
-                  type="button"
-                  onClick={() => setTheme(option.value)}
-                  className={cn(
-                    'group relative flex h-full flex-col gap-4 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isActive && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-primary transition group-hover:bg-primary/10">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                active={theme === option.value}
+                leading={<option.icon className="h-5 w-5" />}
+                label={option.label}
+                description={option.description}
+                onSelect={() => setTheme(option.value)}
+              />
+            ))}
                       </div>
-                    </div>
-                    {isActive && <Check className="h-4 w-4 text-primary" />}
-                  </div>
-                  <div
-                    className="rounded-lg border border-dashed bg-background p-3 text-xs text-muted-foreground"
-                    aria-hidden
-                  >
-          <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-16 items-center justify-center rounded-full bg-primary/20 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                        Headline
-            </span>
-                      <span className="h-1.5 flex-1 rounded-full bg-muted" />
-          </div>
-                    <div className="mt-2 space-y-2">
-                      <div className="h-1.5 w-full rounded-full bg-muted" />
-                      <div className="h-1.5 w-5/6 rounded-full bg-muted/80" />
-                      <div className="h-1.5 w-2/3 rounded-full bg-muted/70" />
-        </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
         </section>
 
         <Separator />
@@ -1119,93 +1719,61 @@ function AppearanceSettings() {
           <div className="space-y-1">
             <Label className="text-sm font-semibold">Accent color</Label>
             <p className="text-sm text-muted-foreground">
-              Set the brand hue used for primary actions and highlights across the UI.
+              Set the brand hue used for primary actions and highlights.
             </p>
-          </div>
+                    </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {accentOptions.map((option) => {
-              const isActive = accent === option.value
               const isCustom = option.value === 'custom'
               return (
-                <div
+                <AppearanceOptionCard
                   key={option.value}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setAccent(option.value)}
-                  onKeyDown={(event) => handleAccentKeyDown(event, option.value)}
-                  className={cn(
-                    'flex h-full flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isActive && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background">
-                        <span
-                          className="h-7 w-7 rounded-full shadow-sm"
-                          style={{ background: `hsl(${option.preview})` }}
-                        />
-                        {isActive && (
-                          <Check className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-background text-primary ring-1 ring-primary" />
-                        )}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">{option.description}</p>
-                      </div>
-                    </div>
+                  active={accent === option.value}
+                  leading={
+                    <span
+                      className="h-7 w-7 rounded-full shadow-sm ring-1 ring-border/40"
+                      style={{ background: `hsl(${option.tone})` }}
+                    />
+                  }
+                  label={option.label}
+                  description={option.description}
+                  onSelect={() => setAccent(option.value)}
+                  preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
+                  footer={
+                    isCustom ? (
+                      <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex items-center justify-between gap-3">
+                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="uppercase tracking-wide">Light</span>
+                            <input
+                              type="color"
+                              value={customAccent.light}
+                              onChange={(event) => {
+                                setAccent('custom')
+                                setCustomAccentColor('light', event.target.value)
+                              }}
+                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                              aria-label="Pick accent color for light theme"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="uppercase tracking-wide">Dark</span>
+                            <input
+                              type="color"
+                              value={customAccent.dark}
+                              onChange={(event) => {
+                                setAccent('custom')
+                                setCustomAccentColor('dark', event.target.value)
+                              }}
+                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                              aria-label="Pick accent color for dark theme"
+                            />
+                          </label>
                   </div>
-                  <div
-                    className="h-2 rounded-full"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(${option.preview}) 0%, hsl(${option.values.dark.primary}) 100%)`,
-                    }}
-                    aria-hidden
-                  />
-                  {isCustom && (
-                    <div className="mt-1 space-y-3 rounded-md border border-dashed bg-background/80 p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Light theme
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Primary accent in light mode
-                          </p>
-                        </div>
-                        <input
-                          type="color"
-                          value={customAccent.light}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={(event) => handleCustomAccentChange('light', event.target.value)}
-                          className="h-9 w-9 cursor-pointer rounded border border-border bg-transparent p-1"
-                          aria-label="Pick accent color for light theme"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Dark theme
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Primary accent in dark mode
-                          </p>
-                        </div>
-                        <input
-                          type="color"
-                          value={customAccent.dark}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={(event) => handleCustomAccentChange('dark', event.target.value)}
-                          className="h-9 w-9 cursor-pointer rounded border border-border bg-transparent p-1"
-                          aria-label="Pick accent color for dark theme"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Foreground and highlight colors adapt automatically for readability.
-                      </p>
                     </div>
-                  )}
-                </div>
+                    ) : undefined
+                  }
+                />
               )
             })}
           </div>
@@ -1215,26 +1783,114 @@ function AppearanceSettings() {
 
         <section className="space-y-4">
           <div className="space-y-1">
+            <Label className="text-sm font-semibold">Typography scale</Label>
+            <p className="text-sm text-muted-foreground">
+              Adjust reading size to fit your preferred density and display.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {typographyOptions.map((option) => (
+              <AppearanceOptionCard
+                  key={option.value}
+                active={typography === option.value}
+                leading={<option.icon className="h-5 w-5" />}
+                label={option.label}
+                description={option.description}
+                onSelect={() => setTypography(option.value)}
+                preview={
+                  <div className="space-y-2">
+                    <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Sample</div>
+                    <p className="text-sm font-medium">Typography adapts responsively.</p>
+                  </div>
+                }
+              />
+            ))}
+                      </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Contrast & motion</Label>
+            <p className="text-sm text-muted-foreground">
+              Tune clarity for different environments and accessibility preferences.
+            </p>
+                    </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {contrastOptions.map((option) => (
+              <AppearanceOptionCard
+                key={option.value}
+                active={contrast === option.value}
+                leading={<option.icon className="h-5 w-5" />}
+                label={option.label}
+                description={option.description}
+                onSelect={() => setContrast(option.value)}
+              />
+            ))}
+                  </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {motionOptions.map((option) => (
+              <AppearanceOptionCard
+                key={option.value}
+                active={motion === option.value}
+                leading={<option.icon className="h-5 w-5" />}
+                label={option.label}
+                description={option.description}
+                onSelect={() => setMotion(option.value)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Depth & shadows</Label>
+            <p className="text-sm text-muted-foreground">
+              Choose how pronounced surface shadows should appear.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {depthOptions.map((option) => (
+              <AppearanceOptionCard
+                key={option.value}
+                active={depth === option.value}
+                leading={<option.icon className="h-5 w-5" />}
+                label={option.label}
+                description={option.description}
+                onSelect={() => setDepth(option.value)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1">
             <Label className="text-sm font-semibold">Interface shape</Label>
             <p className="text-sm text-muted-foreground">
               Adjust corner rounding for cards, dialogs, and buttons.
             </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setRadius(DEFAULT_RADIUS)}
+              disabled={radiusIsDefault}
+              aria-label="Reset radius to default"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </div>
           <div className="space-y-3 rounded-lg border border-dashed p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
-                <span>Sharper</span>
-                <span>{radiusInPixels}px radius</span>
-                <span>Softer</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRadius(DEFAULT_RADIUS)}
-                disabled={radiusIsDefault}
-              >
-                Reset
-              </Button>
+            <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
+              <span>Sharper</span>
+              <span>{Math.round(radius * 16)}px radius</span>
+              <span>Softer</span>
             </div>
             <Slider
               value={[radius]}
@@ -1244,6 +1900,106 @@ function AppearanceSettings() {
               onValueChange={(value) => setRadius(value[0] ?? radius)}
               aria-label="Adjust global border radius"
             />
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold">Content density</Label>
+              <p className="text-sm text-muted-foreground">
+                Control vertical rhythm for lists, cards, and navigation.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDensity(1)}
+              disabled={densityIsDefault}
+              aria-label="Reset density to default"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-3 rounded-lg border border-dashed p-4">
+            <Slider
+              value={[density]}
+              min={0.85}
+              max={1.15}
+              step={0.05}
+              onValueChange={(value) => setDensity(value[0] ?? density)}
+              aria-label="Adjust interface density"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>-15%</span>
+              <span>Baseline</span>
+              <span>+15%</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{densityLabel}</p>
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold">Live preview</p>
+              <p className="text-sm text-muted-foreground">
+                Review how your appearance choices influence the interface.
+              </p>
+            </div>
+            <Badge variant="secondary">{resolvedTheme === 'dark' ? 'Dark theme' : 'Light theme'}</Badge>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+            <div
+              className="rounded-xl border transition-all"
+              style={{
+                background: previewBackground,
+                boxShadow: previewShadow,
+                padding: `${previewPadding}px`,
+                borderColor: contrast === 'bold' ? 'rgba(15, 23, 42, 0.22)' : undefined,
+                fontSize: `${previewScale}rem`,
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide', previewBadgeClass)}>
+                  Featured
+                </div>
+                <span className="text-xs text-muted-foreground">{densityLabel}</span>
+              </div>
+              <h4 className="mt-4 text-lg font-semibold">Designing a calmer reading experience</h4>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Accent colors, typography, spacing, and depth adapt instantly so you can discover the mood that fits your publication.
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2" style={{ gap: `${previewGap}px` }}>
+                <div className="rounded-lg border bg-background p-4 shadow-sm transition-all" style={{ boxShadow: previewShadow }}>
+                  <p className="text-sm font-medium">Primary action</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{previewMotionNote}</p>
+                  <Button size="sm" className="mt-4 w-full">
+                    Publish
+                  </Button>
+                </div>
+                <div className="rounded-lg border border-dashed bg-background/60 p-4 transition-all" style={{ boxShadow: depth === 'flat' ? 'none' : previewShadow }}>
+                  <p className="text-sm font-medium">Article digest</p>
+                  <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
+                    <li>• Visual hierarchy stays clear.</li>
+                    <li>• Shadows reinforce emphasis.</li>
+                    <li>• Contrast supports accessibility.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Tips</p>
+              <ul className="mt-3 space-y-2">
+                <li>• Combine comfortable typography with higher density for large screens.</li>
+                <li>• Use bold contrast with flat depth to keep things airy but legible.</li>
+                <li>• Save presets for different contexts like "Writing mode" or "Presentation".</li>
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -1260,52 +2016,41 @@ function AppearanceSettings() {
             {viewModeOptions.map((option) => {
               const Icon = option.icon
               const isActive = viewMode === option.value
+
               return (
-                <button
+                <AppearanceOptionCard
                   key={option.value}
-                  type="button"
-                  onClick={() => setViewMode(option.value)}
-                  className={cn(
-                    'flex h-full flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isActive && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-primary">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">{option.description}</p>
-                      </div>
-                    </div>
-                    {isActive && <Check className="h-4 w-4 text-primary" />}
-                  </div>
-                  <div className="rounded-md border border-dashed bg-background p-3" aria-hidden>
-                    <div
-                      className={cn(
-                        'grid gap-2',
-                        option.value === 'square' ? 'grid-cols-2' : 'grid-cols-1'
-                      )}
-                    >
-                      <div className="space-y-2 rounded-md border bg-card p-2">
-                        <span className="block h-1.5 rounded-full bg-muted" />
-                        <span className="block h-1.5 w-3/4 rounded-full bg-muted/80" />
-                        {option.value !== 'line' && (
-                          <span className="block h-16 rounded-md bg-muted/70" />
-                        )}
-                      </div>
-                      {option.value === 'square' && (
-                        <div className="space-y-2 rounded-md border bg-card p-2">
-                          <span className="block h-1.5 rounded-full bg-muted" />
-                          <span className="block h-1.5 w-3/4 rounded-full bg-muted/80" />
-                          <span className="block h-16 rounded-md bg-muted/70" />
+                  active={isActive}
+                  leading={<Icon className="h-5 w-5" />}
+                  label={option.label}
+                  description={option.description}
+                  onSelect={() => setViewMode(option.value)}
+                  preview={
+                    <div className="rounded-md border border-dashed bg-muted/10 p-2 text-muted-foreground" aria-hidden>
+                      {option.value === 'default' ? (
+                        <div className="space-y-1.5">
+                          <div className="h-10 rounded-md bg-muted/40" />
+                          <div className="space-y-0.5">
+                            <span className="block h-1.5 w-10/12 rounded-full bg-muted/70" />
+                            <span className="block h-1.5 w-8/12 rounded-full bg-muted/50" />
+                          </div>
+                        </div>
+                      ) : option.value === 'line' ? (
+                        <div className="space-y-1">
+                          <span className="block h-1.5 w-full rounded-full bg-muted/70" />
+                          <span className="block h-1.5 w-11/12 rounded-full bg-muted/60" />
+                          <span className="block h-1.5 w-9/12 rounded-full bg-muted/50" />
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[0, 1, 2, 3, 4, 5].map((index) => (
+                            <div key={index} className="h-6 rounded-sm bg-muted/50" />
+                          ))}
                         </div>
                       )}
                     </div>
-                  </div>
-                </button>
+                  }
+                />
               )
             })}
           </div>
@@ -1314,131 +2059,878 @@ function AppearanceSettings() {
         <Separator />
 
         <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold">Live preview</p>
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Presets</Label>
               <p className="text-sm text-muted-foreground">
-                Review how your appearance choices influence the interface.
+              Save and recall appearance combinations for different workflows.
               </p>
             </div>
-            <Badge variant="secondary">
-              {resolvedTheme === 'dark' ? 'Dark theme' : 'Light theme'}
-            </Badge>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-            <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: `hsl(${previewAccentHsl})` }}
-                  />
-                  Accent
-                </span>
-                <span>Preview</span>
+          <Card className="border-dashed">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Save current appearance</CardTitle>
+              <CardDescription>Capture your current theme mix to reuse later.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={presetName}
+                  onChange={(event) => setPresetName(event.target.value)}
+                  placeholder="Focus Mode"
+                  maxLength={40}
+                  className="sm:flex-1"
+                />
+                <Button onClick={handleSavePreset} className="sm:w-auto">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Save preset
+                </Button>
               </div>
-              <h4 className="mt-4 text-lg font-semibold">
-                Designing a calmer reading experience
-              </h4>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Accent colors and layout preferences update instantly so you can find the style that matches your flow.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button size="sm" className="gap-1">
-                  Primary action
+              {presetList.length > 0 ? (
+                <div className="space-y-3">
+                  {presetList.map((preset) => (
+                    <div
+                      key={preset.id}
+                      className="flex flex-col gap-3 rounded-lg border border-border/70 bg-background/40 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{preset.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Saved {new Date(preset.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+          <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => handleApplyPreset(preset)}
+                        >
+                          <Download className="h-4 w-4" />
+                          Apply
                 </Button>
-                <Button size="sm" variant="outline">
-                  Secondary
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Minimal
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeletePreset(preset)}
+                          aria-label={`Delete preset ${preset.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            <div className="rounded-xl border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">Tips</p>
-              <ul className="mt-3 space-y-2">
-                <li>• Use system mode to stay in sync with your OS theme.</li>
-                <li>• Adjust corner radius to match your brand&apos;s shapes.</li>
-                <li>• Pick the article layout that suits how you browse content.</li>
-              </ul>
+                  ))}
             </div>
-          </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  You haven&apos;t saved any appearance presets yet. Tune a look you love, give it a name, and save it for instant switching.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </section>
       </CardContent>
     </Card>
   )
 }
 
+type PrivacyState = {
+  profilePublic: boolean
+  showEmail: boolean
+  showLastSeen: boolean
+  allowMessages: boolean
+  allowSearch: boolean
+  shareActivity: boolean
+  enableTwoFactor: boolean
+}
+
 function PrivacySettings() {
+  const { user } = useAuthStore((state) => ({ user: state.user }))
+  const { toast } = useToast()
+
+  const baseSettings = useMemo<PrivacyState>(
+    () => ({
+      profilePublic: user?.isProfilePublic ?? true,
+      showEmail: user?.showEmail ?? false,
+      showLastSeen: user?.showLastSeen ?? false,
+      allowMessages: true,
+      allowSearch: true,
+      shareActivity: true,
+      enableTwoFactor: false,
+    }),
+    [user?.id, user?.isProfilePublic, user?.showEmail, user?.showLastSeen]
+  )
+
+  const [privacy, setPrivacy] = useState<PrivacyState>(baseSettings)
+  const initialRef = useRef(baseSettings)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    initialRef.current = baseSettings
+    setPrivacy(baseSettings)
+  }, [baseSettings])
+
+  const hasChanges = useMemo(
+    () =>
+      (Object.keys(privacy) as Array<keyof PrivacyState>).some(
+        (key) => privacy[key] !== initialRef.current[key]
+      ),
+    [privacy]
+  )
+
+  const handleToggle = (key: keyof PrivacyState) => (next: boolean) => {
+    setPrivacy((prev) => ({ ...prev, [key]: next }))
+  }
+
+  const handleReset = () => {
+    setPrivacy(initialRef.current)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    initialRef.current = privacy
+    setSaving(false)
+    toast({
+      title: 'Privacy preferences saved',
+      description: 'TODO: wire these toggles into Strapi privacy settings.',
+    })
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Privacy Settings</CardTitle>
+        <CardTitle>Privacy</CardTitle>
         <CardDescription>
-          Control your privacy and data
+          Decide how visible your profile is and what information you share with the community.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Privacy settings coming soon...
-        </p>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <ToggleRow
+            label="Public profile"
+            description="Allow readers who are not signed in to view your profile."
+            icon={Shield}
+            value={privacy.profilePublic}
+            onChange={handleToggle('profilePublic')}
+          />
+          <ToggleRow
+            label="Show contact email"
+            description="Display your contact email on your profile page."
+            icon={Mail}
+            value={privacy.showEmail}
+            onChange={handleToggle('showEmail')}
+          />
+          <ToggleRow
+            label="Show last seen"
+            description="Display the last time you were active to other members."
+            icon={CalendarClock}
+            value={privacy.showLastSeen}
+            onChange={handleToggle('showLastSeen')}
+          />
+          <ToggleRow
+            label="Allow direct messages"
+            description="Let other authors reach out to you through the built-in messenger."
+            icon={MessageCircle}
+            value={privacy.allowMessages}
+            onChange={handleToggle('allowMessages')}
+          />
+          <ToggleRow
+            label="Allow search indexing"
+            description="Permit search engines to index your profile for discoverability."
+            icon={Search}
+            value={privacy.allowSearch}
+            onChange={handleToggle('allowSearch')}
+            meta={
+              privacy.allowSearch ? (
+                <Badge variant="secondary" className="mt-1 w-fit">
+                  Recommended
+                </Badge>
+              ) : undefined
+            }
+          />
+          <ToggleRow
+            label="Show reading activity"
+            description="Let followers know which articles you read and bookmark."
+            icon={Eye}
+            value={privacy.shareActivity}
+            onChange={handleToggle('shareActivity')}
+          />
+          <ToggleRow
+            label="Two-factor authentication"
+            description="Protect your account with a secondary verification step at sign in."
+            icon={ShieldCheck}
+            value={privacy.enableTwoFactor}
+            onChange={handleToggle('enableTwoFactor')}
+            meta={
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Coming soon
+              </span>
+            }
+          />
+        </div>
+
+        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Data export & account deletion</p>
+              <p>
+                Need a copy of your data or want to schedule account deletion? Request it and the editorial
+                team will reach out within 48 hours.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 w-fit gap-2"
+                onClick={() =>
+                  toast({
+                    title: 'Request submitted',
+                    description: 'TODO: connect export/deletion requests to support workflow.',
+                  })
+                }
+              >
+                <Download className="h-4 w-4" />
+                Request export
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
+            Reset
+          </Button>
+          <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save privacy settings'
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
+type NotificationState = {
+  emailMentions: boolean
+  emailFollows: boolean
+  emailDigest: boolean
+  pushComments: boolean
+  pushReactions: boolean
+  productAnnouncements: boolean
+  securityAlerts: boolean
+  digestFrequency: 'daily' | 'weekly' | 'monthly'
+}
+
 function NotificationsSettings() {
+  const { toast } = useToast()
+  const baseState = useMemo<NotificationState>(
+    () => ({
+      emailMentions: true,
+      emailFollows: true,
+      emailDigest: true,
+      pushComments: true,
+      pushReactions: true,
+      productAnnouncements: false,
+      securityAlerts: true,
+      digestFrequency: 'weekly',
+    }),
+    []
+  )
+  const [preferences, setPreferences] = useState<NotificationState>(baseState)
+  const initialRef = useRef(baseState)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    initialRef.current = baseState
+    setPreferences(baseState)
+  }, [baseState])
+
+  const hasChanges = useMemo(
+    () =>
+      (Object.keys(preferences) as Array<keyof NotificationState>).some(
+        (key) => preferences[key] !== initialRef.current[key]
+      ),
+    [preferences]
+  )
+
+  const handleToggle = (key: keyof NotificationState) => (next: boolean) => {
+    setPreferences((prev) => ({ ...prev, [key]: next }))
+  }
+
+  const handleDigestChange = (frequency: NotificationState['digestFrequency']) => {
+    setPreferences((prev) => ({ ...prev, digestFrequency: frequency }))
+  }
+
+  const handleReset = () => setPreferences(initialRef.current)
+
+  const handleSave = async () => {
+    setSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    initialRef.current = preferences
+    setSaving(false)
+    toast({
+      title: 'Notification preferences saved',
+      description: 'TODO: sync notification toggles with user preferences in Strapi.',
+    })
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Notifications</CardTitle>
         <CardDescription>
-          Manage your notification preferences
+          Choose how and when you hear about new activity.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Notification settings coming soon...
-        </p>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Email updates
+          </h3>
+          <ToggleRow
+            label="Mentions & replies"
+            description="Get an email when someone mentions you or replies to your article."
+            icon={Mail}
+            value={preferences.emailMentions}
+            onChange={handleToggle('emailMentions')}
+          />
+          <ToggleRow
+            label="New followers"
+            description="Receive a short note when someone follows your profile."
+            icon={BellRing}
+            value={preferences.emailFollows}
+            onChange={handleToggle('emailFollows')}
+          />
+          <ToggleRow
+            label="Digest summary"
+            description="A curated summary of comments, reactions, and saved articles."
+            icon={CalendarClock}
+            value={preferences.emailDigest}
+            onChange={handleToggle('emailDigest')}
+            meta={
+              <div className="flex items-center gap-2">
+                {(['daily', 'weekly', 'monthly'] as NotificationState['digestFrequency'][]).map(
+                  (option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={preferences.digestFrequency === option ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 px-3 text-xs capitalize"
+                      onClick={() => handleDigestChange(option)}
+                    >
+                      {option}
+                    </Button>
+                  )
+                )}
+              </div>
+            }
+          />
+        </div>
+
+        <Separator className="border-dashed" />
+
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Push notifications
+          </h3>
+          <ToggleRow
+            label="Comments on my articles"
+            description="Instant alerts when readers leave feedback on your stories."
+            icon={MessageCircle}
+            value={preferences.pushComments}
+            onChange={handleToggle('pushComments')}
+          />
+          <ToggleRow
+            label="Reactions & bookmarks"
+            description="Know when your stories resonate with the community."
+            icon={BellRing}
+            value={preferences.pushReactions}
+            onChange={handleToggle('pushReactions')}
+          />
+          <ToggleRow
+            label="Product announcements"
+            description="Hear about new features and beta programs before anyone else."
+            icon={Laptop}
+            value={preferences.productAnnouncements}
+            onChange={handleToggle('productAnnouncements')}
+          />
+          <ToggleRow
+            label="Security alerts"
+            description="Critical alerts if someone signs in from a new device or location."
+            icon={AlertTriangle}
+            value={preferences.securityAlerts}
+            onChange={handleToggle('securityAlerts')}
+            meta={
+              <Badge variant="destructive" className="mt-1 w-fit px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                Recommended
+              </Badge>
+            }
+          />
+        </div>
+
+        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Quiet hours</p>
+          <p className="mt-1">
+            Notifications are paused between <span className="font-semibold">22:00</span> and{' '}
+            <span className="font-semibold">08:00</span> in your local timezone.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit gap-2"
+            onClick={() =>
+              toast({
+                title: 'Quiet hours updated',
+                description: 'TODO: expose a time range picker for quiet hours.',
+              })
+            }
+          >
+            <Clock className="h-4 w-4" />
+            Adjust quiet hours
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
+            Reset
+          </Button>
+          <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save notification settings'
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
+type SessionItem = {
+  id: string
+  device: string
+  platform: 'desktop' | 'mobile'
+  browser: string
+  location: string
+  ip: string
+  lastActive: string
+  current: boolean
+}
+
+const DEFAULT_SESSIONS: SessionItem[] = [
+  {
+    id: 'session-1',
+    device: 'MacBook Pro',
+    platform: 'desktop',
+    browser: 'Arc 1.38 · macOS 15.1',
+    location: 'Valencia, Spain',
+    ip: '193.42.12.18',
+    lastActive: 'Active now',
+    current: true,
+  },
+  {
+    id: 'session-2',
+    device: 'iPhone 15 Pro',
+    platform: 'mobile',
+    browser: 'Aetheris iOS',
+    location: 'Barcelona, Spain',
+    ip: '82.19.44.21',
+    lastActive: '2 hours ago',
+    current: false,
+  },
+  {
+    id: 'session-3',
+    device: 'Surface Laptop',
+    platform: 'desktop',
+    browser: 'Edge 130 · Windows 11',
+    location: 'Berlin, Germany',
+    ip: '91.202.17.55',
+    lastActive: 'Yesterday · 22:17',
+    current: false,
+  },
+]
+
 function SessionsSettings() {
+  const { toast } = useToast()
+  const [sessions, setSessions] = useState<SessionItem[]>(DEFAULT_SESSIONS)
+  const [signingOutId, setSigningOutId] = useState<string | null>(null)
+
+  const handleSignOut = async (sessionId: string) => {
+    setSigningOutId(sessionId)
+    await new Promise((resolve) => setTimeout(resolve, 600))
+    setSessions((prev) => prev.filter((session) => session.id !== sessionId))
+    setSigningOutId(null)
+    toast({
+      title: 'Session revoked',
+      description: 'TODO: connect session revocation with the authentication service.',
+    })
+  }
+
+  const handleSignOutOthers = async () => {
+    setSigningOutId('all')
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    setSessions((prev) => prev.filter((session) => session.current))
+    setSigningOutId(null)
+    toast({
+      title: 'Other sessions signed out',
+      description: 'TODO: revoke sessions server-side and notify connected devices.',
+    })
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Active Sessions</CardTitle>
+        <CardTitle>Active sessions</CardTitle>
         <CardDescription>
-          Manage your active sessions and devices
+          Keep an eye on where you&apos;re signed in and revoke access you don&apos;t recognise.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Sessions management coming soon...
-        </p>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          {sessions.map((session) => {
+            const Icon = session.platform === 'mobile' ? Smartphone : Laptop
+            return (
+              <div
+                key={session.id}
+                className="flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/10 p-4 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span>{session.device}</span>
+                    {session.current ? (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <ShieldCheck className="h-3 w-3" />
+                        Current session
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <LogOut className="h-3 w-3" />
+                      {session.browser}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {session.location}
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-mono">
+                      <Shield className="h-3 w-3" />
+                      {session.ip}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3" />
+                      {session.lastActive}
+                    </span>
+                  </div>
+                </div>
+
+                {!session.current && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 md:w-auto"
+                    onClick={() => handleSignOut(session.id)}
+                    disabled={signingOutId === session.id || signingOutId === 'all'}
+                  >
+                    {signingOutId === session.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Signing out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <Separator className="border-dashed" />
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p className="text-sm font-medium text-foreground">Secure your account</p>
+            <p>
+              Remove sessions you don&apos;t recognise and enable two-factor authentication in the
+              privacy tab.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-2"
+            onClick={handleSignOutOthers}
+            disabled={signingOutId === 'all' || sessions.length <= 1}
+          >
+            {signingOutId === 'all' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Signing out...
+              </>
+            ) : (
+              <>
+                <Shield className="h-4 w-4" />
+                Sign out of other sessions
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
+type Invoice = {
+  id: string
+  period: string
+  amount: string
+  status: 'Paid' | 'Refunded' | 'Pending'
+  downloadUrl: string
+}
+
 function BillingSettings() {
+  const { toast } = useToast()
+  const [processingAction, setProcessingAction] = useState<'manage' | 'payment' | null>(null)
+  const invoices: Invoice[] = useMemo(
+    () => [
+      {
+        id: 'INV-2025-003',
+        period: 'November 2025',
+        amount: '$18.00',
+        status: 'Paid',
+        downloadUrl: '#',
+      },
+      {
+        id: 'INV-2025-002',
+        period: 'October 2025',
+        amount: '$18.00',
+        status: 'Paid',
+        downloadUrl: '#',
+      },
+      {
+        id: 'INV-2025-001',
+        period: 'September 2025',
+        amount: '$12.00',
+        status: 'Refunded',
+        downloadUrl: '#',
+      },
+    ],
+    []
+  )
+
+  const handlePlanAction = async (type: 'manage' | 'payment') => {
+    setProcessingAction(type)
+    await new Promise((resolve) => setTimeout(resolve, 600))
+    setProcessingAction(null)
+    toast({
+      title: type === 'manage' ? 'Subscription portal' : 'Payment method',
+      description: 'TODO: connect billing actions to the Stripe customer portal.',
+    })
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Billing</CardTitle>
         <CardDescription>
-          Manage your subscription and billing
+          Review your current plan, payment method, and download past invoices.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Billing settings coming soon...
-        </p>
+      <CardContent className="space-y-6">
+        <section className="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Crown className="h-4 w-4 text-primary" />
+                Creator Pro
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Unlimited drafts, advanced analytics, and priority support.
+              </p>
+            </div>
+            <Badge variant="secondary" className="w-fit">
+              Active · $18/month
+            </Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <CalendarClock className="h-3 w-3" />
+              Next invoice: <span className="font-medium text-foreground">December 10, 2025</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3 text-primary" />
+              Trial credits applied
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => handlePlanAction('manage')}
+              disabled={processingAction !== null}
+            >
+              {processingAction === 'manage' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Opening portal...
+                </>
+              ) : (
+                <>
+                  <Crown className="h-4 w-4" />
+                  Manage subscription
+                </>
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <section className="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                Payment method
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Visa ending in 4242 · Expires 08/27 · Billing email invoices@aetheris.dev
+              </p>
+            </div>
+            <Badge variant="outline" className="px-3 py-1 text-[11px] uppercase tracking-wide">
+              Primary
+            </Badge>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => handlePlanAction('payment')}
+              disabled={processingAction !== null}
+            >
+              {processingAction === 'payment' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Wallet className="h-4 w-4" />
+                  Update payment method
+                </>
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Invoices
+            </h3>
+            <Badge variant="secondary" className="px-3 py-1 text-[11px] uppercase tracking-wide">
+              Latest 12 months
+            </Badge>
+          </div>
+          <div className="space-y-2">
+            {invoices.map((invoice) => (
+              <div
+                key={invoice.id}
+                className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card/80 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="space-y-1 text-sm">
+                  <div className="font-medium text-foreground">{invoice.period}</div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span>{invoice.id}</span>
+                    <span className="font-medium text-foreground">{invoice.amount}</span>
+                    <Badge
+                      variant={invoice.status === 'Paid' ? 'secondary' : 'outline'}
+                      className={cn(
+                        'px-2 py-0.5 text-[10px] uppercase tracking-wide',
+                        invoice.status === 'Refunded' && 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {invoice.status}
+                    </Badge>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Need help with billing?</p>
+          <p className="mt-1">
+            Email <span className="font-medium text-foreground">billing@aetheris.dev</span> and we&apos;ll
+            respond within one business day.
+          </p>
+        </div>
       </CardContent>
     </Card>
+  )
+}
+
+interface ToggleRowProps {
+  label: string
+  description: string
+  icon?: LucideIcon
+  value: boolean
+  onChange: (next: boolean) => void
+  meta?: ReactNode
+  disabled?: boolean
+}
+
+function ToggleRow({ label, description, icon: Icon, value, onChange, meta, disabled }: ToggleRowProps) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-border/60 bg-background p-4 shadow-sm">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+          <span>{label}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        {meta && <div className="pt-1 text-xs text-muted-foreground/90">{meta}</div>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        onClick={() => !disabled && onChange(!value)}
+        className={cn(
+          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
+          value ? 'border-primary bg-primary/80' : 'border-border bg-muted',
+          disabled && 'pointer-events-none opacity-60'
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block h-5 w-5 rounded-full bg-background shadow-sm transition-transform',
+            value ? 'translate-x-5' : 'translate-x-1'
+          )}
+        />
+      </button>
+    </div>
   )
 }
 
@@ -1492,4 +2984,3 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     image.src = src
   })
 }
-

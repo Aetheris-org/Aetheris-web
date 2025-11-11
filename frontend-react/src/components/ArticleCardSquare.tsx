@@ -6,7 +6,7 @@ import type { Article } from '@/types/article'
 interface ArticleCardSquareProps {
   article: Article
   onTagClick?: (tag: string) => void
-  onArticleClick?: (articleId: number) => void
+  onArticleClick?: (articleId: string) => void
 }
 
 export function ArticleCardSquare({
@@ -33,13 +33,15 @@ export function ArticleCardSquare({
       onClick={() => onArticleClick?.(article.id)}
     >
       {article.previewImage && (
-        <div className="relative h-40 w-full overflow-hidden border-b border-border/40">
+        <div className="relative w-full overflow-hidden border-b border-border/40">
+          <div className="aspect-video w-full">
           <img
             src={article.previewImage}
             alt={article.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
+          </div>
         </div>
       )}
       <div className="p-5 space-y-3 flex-1 flex flex-col">

@@ -97,7 +97,8 @@ interface BackendProfileResponse {
       recentArticleCount: number
     }
     articles: Array<{
-      id: number
+      id: number | string
+      documentId?: string
       title: string
       content: string
       excerpt?: string | null
@@ -120,8 +121,16 @@ interface BackendProfileResponse {
 }
 
 function adaptProfileArticle(article: BackendProfileResponse['data']['articles'][number]): Article {
+  const documentId =
+    article.documentId ??
+    (typeof article.id === 'string' ? article.id : String(article.id))
+  const databaseId =
+    typeof article.id === 'number' ? article.id : Number.parseInt(article.id, 10) || 0
+
   return {
-    id: article.id,
+    id: documentId,
+    documentId,
+    databaseId,
     title: article.title,
     content: article.content,
     excerpt: article.excerpt ?? undefined,

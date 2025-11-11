@@ -4,7 +4,9 @@ export interface Author {
 }
 
 export interface Article {
-  id: number
+  id: string
+  documentId: string
+  databaseId: number
   title: string
   content: string
   excerpt?: string

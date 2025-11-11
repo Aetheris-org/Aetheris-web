@@ -170,22 +170,36 @@ export default factories.createCoreController(ARTICLE_UID as any, ({ strapi }) =
       return ctx.unauthorized('Необходима авторизация');
     }
 
-    const { id } = ctx.params;
+    const documentId = ctx.params?.id;
     const { reaction } = ctx.request.body as { reaction?: ReactionType };
+
+    if (!documentId) {
+      strapi.log.warn('⚠️ Article.react called without documentId in params');
+      return ctx.badRequest('Некорректный идентификатор статьи');
+    }
 
     if (!reaction || !['like', 'dislike'].includes(reaction)) {
       return ctx.badRequest('reaction должен быть "like" или "dislike"');
     }
 
-    const articleId = ctx.params?.id;
-    if (!articleId) {
-      return ctx.badRequest('Некорректный идентификатор статьи');
+    const [articleEntry] = await strapi.entityService.findMany(ARTICLE_UID, {
+      filters: {
+        documentId,
+      },
+      limit: 1,
+    });
+
+    if (!articleEntry) {
+      strapi.log.warn(`⚠️ Article.react unable to find article for documentId=${documentId}`);
+      return ctx.notFound('article.notFound');
     }
+
+    const articleDbId = articleEntry.id;
 
     const existing = await strapi.entityService.findMany(ARTICLE_REACTION_UID, {
       filters: {
         user: user.id,
-        article: id,
+        article: articleDbId,
       },
       limit: 1,
     });
@@ -207,7 +221,7 @@ export default factories.createCoreController(ARTICLE_UID as any, ({ strapi }) =
       await strapi.entityService.create(ARTICLE_REACTION_UID, {
         data: {
           reaction,
-          article: id,
+        article: articleDbId,
           user: user.id,
         },
       });
@@ -216,21 +230,21 @@ export default factories.createCoreController(ARTICLE_UID as any, ({ strapi }) =
 
     const [likesCount, dislikesCount] = await Promise.all([
       strapi.entityService.count(ARTICLE_REACTION_UID, {
-        filters: { article: id, reaction: 'like' },
+        filters: { article: articleDbId, reaction: 'like' },
       }),
       strapi.entityService.count(ARTICLE_REACTION_UID, {
-        filters: { article: id, reaction: 'dislike' },
+        filters: { article: articleDbId, reaction: 'dislike' },
       }),
     ]);
 
-    await strapi.entityService.update(ARTICLE_UID, id, {
+    await strapi.entityService.update(ARTICLE_UID, articleDbId, {
       data: {
         likes_count: likesCount,
         dislikes_count: dislikesCount,
       },
     });
 
-    const updatedArticle = await strapi.entityService.findOne(ARTICLE_UID, id, {
+    const updatedArticle = await strapi.entityService.findOne(ARTICLE_UID, articleDbId, {
       populate: {
         author: {
           fields: ['username'],

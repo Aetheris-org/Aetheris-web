@@ -1,8 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Calendar, Clock, User, Heart, Share2, Bookmark } from 'lucide-react'
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  User,
+  Heart,
+  Share2,
+  Bookmark,
+  Copy,
+  Check,
+  Twitter,
+  Send,
+  Linkedin,
+} from 'lucide-react'
 import { getArticle, reactArticle } from '@/api/articles'
+import { createArticleComment, getArticleComments } from '@/api/comments'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +26,9 @@ import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
+import { useReadingListStore } from '@/stores/readingListStore'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -19,24 +37,82 @@ export default function ArticlePage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [isShareOpen, setIsShareOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [copySuccess, setCopySuccess] = useState(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(window.location.href)
+    }
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Fetch article
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id],
-    queryFn: () => getArticle(Number(id), user?.id),
+    queryFn: () => getArticle(id as string, user?.id),
     enabled: !!id,
   })
 
+  const {
+    data: commentsResponse,
+    isLoading: isCommentsLoading,
+    isRefetching: isCommentsRefetching,
+  } = useQuery({
+    queryKey: ['article-comments', id],
+    queryFn: () => getArticleComments(id as string),
+    enabled: !!id,
+  })
+
+  const comments = commentsResponse?.comments ?? []
+
   // React to article
   const reactMutation = useMutation({
-    mutationFn: ({ reaction }: { reaction: 'like' | 'dislike' }) =>
-      reactArticle(Number(id), user!.id, reaction),
+    mutationFn: ({ reaction }: { reaction: 'like' | 'dislike' }) => {
+      if (!article) {
+        throw new Error('Статья ещё не загружена')
+      }
+      return reactArticle(article.id, reaction)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['article', id] })
       toast({
         title: 'Success',
         description: 'Your reaction has been recorded',
+      })
+    },
+  })
+
+  const addCommentMutation = useMutation({
+    mutationFn: async () => {
+      if (!article) {
+        throw new Error('Статья ещё не загружена')
+      }
+      return createArticleComment(article.id, { text: commentText.trim() })
+    },
+    onSuccess: () => {
+      setCommentText('')
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      queryClient.invalidateQueries({ queryKey: ['article', id] })
+      toast({
+        title: 'Комментарий опубликован',
+        description: 'Ваш комментарий успешно добавлен',
+      })
+    },
+    onError: (mutationError: any) => {
+      const message =
+        mutationError?.response?.data?.error?.message || 'Не удалось добавить комментарий'
+      toast({
+        title: 'Ошибка',
+        description: message,
+        variant: 'destructive',
       })
     },
   })
@@ -50,8 +126,21 @@ export default function ArticlePage() {
       })
       return
     }
+    if (!article) {
+      toast({
+        title: 'Подождите',
+        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        variant: 'destructive',
+      })
+      return
+    }
     reactMutation.mutate({ reaction })
   }
+
+  const readingListToggle = useReadingListStore((state) => state.toggle)
+  const isSaved = useReadingListStore((state) =>
+    article ? state.items.some((item) => item.id === article.id) : false
+  )
 
   const handleBookmark = () => {
     if (!user) {
@@ -62,25 +151,108 @@ export default function ArticlePage() {
       })
       return
     }
-    setIsBookmarked(!isBookmarked)
+
+    if (!article) {
+      toast({
+        title: 'Подождите',
+        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const wasSaved = isSaved
+    readingListToggle(article)
     toast({
-      title: isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks',
+      title: wasSaved ? 'Removed from Reading List' : 'Saved for later',
+      description: wasSaved
+        ? 'Эта статья удалена из списка “Читать позже”.'
+        : 'Статья добавлена в список “Читать позже”.',
     })
   }
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: article?.title,
-        url: window.location.href,
+  const handleSubmitComment = () => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to leave a comment',
+        variant: 'destructive',
       })
-    } else {
-      navigator.clipboard.writeText(window.location.href)
+      navigate('/auth')
+      return
+    }
+
+    if (!commentText.trim()) {
+      toast({
+        title: 'Пустой комментарий',
+        description: 'Введите текст комментария прежде чем отправлять',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    addCommentMutation.mutate()
+  }
+
+  const handleShare = () => {
+    setIsShareOpen(true)
+  }
+
+  const canUseNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+
+  const handleNativeShare = async () => {
+    if (!article || !shareUrl || !canUseNativeShare) return
+    try {
+      await navigator.share({
+        title: article.title,
+        url: shareUrl,
+      })
+      setIsShareOpen(false)
+      toast({
+        title: 'Shared',
+        description: 'Thanks for spreading the word!',
+      })
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        return
+      }
+      toast({
+        title: 'Share failed',
+        description: 'Unable to share the article right now.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return
+    try {
+      if (!('clipboard' in navigator)) {
+        throw new Error('Clipboard API is not available')
+      }
+      await navigator.clipboard.writeText(shareUrl)
+      setCopySuccess(true)
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+      copyTimeoutRef.current = setTimeout(() => setCopySuccess(false), 2000)
       toast({
         title: 'Link copied',
         description: 'Article link copied to clipboard',
       })
+    } catch (error) {
+      toast({
+        title: 'Copy failed',
+        description: 'Unable to copy the link. Please try again.',
+        variant: 'destructive',
+      })
     }
+  }
+
+  const handleExternalShare = (targetUrl: string) => {
+    if (!shareUrl) return
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    setIsShareOpen(false)
   }
 
   const formatDate = (date: string) => {
@@ -96,6 +268,34 @@ export default function ArticlePage() {
     const words = content.split(/\s+/).length
     return Math.ceil(words / wordsPerMinute)
   }
+
+  const shareTitle = article ? `“${article.title}” on Aetheris` : 'Check out this article on Aetheris'
+
+  const shareTargets = useMemo<Array<{ label: string; description: string; icon: LucideIcon; href: string }>>(() => {
+    if (!shareUrl) return []
+    const encodedUrl = encodeURIComponent(shareUrl)
+    const encodedTitle = encodeURIComponent(shareTitle)
+    return [
+      {
+        label: 'Share on X',
+        description: 'Post to X (Twitter)',
+        icon: Twitter,
+        href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+      },
+      {
+        label: 'Send via Telegram',
+        description: 'Share instantly in Telegram',
+        icon: Send,
+        href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+      },
+      {
+        label: 'Share on LinkedIn',
+        description: 'Reach your professional network',
+        icon: Linkedin,
+        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      },
+    ]
+  }, [shareUrl, shareTitle])
 
   if (isLoading) {
     return (
@@ -207,14 +407,16 @@ export default function ArticlePage() {
                 {article.likes || 0}
               </Button>
               <Button
-                variant="outline"
+                variant={isSaved ? 'default' : 'outline'}
                 size="sm"
                 onClick={handleBookmark}
                 className="gap-2"
+                aria-pressed={isSaved}
               >
-                <Bookmark
-                  className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`}
-                />
+                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                <span className="hidden sm:inline">
+                  {isSaved ? 'Saved' : 'Read later'}
+                </span>
               </Button>
               <Button
                 variant="outline"
@@ -243,50 +445,150 @@ export default function ArticlePage() {
           {/* Comments Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold tracking-tight">
-              Comments ({article.commentsCount || 0})
+              Комментарии ({comments.length})
             </h2>
 
-            {user ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <textarea
-                    placeholder="Write a comment..."
-                    className="w-full min-h-[100px] p-3 rounded-lg border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <div className="mt-3 flex justify-end">
-                    <Button>Post Comment</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Sign in to leave a comment
-                  </p>
-                  <Button onClick={() => navigate('/auth')}>Sign In</Button>
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <textarea
+                  placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
+                  className="w-full min-h-[120px] p-3 rounded-lg border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={commentText}
+                  onChange={(event) => setCommentText(event.target.value)}
+                  disabled={!user || addCommentMutation.isPending}
+                />
+                <div className="flex justify-end gap-2">
+                  {!user && (
+                    <Button variant="outline" onClick={() => navigate('/auth')}>
+                      Войти
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={
+                      !user ||
+                      !commentText.trim() ||
+                      addCommentMutation.isPending
+                    }
+                  >
+                    {addCommentMutation.isPending ? 'Отправка…' : 'Отправить комментарий'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Comments List */}
-            {article.commentsCount === 0 ? (
+            {isCommentsLoading || isCommentsRefetching ? (
               <Card className="border-dashed">
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  No comments yet. Be the first to comment!
+                  Загружаем комментарии…
+                </CardContent>
+              </Card>
+            ) : comments.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  Пока нет комментариев. Будьте первым!
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {/* Comments will be rendered here */}
-                <p className="text-sm text-muted-foreground">
-                  Comments feature coming soon...
-                </p>
+                {comments.map((comment) => (
+                  <Card key={comment.id}>
+                    <CardContent className="pt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="font-medium">{comment.author.username}</span>
+                        <span>•</span>
+                        <span>
+                          {new Date(comment.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed whitespace-pre-line">
+                        {comment.text}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
         </article>
       </div>
+
+      <Dialog
+        open={isShareOpen}
+        onOpenChange={(open) => {
+          setIsShareOpen(open)
+          if (!open) {
+            setCopySuccess(false)
+            if (copyTimeoutRef.current) {
+              clearTimeout(copyTimeoutRef.current)
+              copyTimeoutRef.current = null
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="space-y-2">
+            <DialogTitle>Share this article</DialogTitle>
+            <DialogDescription>
+              Spread the word about {article ? `“${article.title}”` : 'this article'} across your favorite channels.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Share link</p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input value={shareUrl} readOnly className="font-mono text-sm" />
+                <Button
+                  variant="outline"
+                  className="gap-2 sm:w-auto"
+                  onClick={handleCopyLink}
+                  disabled={!shareUrl}
+                >
+                  {copySuccess ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copySuccess ? 'Copied' : 'Copy'}
+                </Button>
+              </div>
+            </div>
+
+            {shareTargets.length > 0 && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {shareTargets.map((target) => {
+                  const Icon = target.icon
+                  return (
+                    <Button
+                      key={target.label}
+                      variant="secondary"
+                      className="justify-start gap-3 py-3 text-left"
+                      onClick={() => handleExternalShare(target.href)}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="flex flex-col items-start leading-tight">
+                        <span className="text-sm font-medium">{target.label}</span>
+                        <span className="text-xs text-muted-foreground">{target.description}</span>
+                      </span>
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
+
+            {canUseNativeShare && (
+              <Button variant="outline" className="gap-2" onClick={handleNativeShare}>
+                <Share2 className="h-4 w-4" />
+                Share via device
+              </Button>
+            )}
+          </div>
+
+          <DialogFooter className="sm:justify-end">
+            <Button variant="ghost" onClick={() => setIsShareOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

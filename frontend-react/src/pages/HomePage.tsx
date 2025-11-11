@@ -1,7 +1,21 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, Flame, LayoutGrid, List, Rows, PenSquare, Bell, Hash } from 'lucide-react'
+import {
+  Search,
+  SlidersHorizontal,
+  Flame,
+  LayoutGrid,
+  List,
+  Rows,
+  PenSquare,
+  Bell,
+  Hash,
+  Compass,
+  GraduationCap,
+  Terminal,
+  Sparkles,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
@@ -14,8 +28,8 @@ import { Badge } from '@/components/ui/badge'
 import { ArticleCard } from '@/components/ArticleCard'
 import { ArticleCardLine } from '@/components/ArticleCardLine'
 import { ArticleCardSquare } from '@/components/ArticleCardSquare'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { AccountSheet } from '@/components/AccountSheet'
+import { SiteHeader } from '@/components/SiteHeader'
+import { networkingOpportunities, featuredCourses, developerResources } from '@/data/mockSections'
 import {
   Sheet,
   SheetContent,
@@ -35,12 +49,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 export default function HomePage() {
@@ -80,6 +88,34 @@ export default function HomePage() {
   const [page, setPage] = useState(1)
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
+  const quickDestinations = useMemo(
+    () => [
+      {
+        label: 'Networking',
+        description: 'Find collaborators & clients',
+        icon: Compass,
+        action: () => navigate('/networking'),
+      },
+      {
+        label: 'Courses',
+        description: 'Grow your craft with guided paths',
+        icon: GraduationCap,
+        action: () => navigate('/courses'),
+      },
+      {
+        label: 'Developers',
+        description: 'Tooling, changelog, and resources',
+        icon: Terminal,
+        action: () => navigate('/developers'),
+      },
+    ],
+    [navigate]
+  )
+  const openNetworking = useMemo(
+    () => networkingOpportunities.filter((item) => item.status === 'open').length,
+    []
+  )
+  const upcomingCourses = useMemo(() => featuredCourses.length, [])
 
   // Queries
   const { data: articlesData, isLoading } = useQuery({
@@ -107,6 +143,14 @@ export default function HomePage() {
     queryKey: ['trending-articles', user?.id],
     queryFn: () => getTrendingArticles(user?.id, 5),
   })
+
+  const trendingSummary = useMemo(() => {
+    if (!trendingArticles.length) return 'No data yet'
+    return trendingArticles
+      .slice(0, 3)
+      .map((article) => article.title)
+      .join(' • ')
+  }, [trendingArticles])
 
   const articles = articlesData?.data || []
   const totalRecords = articlesData?.total || 0
@@ -168,14 +212,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">Aetheris</h1>
-          </div>
+      <SiteHeader />
 
-          <div className="flex items-center gap-2">
+      <main className="container space-y-10 pb-12 pt-6">
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -190,87 +231,111 @@ export default function HomePage() {
               <Bell className="h-4 w-4" />
               {unreadNotifications > 0 && (
                 <span className="absolute right-1 top-1 inline-flex h-2 w-2">
-                  <span className="h-full w-full rounded-full bg-destructive" />
+                  <span className="h-full w-full rounded-full bg-primary" />
                 </span>
               )}
             </Button>
             {user && (
-              <Button
-                size="sm"
-                onClick={() => navigate('/create')}
-                className="gap-2"
-              >
+              <Button size="sm" onClick={() => navigate('/create')} className="gap-2">
                 <PenSquare className="h-4 w-4" />
-                Write
+                Start discussion
               </Button>
             )}
-
-            {/* View Mode Selector */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  aria-label="Toggle article view"
-                >
-                  <CurrentViewIcon className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                sideOffset={4}
-                className="w-9 min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background p-0"
-              >
-                <div className="flex flex-col">
-                  {viewModeOptions
-                    .filter((option) => option.id !== viewMode)
-                    .map((option) => {
-                      const Icon = option.icon
-
-                      return (
-                        <DropdownMenuItem
-                          key={option.id}
-                          onSelect={() => setViewMode(option.id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-none p-0 px-0 data-[highlighted]:bg-muted/50"
-                          aria-label={option.label}
-                        >
-                          <Icon className="h-4 w-4 text-muted-foreground" />
-                          <span className="sr-only">{option.label}</span>
-                        </DropdownMenuItem>
-                      )
-                    })}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <ThemeToggle />
-            <AccountSheet />
           </div>
-        </div>
-      </header>
 
-      <FiltersDrawer
-        open={showFilters}
-        onOpenChange={setShowFilters}
-        selectedTags={selectedTags}
-        difficulty={difficultyFilter}
-        sortOption={sortOption}
-        allTags={popularTags}
-        onApply={({ tags, difficulty, sort }) => {
-          setSelectedTags(tags)
-          setDifficultyFilter(difficulty)
-          setSortOption(sort)
-          setPage(1)
-        }}
-        onClear={handleClearFilters}
-      />
+          <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+            {viewModeOptions.map((option) => {
+              const Icon = option.icon
+              const isActive = option.id === viewMode
+              return (
+                <Button
+                  key={option.id}
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className={cn('gap-2 px-3 text-xs', isActive && 'shadow-sm')}
+                  onClick={() => setViewMode(option.id)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{option.label}</span>
+                </Button>
+              )
+            })}
+          </div>
+        </section>
 
-      <div className="container py-8">
-        <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-          {/* Main Content */}
+        <section className="grid gap-6 rounded-2xl border border-border/60 bg-muted/20 p-6 shadow-sm lg:grid-cols-[1.4fr_1fr]">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
+              <Sparkles className="h-3 w-3" />
+              Forum spotlight
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Join the conversation shaping modern publishing.
+              </h1>
+              <p className="max-w-3xl text-base text-muted-foreground">
+                Aetheris Forum connects writers, engineers, and design leaders sharing pragmatic lessons on web
+                craftsmanship. Discover trending debates, ship-ready snippets, and behind-the-scenes retrospectives.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map((tag) => {
+                const isActive = selectedTags.includes(tag)
+                return (
+                  <Badge
+                    key={`hero-tag-${tag}`}
+                    variant={isActive ? 'default' : 'outline'}
+                    className="cursor-pointer rounded-md"
+                    onClick={() => handleTagClick(tag)}
+                  >
+                    #{tag}
+                  </Badge>
+                )
+              })}
+              <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                Reset filters
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {quickDestinations.map((destination) => (
+              <Button
+                key={destination.label}
+                variant="outline"
+                className="h-auto justify-start rounded-xl border-border/60 bg-background/60 px-4 py-4 text-left shadow-sm transition hover:border-primary/50 hover:bg-background"
+                onClick={destination.action}
+              >
+                <destination.icon className="mr-4 h-5 w-5 text-primary" />
+                <span className="flex flex-col items-start gap-1">
+                  <span className="text-sm font-semibold">{destination.label}</span>
+                  <span className="text-xs text-muted-foreground">{destination.description}</span>
+                </span>
+              </Button>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-4">
+          <StatTile
+            label="Active discussions"
+            value={articlesData?.total ?? '—'}
+            description="Total threads across the community"
+          />
+          <StatTile
+            label="Open opportunities"
+            value={openNetworking || '—'}
+            description="Networking matches you can apply to today"
+          />
+          <StatTile
+            label="Courses in catalog"
+            value={upcomingCourses}
+            description="Guided paths from Aetheris & creators"
+          />
+          <StatTile label="Trending highlights" value={trendingSummary} compact />
+        </section>
+
+        <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
           <div className="space-y-6">
-            {/* Search & Filters */}
             <div className="space-y-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -284,18 +349,13 @@ export default function HomePage() {
                     className="pl-9"
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
+                <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </div>
 
-              {/* Selected Tags */}
               {selectedTags.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-muted-foreground">Filters:</span>
                   {selectedTags.map((tag) => (
                     <Badge
@@ -307,12 +367,7 @@ export default function HomePage() {
                       {tag} ×
                     </Badge>
                   ))}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearFilters}
-                    className="h-7 text-xs"
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs">
                     Clear all
                   </Button>
                 </div>
@@ -323,19 +378,13 @@ export default function HomePage() {
                   <Badge variant="outline" className="capitalize">
                     {difficultyFilter}
                   </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDifficultyFilter('all')}
-                    className="h-7 px-2 text-xs"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-7 px-2 text-xs">
                     reset
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Articles List */}
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -344,27 +393,15 @@ export default function HomePage() {
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                   <p className="text-lg font-medium">No articles found</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Try adjusting your search or filters
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={handleClearFilters}
-                    className="mt-4"
-                  >
+                  <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filters</p>
+                  <Button variant="outline" onClick={handleClearFilters} className="mt-4">
                     Clear filters
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <>
-                <div
-                  className={
-                    viewMode === 'square'
-                      ? 'grid gap-4 sm:grid-cols-2'
-                      : 'space-y-4'
-                  }
-                >
+                <div className={viewMode === 'square' ? 'grid gap-4 sm:grid-cols-2' : 'space-y-4'}>
                   {articles.map((article) => {
                     if (viewMode === 'line') {
                       return (
@@ -376,7 +413,6 @@ export default function HomePage() {
                         />
                       )
                     }
-
                     if (viewMode === 'square') {
                       return (
                         <ArticleCardSquare
@@ -387,7 +423,6 @@ export default function HomePage() {
                         />
                       )
                     }
-
                     return (
                       <ArticleCard
                         key={article.id}
@@ -399,7 +434,6 @@ export default function HomePage() {
                   })}
                 </div>
 
-                {/* Pagination */}
                 {hasMultiplePages && (
                   <Pagination className="pt-6">
                     <PaginationContent>
@@ -460,9 +494,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Sidebar */}
           <aside className="space-y-6">
-            {/* Trending */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -476,9 +508,7 @@ export default function HomePage() {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 ) : trendingArticles.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground py-4">
-                    No trending articles
-                  </p>
+                  <p className="text-center text-sm text-muted-foreground py-4">No trending articles</p>
                 ) : (
                   trendingArticles.map((article, index) => (
                     <div
@@ -487,16 +517,12 @@ export default function HomePage() {
                       onClick={() => navigate(`/article/${article.id}`)}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl font-bold text-muted-foreground/30">
-                          {index + 1}
-                        </span>
+                        <span className="text-2xl font-bold text-muted-foreground/30">{index + 1}</span>
                         <div className="flex-1 space-y-1">
-                          <h4 className="font-medium leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                          <h4 className="font-medium leading-tight line-clamp-2 transition-colors group-hover:text-primary">
                             {article.title}
                           </h4>
-                          <p className="text-xs text-muted-foreground">
-                            {article.author.username}
-                          </p>
+                          <p className="text-xs text-muted-foreground">{article.author.username}</p>
                         </div>
                       </div>
                     </div>
@@ -505,7 +531,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Popular Tags */}
             <Card className="border-border/70">
               <CardHeader className="space-y-1">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -538,9 +563,56 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </aside>
-        </div>
-      </div>
+        </section>
+      </main>
+
+      <FiltersDrawer
+        open={showFilters}
+        onOpenChange={setShowFilters}
+        selectedTags={selectedTags}
+        difficulty={difficultyFilter}
+        sortOption={sortOption}
+        allTags={popularTags}
+        onApply={({ tags, difficulty, sort }) => {
+          setSelectedTags(tags)
+          setDifficultyFilter(difficulty)
+          setSortOption(sort)
+          setPage(1)
+        }}
+        onClear={handleClearFilters}
+      />
     </div>
+  )
+}
+
+function StatTile({
+  label,
+  value,
+  description,
+  compact,
+}: {
+  label: string
+  value: string | number
+  description?: string
+  compact?: boolean
+}) {
+  const displayValue =
+    typeof value === 'number' && !Number.isNaN(value) ? value.toLocaleString() : value || '—'
+
+  return (
+    <Card className="h-full border-border/60 bg-background shadow-sm">
+      <CardHeader className="space-y-1">
+        <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
+          {label}
+        </CardDescription>
+        <CardTitle className={cn('truncate text-2xl font-semibold', compact && 'text-base font-medium')}>
+          {displayValue}
+        </CardTitle>
+      </CardHeader>
+      {description && (
+        <CardContent className="pt-0 text-xs text-muted-foreground">{description}</CardContent>
+      )}
+    </Card>
   )
 }
 
