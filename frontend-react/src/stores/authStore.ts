@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import apiClient, { cancelAllRequests, deleteTokenCookie, getTokenFromCookie } from '@/lib/axios'
 import { getCurrentUser } from '@/api/profile'
 import type { User } from '@/types/user'
+import { useGamificationStore } from '@/stores/gamificationStore'
 
 interface AuthState {
   user: User | null
@@ -32,6 +33,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => {
     persistUser(user)
     set({ user, isAuthenticated: !!user })
+    try {
+      useGamificationStore.getState().hydrateFromUser(user)
+    } catch (error) {
+      console.warn('Failed to hydrate gamification store from user:', error)
+    }
   },
   loadFromStorage: () => {
     try {
@@ -39,6 +45,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (raw) {
         const parsed = JSON.parse(raw) as User
         set({ user: parsed, isAuthenticated: true })
+        try {
+          useGamificationStore.getState().hydrateFromUser(parsed)
+        } catch (error) {
+          console.warn('Failed to hydrate gamification store from storage:', error)
+        }
       }
     } catch (error) {
       console.warn('Failed to load auth user from storage:', error)
@@ -100,6 +111,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     persistUser(null)
     set({ user: null, isAuthenticated: false })
+    useGamificationStore.getState().hydrateFromUser(null)
   },
 }))
 

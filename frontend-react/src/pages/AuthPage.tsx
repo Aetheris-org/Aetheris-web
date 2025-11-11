@@ -4,12 +4,15 @@ import {
   AlertCircle,
   Apple,
   Github,
+  Linkedin,
   Loader2,
+  MessagesSquare,
   Shield,
   Smartphone,
   Sparkles,
   Twitter,
 } from 'lucide-react'
+import type { LucideProps } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -25,6 +28,23 @@ import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
+
+function DiscordIcon(props: LucideProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M20.317 4.37A17.643 17.643 0 0 0 16.61 3c-.18.32-.386.75-.53 1.09a16.14 16.14 0 0 0-4.16 0c-.144-.34-.35-.77-.53-1.09a17.64 17.64 0 0 0-3.71 1.37C4.275 8.14 3.76 11.81 4.07 15.43a17.94 17.94 0 0 0 4.43 2.18c.36-.52.68-1.07.96-1.65-.52-.19-1.01-.42-1.47-.68l.34-.27c2.82 1.31 5.89 1.31 8.69 0l.34.27c-.46.26-.95.5-1.47.68.28.58.6 1.13.96 1.65a17.94 17.94 0 0 0 4.43-2.18c.31-3.23-.27-6.86-1.96-11.06ZM9.35 13.48c-.85 0-1.55-.78-1.55-1.74 0-.95.68-1.73 1.55-1.73.88 0 1.57.79 1.55 1.73 0 .96-.68 1.74-1.55 1.74Zm5.29 0c-.85 0-1.55-.78-1.55-1.74 0-.95.68-1.73 1.55-1.73.88 0 1.57.79 1.55 1.73 0 .96-.68 1.74-1.55 1.74Z" />
+    </svg>
+  )
+}
 
 export default function AuthPage() {
   const navigate = useNavigate()
@@ -84,15 +104,15 @@ export default function AuthPage() {
             </CardTitle>
             <CardDescription>
               Sign in to sync your reading list, publish stories, and keep track of your stats.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {errorMessage && (
-              <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {errorMessage && (
+            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
             <Tabs defaultValue="oauth" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
@@ -100,29 +120,29 @@ export default function AuthPage() {
                 <TabsTrigger value="coming-soon">Coming soon</TabsTrigger>
               </TabsList>
               <TabsContent value="oauth" className="space-y-4">
-                <Button
-                  onClick={handleGoogleLogin}
-                  disabled={isLoading}
-                  className="w-full gap-3 bg-white text-foreground hover:bg-muted"
-                  variant="outline"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Перенаправляем…</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-4 w-4" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
-                        <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
+          <Button
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+                  className="w-full gap-3 border border-border/80 bg-white text-gray-900 transition-colors hover:border-primary/40 hover:bg-white hover:text-gray-900 dark:border-border dark:bg-white dark:text-gray-900 dark:hover:border-primary/40"
+                  variant="ghost"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Перенаправляем…</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
+                  <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
                         <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042л3.007-2.332z" fill="#FBBC05" />
                         <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958л3.007 2.332z" fill="#EA4335" />
-                      </svg>
+                </svg>
                       <span>Continue with Google</span>
-                    </>
-                  )}
-                </Button>
+              </>
+            )}
+          </Button>
 
                 <div className="space-y-2 rounded-lg border border-muted-foreground/10 bg-muted/20 p-3 text-xs text-muted-foreground">
                   <p className="flex items-center gap-2">
@@ -136,18 +156,13 @@ export default function AuthPage() {
               </TabsContent>
               <TabsContent value="coming-soon" className="space-y-4">
                 {[
-                  {
-                    label: 'Continue with GitHub',
-                    icon: Github,
-                  },
-                  {
-                    label: 'Continue with Apple ID',
-                    icon: Apple,
-                  },
-                  {
-                    label: 'Continue with Twitter',
-                    icon: Twitter,
-                  },
+                  { label: 'Continue with GitHub', icon: Github },
+                  { label: 'Continue with Apple ID', icon: Apple },
+                  { label: 'Continue with Twitter', icon: Twitter },
+                  { label: 'Continue with LinkedIn', icon: Linkedin },
+                  { label: 'Continue with Slack', icon: MessagesSquare },
+                  { label: 'Continue with Figma', icon: Sparkles },
+                  { label: 'Continue with Discord', icon: DiscordIcon },
                 ].map((provider) => (
                   <Button
                     key={provider.label}
@@ -226,7 +241,7 @@ export default function AuthPage() {
               ))}
             </div>
 
-            <Separator />
+          <Separator />
 
             <div className="space-y-3 text-xs text-muted-foreground">
               <p>
@@ -237,8 +252,8 @@ export default function AuthPage() {
                 Need help? Reach us at <span className="font-medium text-primary">hello@aetheris.dev</span>
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
       </div>
     </div>
   )

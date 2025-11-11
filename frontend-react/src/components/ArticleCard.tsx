@@ -7,12 +7,14 @@ interface ArticleCardProps {
   article: Article
   onTagClick?: (tag: string) => void
   onArticleClick?: (articleId: string) => void
+  hidePreview?: boolean
 }
 
 export function ArticleCard({
   article,
   onTagClick,
   onArticleClick,
+  hidePreview = false,
 }: ArticleCardProps) {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -33,15 +35,15 @@ export function ArticleCard({
       className="group relative overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer"
       onClick={() => onArticleClick?.(article.id)}
     >
-      {article.previewImage && (
+      {!hidePreview && article.previewImage && (
         <div className="relative w-full overflow-hidden border-b border-border/40">
           <div className="aspect-video w-full">
-          <img
-            src={article.previewImage}
-            alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+            <img
+              src={article.previewImage}
+              alt={article.title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
           </div>
         </div>
       )}
@@ -79,7 +81,7 @@ export function ArticleCard({
           </p>
         )}
 
-        {!article.previewImage && article.excerpt === undefined && (
+        {(hidePreview || !article.previewImage) && article.excerpt === undefined && (
           <p className="text-muted-foreground leading-relaxed line-clamp-3">
             {article.content.slice(0, 150)}…
           </p>

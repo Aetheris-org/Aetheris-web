@@ -15,6 +15,10 @@ import {
   GraduationCap,
   Terminal,
   Sparkles,
+  Bookmark,
+  MessageCircle,
+  X,
+  ChevronDown,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
@@ -29,7 +33,7 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { ArticleCardLine } from '@/components/ArticleCardLine'
 import { ArticleCardSquare } from '@/components/ArticleCardSquare'
 import { SiteHeader } from '@/components/SiteHeader'
-import { networkingOpportunities, featuredCourses, developerResources } from '@/data/mockSections'
+import { networkingOpportunities, featuredCourses, developerResources, forumSpotlights } from '@/data/mockSections'
 import {
   Sheet,
   SheetContent,
@@ -50,6 +54,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import { cn } from '@/lib/utils'
+import { useLocalStorage } from 'usehooks-ts'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -86,6 +91,8 @@ export default function HomePage() {
   const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
   const [page, setPage] = useState(1)
+  const [isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
+  const [isSignalsCollapsed, setIsSignalsCollapsed] = useState(false)
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
   const quickDestinations = useMemo(
@@ -166,6 +173,17 @@ export default function HomePage() {
     }
   }, [page, totalPages, totalRecords])
 
+  useEffect(() => {
+    const storedValue = typeof window !== 'undefined' ? localStorage.getItem('home-spotlight-dismissed') : null
+    if (storedValue === 'true') {
+      setIsSpotlightDismissed(true)
+    }
+    const storedSignals = typeof window !== 'undefined' ? localStorage.getItem('home-signals-collapsed') : null
+    if (storedSignals === 'true') {
+      setIsSignalsCollapsed(true)
+    }
+  }, [])
+
   const paginationPages = useMemo(() => {
     const pages: Array<number | 'ellipsis'> = []
     if (totalPages <= 7) {
@@ -208,6 +226,13 @@ export default function HomePage() {
     setDifficultyFilter('all')
     setSortOption('newest')
     setPage(1)
+  }
+
+  const handleDismissSpotlight = () => {
+    setIsSpotlightDismissed(true)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('home-spotlight-dismissed', 'true')
+    }
   }
 
   return (
@@ -263,75 +288,112 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-2xl border border-border/60 bg-muted/20 p-6 shadow-sm lg:grid-cols-[1.4fr_1fr]">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
-              <Sparkles className="h-3 w-3" />
-              Forum spotlight
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Join the conversation shaping modern publishing.
-              </h1>
-              <p className="max-w-3xl text-base text-muted-foreground">
-                Aetheris Forum connects writers, engineers, and design leaders sharing pragmatic lessons on web
-                craftsmanship. Discover trending debates, ship-ready snippets, and behind-the-scenes retrospectives.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {popularTags.map((tag) => {
-                const isActive = selectedTags.includes(tag)
-                return (
-                  <Badge
-                    key={`hero-tag-${tag}`}
-                    variant={isActive ? 'default' : 'outline'}
-                    className="cursor-pointer rounded-md"
-                    onClick={() => handleTagClick(tag)}
+        {!isSpotlightDismissed && (
+        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/15 p-6 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-3 top-3 h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+            onClick={handleDismissSpotlight}
+            aria-label="Dismiss spotlight"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-6 lg:max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                <Sparkles className="h-3 w-3" />
+                Forum spotlight
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  Join the conversation shaping modern publishing.
+                </h1>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  Two threads worth your time today—jump in, trade notes, or save for later.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {forumSpotlights.slice(0, 2).map((spotlight) => (
+                  <button
+                    key={spotlight.id}
+                    type="button"
+                    className="flex flex-col gap-2 rounded-2xl border border-transparent bg-background/70 px-4 py-4 text-left transition hover:border-border hover:bg-muted/30"
+                    onClick={() => navigate(`/article/${spotlight.id}`)}
                   >
-                    #{tag}
-                  </Badge>
-                )
-              })}
-              <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                Reset filters
-              </Button>
+                    <span className="text-sm font-semibold text-foreground leading-tight">{spotlight.title}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-2">{spotlight.summary}</span>
+                    <span className="text-xs text-muted-foreground">{spotlight.author} · {spotlight.reads.toLocaleString()} reads</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="grid gap-3">
-            {quickDestinations.map((destination) => (
-              <Button
-                key={destination.label}
-                variant="outline"
-                className="h-auto justify-start rounded-xl border-border/60 bg-background/60 px-4 py-4 text-left shadow-sm transition hover:border-primary/50 hover:bg-background"
-                onClick={destination.action}
-              >
-                <destination.icon className="mr-4 h-5 w-5 text-primary" />
-                <span className="flex flex-col items-start gap-1">
-                  <span className="text-sm font-semibold">{destination.label}</span>
-                  <span className="text-xs text-muted-foreground">{destination.description}</span>
-                </span>
-              </Button>
-            ))}
+
+            <div className="flex w-full max-w-xs flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Quick destinations</p>
+              {quickDestinations.map((destination) => (
+                <button
+                  key={destination.label}
+                  type="button"
+                  className="flex items-center gap-3 rounded-xl border border-transparent px-4 py-3 text-left transition hover:border-border hover:bg-muted/40"
+                  onClick={destination.action}
+                >
+                  <destination.icon className="h-5 w-5 text-primary" />
+                  <span className="flex flex-col items-start gap-1">
+                    <span className="text-sm font-semibold text-foreground">{destination.label}</span>
+                    <span className="text-xs text-muted-foreground">{destination.description}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
+        )}
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <StatTile
-            label="Active discussions"
-            value={articlesData?.total ?? '—'}
-            description="Total threads across the community"
-          />
-          <StatTile
-            label="Open opportunities"
-            value={openNetworking || '—'}
-            description="Networking matches you can apply to today"
-          />
-          <StatTile
-            label="Courses in catalog"
-            value={upcomingCourses}
-            description="Guided paths from Aetheris & creators"
-          />
-          <StatTile label="Trending highlights" value={trendingSummary} compact />
+        <section className="rounded-2xl border border-border/60 bg-muted/10 p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Today’s signals</p>
+              <p className="max-w-xl text-sm text-muted-foreground">
+                15 threads are heating up right now. See the hottest discussions or jump into a quick-win opportunity.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground',
+                isSignalsCollapsed && 'rotate-180'
+              )}
+              onClick={() => setIsSignalsCollapsed((prev) => {
+                const next = !prev
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('home-signals-collapsed', next ? 'true' : 'false')
+                }
+                return next
+              })}
+              aria-expanded={!isSignalsCollapsed}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </div>
+          {!isSignalsCollapsed && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/networking')}>
+                <Compass className="h-4 w-4" />
+                Match with collaborators
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/courses')}>
+                <GraduationCap className="h-4 w-4" />
+                Browse fresh courses
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/developers')}>
+                <Terminal className="h-4 w-4" />
+                Review dev updates
+              </Button>
+            </div>
+          )}
         </section>
 
         <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
@@ -545,18 +607,18 @@ export default function HomePage() {
                     const isActive = selectedTags.includes(tag)
 
                     return (
-                      <Badge
-                        key={tag}
+                    <Badge
+                      key={tag}
                         variant={isActive ? 'default' : 'secondary'}
                         className={cn(
                           'cursor-pointer rounded-md font-normal transition-colors',
                           isActive ? 'shadow-sm' : 'hover:bg-secondary/80'
                         )}
-                        onClick={() => handleTagClick(tag)}
+                      onClick={() => handleTagClick(tag)}
                         aria-pressed={isActive}
-                      >
-                        {tag}
-                      </Badge>
+                    >
+                      {tag}
+                    </Badge>
                     )
                   })}
                 </div>

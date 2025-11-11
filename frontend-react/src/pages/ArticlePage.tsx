@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,9 +16,23 @@ import {
   Twitter,
   Send,
   Linkedin,
+  ChevronDown,
+  ChevronRight,
+  ListTree,
+  CornerUpLeft,
+  CornerDownRight,
+  Minimize2,
+  MoreHorizontal,
+  ThumbsUp,
+  ThumbsDown,
+  Info,
+  Flag,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
 import { getArticle, reactArticle } from '@/api/articles'
-import { createArticleComment, getArticleComments } from '@/api/comments'
+import { getArticleComments } from '@/api/comments'
+import type { Comment as RemoteComment } from '@/api/comments'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +44,49 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { useReadingListStore } from '@/stores/readingListStore'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  selectLocalComments,
+  useLocalCommentsStore,
+} from '@/stores/localCommentsStore'
+import { cn } from '@/lib/utils'
+
+type CommentSource = 'remote' | 'local'
+
+interface UnifiedComment extends RemoteComment {
+  source: CommentSource
+}
+
+interface CommentNode extends UnifiedComment {
+  replies: CommentNode[]
+}
+
+interface CommentReactionState {
+  upvotes: number
+  downvotes: number
+  userReaction: 'up' | 'down' | null
+}
+
+const MAX_VISIBLE_STRIPE_DEPTH = 6
+const STRIPE_WIDTH = 2
+const STRIPE_GAP = 4
+const BASE_COMMENT_PADDING = 16
+const STRIPE_CLASSNAMES = [
+  'bg-border/80',
+  'bg-border/70',
+  'bg-border/60',
+  'bg-border/50',
+  'bg-border/40',
+  'bg-border/30',
+]
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -41,6 +99,16 @@ export default function ArticlePage() {
   const [isShareOpen, setIsShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [activeReply, setActiveReply] = useState<{ parentId: string; parentAuthor: string } | null>(
+    null
+  )
+  const [replyText, setReplyText] = useState('')
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null)
+  const [highlightDepth, setHighlightDepth] = useState<number | null>(null)
+  const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({})
+  const [threadRootId, setThreadRootId] = useState<string | null>(null)
+  const replyHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [reactionState, setReactionState] = useState<Record<string, CommentReactionState>>({})
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -71,8 +139,6 @@ export default function ArticlePage() {
     enabled: !!id,
   })
 
-  const comments = commentsResponse?.comments ?? []
-
   // React to article
   const reactMutation = useMutation({
     mutationFn: ({ reaction }: { reaction: 'like' | 'dislike' }) => {
@@ -90,32 +156,6 @@ export default function ArticlePage() {
     },
   })
 
-  const addCommentMutation = useMutation({
-    mutationFn: async () => {
-      if (!article) {
-        throw new Error('Статья ещё не загружена')
-      }
-      return createArticleComment(article.id, { text: commentText.trim() })
-    },
-    onSuccess: () => {
-      setCommentText('')
-      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
-      queryClient.invalidateQueries({ queryKey: ['article', id] })
-      toast({
-        title: 'Комментарий опубликован',
-        description: 'Ваш комментарий успешно добавлен',
-      })
-    },
-    onError: (mutationError: any) => {
-      const message =
-        mutationError?.response?.data?.error?.message || 'Не удалось добавить комментарий'
-      toast({
-        title: 'Ошибка',
-        description: message,
-        variant: 'destructive',
-      })
-    },
-  })
 
   const handleReaction = (reaction: 'like' | 'dislike') => {
     if (!user) {
@@ -141,6 +181,22 @@ export default function ArticlePage() {
   const isSaved = useReadingListStore((state) =>
     article ? state.items.some((item) => item.id === article.id) : false
   )
+  const articleCommentKey = useMemo(() => {
+    if (article && typeof (article as any).documentId !== 'undefined' && (article as any).documentId) {
+      return String((article as any).documentId)
+    }
+    if (article?.id) {
+      return String(article.id)
+    }
+    return typeof id === 'string' ? id : ''
+  }, [article, id])
+
+  const localCommentsSelector = useMemo(
+    () => selectLocalComments(articleCommentKey),
+    [articleCommentKey]
+  )
+  const localComments = useLocalCommentsStore(localCommentsSelector)
+  const addLocalComment = useLocalCommentsStore((state) => state.addComment)
 
   const handleBookmark = () => {
     if (!user) {
@@ -153,7 +209,7 @@ export default function ArticlePage() {
     }
 
     if (!article) {
-      toast({
+    toast({
         title: 'Подождите',
         description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
         variant: 'destructive',
@@ -171,7 +227,7 @@ export default function ArticlePage() {
     })
   }
 
-  const handleSubmitComment = () => {
+  const ensureCommentAuth = () => {
     if (!user) {
       toast({
         title: 'Authentication required',
@@ -179,19 +235,83 @@ export default function ArticlePage() {
         variant: 'destructive',
       })
       navigate('/auth')
-      return
+      return false
+    }
+    return true
+  }
+
+  const commitLocalComment = (content: string, parentId: string | null) => {
+    if (!article) {
+      toast({
+        title: 'Подождите',
+        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        variant: 'destructive',
+      })
+      return false
     }
 
-    if (!commentText.trim()) {
+    const trimmed = content.trim()
+    if (!trimmed) {
       toast({
         title: 'Пустой комментарий',
         description: 'Введите текст комментария прежде чем отправлять',
         variant: 'destructive',
       })
-      return
+      return false
     }
 
-    addCommentMutation.mutate()
+    const fallbackKey =
+      typeof id === 'string' ? id : String(article.id ?? article.documentId ?? '')
+    const articleKey = articleCommentKey || fallbackKey
+
+    addLocalComment({
+      id: `local-${Date.now()}`,
+      articleId: articleKey,
+      text: trimmed,
+      createdAt: new Date().toISOString(),
+      parentId,
+      author: {
+        id: user!.id,
+        username: user?.nickname ?? user?.email ?? 'Вы',
+        avatar: user?.avatar,
+      },
+    })
+    return true
+  }
+
+  const handleSubmitComment = () => {
+    if (!ensureCommentAuth()) return
+    if (commitLocalComment(commentText, null)) {
+      setCommentText('')
+      toast({
+        title: 'Комментарий сохранён',
+        description: 'Пока что комментарии хранятся локально на этом устройстве.',
+      })
+    }
+  }
+
+  const handleReplyClick = (commentId: string, authorName: string) => {
+    if (!ensureCommentAuth()) return
+    setActiveReply({ parentId: commentId, parentAuthor: authorName })
+    setReplyText('')
+  }
+
+  const handleCancelReply = () => {
+    setActiveReply(null)
+    setReplyText('')
+  }
+
+  const handleSubmitReply = () => {
+    if (!activeReply) return
+    if (!ensureCommentAuth()) return
+    if (commitLocalComment(replyText, activeReply.parentId)) {
+      setReplyText('')
+      setActiveReply(null)
+      toast({
+        title: 'Ответ сохранён',
+        description: 'Ответ пока что хранится локально и виден только вам.',
+      })
+    }
   }
 
   const handleShare = () => {
@@ -253,6 +373,588 @@ export default function ArticlePage() {
     if (!shareUrl) return
     window.open(targetUrl, '_blank', 'noopener,noreferrer')
     setIsShareOpen(false)
+  }
+
+  const combinedComments = useMemo<UnifiedComment[]>(() => {
+    const remote: UnifiedComment[] = (commentsResponse?.comments ?? []).map((comment) => ({
+      ...comment,
+      source: 'remote' as const,
+    }))
+
+    const local: UnifiedComment[] = localComments.map((comment) => ({
+      id: comment.id,
+      documentId: comment.id,
+      databaseId: Number.parseInt(comment.articleId, 10) || 0,
+      text: comment.text,
+      createdAt: comment.createdAt,
+      updatedAt: undefined,
+      author: {
+        id: comment.author.id,
+        username: comment.author.username,
+        avatar: comment.author.avatar,
+      },
+      parentId: comment.parentId ?? null,
+      source: 'local' as const,
+    }))
+
+    const merged = [...remote, ...local]
+    return merged.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    )
+  }, [commentsResponse?.comments, localComments])
+
+  useEffect(() => {
+    setReactionState((prev) => {
+      const next: Record<string, CommentReactionState> = { ...prev }
+      combinedComments.forEach((comment) => {
+        if (!next[comment.id]) {
+          next[comment.id] = {
+            upvotes: 0,
+            downvotes: 0,
+            userReaction: null,
+          }
+        }
+      })
+      return next
+    })
+  }, [combinedComments])
+
+  const commentGraph = useMemo(() => {
+    const nodes = new Map<string, CommentNode>()
+    const parentById = new Map<string, string | null>()
+
+    combinedComments.forEach((comment) => {
+      nodes.set(comment.id, { ...comment, replies: [] })
+      parentById.set(comment.id, comment.parentId ?? null)
+    })
+
+    const roots: CommentNode[] = []
+
+    nodes.forEach((node) => {
+      const parentId = node.parentId
+      if (parentId && nodes.has(parentId)) {
+        nodes.get(parentId)!.replies.push(node)
+      } else {
+        roots.push(node)
+      }
+    })
+
+    const sortBranch = (branch: CommentNode[]) => {
+      branch.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      branch.forEach((child) => sortBranch(child.replies))
+    }
+
+    sortBranch(roots)
+
+    const depthById = new Map<string, number>()
+    const descendantCountById = new Map<string, number>()
+    let maxDepth = 0
+
+    const computeMeta = (node: CommentNode, depth: number): number => {
+      depthById.set(node.id, depth)
+      maxDepth = Math.max(maxDepth, depth)
+      let total = 0
+      node.replies.forEach((child) => {
+        total += 1 + computeMeta(child, depth + 1)
+      })
+      descendantCountById.set(node.id, total)
+      return total
+    }
+
+    roots.forEach((root) => computeMeta(root, 0))
+
+    return {
+      roots,
+      lookup: nodes,
+      parentById,
+      depthById,
+      descendantCountById,
+      maxDepth,
+    }
+  }, [combinedComments])
+
+  const commentTree = commentGraph.roots
+  const nodeLookup = commentGraph.lookup
+  const parentById = commentGraph.parentById
+  const depthById = commentGraph.depthById
+  const descendantCountById = commentGraph.descendantCountById
+  const maxCommentDepth = commentGraph.maxDepth
+
+  const hoverContext = useMemo(() => {
+    if (!hoveredCommentId || !nodeLookup.has(hoveredCommentId)) {
+      return {
+        ancestors: new Set<string>(),
+        descendants: new Set<string>(),
+      }
+    }
+
+    const ancestors = new Set<string>()
+    let cursor: string | null = hoveredCommentId
+    while (cursor) {
+      const parentId: string | null = parentById.get(cursor) ?? null
+      if (!parentId) break
+      ancestors.add(parentId)
+      cursor = parentId
+    }
+
+    const descendants = new Set<string>()
+    const collect = (node: CommentNode) => {
+      node.replies.forEach((child) => {
+        descendants.add(child.id)
+        collect(child)
+      })
+    }
+    collect(nodeLookup.get(hoveredCommentId)!)
+
+    return { ancestors, descendants }
+  }, [hoveredCommentId, nodeLookup, parentById])
+
+  useEffect(() => {
+    setCollapsedMap((prev) => {
+      const next: Record<string, boolean> = {}
+      nodeLookup.forEach((_, id) => {
+        if (prev[id]) {
+          next[id] = true
+        }
+      })
+      return next
+    })
+    if (threadRootId && !nodeLookup.has(threadRootId)) {
+      setThreadRootId(null)
+    }
+    return () => {
+      if (replyHighlightTimeoutRef.current) {
+        clearTimeout(replyHighlightTimeoutRef.current)
+        replyHighlightTimeoutRef.current = null
+      }
+    }
+  }, [nodeLookup, threadRootId])
+
+  const formatCommentTimestamp = (date: string) =>
+    new Date(date).toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+  const handleCommentReaction = (commentId: string, reaction: 'up' | 'down') => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Войдите, чтобы реагировать на комментарии.',
+        variant: 'destructive',
+      })
+      navigate('/auth')
+      return
+    }
+
+    setReactionState((prev) => {
+      const current = prev[commentId] ?? { upvotes: 0, downvotes: 0, userReaction: null }
+      let { upvotes, downvotes, userReaction } = current
+
+      if (reaction === 'up') {
+        if (userReaction === 'up') {
+          upvotes = Math.max(0, upvotes - 1)
+          userReaction = null
+        } else {
+          upvotes += 1
+          if (userReaction === 'down') {
+            downvotes = Math.max(0, downvotes - 1)
+          }
+          userReaction = 'up'
+        }
+      } else {
+        if (userReaction === 'down') {
+          downvotes = Math.max(0, downvotes - 1)
+          userReaction = null
+        } else {
+          downvotes += 1
+          if (userReaction === 'up') {
+            upvotes = Math.max(0, upvotes - 1)
+          }
+          userReaction = 'down'
+        }
+      }
+
+      return {
+        ...prev,
+        [commentId]: {
+          upvotes,
+          downvotes,
+          userReaction,
+        },
+      }
+    })
+
+    // TODO: integrate with Strapi comment reaction API
+  }
+
+  const handleCommentAction = (
+    comment: CommentNode,
+    action: 'report' | 'edit' | 'delete' | 'info'
+  ) => {
+    switch (action) {
+      case 'report':
+        toast({
+          title: 'Жалоба отправлена',
+          description: `Мы рассмотрим комментарий пользователя @${comment.author.username}.`,
+        })
+        break
+      case 'edit':
+        toast({
+          title: 'Редактирование',
+          description: 'Редактирование комментариев пока не реализовано.',
+        })
+        break
+      case 'delete':
+        toast({
+          title: 'Удаление',
+          description: 'Удаление комментариев пока не реализовано.',
+        })
+        break
+      case 'info':
+        toast({
+          title: 'Информация о комментарии',
+          description: `Комментарий оставил @${comment.author.username} ${formatCommentTimestamp(comment.createdAt)}.`,
+        })
+        break
+    }
+  }
+
+  const renderCommentThread = (
+    nodes: CommentNode[],
+    depth = 0,
+    options: { showStripes?: boolean; threadMode?: boolean } = {}
+  ): JSX.Element[] => {
+    const { showStripes = true, threadMode = false } = options
+
+    return nodes.flatMap((node) => {
+      const initials = (node.author.username ?? 'U').slice(0, 2).toUpperCase()
+      const isLocal = node.source === 'local'
+      const stripeCount = showStripes ? Math.min(depth, MAX_VISIBLE_STRIPE_DEPTH) : 0
+      const overflowDepth = Math.max(depth - MAX_VISIBLE_STRIPE_DEPTH, 0)
+      const gutterWidth = stripeCount * (STRIPE_WIDTH + STRIPE_GAP)
+      const paddingLeft = showStripes
+        ? depth > 0
+          ? BASE_COMMENT_PADDING + gutterWidth
+          : 0
+        : depth > 0
+          ? BASE_COMMENT_PADDING + depth * 10
+          : 0
+
+      const containerStyle: CSSProperties = {
+        paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined,
+        boxSizing: 'border-box',
+      }
+
+      const commentDepth = depth
+      const isHoverTarget = hoveredCommentId === node.id
+      const isInHoverPath =
+        hoverContext.ancestors.has(node.id) || hoverContext.descendants.has(node.id)
+      const matchesHighlightDepth =
+        highlightDepth !== null ? commentDepth >= highlightDepth : false
+      const isCollapsed = collapsedMap[node.id] ?? false
+      const parentId = parentById.get(node.id) ?? null
+      const parentNode = parentId ? nodeLookup.get(parentId) : undefined
+      const replyDescendants = descendantCountById.get(node.id) ?? node.replies.length
+
+      const commentElement = (
+        <div
+          key={`comment-${node.id}`}
+          id={`comment-${node.id}`}
+          className="relative space-y-3"
+          style={containerStyle}
+          onMouseEnter={() => setHoveredCommentId(node.id)}
+          onMouseLeave={() => setHoveredCommentId((prev) => (prev === node.id ? null : prev))}
+        >
+          {showStripes && stripeCount > 0 && (
+            <div aria-hidden className="pointer-events-auto absolute left-0 top-4 bottom-4 flex">
+              {Array.from({ length: stripeCount }).map((_, stripeIndex) => {
+                const stripeDepth = stripeIndex + 1
+                const stripeActive =
+                  highlightDepth !== null ? stripeDepth >= highlightDepth : true
+                return (
+                  <span
+                    key={`stripe-${node.id}-${stripeIndex}`}
+                    className={cn(
+                      'h-full cursor-pointer rounded-full transition-opacity',
+                      STRIPE_CLASSNAMES[stripeIndex % STRIPE_CLASSNAMES.length],
+                      stripeActive ? 'opacity-60 hover:opacity-90' : 'opacity-20'
+                    )}
+                    style={{
+                      width: STRIPE_WIDTH,
+                      marginRight: stripeIndex === stripeCount - 1 ? 0 : STRIPE_GAP,
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setHighlightDepth((prev) =>
+                        prev === stripeDepth ? null : stripeDepth
+                      )
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )}
+          {overflowDepth > 0 && (
+            <span className="pointer-events-none absolute left-0 top-2 inline-flex -translate-x-3 select-none rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              +{overflowDepth}
+            </span>
+          )}
+          <Card
+            className={cn(
+              'transition-colors border-border/60 bg-card/70',
+              threadMode && 'shadow-sm',
+              isLocal && 'border-primary/40 bg-primary/5',
+              isHoverTarget && 'ring-2 ring-primary/50 ring-offset-0',
+              !isHoverTarget && isInHoverPath && 'border-primary/50 bg-primary/10',
+              highlightDepth !== null &&
+                commentDepth < highlightDepth &&
+                !isHoverTarget &&
+                !isInHoverPath &&
+                'opacity-60'
+            )}
+          >
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-9 w-9">
+                  {node.author.avatar ? (
+                    <AvatarImage src={node.author.avatar} alt={node.author.username} />
+                  ) : null}
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">
+                      {node.author.username}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatCommentTimestamp(node.createdAt)}
+                    </span>
+                    {matchesHighlightDepth && (
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                        depth {commentDepth}
+                      </Badge>
+                    )}
+                  </div>
+                  {parentNode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const anchor = document.getElementById(`comment-${parentNode.id}`)
+                        if (anchor) {
+                          anchor.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          if (replyHighlightTimeoutRef.current) {
+                            clearTimeout(replyHighlightTimeoutRef.current)
+                          }
+                          const parentDepth = depthById.get(parentNode.id) ?? null
+                          setHighlightDepth(parentDepth)
+                          replyHighlightTimeoutRef.current = setTimeout(() => {
+                            setHighlightDepth((prev) =>
+                              prev === parentDepth ? null : prev
+                            )
+                          }, 2500)
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    >
+                      <CornerUpLeft className="h-3 w-3" />
+                      В ответ @{parentNode.author.username}
+                    </button>
+                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
+                    {node.text}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleReplyClick(node.id, node.author.username)}
+                  >
+                    Ответить
+                  </Button>
+                  {node.replies.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-xs"
+                      onClick={() =>
+                        setCollapsedMap((prev) => ({
+                          ...prev,
+                          [node.id]: !isCollapsed,
+                        }))
+                      }
+                    >
+                      {isCollapsed ? (
+                        <>
+                          <ChevronRight className="h-3 w-3" />
+                          Показать ответы ({replyDescendants})
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3 w-3" />
+                          Свернуть ({replyDescendants})
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {node.replies.length > 0 && (!threadMode || node.id !== threadRootId) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-xs"
+                      onClick={() => setThreadRootId(node.id)}
+                    >
+                      <CornerDownRight className="h-3 w-3" />
+                      Открыть ветку
+                    </Button>
+                  )}
+                  {threadMode && threadRootId === node.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-xs"
+                      onClick={() => setThreadRootId(null)}
+                    >
+                      <Minimize2 className="h-3 w-3" />
+                      Выход
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={reactionState[node.id]?.userReaction === 'up' ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleCommentReaction(node.id, 'up')}
+                      disabled={!user}
+                      aria-label="Понравилось"
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="min-w-[24px] text-center text-xs font-medium">
+                      {reactionState[node.id]?.upvotes ?? 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={
+                        reactionState[node.id]?.userReaction === 'down' ? 'destructive' : 'ghost'
+                      }
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleCommentReaction(node.id, 'down')}
+                      disabled={!user}
+                      aria-label="Не понравилось"
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="min-w-[24px] text-center text-xs font-medium">
+                      {reactionState[node.id]?.downvotes ?? 0}
+                    </span>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Действия">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel>Действия</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {user && node.author.id !== user.id && (
+                        <DropdownMenuItem
+                          onClick={() => handleCommentAction(node, 'report')}
+                          className="gap-2"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                          <span>Пожаловаться</span>
+                        </DropdownMenuItem>
+                      )}
+                      {user && node.author.id === user.id && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleCommentAction(node, 'edit')}
+                            className="gap-2"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Изменить</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleCommentAction(node, 'delete')}
+                            className="gap-2 text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Удалить</span>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleCommentAction(node, 'info')}
+                        className="gap-2"
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                        <span>Информация</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+              {activeReply?.parentId === node.id && (
+                <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-3">
+                  <textarea
+                    placeholder={`Ответить ${node.author.username}`}
+                    className="w-full min-h-[100px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={replyText}
+                    onChange={(event) => setReplyText(event.target.value)}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={handleCancelReply}>
+                      Отмена
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSubmitReply}
+                      disabled={!replyText.trim()}
+                    >
+                      Отправить
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )
+
+      if (node.replies.length === 0 || isCollapsed) {
+        if (isCollapsed && node.replies.length > 0) {
+          return [
+            commentElement,
+            <div
+              key={`collapsed-${node.id}`}
+              className="ml-4 text-xs text-muted-foreground"
+            >
+              Ответы скрыты
+            </div>,
+          ]
+        }
+        return [commentElement]
+      }
+
+      return [
+        commentElement,
+        ...renderCommentThread(node.replies, depth + 1, { showStripes, threadMode }),
+      ]
+    })
   }
 
   const formatDate = (date: string) => {
@@ -444,18 +1146,107 @@ export default function ArticlePage() {
 
           {/* Comments Section */}
           <div className="space-y-6">
+            <div className="flex items-center justify-between gap-2">
             <h2 className="text-2xl font-bold tracking-tight">
-              Комментарии ({comments.length})
+                Комментарии ({combinedComments.length})
             </h2>
+              {localComments.length > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  Local preview
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {maxCommentDepth > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <ListTree className="h-3.5 w-3.5" />
+                    Глубина:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {Array.from({ length: maxCommentDepth + 1 }).map((_, depth) => (
+                      <Button
+                        key={`depth-toggle-${depth}`}
+                        variant={highlightDepth === depth ? 'default' : 'ghost'}
+                        size="sm"
+                        className={cn(
+                          'h-7 rounded-full px-2 text-xs font-medium',
+                          highlightDepth === depth ? '' : 'text-muted-foreground'
+                        )}
+                        onClick={() =>
+                          setHighlightDepth((prev) => (prev === depth ? null : depth))
+                        }
+                      >
+                        {depth}
+                      </Button>
+                    ))}
+                    {highlightDepth !== null && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 rounded-full px-2 text-xs"
+                        onClick={() => setHighlightDepth(null)}
+                      >
+                        Сброс
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {threadRootId && nodeLookup.has(threadRootId) && (
+                <div className="flex flex-1 flex-wrap items-center justify-end gap-2 text-xs">
+                  <span className="text-muted-foreground">Фокус ветки:</span>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {(() => {
+                      const chain: CommentNode[] = []
+                      let cursor: string | null = threadRootId
+                      while (cursor) {
+                        const node = nodeLookup.get(cursor)
+                        if (!node) break
+                        chain.unshift(node)
+                        cursor = parentById.get(cursor) ?? null
+                      }
+                      return chain.map((node, index) => (
+                        <div key={`crumb-${node.id}`} className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            className={cn(
+                              'rounded-full border border-border/60 bg-background px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted hover:text-foreground',
+                              node.id === threadRootId && 'border-primary/40 text-primary'
+                            )}
+                            onClick={() => setThreadRootId(node.id)}
+                          >
+                            @{node.author.username}
+                          </button>
+                          {index !== chain.length - 1 && (
+                            <span className="text-muted-foreground/60">/</span>
+                          )}
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 rounded-full px-2 text-xs"
+                    onClick={() => setThreadRootId(null)}
+                  >
+                    Выйти из фокуса
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <textarea
                   placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
-                  className="w-full min-h-[120px] p-3 rounded-lg border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
-                  disabled={!user || addCommentMutation.isPending}
+                  disabled={!user}
                 />
                 <div className="flex justify-end gap-2">
                   {!user && (
@@ -465,13 +1256,9 @@ export default function ArticlePage() {
                   )}
                   <Button
                     onClick={handleSubmitComment}
-                    disabled={
-                      !user ||
-                      !commentText.trim() ||
-                      addCommentMutation.isPending
-                    }
+                    disabled={!user || !commentText.trim()}
                   >
-                    {addCommentMutation.isPending ? 'Отправка…' : 'Отправить комментарий'}
+                    Отправить комментарий
                   </Button>
                 </div>
               </CardContent>
@@ -484,7 +1271,7 @@ export default function ArticlePage() {
                   Загружаем комментарии…
                 </CardContent>
               </Card>
-            ) : comments.length === 0 ? (
+            ) : combinedComments.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   Пока нет комментариев. Будьте первым!
@@ -492,22 +1279,16 @@ export default function ArticlePage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {comments.map((comment) => (
-                  <Card key={comment.id}>
-                    <CardContent className="pt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="font-medium">{comment.author.username}</span>
-                        <span>•</span>
-                        <span>
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm leading-relaxed whitespace-pre-line">
-                        {comment.text}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {renderCommentThread(
+                  threadRootId && nodeLookup.has(threadRootId)
+                    ? [nodeLookup.get(threadRootId)!]
+                    : commentTree,
+                  0,
+                  {
+                    showStripes: !(threadRootId && nodeLookup.has(threadRootId)),
+                    threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
+                  }
+                )}
               </div>
             )}
           </div>

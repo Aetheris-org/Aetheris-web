@@ -48,6 +48,8 @@ import {
   Twitter,
   User,
   Wallet,
+  Users,
+  Sparkles,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -60,6 +62,7 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuthStore } from '@/stores/authStore'
+import { useProfileDetailsStore, type PreferredContactMethod } from '@/stores/profileDetailsStore'
 import { updateUserProfile, uploadProfileMedia } from '@/api/profile'
 import {
   Dialog,
@@ -316,22 +319,46 @@ function ProfileSettings() {
     user: state.user,
     setUser: state.setUser,
   }))
+  const { details: profileDetails, setDetails: setProfileDetails } = useProfileDetailsStore((state) => ({
+    details: state.details,
+    setDetails: state.setDetails,
+  }))
 
   const [nickname, setNickname] = useState(user?.nickname ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
-  const [contactEmail, setContactEmail] = useState(user?.email ?? '')
-  const [website, setWebsite] = useState(user?.website ?? '')
-  const [locationValue, setLocationValue] = useState(user?.location ?? '')
-  const [headline, setHeadline] = useState('')
-  const [availability, setAvailability] = useState('')
-  const [twitterHandle, setTwitterHandle] = useState('')
-  const [githubHandle, setGithubHandle] = useState('')
-  const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [portfolioUrl, setPortfolioUrl] = useState('')
+  const [contactEmail, setContactEmail] = useState(profileDetails.contactEmail || user?.email || '')
+  const [website, setWebsite] = useState(profileDetails.website || user?.website || '')
+  const [locationValue, setLocationValue] = useState(profileDetails.location || user?.location || '')
+  const [headline, setHeadline] = useState(profileDetails.headline)
+  const [availability, setAvailability] = useState(profileDetails.availability)
+  const [currentRole, setCurrentRole] = useState(profileDetails.currentRole)
+  const [currentCompany, setCurrentCompany] = useState(profileDetails.currentCompany)
+  const [experienceLevel, setExperienceLevel] = useState(profileDetails.yearsExperience)
+  const [timezone, setTimezone] = useState(profileDetails.timezone)
+  const [pronouns, setPronouns] = useState(profileDetails.pronouns)
+  const [languages, setLanguages] = useState(profileDetails.languages)
+  const [focusAreas, setFocusAreas] = useState(profileDetails.focusAreas)
+  const [currentlyLearning, setCurrentlyLearning] = useState(profileDetails.currentlyLearning)
+  const [openToMentoring, setOpenToMentoring] = useState(profileDetails.openToMentoring)
+  const [openToConsulting, setOpenToConsulting] = useState(profileDetails.openToConsulting)
+  const [openToSpeaking, setOpenToSpeaking] = useState(profileDetails.openToSpeaking)
+  const [preferredContactMethod, setPreferredContactMethod] = useState<PreferredContactMethod>(
+    profileDetails.preferredContactMethod
+  )
+  const [newsletterName, setNewsletterName] = useState(profileDetails.newsletterName)
+  const [newsletterUrl, setNewsletterUrl] = useState(profileDetails.newsletterUrl)
+  const [officeHours, setOfficeHours] = useState(profileDetails.officeHours)
+  const [collaborationNotes, setCollaborationNotes] = useState(profileDetails.collaborationNotes)
+  const [twitterHandle, setTwitterHandle] = useState(profileDetails.social.twitter)
+  const [githubHandle, setGithubHandle] = useState(profileDetails.social.github)
+  const [linkedinUrl, setLinkedinUrl] = useState(profileDetails.social.linkedin)
+  const [portfolioUrl, setPortfolioUrl] = useState(profileDetails.social.portfolio)
   const [contactSaving, setContactSaving] = useState(false)
   const [socialSaving, setSocialSaving] = useState(false)
+  const [professionalSaving, setProfessionalSaving] = useState(false)
+  const [insightsSaving, setInsightsSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar ?? null)
   const [coverPreview, setCoverPreview] = useState<string | null>(user?.coverImage ?? null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -351,9 +378,24 @@ function ProfileSettings() {
   const initialCover = user?.coverImage ?? null
   const initialFirstName = user?.firstName ?? ''
   const initialLastName = user?.lastName ?? ''
-  const initialContactEmail = user?.email ?? ''
-  const initialWebsite = user?.website ?? ''
-  const initialLocation = user?.location ?? ''
+  const initialContactEmail = profileDetails.contactEmail || user?.email || ''
+  const initialWebsite = profileDetails.website || user?.website || ''
+  const initialLocation = profileDetails.location || user?.location || ''
+  const initialHeadline = profileDetails.headline
+  const initialAvailability = profileDetails.availability
+  const initialCurrentRole = profileDetails.currentRole
+  const initialCurrentCompany = profileDetails.currentCompany
+  const initialExperienceLevel = profileDetails.yearsExperience
+  const initialTimezone = profileDetails.timezone
+  const initialPronouns = profileDetails.pronouns
+  const initialLanguages = profileDetails.languages
+  const initialFocusAreas = profileDetails.focusAreas
+  const initialCurrentlyLearning = profileDetails.currentlyLearning
+  const initialPreferredContact = profileDetails.preferredContactMethod
+  const initialNewsletterName = profileDetails.newsletterName
+  const initialNewsletterUrl = profileDetails.newsletterUrl
+  const initialOfficeHours = profileDetails.officeHours
+  const initialCollaborationNotes = profileDetails.collaborationNotes
 
   const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null)
   const [coverCropSource, setCoverCropSource] = useState<string | null>(null)
@@ -371,14 +413,34 @@ function ProfileSettings() {
     contactEmail: initialContactEmail,
     website: initialWebsite,
     location: initialLocation,
-    headline: '',
-    availability: '',
   })
   const socialInitialRef = useRef({
-    twitterHandle: '',
-    githubHandle: '',
-    linkedinUrl: '',
-    portfolioUrl: '',
+    twitterHandle: profileDetails.social.twitter,
+    githubHandle: profileDetails.social.github,
+    linkedinUrl: profileDetails.social.linkedin,
+    portfolioUrl: profileDetails.social.portfolio,
+  })
+  const professionalInitialRef = useRef({
+    headline: initialHeadline,
+    availability: initialAvailability,
+    currentRole: initialCurrentRole,
+    currentCompany: initialCurrentCompany,
+    experienceLevel: initialExperienceLevel,
+    timezone: initialTimezone,
+    pronouns: initialPronouns,
+  })
+  const insightsInitialRef = useRef({
+    languages: initialLanguages,
+    focusAreas: initialFocusAreas,
+    currentlyLearning: initialCurrentlyLearning,
+    openToMentoring: profileDetails.openToMentoring,
+    openToConsulting: profileDetails.openToConsulting,
+    openToSpeaking: profileDetails.openToSpeaking,
+    preferredContactMethod: initialPreferredContact,
+    newsletterName: initialNewsletterName,
+    newsletterUrl: initialNewsletterUrl,
+    officeHours: initialOfficeHours,
+    collaborationNotes: initialCollaborationNotes,
   })
 
   const revokeObjectUrl = (url: string | null) => {
@@ -394,34 +456,79 @@ function ProfileSettings() {
     setCoverRemoved(false)
     setAvatarFile(null)
     setCoverFile(null)
+
     contactInitialRef.current = {
       firstName: initialFirstName,
       lastName: initialLastName,
       contactEmail: initialContactEmail,
       website: initialWebsite,
       location: initialLocation,
-      headline: '',
-      availability: '',
     }
     socialInitialRef.current = {
-      twitterHandle: '',
-      githubHandle: '',
-      linkedinUrl: '',
-      portfolioUrl: '',
+      twitterHandle: profileDetails.social.twitter,
+      githubHandle: profileDetails.social.github,
+      linkedinUrl: profileDetails.social.linkedin,
+      portfolioUrl: profileDetails.social.portfolio,
     }
+    professionalInitialRef.current = {
+      headline: initialHeadline,
+      availability: initialAvailability,
+      currentRole: initialCurrentRole,
+      currentCompany: initialCurrentCompany,
+      experienceLevel: initialExperienceLevel,
+      timezone: initialTimezone,
+      pronouns: initialPronouns,
+    }
+    insightsInitialRef.current = {
+      languages: initialLanguages,
+      focusAreas: initialFocusAreas,
+      currentlyLearning: initialCurrentlyLearning,
+      openToMentoring: profileDetails.openToMentoring,
+      openToConsulting: profileDetails.openToConsulting,
+      openToSpeaking: profileDetails.openToSpeaking,
+      preferredContactMethod: initialPreferredContact,
+      newsletterName: initialNewsletterName,
+      newsletterUrl: initialNewsletterUrl,
+      officeHours: initialOfficeHours,
+      collaborationNotes: initialCollaborationNotes,
+    }
+
     setFirstName(contactInitialRef.current.firstName)
     setLastName(contactInitialRef.current.lastName)
     setContactEmail(contactInitialRef.current.contactEmail)
     setWebsite(contactInitialRef.current.website)
     setLocationValue(contactInitialRef.current.location)
-    setHeadline(contactInitialRef.current.headline)
-    setAvailability(contactInitialRef.current.availability)
+
+    setHeadline(professionalInitialRef.current.headline)
+    setAvailability(professionalInitialRef.current.availability)
+    setCurrentRole(professionalInitialRef.current.currentRole)
+    setCurrentCompany(professionalInitialRef.current.currentCompany)
+    setExperienceLevel(professionalInitialRef.current.experienceLevel)
+    setTimezone(professionalInitialRef.current.timezone)
+    setPronouns(professionalInitialRef.current.pronouns)
+
+    setLanguages(insightsInitialRef.current.languages)
+    setFocusAreas(insightsInitialRef.current.focusAreas)
+    setCurrentlyLearning(insightsInitialRef.current.currentlyLearning)
+    setOpenToMentoring(insightsInitialRef.current.openToMentoring)
+    setOpenToConsulting(insightsInitialRef.current.openToConsulting)
+    setOpenToSpeaking(insightsInitialRef.current.openToSpeaking)
+    setPreferredContactMethod(insightsInitialRef.current.preferredContactMethod)
+    setNewsletterName(insightsInitialRef.current.newsletterName)
+    setNewsletterUrl(insightsInitialRef.current.newsletterUrl)
+    setOfficeHours(insightsInitialRef.current.officeHours)
+    setCollaborationNotes(insightsInitialRef.current.collaborationNotes)
+
     setTwitterHandle(socialInitialRef.current.twitterHandle)
     setGithubHandle(socialInitialRef.current.githubHandle)
     setLinkedinUrl(socialInitialRef.current.linkedinUrl)
     setPortfolioUrl(socialInitialRef.current.portfolioUrl)
+
     setContactSaving(false)
     setSocialSaving(false)
+    setProfessionalSaving(false)
+    setInsightsSaving(false)
+
     setAvatarPreview((prev) => {
       if (prev && prev.startsWith('blob:')) {
         revokeObjectUrl(prev)
@@ -464,6 +571,28 @@ function ProfileSettings() {
     initialContactEmail,
     initialWebsite,
     initialLocation,
+    initialHeadline,
+    initialAvailability,
+    initialCurrentRole,
+    initialCurrentCompany,
+    initialExperienceLevel,
+    initialTimezone,
+    initialPronouns,
+    initialLanguages,
+    initialFocusAreas,
+    initialCurrentlyLearning,
+    initialPreferredContact,
+    initialNewsletterName,
+    initialNewsletterUrl,
+    initialOfficeHours,
+    initialCollaborationNotes,
+    profileDetails.openToMentoring,
+    profileDetails.openToConsulting,
+    profileDetails.openToSpeaking,
+    profileDetails.social.github,
+    profileDetails.social.linkedin,
+    profileDetails.social.portfolio,
+    profileDetails.social.twitter,
   ])
 
   useEffect(() => {
@@ -691,8 +820,12 @@ function ProfileSettings() {
     setCoverCroppedArea(null)
     handleContactReset()
     handleSocialReset()
+    handleProfessionalReset()
+    handleInsightsReset()
     setContactSaving(false)
     setSocialSaving(false)
+    setProfessionalSaving(false)
+    setInsightsSaving(false)
   }
 
   const contactHasChanges =
@@ -700,15 +833,43 @@ function ProfileSettings() {
     lastName.trim() !== contactInitialRef.current.lastName ||
     contactEmail.trim() !== contactInitialRef.current.contactEmail ||
     website.trim() !== contactInitialRef.current.website ||
-    locationValue.trim() !== contactInitialRef.current.location ||
-    headline.trim() !== contactInitialRef.current.headline ||
-    availability.trim() !== contactInitialRef.current.availability
+    locationValue.trim() !== contactInitialRef.current.location
 
   const socialHasChanges =
     twitterHandle.trim() !== socialInitialRef.current.twitterHandle ||
     githubHandle.trim() !== socialInitialRef.current.githubHandle ||
     linkedinUrl.trim() !== socialInitialRef.current.linkedinUrl ||
     portfolioUrl.trim() !== socialInitialRef.current.portfolioUrl
+
+  const professionalHasChanges =
+    headline.trim() !== professionalInitialRef.current.headline ||
+    availability.trim() !== professionalInitialRef.current.availability ||
+    currentRole.trim() !== professionalInitialRef.current.currentRole ||
+    currentCompany.trim() !== professionalInitialRef.current.currentCompany ||
+    experienceLevel.trim() !== professionalInitialRef.current.experienceLevel ||
+    timezone.trim() !== professionalInitialRef.current.timezone ||
+    pronouns.trim() !== professionalInitialRef.current.pronouns
+
+  const insightsHasChanges =
+    languages.trim() !== insightsInitialRef.current.languages ||
+    focusAreas.trim() !== insightsInitialRef.current.focusAreas ||
+    currentlyLearning.trim() !== insightsInitialRef.current.currentlyLearning ||
+    openToMentoring !== insightsInitialRef.current.openToMentoring ||
+    openToConsulting !== insightsInitialRef.current.openToConsulting ||
+    openToSpeaking !== insightsInitialRef.current.openToSpeaking ||
+    preferredContactMethod !== insightsInitialRef.current.preferredContactMethod ||
+    newsletterName.trim() !== insightsInitialRef.current.newsletterName ||
+    newsletterUrl.trim() !== insightsInitialRef.current.newsletterUrl ||
+    officeHours.trim() !== insightsInitialRef.current.officeHours ||
+    collaborationNotes.trim() !== insightsInitialRef.current.collaborationNotes
+
+  const contactMethodOptions: Array<{ value: PreferredContactMethod; label: string; helper: string }> = [
+    { value: 'email', label: 'Email', helper: 'Reply within 1-2 business days' },
+    { value: 'direct-message', label: 'Direct messages', helper: 'Connect via the built-in messenger' },
+    { value: 'schedule', label: 'Scheduling link', helper: 'Share a Calendly or other booking link' },
+    { value: 'social', label: 'Social first', helper: 'Reach out via social handles' },
+    { value: 'not-specified', label: 'No preference', helper: 'Decide together as needed' },
+  ]
 
   const hasTextChanges =
     nickname.trim() !== initialNickname || (bio ?? '').trim() !== (initialBio ?? '')
@@ -728,8 +889,6 @@ function ProfileSettings() {
     setContactEmail(contactInitialRef.current.contactEmail)
     setWebsite(contactInitialRef.current.website)
     setLocationValue(contactInitialRef.current.location)
-    setHeadline(contactInitialRef.current.headline)
-    setAvailability(contactInitialRef.current.availability)
   }
 
   const handleContactSave = async () => {
@@ -741,9 +900,12 @@ function ProfileSettings() {
       contactEmail: contactEmail.trim(),
       website: website.trim(),
       location: locationValue.trim(),
-      headline: headline.trim(),
-      availability: availability.trim(),
     }
+    setProfileDetails({
+      contactEmail: contactInitialRef.current.contactEmail,
+      website: contactInitialRef.current.website,
+      location: contactInitialRef.current.location,
+    })
     setContactSaving(false)
     toast({
       title: 'Contact details saved',
@@ -772,6 +934,94 @@ function ProfileSettings() {
     toast({
       title: 'Social links saved',
       description: 'TODO: connect social profiles with backend once it supports them.',
+    })
+  }
+
+  const handleProfessionalReset = () => {
+    setHeadline(professionalInitialRef.current.headline)
+    setAvailability(professionalInitialRef.current.availability)
+    setCurrentRole(professionalInitialRef.current.currentRole)
+    setCurrentCompany(professionalInitialRef.current.currentCompany)
+    setExperienceLevel(professionalInitialRef.current.experienceLevel)
+    setTimezone(professionalInitialRef.current.timezone)
+    setPronouns(professionalInitialRef.current.pronouns)
+  }
+
+  const handleProfessionalSave = async () => {
+    setProfessionalSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    professionalInitialRef.current = {
+      headline: headline.trim(),
+      availability: availability.trim(),
+      currentRole: currentRole.trim(),
+      currentCompany: currentCompany.trim(),
+      experienceLevel: experienceLevel.trim(),
+      timezone: timezone.trim(),
+      pronouns: pronouns.trim(),
+    }
+    setProfileDetails({
+      headline: professionalInitialRef.current.headline,
+      availability: professionalInitialRef.current.availability,
+      currentRole: professionalInitialRef.current.currentRole,
+      currentCompany: professionalInitialRef.current.currentCompany,
+      yearsExperience: professionalInitialRef.current.experienceLevel,
+      timezone: professionalInitialRef.current.timezone,
+      pronouns: professionalInitialRef.current.pronouns,
+    })
+    setProfessionalSaving(false)
+    toast({
+      title: 'Professional profile saved',
+      description: 'These details appear across your public profile header and author cards.',
+    })
+  }
+
+  const handleInsightsReset = () => {
+    setLanguages(insightsInitialRef.current.languages)
+    setFocusAreas(insightsInitialRef.current.focusAreas)
+    setCurrentlyLearning(insightsInitialRef.current.currentlyLearning)
+    setOpenToMentoring(insightsInitialRef.current.openToMentoring)
+    setOpenToConsulting(insightsInitialRef.current.openToConsulting)
+    setOpenToSpeaking(insightsInitialRef.current.openToSpeaking)
+    setPreferredContactMethod(insightsInitialRef.current.preferredContactMethod)
+    setNewsletterName(insightsInitialRef.current.newsletterName)
+    setNewsletterUrl(insightsInitialRef.current.newsletterUrl)
+    setOfficeHours(insightsInitialRef.current.officeHours)
+    setCollaborationNotes(insightsInitialRef.current.collaborationNotes)
+  }
+
+  const handleInsightsSave = async () => {
+    setInsightsSaving(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    insightsInitialRef.current = {
+      languages: languages.trim(),
+      focusAreas: focusAreas.trim(),
+      currentlyLearning: currentlyLearning.trim(),
+      openToMentoring,
+      openToConsulting,
+      openToSpeaking,
+      preferredContactMethod,
+      newsletterName: newsletterName.trim(),
+      newsletterUrl: newsletterUrl.trim(),
+      officeHours: officeHours.trim(),
+      collaborationNotes: collaborationNotes.trim(),
+    }
+    setProfileDetails({
+      languages: insightsInitialRef.current.languages,
+      focusAreas: insightsInitialRef.current.focusAreas,
+      currentlyLearning: insightsInitialRef.current.currentlyLearning,
+      openToMentoring: insightsInitialRef.current.openToMentoring,
+      openToConsulting: insightsInitialRef.current.openToConsulting,
+      openToSpeaking: insightsInitialRef.current.openToSpeaking,
+      preferredContactMethod: insightsInitialRef.current.preferredContactMethod,
+      newsletterName: insightsInitialRef.current.newsletterName,
+      newsletterUrl: insightsInitialRef.current.newsletterUrl,
+      officeHours: insightsInitialRef.current.officeHours,
+      collaborationNotes: insightsInitialRef.current.collaborationNotes,
+    })
+    setInsightsSaving(false)
+    toast({
+      title: 'Focus & visibility saved',
+      description: 'Your availability preferences will now show on the profile page.',
     })
   }
 
@@ -1098,28 +1348,6 @@ function ProfileSettings() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-headline">Headline</Label>
-              <div className="relative">
-                <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-headline"
-                  value={headline}
-                  onChange={(event) => setHeadline(event.target.value)}
-                  placeholder="Frontend engineer & technical writer"
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-availability">Availability note</Label>
-              <Input
-                id="settings-availability"
-                value={availability}
-                onChange={(event) => setAvailability(event.target.value)}
-                placeholder="Open for mentoring requests and podcast interviews."
-              />
-            </div>
           </div>
           <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
             <Button
@@ -1237,6 +1465,285 @@ function ProfileSettings() {
             </Button>
           </div>
         </section>
+
+        <Separator className="border-dashed" />
+
+        <section className="space-y-4 pt-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Focus & visibility</Label>
+            <p className="text-sm text-muted-foreground">
+              Highlight the work you are excited about and how collaborators should reach out.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-languages">Languages & locales</Label>
+              <Input
+                id="settings-languages"
+                value={languages}
+                onChange={(event) => setLanguages(event.target.value)}
+                placeholder="English, Spanish (ES), Catalan"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-focus">Focus areas</Label>
+              <textarea
+                id="settings-focus"
+                value={focusAreas}
+                onChange={(event) => setFocusAreas(event.target.value)}
+                placeholder="Calm product strategy, accessibility systems, editorial tooling, long-form craft."
+                className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                maxLength={320}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-learning">Currently exploring</Label>
+              <textarea
+                id="settings-learning"
+                value={currentlyLearning}
+                onChange={(event) => setCurrentlyLearning(event.target.value)}
+                placeholder="Studying tactile motion systems and authoring workflows for multi-sensory mediums."
+                className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                maxLength={280}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-office-hours">Office hours / response window</Label>
+              <Input
+                id="settings-office-hours"
+                value={officeHours}
+                onChange={(event) => setOfficeHours(event.target.value)}
+                placeholder="Replies within 48h · Best between 10:00 and 16:00 CET"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-collaboration">Collaboration notes</Label>
+              <textarea
+                id="settings-collaboration"
+                value={collaborationNotes}
+                onChange={(event) => setCollaborationNotes(event.target.value)}
+                placeholder="Open to paired writing, guest lectures, and design audits for creator platforms."
+                className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                maxLength={240}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-lg border border-dashed bg-muted/20 p-4">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Availability</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant={openToMentoring ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setOpenToMentoring((value) => !value)}
+                  aria-pressed={openToMentoring}
+                >
+                  <Users className="h-4 w-4" />
+                  Mentoring
+                </Button>
+                <Button
+                  type="button"
+                  variant={openToConsulting ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setOpenToConsulting((value) => !value)}
+                  aria-pressed={openToConsulting}
+                >
+                  <Briefcase className="h-4 w-4" />
+                  Consulting
+                </Button>
+                <Button
+                  type="button"
+                  variant={openToSpeaking ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setOpenToSpeaking((value) => !value)}
+                  aria-pressed={openToSpeaking}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Speaking
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preferred contact method</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {contactMethodOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={preferredContactMethod === option.value ? 'default' : 'outline'}
+                    className={cn(
+                      'h-full justify-start gap-1 py-3 text-left',
+                      preferredContactMethod === option.value && 'border-primary'
+                    )}
+                    onClick={() => setPreferredContactMethod(option.value)}
+                    aria-pressed={preferredContactMethod === option.value}
+                  >
+                    <span className="text-sm font-semibold">{option.label}</span>
+                    <span className="text-xs text-muted-foreground">{option.helper}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="settings-newsletter-name">Newsletter name</Label>
+                <Input
+                  id="settings-newsletter-name"
+                  value={newsletterName}
+                  onChange={(event) => setNewsletterName(event.target.value)}
+                  placeholder="Field Notes by Noelle"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="settings-newsletter-url">Newsletter link</Label>
+                <Input
+                  id="settings-newsletter-url"
+                  value={newsletterUrl}
+                  onChange={(event) => setNewsletterUrl(event.target.value)}
+                  placeholder="https://newsletter.aetheris.dev"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleInsightsReset}
+              disabled={!insightsHasChanges || insightsSaving}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleInsightsSave}
+              disabled={!insightsHasChanges || insightsSaving}
+              className="gap-2"
+            >
+              {insightsSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save focus & visibility'
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <Separator className="border-dashed" />
+
+        <section className="space-y-4 pt-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Professional profile</Label>
+            <p className="text-sm text-muted-foreground">
+              Curate how Aetheris introduces you in newsletters, listings, and profile summaries.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-headline">Headline</Label>
+              <Input
+                id="settings-headline"
+                value={headline}
+                onChange={(event) => setHeadline(event.target.value)}
+                placeholder="Design director crafting calm, accessible publishing tools"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-role">Current role</Label>
+              <Input
+                id="settings-role"
+                value={currentRole}
+                onChange={(event) => setCurrentRole(event.target.value)}
+                placeholder="Design Director"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-company">Organisation</Label>
+              <Input
+                id="settings-company"
+                value={currentCompany}
+                onChange={(event) => setCurrentCompany(event.target.value)}
+                placeholder="Aetheris Studio"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-experience">Experience</Label>
+              <Input
+                id="settings-experience"
+                value={experienceLevel}
+                onChange={(event) => setExperienceLevel(event.target.value)}
+                placeholder="8+ years in product design"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-timezone">Timezone</Label>
+              <Input
+                id="settings-timezone"
+                value={timezone}
+                onChange={(event) => setTimezone(event.target.value)}
+                placeholder="UTC+1 · CET"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="settings-pronouns">Pronouns</Label>
+              <Input
+                id="settings-pronouns"
+                value={pronouns}
+                onChange={(event) => setPronouns(event.target.value)}
+                placeholder="she/they"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="settings-availability">Availability note</Label>
+              <textarea
+                id="settings-availability"
+                value={availability}
+                onChange={(event) => setAvailability(event.target.value)}
+                placeholder="Open for fractional design leadership, UX critiques, and conference talks."
+                className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                maxLength={200}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleProfessionalReset}
+              disabled={!professionalHasChanges || professionalSaving}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleProfessionalSave}
+              disabled={!professionalHasChanges || professionalSaving}
+              className="gap-2"
+            >
+              {professionalSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save professional info'
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <Separator className="border-dashed" />
 
         <div className="flex flex-col gap-2 border-t border-dashed pt-6 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={handleCancel} disabled={isSaving || !hasChanges}>
@@ -2115,8 +2622,8 @@ function AppearanceSettings() {
                         >
                           <Trash2 className="h-4 w-4" />
                 </Button>
-              </div>
-            </div>
+          </div>
+        </div>
                   ))}
             </div>
               ) : (

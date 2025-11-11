@@ -12,6 +12,7 @@ import AuthPage from '@/pages/AuthPage'
 import CreateArticlePage from '@/pages/CreateArticlePage'
 import SettingsPage from '@/pages/SettingsPage'
 import ReadingListPage from '@/pages/ReadingListPage'
+import HelpCenterPage from '@/pages/HelpCenterPage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import { useAuthStore } from '@/stores/authStore'
@@ -53,6 +54,7 @@ function App() {
           <Route path="/create" element={<CreateArticlePage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/reading-list" element={<ReadingListPage />} />
+          <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
         <Toaster />
