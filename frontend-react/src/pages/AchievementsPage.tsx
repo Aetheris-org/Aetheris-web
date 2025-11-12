@@ -555,22 +555,11 @@ export default function AchievementsPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="container space-y-8 pb-16 pt-6">
-        <div className="relative">
-          <HeroSection stats={stats} isExpanded={isHeroExpanded} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 h-8 w-8 rounded-full"
-            onClick={() => setIsHeroExpanded(!isHeroExpanded)}
-            aria-label={isHeroExpanded ? 'Collapse hero section' : 'Expand hero section'}
-          >
-            {isHeroExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        <HeroSection
+          stats={stats}
+          isExpanded={isHeroExpanded}
+          onToggle={() => setIsHeroExpanded(!isHeroExpanded)}
+        />
 
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
           <aside className="space-y-6">
@@ -621,25 +610,19 @@ export default function AchievementsPage() {
                   {activeCategory !== 'all' && ` in ${activeCategory}`}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-                  <SelectTrigger className="w-[180px]">
-                    <ArrowUpDown className="mr-2 h-4 w-4 shrink-0" />
-                    <SelectValue placeholder="Sort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default</SelectItem>
-                    <SelectItem value="rarity-asc">Rarity: Low to High</SelectItem>
-                    <SelectItem value="rarity-desc">Rarity: High to Low</SelectItem>
-                    <SelectItem value="name">Name (A-Z)</SelectItem>
-                    <SelectItem value="unlocked">Unlocked First</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Badge variant="secondary" className="gap-2 rounded-full px-4 py-1.5">
-                  <Trophy className="h-3.5 w-3.5" />
-                  {unlockedCount} / {totalCount} unlocked
-                </Badge>
-              </div>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                <SelectTrigger className="w-[180px] border-border/60 bg-muted/20 hover:bg-muted/30">
+                  <ArrowUpDown className="mr-2 h-4 w-4 shrink-0" />
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent className="!bg-card border-border/60">
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="rarity-asc">Rarity: Low to High</SelectItem>
+                  <SelectItem value="rarity-desc">Rarity: High to Low</SelectItem>
+                  <SelectItem value="name">Name (A-Z)</SelectItem>
+                  <SelectItem value="unlocked">Unlocked First</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <AchievementsGrid achievements={filteredAchievements} />
@@ -663,18 +646,28 @@ interface HeroSectionProps {
     }>
   }
   isExpanded: boolean
+  onToggle: () => void
 }
 
-function HeroSection({ stats, isExpanded }: HeroSectionProps) {
+function HeroSection({ stats, isExpanded, onToggle }: HeroSectionProps) {
   return (
     <section
       className={cn(
-        'rounded-3xl border border-border/60 bg-muted/20 p-6 shadow-sm transition-all duration-300 overflow-hidden md:p-10',
-        isExpanded ? 'max-h-[1000px]' : 'max-h-20'
+        'rounded-3xl border border-border/60 bg-muted/20 shadow-sm transition-all duration-300 overflow-hidden',
+        isExpanded ? 'p-6 md:p-10 max-h-[1000px]' : 'px-6 py-3 max-h-14'
       )}
     >
       {isExpanded ? (
-        <div className="space-y-5">
+        <div className="space-y-5 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-8 w-8 rounded-full"
+            onClick={onToggle}
+            aria-label="Collapse hero section"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
           <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
             Achievements & Progress
           </Badge>
@@ -702,7 +695,8 @@ function HeroSection({ stats, isExpanded }: HeroSectionProps) {
           </Card>
         </div>
       ) : (
-        <div className="flex items-center gap-3 h-full">
+        <div className="flex items-center gap-3 w-full">
+          <Trophy className="h-4 w-4 shrink-0 text-primary" />
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-sm font-semibold text-foreground">{stats.completionRate}%</span>
             <span className="text-xs text-muted-foreground">complete</span>
@@ -711,6 +705,15 @@ function HeroSection({ stats, isExpanded }: HeroSectionProps) {
           <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
             {stats.totalUnlocked}/{stats.totalAvailable}
           </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0 rounded-full -mr-1"
+            onClick={onToggle}
+            aria-label="Expand hero section"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
     </section>
@@ -734,11 +737,11 @@ function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCateg
   ]
 
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader>
+    <Card className="border-border/60 bg-muted/20 shadow-sm">
+      <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">Categories</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-1 pt-0">
         {categories.map((category) => {
           const Icon = category.icon
           const count =
@@ -757,14 +760,22 @@ function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCateg
               key={category.id}
               variant={activeCategory === category.id ? 'secondary' : 'ghost'}
               className={cn(
-                'w-full justify-start gap-2',
-                activeCategory === category.id && 'shadow-sm'
+                'w-full justify-start gap-2 h-9',
+                activeCategory === category.id && 'bg-primary/10 text-primary border-primary/20 shadow-sm'
               )}
               onClick={() => onCategoryChange(category.id)}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1 text-left">{category.label}</span>
-              <Badge variant="outline" className="ml-auto rounded-md text-xs">
+              <Badge
+                variant="outline"
+                className={cn(
+                  'ml-auto rounded-full text-xs border',
+                  activeCategory === category.id
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'bg-muted/50 border-border/60'
+                )}
+              >
                 {unlocked}/{count}
               </Badge>
             </Button>
@@ -790,11 +801,11 @@ function RarityBreakdown({ stats }: RarityBreakdownProps) {
   ]
 
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader>
+    <Card className="border-border/60 bg-muted/20 shadow-sm">
+      <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">By rarity</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pt-0">
         {rarities.map((rarity) => {
           const count = stats.byRarity[rarity.id] ?? 0
           return (
@@ -818,7 +829,7 @@ function RarityBreakdown({ stats }: RarityBreakdownProps) {
                 </div>
                 <span className="text-muted-foreground">{count} unlocked</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
                 <div
                   className={cn('h-full transition-all', rarity.style.badge.split(' ')[0])}
                   style={{ width: `${Math.min(100, (count / 5) * 100)}%` }}

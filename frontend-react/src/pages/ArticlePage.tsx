@@ -1143,13 +1143,13 @@ export default function ArticlePage() {
       </header>
 
       <div className="container py-8">
-        <article className="mx-auto max-w-4xl">
+        <article className="w-full">
           {article.previewImage && (
             <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
               <img
                 src={article.previewImage}
                 alt={article.title}
-                className="max-h-[460px] w-full object-cover"
+                className="w-full h-auto object-contain"
               />
             </div>
           )}

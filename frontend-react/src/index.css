@@ -137,6 +137,9 @@
   .tiptap {
     position: relative;
     @apply leading-relaxed text-foreground;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .tiptap:focus-visible {

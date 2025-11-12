@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,7 @@ import {
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
 import { createDraftArticle, updateDraftArticle, publishArticle, getDraftArticle } from '@/api/articles'
+import { cn } from '@/lib/utils'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
@@ -78,6 +79,7 @@ export default function CreateArticlePage() {
   const [isLoadingDraft, setIsLoadingDraft] = useState(false)
   const [draftId, setDraftId] = useState<number | null>(null)
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<number | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
@@ -529,6 +531,60 @@ export default function CreateArticlePage() {
     }
   }
 
+  const steps = [
+    {
+      id: 0,
+      label: 'Basic Info',
+      icon: Type,
+      description: 'Title and excerpt',
+    },
+    {
+      id: 1,
+      label: 'Content',
+      icon: FileText,
+      description: 'Article content',
+    },
+    {
+      id: 2,
+      label: 'Metadata',
+      icon: Tag,
+      description: 'Tags and difficulty',
+    },
+    {
+      id: 3,
+      label: 'Preview',
+      icon: ImageIcon,
+      description: 'Hero image',
+    },
+  ]
+
+  const canGoNext = () => {
+    switch (currentStep) {
+      case 0:
+        return title.trim().length > 0
+      case 1:
+        return getPlainTextFromHtml(content).trim().length > 0
+      case 2:
+        return true // Tags and difficulty are optional
+      case 3:
+        return true // Preview image is optional
+      default:
+        return false
+    }
+  }
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1 && canGoNext()) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -574,180 +630,355 @@ export default function CreateArticlePage() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-4rem)] w-full">
-        {/* Main Editor Area - Full Width */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Title Bar */}
-          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="px-8 py-4">
-              <Input
-                placeholder="Article title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-bold border-0 bg-transparent px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
-              />
-            </div>
-          </div>
+      <div className="container py-8">
+        {/* Stepper - Compact and Modern */}
+        <div className="mb-12">
+          <div className="flex items-center">
+            {steps.map((step, index) => {
+              const StepIcon = step.icon
+              const isActive = currentStep === step.id
+              const isCompleted = currentStep > step.id
+              const isUpcoming = currentStep < step.id
+              const stepNumber = index + 1
 
-          {/* Editor Content Area */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="px-8 py-8">
-              <RichTextEditor
-                id="content-editor"
-                ariaLabelledBy="content-editor-label"
-                value={content}
-                onChange={setContent}
-                placeholder="Start writing your article..."
-                characterLimit={20000}
-              />
-            </div>
+              return (
+                <div key={step.id} className="flex flex-1 items-center">
+                  <div className="flex flex-1 items-center">
+                    {/* Step Circle */}
+                    <div className="flex flex-col items-center flex-1">
+                      <button
+                        type="button"
+                        onClick={() => (isCompleted || isActive) && setCurrentStep(step.id)}
+                        disabled={isUpcoming}
+                        className={cn(
+                          'relative flex items-center justify-center transition-all duration-300',
+                          isActive && 'cursor-default',
+                          isCompleted && 'cursor-pointer',
+                          isUpcoming && 'cursor-not-allowed'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'relative flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300',
+                            isActive
+                              ? 'border-primary bg-primary text-primary-foreground scale-110'
+                              : isCompleted
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-muted text-muted-foreground'
+                          )}
+                        >
+                          {isCompleted ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <span className="text-xs font-semibold">{stepNumber}</span>
+                          )}
+                        </div>
+                        {isActive && (
+                          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                        )}
+                      </button>
+                      {/* Step Label */}
+                      <div className="mt-3 text-center">
+                        <p
+                          className={cn(
+                            'text-xs font-medium transition-colors',
+                            isActive
+                              ? 'text-foreground'
+                              : isCompleted
+                                ? 'text-muted-foreground'
+                                : 'text-muted-foreground/60'
+                          )}
+                        >
+                          {step.label}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Connector Line */}
+                    {index < steps.length - 1 && (
+                      <div className="mx-2 flex-1 h-px relative">
+                        <div
+                          className={cn(
+                            'absolute inset-0 transition-all duration-500',
+                            isCompleted
+                              ? 'bg-primary'
+                              : isActive
+                                ? 'bg-primary/30'
+                                : 'bg-border'
+                          )}
+                          style={{
+                            width: isCompleted ? '100%' : isActive ? '50%' : '0%',
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
 
-        {/* Sidebar - Article Settings */}
-        <div className="w-80 border-l bg-muted/30 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            {/* Excerpt */}
-            <div className="space-y-2">
-              <Label htmlFor="excerpt" className="text-sm font-medium">Excerpt</Label>
-              <Input
-                id="excerpt"
-                placeholder="Brief description..."
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-
-            <Separator />
-
-            {/* Tags */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add tag..."
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddTag()
-                    }
-                  }}
-                  className="text-sm"
-                />
-                <Button onClick={handleAddTag} size="sm">Add</Button>
-              </div>
-
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="cursor-pointer text-xs"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      {tag} ×
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Difficulty */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Difficulty</Label>
-              <div className="flex gap-2">
-                {(['easy', 'medium', 'hard'] as const).map((level) => (
-                  <Button
-                    key={level}
-                    variant={difficulty === level ? 'default' : 'outline'}
-                    onClick={() => setDifficulty(level)}
-                    size="sm"
-                    className="capitalize flex-1"
-                  >
-                    {level}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Preview Image */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Preview Image</Label>
-              {croppedImageUrl ? (
-                <>
-                  <div className="relative overflow-hidden rounded-lg border border-border/70 bg-muted/20">
-                    <img
-                      src={croppedImageUrl}
-                      alt="Article preview"
-                      className="aspect-video w-full object-cover"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 flex-1"
-                      onClick={handleAdjustCrop}
-                      disabled={!originalImageUrl}
-                    >
-                      <Crop className="h-3 w-3" />
-                      Adjust
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 flex-1"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Replace
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-destructive hover:text-destructive"
-                      onClick={resetPreviewImage}
-                    >
-                      <XCircle className="h-3 w-3" />
-                      Remove
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 bg-muted/10 px-4 py-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/40">
-                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Add a hero image
+        {/* Content Area - Full Width with Steps */}
+        <div className="w-full">
+          <div
+            className="transition-all duration-300 ease-in-out"
+            style={{
+              opacity: 1,
+              transform: 'translateX(0)',
+            }}
+          >
+            {/* Step 0: Basic Info (Title and Excerpt) */}
+            {currentStep === 0 && (
+              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Article Title</Label>
+                  <Input
+                    placeholder="Enter your article title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 bg-transparent"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Choose a clear, descriptive title that captures the essence of your article.
                   </p>
-                  <Button
-                    className="mt-3 gap-2"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <ImagePlus className="h-3 w-3" />
-                    Upload
-                  </Button>
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageSelection}
-              />
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt" className="text-sm font-medium">
+                    Excerpt <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="excerpt"
+                    placeholder="Brief description of your article..."
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    className="text-base"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    A short summary that appears in article previews and search results.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1: Content */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <Label id="content-editor-label" htmlFor="content-editor" className="text-base font-medium">
+                      Article Content
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      Rich text editor with formatting, shortcuts, and live previews
+                    </span>
+                  </div>
+                  <RichTextEditor
+                    id="content-editor"
+                    ariaLabelledBy="content-editor-label"
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Start writing your article content here..."
+                    characterLimit={20000}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Metadata */}
+            {currentStep === 2 && (
+              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Tag className="h-5 w-5" />
+                      Tags
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Add tags to help readers find your article. Press Enter to add.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a tag..."
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleAddTag()
+                          }
+                        }}
+                      />
+                      <Button onClick={handleAddTag}>Add</Button>
+                    </div>
+
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {tags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                            onClick={() => handleRemoveTag(tag)}
+                          >
+                            {tag} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Difficulty Level</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Select the difficulty level that best matches your article content.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-3">
+                      {(['easy', 'medium', 'hard'] as const).map((level) => (
+                        <Button
+                          key={level}
+                          variant={difficulty === level ? 'default' : 'outline'}
+                          onClick={() => setDifficulty(level)}
+                          className="capitalize flex-1"
+                          size="lg"
+                        >
+                          {level}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Step 3: Preview Image */}
+            {currentStep === 3 && (
+              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Preview Image
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Upload a hero image that appears on article cards, homepage, and social shares. Recommended size
+                      1200×630px.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {croppedImageUrl ? (
+                      <>
+                        <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
+                          <img
+                            src={croppedImageUrl}
+                            alt="Article preview"
+                            className="aspect-video w-full object-cover"
+                          />
+                          <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
+                            <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                              16:9
+                            </Badge>
+                            Perfect for social previews
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={handleAdjustCrop}
+                            disabled={!originalImageUrl}
+                          >
+                            <Crop className="h-4 w-4" />
+                            Adjust crop
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            Replace image
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="gap-2 text-destructive hover:text-destructive"
+                            onClick={resetPreviewImage}
+                          >
+                            <XCircle className="h-4 w-4" />
+                            Remove
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-6 py-16 text-center">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/40">
+                          <ImagePlus className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        <h4 className="mt-6 text-lg font-semibold">Add a hero image</h4>
+                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                          The preview appears on article cards, the homepage, and social shares. Recommended size
+                          1200×630px.
+                        </p>
+                        <Button
+                          className="mt-6 gap-2"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <ImagePlus className="h-4 w-4" />
+                          Upload image
+                        </Button>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelection}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="mt-8 flex items-center justify-between border-t pt-6">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className="gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Step {currentStep + 1} of {steps.length}
+              </span>
             </div>
+
+            <Button
+              onClick={handleNext}
+              disabled={!canGoNext() || currentStep === steps.length - 1}
+              className="gap-2"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

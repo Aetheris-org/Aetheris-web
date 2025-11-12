@@ -1058,14 +1058,14 @@ export function RichTextEditor({
             )}
 
             <div className="px-4 pb-8 pt-6 lg:flex lg:items-start lg:gap-10">
-              <div className="group/editor relative flex-1 transition-[box-shadow] focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.04)]">
+              <div className="group/editor relative flex-1 min-w-0 transition-[box-shadow] focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.04)]">
                 <EditorContent
                   editor={editor}
                   id={id}
                   aria-label={ariaLabel}
                   aria-labelledby={ariaLabelledBy}
                   aria-describedby={ariaDescribedBy}
-                  className="text-base"
+                  className="text-base break-words"
                 />
                 <span className="pointer-events-none absolute bottom-2 left-4 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40 opacity-0 transition-opacity duration-200 group-focus-within/editor:opacity-100">
                   Writing mode
