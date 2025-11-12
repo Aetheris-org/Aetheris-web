@@ -717,33 +717,33 @@ export default function ArticlePage() {
           {showConnectors && stripeCount > 0 && (
             <>
               <div aria-hidden className="pointer-events-auto absolute left-0 top-0 bottom-0 flex">
-                {Array.from({ length: stripeCount }).map((_, stripeIndex) => {
-                  const stripeDepth = stripeIndex + 1
-                  const stripeActive =
-                    highlightDepth !== null ? stripeDepth >= highlightDepth : true
+              {Array.from({ length: stripeCount }).map((_, stripeIndex) => {
+                const stripeDepth = stripeIndex + 1
+                const stripeActive =
+                  highlightDepth !== null ? stripeDepth >= highlightDepth : true
                   const isLastStripe = stripeIndex === stripeCount - 1
-                  return (
-                    <span
-                      key={`stripe-${node.id}-${stripeIndex}`}
-                      className={cn(
-                        'h-full cursor-pointer rounded-full transition-opacity',
-                        STRIPE_CLASSNAMES[stripeIndex % STRIPE_CLASSNAMES.length],
-                        stripeActive ? 'opacity-60 hover:opacity-90' : 'opacity-20'
-                      )}
-                      style={{
-                        width: STRIPE_WIDTH,
+                return (
+                  <span
+                    key={`stripe-${node.id}-${stripeIndex}`}
+                    className={cn(
+                      'h-full cursor-pointer rounded-full transition-opacity',
+                      STRIPE_CLASSNAMES[stripeIndex % STRIPE_CLASSNAMES.length],
+                      stripeActive ? 'opacity-60 hover:opacity-90' : 'opacity-20'
+                    )}
+                    style={{
+                      width: STRIPE_WIDTH,
                         marginRight: isLastStripe ? 0 : STRIPE_GAP,
-                      }}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setHighlightDepth((prev) =>
-                          prev === stripeDepth ? null : stripeDepth
-                        )
-                      }}
-                    />
-                  )
-                })}
-              </div>
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setHighlightDepth((prev) =>
+                        prev === stripeDepth ? null : stripeDepth
+                      )
+                    }}
+                  />
+                )
+              })}
+            </div>
             </>
           )}
           {overflowDepth > 0 && (
@@ -1242,7 +1242,7 @@ export default function ArticlePage() {
           {/* Comments Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold tracking-tight">
-              Комментарии ({combinedComments.length})
+                Комментарии ({combinedComments.length})
             </h2>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -1347,7 +1347,7 @@ export default function ArticlePage() {
                       threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
                     }
                   )}
-                      </div>
+              </div>
             )}
           </div>
         </article>
@@ -1397,7 +1397,7 @@ export default function ArticlePage() {
                       Ответ на @{infoParent.author.username}
                     </p>
                   )}
-              </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1434,7 +1434,7 @@ export default function ArticlePage() {
                   <p className="text-xs text-muted-foreground">
                     +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
                   </p>
-          </div>
+                </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
                   <p className="text-xs text-muted-foreground">Статус синхронизации</p>
                   <p className="text-sm font-medium text-foreground">
@@ -1442,8 +1442,8 @@ export default function ArticlePage() {
                       ? 'Ожидает отправки в Strapi'
                       : 'Получен из Strapi'}
                   </p>
-      </div>
-    </div>
+                </div>
+              </div>
 
               <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
                 TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и
@@ -1495,7 +1495,7 @@ export default function ArticlePage() {
                   {copySuccess ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copySuccess ? 'Copied' : 'Copy'}
                 </Button>
-              </div>
+    </div>
             </div>
 
             {shareTargets.length > 0 && (
@@ -1535,7 +1535,7 @@ export default function ArticlePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  </TooltipProvider>
-)
+      </div>
+    </TooltipProvider>
+  )
 }

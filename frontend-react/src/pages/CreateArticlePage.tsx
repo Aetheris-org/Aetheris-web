@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Calendar, Clock, Heart, Bookmark, Share2 } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,9 @@ import { createDraftArticle, updateDraftArticle, publishArticle, getDraftArticle
 import { cn } from '@/lib/utils'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
+
+// TODO: Add the same character limit validation on the backend (Strapi schema)
+const EXCERPT_MAX_LENGTH = 500
 
 function normalizeRichText(value: string | null | undefined): string {
   if (!value) return ''
@@ -58,6 +62,7 @@ function getPlainTextFromHtml(html: string): string {
 export default function CreateArticlePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { user } = useAuthStore()
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -80,6 +85,9 @@ export default function CreateArticlePage() {
   const [draftId, setDraftId] = useState<number | null>(null)
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<number | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
+  const [isTitleFocused, setIsTitleFocused] = useState(false)
+  const [isExcerptFocused, setIsExcerptFocused] = useState(false)
+  const excerptTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
@@ -120,6 +128,34 @@ export default function CreateArticlePage() {
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove))
+  }
+
+  // Auto-resize textarea for excerpt
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = excerptTextareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [])
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [excerpt, adjustTextareaHeight])
+
+  const formatDate = (date: string | Date) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    return dateObj.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
+  const estimateReadTime = (content: string) => {
+    const wordsPerMinute = 200
+    const words = content.split(/\s+/).length
+    return Math.ceil(words / wordsPerMinute) || 1
   }
 
   const handleSaveDraft = async () => {
@@ -556,6 +592,12 @@ export default function CreateArticlePage() {
       icon: ImageIcon,
       description: 'Hero image',
     },
+    {
+      id: 4,
+      label: 'Review',
+      icon: Eye,
+      description: 'Final preview',
+    },
   ]
 
   const canGoNext = () => {
@@ -568,6 +610,8 @@ export default function CreateArticlePage() {
         return true // Tags and difficulty are optional
       case 3:
         return true // Preview image is optional
+      case 4:
+        return true // Review is always accessible
       default:
         return false
     }
@@ -730,36 +774,53 @@ export default function CreateArticlePage() {
             {/* Step 0: Basic Info (Title and Excerpt) */}
             {currentStep === 0 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
-                <div className="space-y-2">
+          <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Article Title</Label>
-                  <Input
-                    placeholder="Enter your article title..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 bg-transparent"
-                  />
+            <Input
+                    placeholder={isTitleFocused || title.trim() ? '' : 'Enter your article title...'}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onFocus={() => setIsTitleFocused(true)}
+              onBlur={() => setIsTitleFocused(false)}
+                    className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground/50 bg-transparent shadow-none break-words"
+                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+            />
                   <p className="text-xs text-muted-foreground">
                     Choose a clear, descriptive title that captures the essence of your article.
                   </p>
-                </div>
+          </div>
 
-                <Separator />
+          <Separator />
 
-                <div className="space-y-2">
+          <div className="space-y-2">
                   <Label htmlFor="excerpt" className="text-sm font-medium">
                     Excerpt <span className="text-muted-foreground font-normal">(optional)</span>
                   </Label>
-                  <Input
-                    id="excerpt"
-                    placeholder="Brief description of your article..."
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    className="text-base"
-                  />
+            <div className="relative">
+              <Textarea
+                id="excerpt"
+                ref={excerptTextareaRef}
+                placeholder={isExcerptFocused || excerpt.trim() ? '' : 'Brief description of your article...'}
+                value={excerpt}
+                onChange={(e) => {
+                  const newValue = e.target.value.slice(0, EXCERPT_MAX_LENGTH)
+                  setExcerpt(newValue)
+                  adjustTextareaHeight()
+                }}
+                onFocus={() => setIsExcerptFocused(true)}
+                onBlur={() => setIsExcerptFocused(false)}
+                className="text-base min-h-[80px] resize-none break-words pr-16"
+                rows={3}
+                maxLength={EXCERPT_MAX_LENGTH}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                {excerpt.length}/{EXCERPT_MAX_LENGTH}
+              </div>
+            </div>
                   <p className="text-xs text-muted-foreground">
                     A short summary that appears in article previews and search results.
                   </p>
-                </div>
+          </div>
               </div>
             )}
 
@@ -778,20 +839,20 @@ export default function CreateArticlePage() {
                   <RichTextEditor
                     id="content-editor"
                     ariaLabelledBy="content-editor-label"
-                    value={content}
+              value={content}
                     onChange={setContent}
                     placeholder="Start writing your article content here..."
                     characterLimit={20000}
-                  />
-                </div>
+            />
+          </div>
               </div>
             )}
 
             {/* Step 2: Metadata */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
-                <Card>
-                  <CardHeader>
+          <Card>
+            <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Tag className="h-5 w-5" />
                       Tags
@@ -799,71 +860,71 @@ export default function CreateArticlePage() {
                     <p className="text-sm text-muted-foreground">
                       Add tags to help readers find your article. Press Enter to add.
                     </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Add a tag..."
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            handleAddTag()
-                          }
-                        }}
-                      />
-                      <Button onClick={handleAddTag}>Add</Button>
-                    </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a tag..."
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddTag()
+                    }
+                  }}
+                />
+                <Button onClick={handleAddTag}>Add</Button>
+              </div>
 
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
                             className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                            onClick={() => handleRemoveTag(tag)}
-                          >
-                            {tag} ×
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      {tag} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <Card>
-                  <CardHeader>
+          <Card>
+            <CardHeader>
                     <CardTitle className="text-lg">Difficulty Level</CardTitle>
                     <p className="text-sm text-muted-foreground">
                       Select the difficulty level that best matches your article content.
                     </p>
-                  </CardHeader>
-                  <CardContent>
+            </CardHeader>
+            <CardContent>
                     <div className="flex gap-3">
-                      {(['easy', 'medium', 'hard'] as const).map((level) => (
-                        <Button
-                          key={level}
-                          variant={difficulty === level ? 'default' : 'outline'}
-                          onClick={() => setDifficulty(level)}
+                {(['easy', 'medium', 'hard'] as const).map((level) => (
+                  <Button
+                    key={level}
+                    variant={difficulty === level ? 'default' : 'outline'}
+                    onClick={() => setDifficulty(level)}
                           className="capitalize flex-1"
                           size="lg"
-                        >
-                          {level}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                  >
+                    {level}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
               </div>
             )}
 
             {/* Step 3: Preview Image */}
             {currentStep === 3 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
-                <Card>
-                  <CardHeader>
+          <Card>
+            <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <ImageIcon className="h-5 w-5" />
                       Preview Image
@@ -872,81 +933,259 @@ export default function CreateArticlePage() {
                       Upload a hero image that appears on article cards, homepage, and social shares. Recommended size
                       1200×630px.
                     </p>
-                  </CardHeader>
-                  <CardContent className="space-y-5">
-                    {croppedImageUrl ? (
-                      <>
-                        <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
-                          <img
-                            src={croppedImageUrl}
-                            alt="Article preview"
-                            className="aspect-video w-full object-cover"
-                          />
-                          <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
-                            <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
-                              16:9
-                            </Badge>
-                            Perfect for social previews
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            variant="outline"
-                            className="gap-2"
-                            onClick={handleAdjustCrop}
-                            disabled={!originalImageUrl}
-                          >
-                            <Crop className="h-4 w-4" />
-                            Adjust crop
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                            Replace image
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="gap-2 text-destructive hover:text-destructive"
-                            onClick={resetPreviewImage}
-                          >
-                            <XCircle className="h-4 w-4" />
-                            Remove
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
-                        </p>
-                      </>
-                    ) : (
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {croppedImageUrl ? (
+                <>
+                  <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
+                    <img
+                      src={croppedImageUrl}
+                      alt="Article preview"
+                      className="aspect-video w-full object-cover"
+                    />
+                    <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
+                      <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                        16:9
+                      </Badge>
+                      Perfect for social previews
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={handleAdjustCrop}
+                      disabled={!originalImageUrl}
+                    >
+                      <Crop className="h-4 w-4" />
+                      Adjust crop
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Replace image
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="gap-2 text-destructive hover:text-destructive"
+                      onClick={resetPreviewImage}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Remove
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
+                  </p>
+                </>
+              ) : (
                       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-6 py-16 text-center">
                         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/40">
                           <ImagePlus className="h-10 w-10 text-muted-foreground" />
-                        </div>
+                  </div>
                         <h4 className="mt-6 text-lg font-semibold">Add a hero image</h4>
                         <p className="mt-2 max-w-md text-sm text-muted-foreground">
                           The preview appears on article cards, the homepage, and social shares. Recommended size
                           1200×630px.
+                  </p>
+                  <Button
+                    className="mt-6 gap-2"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    Upload image
+                  </Button>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelection}
+              />
+            </CardContent>
+          </Card>
+              </div>
+            )}
+
+            {/* Step 4: Review */}
+            {currentStep === 4 && (
+              <div className="animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                {/* Preview Image */}
+                {croppedImageUrl && (
+                  <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
+                    <img
+                      src={croppedImageUrl}
+                      alt={title.trim() || 'Article preview'}
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                )}
+
+                {/* Article Header */}
+                <div className="space-y-6">
+                  {/* Title */}
+                  <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
+                    {title.trim() || <span className="text-muted-foreground italic">Untitled</span>}
+                  </h1>
+
+                  {/* Meta Info */}
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">{user?.nickname || user?.email || 'You'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{estimateReadTime(getPlainTextFromHtml(content))} min read</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Article Content */}
+                <div className="prose prose-neutral dark:prose-invert max-w-none">
+                  {content.trim() ? (
+                    <div
+                      className="text-foreground leading-relaxed break-words"
+                      dangerouslySetInnerHTML={{ __html: content }}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground italic">No content yet</p>
+                  )}
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Metadata Section - Visually Separated */}
+                <Card className="border-border/60 bg-muted/5">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Article Metadata</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Complete information about your article
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Excerpt */}
+                    {excerpt.trim() ? (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-foreground">Excerpt</Label>
+                        <p className="text-base text-muted-foreground leading-relaxed">{excerpt}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {excerpt.length} / {EXCERPT_MAX_LENGTH} characters
                         </p>
-                        <Button
-                          className="mt-6 gap-2"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <ImagePlus className="h-4 w-4" />
-                          Upload image
-                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-foreground">Excerpt</Label>
+                        <p className="text-sm text-muted-foreground italic">No excerpt provided</p>
                       </div>
                     )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageSelection}
-                    />
+
+                    <Separator />
+
+                    {/* Tags and Difficulty */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-foreground">Tags</Label>
+                        {tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {tags.map((tag) => (
+                              <Badge key={tag} variant="secondary">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">No tags added</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{tags.length} tag{tags.length !== 1 ? 's' : ''}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-foreground">Difficulty Level</Label>
+                        <Badge variant="outline" className="capitalize text-base px-3 py-1">
+                          {difficulty}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Preview Image Info */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Preview Image</Label>
+                      {croppedImageUrl ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-green-600 dark:text-green-400">
+                            <ImageIcon className="h-3 w-3 mr-1" />
+                            Uploaded
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">Hero image is ready</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No preview image</p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Detailed Statistics */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">Content Statistics</Label>
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Title</p>
+                          <p className="text-lg font-semibold">{title.length}</p>
+                          <p className="text-xs text-muted-foreground">characters</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Content</p>
+                          <p className="text-lg font-semibold">
+                            {getPlainTextFromHtml(content).length}
+                          </p>
+                          <p className="text-xs text-muted-foreground">characters</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Words</p>
+                          <p className="text-lg font-semibold">
+                            {getPlainTextFromHtml(content).split(/\s+/).filter(Boolean).length}
+                          </p>
+                          <p className="text-xs text-muted-foreground">total</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Reading Time</p>
+                          <p className="text-lg font-semibold">
+                            {estimateReadTime(getPlainTextFromHtml(content))}
+                          </p>
+                          <p className="text-xs text-muted-foreground">minutes</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Additional Info */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-foreground">Author</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {user?.nickname || user?.email || 'Not specified'}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-foreground">Status</Label>
+                        <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
+                          Draft
+                        </Badge>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

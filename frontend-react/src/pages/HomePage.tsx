@@ -18,7 +18,6 @@ import {
   Bookmark,
   MessageCircle,
   X,
-  ChevronDown,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
@@ -92,7 +91,6 @@ export default function HomePage() {
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
   const [page, setPage] = useState(1)
   const [isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
-  const [isSignalsCollapsed, setIsSignalsCollapsed] = useState(false)
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
   const quickDestinations = useMemo(
@@ -178,10 +176,6 @@ export default function HomePage() {
     if (storedValue === 'true') {
       setIsSpotlightDismissed(true)
     }
-    const storedSignals = typeof window !== 'undefined' ? localStorage.getItem('home-signals-collapsed') : null
-    if (storedSignals === 'true') {
-      setIsSignalsCollapsed(true)
-    }
   }, [])
 
   const paginationPages = useMemo(() => {
@@ -241,6 +235,25 @@ export default function HomePage() {
 
       <main className="container space-y-10 pb-12 pt-6">
         <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+            {viewModeOptions.map((option) => {
+                      const Icon = option.icon
+              const isActive = option.id === viewMode
+                      return (
+                <Button
+                          key={option.id}
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className={cn('gap-2 px-3 text-xs', isActive && 'shadow-sm')}
+                  onClick={() => setViewMode(option.id)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{option.label}</span>
+                </Button>
+              )
+            })}
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="ghost"
@@ -266,25 +279,6 @@ export default function HomePage() {
                 Start discussion
               </Button>
             )}
-          </div>
-
-          <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-            {viewModeOptions.map((option) => {
-                      const Icon = option.icon
-              const isActive = option.id === viewMode
-                      return (
-                <Button
-                          key={option.id}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className={cn('gap-2 px-3 text-xs', isActive && 'shadow-sm')}
-                  onClick={() => setViewMode(option.id)}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden md:inline">{option.label}</span>
-                </Button>
-              )
-            })}
           </div>
         </section>
 
@@ -350,51 +344,6 @@ export default function HomePage() {
           </div>
         </section>
         )}
-
-        <section className="rounded-2xl border border-border/60 bg-muted/10 p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Today’s signals</p>
-              <p className="max-w-xl text-sm text-muted-foreground">
-                15 threads are heating up right now. See the hottest discussions or jump into a quick-win opportunity.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground',
-                isSignalsCollapsed && 'rotate-180'
-              )}
-              onClick={() => setIsSignalsCollapsed((prev) => {
-                const next = !prev
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('home-signals-collapsed', next ? 'true' : 'false')
-                }
-                return next
-              })}
-              aria-expanded={!isSignalsCollapsed}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
-          {!isSignalsCollapsed && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/networking')}>
-                <Compass className="h-4 w-4" />
-                Match with collaborators
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/courses')}>
-                <GraduationCap className="h-4 w-4" />
-                Browse fresh courses
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/developers')}>
-                <Terminal className="h-4 w-4" />
-                Review dev updates
-              </Button>
-        </div>
-          )}
-        </section>
 
         <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
           <div className="space-y-6">
