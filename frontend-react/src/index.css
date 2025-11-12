@@ -167,12 +167,69 @@
     @apply font-medium text-primary underline underline-offset-4;
   }
 
-  .tiptap img {
-    @apply my-6 w-full rounded-lg border border-border/60 object-cover;
-  }
+.tiptap img {
+  @apply my-6 w-full rounded-lg border border-border/60 object-cover;
+}
 
-  .tiptap strong {
-    @apply font-semibold;
-  }
+.tiptap strong {
+  @apply font-semibold;
+}
+}
+
+.tippy-box[data-theme~='slash-command'] {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.tippy-box[data-theme~='slash-command'] > .tippy-content {
+  padding: 0;
+}
+
+.callout-block {
+  @apply rounded-xl border px-4 py-3 shadow-sm transition-shadow;
+}
+
+.editor-columns {
+  display: flex;
+  gap: 1.5rem;
+  margin: 1.75rem 0;
+  width: 100%;
+}
+
+.editor-column {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: calc(var(--column-width, 50) * 1%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.editor-toggle {
+  @apply my-4 rounded-lg border border-border/60 bg-muted/30 p-3;
+}
+
+.editor-toggle-summary {
+  @apply cursor-pointer list-none text-sm font-semibold tracking-tight;
+}
+
+.editor-toggle-content {
+  @apply mt-2 space-y-2 text-sm text-muted-foreground;
+}
+
+.editor-image {
+  @apply my-6 w-full rounded-xl border border-border/60 object-cover shadow-sm;
+}
+
+.editor-drag-handle {
+  position: absolute;
+  z-index: 40;
+  cursor: grab;
+}
+
+.editor-drag-handle:active {
+  cursor: grabbing;
 }
 

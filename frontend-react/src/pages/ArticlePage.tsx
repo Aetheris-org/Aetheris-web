@@ -82,11 +82,9 @@ interface CommentReactionState {
   userReaction: 'up' | 'down' | null
 }
 
-const THREAD_LINE_WIDTH = 1.5
-const THREAD_LINE_GAP = 20
-const THREAD_BASE_OFFSET = 22
-const THREAD_ELBOW_LENGTH = 16
-const THREAD_ELBOW_Y = 34
+const THREAD_CAPSULE_OFFSET = 18
+const THREAD_CAPSULE_PADDING = 16
+const THREAD_CAPSULE_RADIUS = 22
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -664,10 +662,9 @@ export default function ArticlePage() {
       const initials = (node.author.username ?? 'U').slice(0, 2).toUpperCase()
 
       const commentDepth = depth
-      const paddingLeft =
-        showConnectors && commentDepth > 0
-          ? THREAD_BASE_OFFSET + commentDepth * THREAD_LINE_GAP
-          : 0
+      const paddingLeft = showConnectors
+        ? commentDepth * THREAD_CAPSULE_OFFSET + THREAD_CAPSULE_PADDING
+        : 0
 
       const isHoverTarget = hoveredCommentId === node.id
       const isInHoverPath =
@@ -686,79 +683,41 @@ export default function ArticlePage() {
         !isHoverTarget &&
         !isInHoverPath
       const dimClass = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-60' : undefined
-      const connectorOpacity = isDimmedByHover ? 0.35 : isDimmedByDepth ? 0.6 : 1
 
-      const resolveConnectorTone = (level: number) => {
-        if (highlightDepth !== null && level < highlightDepth) {
-          return 'bg-border/30'
-        }
-        if (isHoverTarget) {
-          return 'bg-primary/60'
-        }
-        if (isInHoverPath) {
-          return 'bg-primary/50'
-        }
-        return 'bg-border/60'
-      }
+      const capsuleTone = isHoverTarget
+        ? 'border border-primary/60 bg-primary/5 shadow-[0_0_30px_rgba(var(--primary-rgb,99,102,241),0.18)]'
+        : isInHoverPath
+          ? 'border border-primary/40 bg-primary/5'
+          : 'border border-border/70 bg-card/75'
+      const dimOverlay = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-55' : undefined
 
       const commentElement = (
         <div
           key={`comment-${node.id}`}
           id={`comment-${node.id}`}
           className="relative space-y-3"
-          style={paddingLeft ? ({ paddingLeft } as CSSProperties) : undefined}
+          style={paddingLeft ? ({ paddingLeft: `${paddingLeft}px` } as CSSProperties) : undefined}
           onMouseEnter={() => setHoveredCommentId(node.id)}
           onMouseLeave={() => setHoveredCommentId((prev) => (prev === node.id ? null : prev))}
         >
           {showConnectors && commentDepth > 0 && (
-            <>
-              {Array.from({ length: commentDepth }).map((_, index) => {
-                const depthLevel = index + 1
-                const tone = resolveConnectorTone(depthLevel)
-                const left = THREAD_BASE_OFFSET + index * THREAD_LINE_GAP - THREAD_LINE_WIDTH / 2
-                return (
-                  <span
-                    key={`thread-line-${node.id}-${depthLevel}`}
-                    aria-hidden
-                    className={cn(
-                      'pointer-events-none absolute rounded-full transition-opacity duration-[800ms]',
-                      tone
-                    )}
-                    style={{
-                      left,
-                      top: 0,
-                      bottom: THREAD_ELBOW_Y,
-                      width: THREAD_LINE_WIDTH,
-                      opacity: connectorOpacity,
-                    }}
-                  />
-                )
-              })}
-              <span
-                aria-hidden
-                className={cn(
-                  'pointer-events-none absolute z-10 rounded-full transition-all duration-[800ms]',
-                  resolveConnectorTone(commentDepth)
-                )}
-                style={{
-                  left:
-                    THREAD_BASE_OFFSET + (commentDepth - 1) * THREAD_LINE_GAP - THREAD_LINE_WIDTH / 2,
-                  top: THREAD_ELBOW_Y - THREAD_LINE_WIDTH / 2,
-                  width: THREAD_ELBOW_LENGTH,
-                  height: THREAD_LINE_WIDTH,
-                  borderTopLeftRadius: 999,
-                  borderBottomLeftRadius: 999,
-                  opacity: connectorOpacity,
-                }}
-              />
-            </>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-4 left-[6px] -z-10 w-px bg-border/50"
+              style={{ opacity: isDimmedByHover ? 0.2 : isDimmedByDepth ? 0.45 : 0.75 }}
+            />
           )}
           <Card
             className={cn(
-              'border-none bg-transparent shadow-none transition-colors transition-opacity duration-[800ms]',
-              isHoverTarget && 'ring-2 ring-primary/60 ring-offset-0',
-              dimClass
+              'transition-colors transition-opacity duration-[800ms] shadow-sm',
+              capsuleTone,
+              dimOverlay,
+              commentDepth > 0
+                ? 'ml-[-12px] mr-[-8px] rounded-l-[var(--capsule-radius)] border-l-2'
+                : 'rounded-[var(--capsule-radius)]',
+              'border bg-card/80 backdrop-blur-[1.5px]'
             )}
+            style={{ '--capsule-radius': `${THREAD_CAPSULE_RADIUS}px` } as CSSProperties}
           >
             <CardContent className="pt-4 space-y-3">
               <div className="flex items-start gap-3">
@@ -1436,7 +1395,7 @@ export default function ArticlePage() {
                   <p className="text-xs text-muted-foreground">
                     +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
                   </p>
-          </div>
+                </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
                   <p className="text-xs text-muted-foreground">Статус синхронизации</p>
                   <p className="text-sm font-medium text-foreground">
@@ -1444,8 +1403,8 @@ export default function ArticlePage() {
                       ? 'Ожидает отправки в Strapi'
                       : 'Получен из Strapi'}
                   </p>
-      </div>
-    </div>
+                </div>
+              </div>
 
               <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
                 TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и
@@ -1497,7 +1456,7 @@ export default function ArticlePage() {
                   {copySuccess ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copySuccess ? 'Copied' : 'Copy'}
                 </Button>
-    </div>
+              </div>
             </div>
 
             {shareTargets.length > 0 && (
@@ -1537,8 +1496,7 @@ export default function ArticlePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-    </TooltipProvider>
-  )
+    </div>
+  </TooltipProvider>
+)
 }
-

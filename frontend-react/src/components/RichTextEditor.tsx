@@ -13,11 +13,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import CharacterCount from '@tiptap/extension-character-count'
-import { Extension, type Range } from '@tiptap/core'
-import Suggestion, {
-  type SuggestionOptions,
-  type SuggestionProps,
-} from '@tiptap/suggestion'
+import Typography from '@tiptap/extension-typography'
+import Image from '@tiptap/extension-image'
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details'
+import { Extension, type Range, type Editor } from '@tiptap/core'
+import Suggestion, { type SuggestionOptions, type SuggestionProps } from '@tiptap/suggestion'
 import { createLowlight, common } from 'lowlight'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Highlight from '@tiptap/extension-highlight'
@@ -44,9 +44,13 @@ import {
   Highlighter,
   Braces,
   Minus,
+  StickyNote,
+  ListTodo,
+  Columns3,
+  Link2,
+  Hash,
 } from 'lucide-react'
 
-import type { Editor } from '@tiptap/core'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -59,8 +63,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { Callout, type CalloutVariant } from '@/extensions/callout'
+import { Column, Columns, COLUMN_LAYOUTS, type ColumnPresetKey } from '@/extensions/columns'
+import { SmartInput } from '@/extensions/smart-input'
+import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
+import { DragHandle } from '@/extensions/drag-handle'
 
 const lowlight = createLowlight(common)
 
@@ -76,107 +87,11 @@ type SlashCommandItem = {
 
 type SlashCommandProps = SuggestionProps<SlashCommandItem>
 
-const slashCommandItems: SlashCommandItem[] = [
-  {
-    id: 'text',
-    title: 'Paragraph',
-    description: 'Start with plain text',
-    icon: <Text className="h-4 w-4" />,
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setParagraph().run()
-    },
-  },
-  {
-    id: 'heading-1',
-    title: 'Heading 1',
-    description: 'Large section heading',
-    icon: <Heading1 className="h-4 w-4" />,
-    keywords: ['title', 'h1'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleHeading({ level: 1 }).run()
-    },
-  },
-  {
-    id: 'heading-2',
-    title: 'Heading 2',
-    description: 'Medium section heading',
-    icon: <Heading2 className="h-4 w-4" />,
-    keywords: ['h2'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleHeading({ level: 2 }).run()
-    },
-  },
-  {
-    id: 'heading-3',
-    title: 'Heading 3',
-    description: 'Small section heading',
-    icon: <Heading3 className="h-4 w-4" />,
-    keywords: ['h3'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleHeading({ level: 3 }).run()
-    },
-  },
-  {
-    id: 'bullet-list',
-    title: 'Bullet list',
-    description: 'Create a bulleted list',
-    icon: <List className="h-4 w-4" />,
-    keywords: ['list'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBulletList().run()
-    },
-  },
-  {
-    id: 'ordered-list',
-    title: 'Numbered list',
-    description: 'Create a numbered list',
-    icon: <ListOrdered className="h-4 w-4" />,
-    keywords: ['list', 'numbers'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleOrderedList().run()
-    },
-  },
-  {
-    id: 'quote',
-    title: 'Quote',
-    description: 'Capture a quotation',
-    icon: <Quote className="h-4 w-4" />,
-    keywords: ['blockquote'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run()
-    },
-  },
-  {
-    id: 'code-block',
-    title: 'Code block',
-    description: 'Display code with syntax highlight',
-    icon: <Braces className="h-4 w-4" />,
-    keywords: ['code', 'snippet'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
-    },
-  },
-  {
-    id: 'divider',
-    title: 'Divider',
-    description: 'Add a subtle divider',
-    icon: <Minus className="h-4 w-4" />,
-    keywords: ['line', 'hr'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHorizontalRule().run()
-    },
-  },
-  {
-    id: 'image',
-    title: 'Image',
-    description: 'Embed an image from URL',
-    icon: <ImageIcon className="h-4 w-4" />,
-    keywords: ['picture', 'media'],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setParagraph().run()
-    },
-  },
-]
+let slashCommandItemsResolver: () => SlashCommandItem[] = () => []
+
+export const setSlashCommandItemsResolver = (resolver: () => SlashCommandItem[]) => {
+  slashCommandItemsResolver = resolver
+}
 
 const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, ref) => {
   const { items, command } = props
@@ -298,8 +213,9 @@ const SlashCommandExtension = Extension.create<{
           const isRootDepth = $from.depth === 1 || $from.depth === 0
           return editor.isEditable && isRootDepth
         },
-        items: ({ query }) =>
-          slashCommandItems.filter((item) => {
+        items: ({ query }) => {
+          const allItems = slashCommandItemsResolver()
+          return allItems.filter((item) => {
             const search = query.toLowerCase()
             return (
               !search ||
@@ -307,7 +223,8 @@ const SlashCommandExtension = Extension.create<{
               item.description.toLowerCase().includes(search) ||
               item.keywords?.some((keyword) => keyword.toLowerCase().includes(search))
             )
-          }),
+          })
+        },
         command: ({ editor, range, props }) => {
           props.command({ editor, range })
         },
@@ -336,7 +253,7 @@ const SlashCommandExtension = Extension.create<{
                 placement: 'bottom-start',
                 animation: 'shift-away',
                 duration: [120, 80],
-                theme: 'light-border',
+                theme: 'slash-command',
                 arrow: false,
               })[0]
             },
@@ -389,6 +306,129 @@ const SlashCommandExtension = Extension.create<{
   },
 })
 
+const normalizeAnchorId = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-_]/g, '')
+
+const getActiveColumnsLayout = (editor: Editor) => {
+  const { $from } = editor.state.selection
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth)
+    if (node.type.name === 'columns') {
+      return (node.attrs.layout as number[]) ?? null
+    }
+  }
+  return null
+}
+
+const areLayoutsEqual = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((value, index) => Math.round(value) === Math.round(b[index]))
+
+const findPresetByLayout = (layout: number[] | null): ColumnPresetKey | null => {
+  if (!layout) return null
+  const found = (Object.entries(COLUMN_LAYOUTS) as [ColumnPresetKey, { widths: number[] }][]).find(
+    ([, cfg]) => areLayoutsEqual(cfg.widths, layout)
+  )
+  return found ? found[0] : null
+}
+
+type OutlineItem = {
+  id: string
+  pos: number
+  level: number
+  text: string
+}
+
+const EditorOutline = ({ editor }: { editor: Editor | null }) => {
+  const [items, setItems] = useState<OutlineItem[]>([])
+  const [activePos, setActivePos] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!editor) return
+
+    const collectHeadings = () => {
+      const headings: OutlineItem[] = []
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'heading') {
+          const level = node.attrs.level ?? 1
+          const text = node.textContent.trim() || `Заголовок ${headings.length + 1}`
+          headings.push({
+            id: node.attrs.blockId ?? `heading-${pos}`,
+            pos,
+            level,
+            text,
+          })
+        }
+      })
+      setItems(headings)
+    }
+
+    const updateActive = () => {
+      const { $from } = editor.state.selection
+      for (let depth = $from.depth; depth > 0; depth--) {
+        const node = $from.node(depth)
+        if (node.type.name === 'heading') {
+          setActivePos($from.before(depth))
+          return
+        }
+      }
+      setActivePos(null)
+    }
+
+    collectHeadings()
+    updateActive()
+
+    editor.on('transaction', collectHeadings)
+    editor.on('selectionUpdate', updateActive)
+
+    return () => {
+      editor.off('transaction', collectHeadings)
+      editor.off('selectionUpdate', updateActive)
+    }
+  }, [editor])
+
+  if (!editor || items.length === 0) {
+    return null
+  }
+
+  return (
+    <aside className="sticky top-[5.5rem] hidden max-h-[420px] w-64 shrink-0 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-3 text-sm lg:block">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        Оглавление
+      </div>
+      <nav className="space-y-1">
+        {items.map((item) => {
+          const isActive = activePos === item.pos
+          return (
+            <button
+              key={`${item.id}-${item.pos}`}
+              type="button"
+              onClick={() => {
+                editor
+                  .chain()
+                  .focus()
+                  .setTextSelection({ from: item.pos + 1, to: item.pos + 1 })
+                  .scrollIntoView()
+                  .run()
+              }}
+              className={cn(
+                'flex w-full items-center rounded-md px-2 py-1.5 text-left transition-colors',
+                isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+              )}
+              style={{ paddingLeft: `${(item.level - 1) * 12 + 8}px` }}
+            >
+              <span className="truncate">{item.text}</span>
+            </button>
+          )
+        })}
+      </nav>
+    </aside>
+  )
+}
+
 type RichTextEditorProps = {
   value: string
   onChange: (value: string) => void
@@ -416,6 +456,15 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkValue, setLinkValue] = useState('')
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [imageAlt, setImageAlt] = useState('')
+
+  const [isAnchorDialogOpen, setIsAnchorDialogOpen] = useState(false)
+  const [anchorMode, setAnchorMode] = useState<'create' | 'link'>('create')
+  const [anchorId, setAnchorId] = useState('')
+  const [anchorText, setAnchorText] = useState('')
+  const [anchorOptions, setAnchorOptions] = useState<AnchorData[]>([])
 
   const extensions = useMemo(
     () => [
@@ -437,6 +486,47 @@ export function RichTextEditor({
           class: 'font-medium text-primary underline underline-offset-4',
         },
       }),
+      Typography,
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: 'editor-image',
+        },
+      }),
+      Details.configure({
+        HTMLAttributes: {
+          class: 'editor-toggle',
+        },
+      }),
+      DetailsSummary.configure({
+        HTMLAttributes: {
+          class: 'editor-toggle-summary',
+        },
+      }),
+      DetailsContent.configure({
+        HTMLAttributes: {
+          class: 'editor-toggle-content',
+        },
+      }),
+      Callout,
+      Column,
+      Columns,
+      SmartInput,
+      BlockAnchor.configure({
+        types: [
+          'paragraph',
+          'heading',
+          'callout',
+          'columns',
+          'column',
+          'blockquote',
+          'codeBlock',
+          'details',
+          'detailsSummary',
+        ],
+      }),
+      DragHandle,
       CodeBlockLowlight.configure({
         lowlight,
       }),
@@ -513,146 +603,428 @@ export function RichTextEditor({
     editor?.chain().focus().unsetAllMarks().clearNodes().run()
   }, [editor])
 
+  const openImageDialog = useCallback(() => {
+    setImageUrl('')
+    setImageAlt('')
+    setIsImageDialogOpen(true)
+  }, [])
+
+  const handleInsertImage = useCallback(() => {
+    if (!editor) return
+    const url = imageUrl.trim()
+    if (!url) {
+      setIsImageDialogOpen(false)
+      return
+    }
+    const alt = imageAlt.trim()
+    editor.chain().focus().setImage({ src: url, alt: alt || null }).run()
+    setIsImageDialogOpen(false)
+    setImageUrl('')
+    setImageAlt('')
+  }, [editor, imageAlt, imageUrl])
+
+  const openAnchorDialog = useCallback(
+    (mode: 'create' | 'link') => {
+      if (!editor) return
+      setAnchorMode(mode)
+      setAnchorId('')
+      setAnchorText('')
+      if (mode === 'link') {
+        setAnchorOptions(getBlockAnchors(editor))
+      } else {
+        setAnchorOptions([])
+      }
+      setIsAnchorDialogOpen(true)
+    },
+    [editor]
+  )
+
+  const handleApplyAnchor = useCallback(() => {
+    if (!editor) return
+    if (anchorMode === 'create') {
+      const customId = normalizeAnchorId(anchorId)
+      editor.chain().focus().setBlockAnchor(customId || undefined).run()
+      setIsAnchorDialogOpen(false)
+      return
+    }
+
+    const targetId = normalizeAnchorId(anchorId)
+    if (!targetId) {
+      return
+    }
+    const label = anchorText.trim() || targetId
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'text',
+        text: label,
+        marks: [{ type: 'link', attrs: { href: `#${targetId}` } }],
+      })
+      .run()
+    setIsAnchorDialogOpen(false)
+  }, [anchorId, anchorMode, anchorText, editor])
+
+  useEffect(() => {
+    if (!editor) return
+    setSlashCommandItemsResolver(() => [
+      {
+        id: 'text',
+        title: 'Paragraph',
+        description: 'Стандартный текстовый блок',
+        icon: <Text className="h-4 w-4" />,
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).setParagraph().run()
+        },
+      },
+      {
+        id: 'heading-1',
+        title: 'Heading 1',
+        description: 'Крупный заголовок секции',
+        icon: <Heading1 className="h-4 w-4" />,
+        keywords: ['title', 'h1'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleHeading({ level: 1 }).run()
+        },
+      },
+      {
+        id: 'heading-2',
+        title: 'Heading 2',
+        description: 'Средний заголовок',
+        icon: <Heading2 className="h-4 w-4" />,
+        keywords: ['h2'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleHeading({ level: 2 }).run()
+        },
+      },
+      {
+        id: 'heading-3',
+        title: 'Heading 3',
+        description: 'Младший заголовок',
+        icon: <Heading3 className="h-4 w-4" />,
+        keywords: ['h3'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleHeading({ level: 3 }).run()
+        },
+      },
+      {
+        id: 'bullet-list',
+        title: 'Bullet list',
+        description: 'Маркированный список',
+        icon: <List className="h-4 w-4" />,
+        keywords: ['list'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleBulletList().run()
+        },
+      },
+      {
+        id: 'ordered-list',
+        title: 'Numbered list',
+        description: 'Нумерованный список',
+        icon: <ListOrdered className="h-4 w-4" />,
+        keywords: ['list', 'numbers'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleOrderedList().run()
+        },
+      },
+      {
+        id: 'quote',
+        title: 'Quote',
+        description: 'Цитата с выделением',
+        icon: <Quote className="h-4 w-4" />,
+        keywords: ['blockquote'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleBlockquote().run()
+        },
+      },
+      {
+        id: 'code-block',
+        title: 'Code block',
+        description: 'Блок кода с подсветкой',
+        icon: <Braces className="h-4 w-4" />,
+        keywords: ['code', 'snippet'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
+        },
+      },
+      {
+        id: 'divider',
+        title: 'Divider',
+        description: 'Горизонтальная линия',
+        icon: <Minus className="h-4 w-4" />,
+        keywords: ['line', 'hr'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).setHorizontalRule().run()
+        },
+      },
+      {
+        id: 'callout',
+        title: 'Callout',
+        description: 'Заметка или выделенный блок',
+        icon: <StickyNote className="h-4 w-4" />,
+        keywords: ['note', 'info'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).insertCallout('info').run()
+        },
+      },
+      {
+        id: 'toggle',
+        title: 'Toggle block',
+        description: 'Сворачиваемая секция',
+        icon: <ListTodo className="h-4 w-4" />,
+        keywords: ['details', 'collapse'],
+        command: ({ editor, range }) => {
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .insertContent({
+              type: 'details',
+              attrs: { open: false },
+              content: [
+                {
+                  type: 'detailsSummary',
+                  content: [{ type: 'text', text: 'Заголовок' }],
+                },
+                {
+                  type: 'detailsContent',
+                  content: [{ type: 'paragraph' }],
+                },
+              ],
+            })
+            .run()
+        },
+      },
+      {
+        id: 'columns-two',
+        title: 'Two columns',
+        description: 'Секция с двумя колонками',
+        icon: <Columns3 className="h-4 w-4" />,
+        keywords: ['layout', 'grid'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).insertColumns('twoEqual').run()
+        },
+      },
+      {
+        id: 'columns-three',
+        title: 'Three columns',
+        description: 'Три колонки для контента',
+        icon: <Columns3 className="h-4 w-4" />,
+        keywords: ['layout', 'grid', 'three'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).insertColumns('threeEqual').run()
+        },
+      },
+      {
+        id: 'anchor',
+        title: 'Anchor',
+        description: 'Добавить якорь к блоку',
+        icon: <Hash className="h-4 w-4" />,
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).run()
+          openAnchorDialog('create')
+        },
+      },
+      {
+        id: 'anchor-link',
+        title: 'Link to anchor',
+        description: 'Ссылка на существующий блок',
+        icon: <Link2 className="h-4 w-4" />,
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).run()
+          openAnchorDialog('link')
+        },
+      },
+      {
+        id: 'image',
+        title: 'Image',
+        description: 'Вставить изображение по URL',
+        icon: <ImageIcon className="h-4 w-4" />,
+        keywords: ['picture', 'media'],
+        command: ({ editor, range }) => {
+          editor.chain().focus().deleteRange(range).run()
+          openImageDialog()
+        },
+      },
+    ])
+  }, [editor, openAnchorDialog, openImageDialog])
+
+  const activeColumnsLayout = editor ? getActiveColumnsLayout(editor) : null
+  const activeColumnsPreset = findPresetByLayout(activeColumnsLayout)
+
   return (
     <>
-    <Card
-      className={cn(
-        'overflow-hidden border border-border/70 bg-card/95 shadow-lg backdrop-blur-sm transition-all',
-        disabled && 'opacity-80',
-        className
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-4 py-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline" className="border-primary/30 text-primary">
-            Draft
-          </Badge>
-          <Separator orientation="vertical" className="h-4 bg-border/60" />
-          <span className="flex items-center gap-1">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Use “/” for quick commands
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            disabled={!editor?.can().chain().focus().undo().run()}
-            onClick={() => editor?.chain().focus().undo().run()}
-          >
-            <Undo className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            disabled={!editor?.can().chain().focus().redo().run()}
-            onClick={() => editor?.chain().focus().redo().run()}
-          >
-            <Redo className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <CardContent className="px-0 pb-0">
-        <div className="relative border-b border-border/70 bg-background/70 px-4 pb-8 pt-6">
-          {editor && (
-            <BubbleMenu
-              editor={editor}
-              className="flex items-center gap-1 rounded-full border border-border/70 bg-card/95 px-2 py-1 shadow-xl backdrop-blur"
-              tippyOptions={{
-                duration: 120,
-                placement: 'top',
-                appendTo: () => document.body,
-              }}
-            >
-              {[
-                {
-                  label: 'Bold',
-                  icon: Bold,
-                  action: () => editor.chain().focus().toggleBold().run(),
-                  isActive: editor.isActive('bold'),
-                  disabled: !editor.can().chain().focus().toggleBold().run(),
-                },
-                {
-                  label: 'Strikethrough',
-                  icon: Strikethrough,
-                  action: () => editor.chain().focus().toggleStrike().run(),
-                  isActive: editor.isActive('strike'),
-                  disabled: !editor.can().chain().focus().toggleStrike().run(),
-                },
-                {
-                  label: 'Italic',
-                  icon: Italic,
-                  action: () => editor.chain().focus().toggleItalic().run(),
-                  isActive: editor.isActive('italic'),
-                  disabled: !editor.can().chain().focus().toggleItalic().run(),
-                },
-                {
-                  label: 'Inline code',
-                  icon: Code,
-                  action: () => editor.chain().focus().toggleCode().run(),
-                  isActive: editor.isActive('code'),
-                  disabled: !editor.can().chain().focus().toggleCode().run(),
-                },
-                {
-                  label: 'Highlight',
-                  icon: Highlighter,
-                  action: () => editor.chain().focus().toggleHighlight().run(),
-                  isActive: editor.isActive('highlight'),
-                  disabled: !editor.can().chain().focus().toggleHighlight().run(),
-                },
-                {
-                  label: editor.isActive('link') ? 'Edit link' : 'Add link',
-                  icon: LinkIcon,
-                  action: handleOpenLinkDialog,
-                  isActive: editor.isActive('link'),
-                  disabled: false,
-                },
-                {
-                  label: 'Clear formatting',
-                  icon: RemoveFormatting,
-                  action: handleRemoveFormatting,
-                  isActive: false,
-                  disabled: false,
-                },
-              ].map(({ icon: Icon, label, action, isActive, disabled }) => (
-                <button
-                  key={label}
-                  type="button"
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground',
-                    isActive && 'bg-primary/90 text-primary-foreground shadow-sm'
+      <Card
+        className={cn(
+          'overflow-hidden border border-border/70 bg-card/95 shadow-lg backdrop-blur-sm transition-all',
+          disabled && 'opacity-80',
+          className
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="outline" className="border-primary/30 text-primary">
+              Draft
+            </Badge>
+            <Separator orientation="vertical" className="h-4 bg-border/60" />
+            <span className="flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Use “/” for quick commands
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {editor && activeColumnsLayout && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 gap-2 px-3">
+                    <Columns3 className="h-4 w-4" />
+                    {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Колонки'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {(Object.entries(COLUMN_LAYOUTS) as [ColumnPresetKey, typeof COLUMN_LAYOUTS[keyof typeof COLUMN_LAYOUTS]][]).map(
+                    ([key, config]) => (
+                      <DropdownMenuItem
+                        key={key}
+                        className={cn(
+                          'flex flex-col items-start gap-1',
+                          activeColumnsPreset === key && 'bg-muted text-foreground'
+                        )}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          editor.chain().focus().setColumnsLayout(key).run()
+                        }}
+                      >
+                        <span className="text-sm font-medium">{config.label}</span>
+                        <span className="text-xs text-muted-foreground">{config.description}</span>
+                      </DropdownMenuItem>
+                    )
                   )}
-                  disabled={disabled}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    action()
-                  }}
-                >
-                  <Icon className="h-4 w-4" />
-                </button>
-              ))}
-            </BubbleMenu>
-          )}
-
-          <div className="group/editor overflow-hidden rounded-xl border border-border/60 bg-background/95 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-all focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.12)]">
-            <EditorContent
-              editor={editor}
-              id={id}
-              aria-label={ariaLabel}
-              aria-labelledby={ariaLabelledBy}
-              aria-describedby={ariaDescribedBy}
-              className="text-base"
-            />
-            <div className="pointer-events-none hidden px-4 pb-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/50 group-focus-within/editor:flex">
-              Writing mode
-            </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={!editor?.can().chain().focus().undo().run()}
+              onClick={() => editor?.chain().focus().undo().run()}
+            >
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={!editor?.can().chain().focus().redo().run()}
+              onClick={() => editor?.chain().focus().redo().run()}
+            >
+              <Redo className="h-4 w-4" />
+            </Button>
           </div>
         </div>
+
+        <CardContent className="px-0 pb-0">
+          <div className="relative border-b border-border/70 bg-background/70">
+            {editor && (
+              <BubbleMenu
+                editor={editor}
+                className="flex items-center gap-1 rounded-full border border-border/70 bg-card/95 px-2 py-1 shadow-xl backdrop-blur"
+                tippyOptions={{
+                  duration: 120,
+                  placement: 'top',
+                  appendTo: () => document.body,
+                }}
+              >
+                {[
+                  {
+                    label: 'Bold',
+                    icon: Bold,
+                    action: () => editor.chain().focus().toggleBold().run(),
+                    isActive: editor.isActive('bold'),
+                    disabled: !editor.can().chain().focus().toggleBold().run(),
+                  },
+                  {
+                    label: 'Strikethrough',
+                    icon: Strikethrough,
+                    action: () => editor.chain().focus().toggleStrike().run(),
+                    isActive: editor.isActive('strike'),
+                    disabled: !editor.can().chain().focus().toggleStrike().run(),
+                  },
+                  {
+                    label: 'Italic',
+                    icon: Italic,
+                    action: () => editor.chain().focus().toggleItalic().run(),
+                    isActive: editor.isActive('italic'),
+                    disabled: !editor.can().chain().focus().toggleItalic().run(),
+                  },
+                  {
+                    label: 'Inline code',
+                    icon: Code,
+                    action: () => editor.chain().focus().toggleCode().run(),
+                    isActive: editor.isActive('code'),
+                    disabled: !editor.can().chain().focus().toggleCode().run(),
+                  },
+                  {
+                    label: 'Highlight',
+                    icon: Highlighter,
+                    action: () => editor.chain().focus().toggleHighlight().run(),
+                    isActive: editor.isActive('highlight'),
+                    disabled: !editor.can().chain().focus().toggleHighlight().run(),
+                  },
+                  {
+                    label: editor.isActive('link') ? 'Edit link' : 'Add link',
+                    icon: LinkIcon,
+                    action: handleOpenLinkDialog,
+                    isActive: editor.isActive('link'),
+                    disabled: false,
+                  },
+                  {
+                    label: 'Clear formatting',
+                    icon: RemoveFormatting,
+                    action: handleRemoveFormatting,
+                    isActive: false,
+                    disabled: false,
+                  },
+                ].map(({ icon: Icon, label, action, isActive, disabled }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground',
+                      isActive && 'bg-primary/90 text-primary-foreground shadow-sm'
+                    )}
+                    disabled={disabled}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      action()
+                    }}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                ))}
+              </BubbleMenu>
+            )}
+
+            <div className="px-4 pb-8 pt-6 lg:flex lg:items-start lg:gap-10">
+              <div className="group/editor relative flex-1 transition-[box-shadow] focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.12)]">
+                <EditorContent
+                  editor={editor}
+                  id={id}
+                  aria-label={ariaLabel}
+                  aria-labelledby={ariaLabelledBy}
+                  aria-describedby={ariaDescribedBy}
+                  className="text-base"
+                />
+                <span className="pointer-events-none absolute bottom-2 left-4 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40 opacity-0 transition-opacity duration-200 group-focus-within/editor:opacity-100">
+                  Writing mode
+                </span>
+              </div>
+              <EditorOutline editor={editor} />
+            </div>
+          </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-2.5 text-[12px] text-muted-foreground">
           <span className="flex items-center gap-2">
@@ -697,9 +1069,118 @@ export function RichTextEditor({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Вставить изображение</DialogTitle>
+            <DialogDescription>Укажите ссылку на изображение и альтернативный текст.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="image-url">Image URL</Label>
+              <Input
+                id="image-url"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://example.com/image.jpg"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image-alt">Alt text</Label>
+              <Input
+                id="image-alt"
+                value={imageAlt}
+                onChange={(event) => setImageAlt(event.target.value)}
+                placeholder="Описание изображения"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setIsImageDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleInsertImage} disabled={!editor}>
+              Вставить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAnchorDialogOpen} onOpenChange={setIsAnchorDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{anchorMode === 'create' ? 'Добавить якорь' : 'Ссылка на якорь'}</DialogTitle>
+            <DialogDescription>
+              {anchorMode === 'create'
+                ? 'Присвойте блоку удобный идентификатор. Если оставить поле пустым — он сгенерируется автоматически.'
+                : 'Выберите существующий якорь и задайте текст ссылки.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {anchorMode === 'create' ? (
+              <div className="space-y-2">
+                <Label htmlFor="anchor-id">Идентификатор блока</Label>
+                <Input
+                  id="anchor-id"
+                  value={anchorId}
+                  onChange={(event) => setAnchorId(event.target.value)}
+                  placeholder="section-overview"
+                />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Выберите якорь</Label>
+                  <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-border/60 p-2">
+                    {anchorOptions.length === 0 && (
+                      <span className="text-sm text-muted-foreground">
+                        Пока нет блоков с якорями. Сначала пометьте нужный блок.
+                      </span>
+                    )}
+                    {anchorOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setAnchorId(option.id)}
+                        className={cn(
+                          'rounded-md border border-transparent px-3 py-2 text-left text-sm transition-colors',
+                          anchorId === option.id
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'bg-muted/30 hover:bg-muted/50'
+                        )}
+                      >
+                        <span className="block font-medium">#{option.id}</span>
+                        <span className="block text-xs text-muted-foreground">{option.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="anchor-text">Текст ссылки</Label>
+                  <Input
+                    id="anchor-text"
+                    value={anchorText}
+                    onChange={(event) => setAnchorText(event.target.value)}
+                    placeholder="Перейти к разделу"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setIsAnchorDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleApplyAnchor} disabled={!editor}>
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
 
 export default RichTextEditor
-

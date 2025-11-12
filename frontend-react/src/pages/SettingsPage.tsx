@@ -1330,7 +1330,7 @@ function ProfileSettings() {
               <span className="text-xs text-muted-foreground">
                 {bioRemaining} characters left
               </span>
-        </div>
+            </div>
             <textarea
               id="settings-bio"
               value={bio}
@@ -2342,7 +2342,7 @@ function AppearanceSettings() {
           <div className="grid gap-3 md:grid-cols-3">
             {themeModeOptions.map((option) => (
               <AppearanceOptionCard
-                key={option.value}
+                  key={option.value}
                 active={theme === option.value}
                 leading={<option.icon className="h-5 w-5" />}
                 label={option.label}
@@ -2397,7 +2397,7 @@ function AppearanceSettings() {
                       <Button variant="outline" size="icon">
                         <Bell className="h-4 w-4" />
                       </Button>
-                    </div>
+                  </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <Badge variant="outline" className="px-2 py-0.5 text-[11px] uppercase tracking-wide">
@@ -2446,7 +2446,7 @@ function AppearanceSettings() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
                         Nova Rivera
                       </div>
@@ -2458,13 +2458,13 @@ function AppearanceSettings() {
                         <Flame className="h-3.5 w-3.5" />
                         Trending
             </span>
-          </div>
+                    </div>
                     <Button variant="outline" size="sm" className="w-full justify-between">
                       Continue reading
                       <CornerDownRight className="h-4 w-4" />
                     </Button>
-        </div>
-                </div>
+                    </div>
+                  </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
                   <div className="flex items-center justify-between text-sm font-semibold">
@@ -2488,7 +2488,7 @@ function AppearanceSettings() {
                           <Badge variant="outline" className="border-primary/30 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary">
                             {index === 0 ? 'New' : item.status}
                           </Badge>
-                        </button>
+                </button>
                       </li>
                     ))}
                   </ul>
@@ -2583,7 +2583,7 @@ function AppearanceSettings() {
                           key={option.value}
                           active={accent === option.value}
                           leading={
-                            <span
+                        <span
                               className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
                               style={{ background: `hsl(${option.tone})` }}
                             />
@@ -2594,7 +2594,7 @@ function AppearanceSettings() {
                           preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
                         />
                       ))}
-                    </div>
+                      </div>
                   </AccordionContent>
                 </AccordionItem>
               )
@@ -2809,11 +2809,11 @@ function AppearanceSettings() {
 
         <section className="space-y-4">
           <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1">
-              <Label className="text-sm font-semibold">Interface shape</Label>
-              <p className="text-sm text-muted-foreground">
-                Adjust corner rounding for cards, dialogs, and buttons.
-              </p>
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">Interface shape</Label>
+            <p className="text-sm text-muted-foreground">
+              Adjust corner rounding for cards, dialogs, and buttons.
+            </p>
             </div>
             <Button
               variant="ghost"
@@ -2910,8 +2910,8 @@ function AppearanceSettings() {
                           <div className="space-y-0.5">
                             <span className="block h-1.5 w-10/12 rounded-full bg-muted/70" />
                             <span className="block h-1.5 w-8/12 rounded-full bg-muted/50" />
-                          </div>
-                        </div>
+                      </div>
+                    </div>
                       ) : option.value === 'line' ? (
                         <div className="space-y-1.5">
                           {[0, 1].map((row) => (
@@ -2919,9 +2919,9 @@ function AppearanceSettings() {
                               <span className="block h-1.5 w-full rounded-full bg-muted/70" />
                               <span className="block h-1.5 w-11/12 rounded-full bg-muted/60" />
                               <span className="block h-1.5 w-8/12 rounded-full bg-muted/50" />
-                            </div>
+                  </div>
                           ))}
-                        </div>
+                      </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-1.5">
                           {[0, 1, 2, 3].map((index) => (
@@ -2942,10 +2942,10 @@ function AppearanceSettings() {
         <section className="space-y-4">
           <div className="space-y-1">
             <Label className="text-sm font-semibold">Presets</Label>
-            <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
               Save and recall appearance combinations for different workflows.
-            </p>
-          </div>
+              </p>
+            </div>
           <Card className="border-dashed">
             <CardHeader className="pb-4">
               <CardTitle className="text-base">Save current appearance</CardTitle>
@@ -2996,8 +2996,8 @@ function AppearanceSettings() {
                         >
                           <Trash2 className="h-4 w-4" />
                 </Button>
-          </div>
-        </div>
+              </div>
+            </div>
                   ))}
             </div>
               ) : (
