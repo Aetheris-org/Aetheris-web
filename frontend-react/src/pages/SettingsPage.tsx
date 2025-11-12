@@ -193,13 +193,13 @@ const ACCENT_GROUPS: Array<{ id: string; label: string; description: string; acc
     id: 'vivid',
     label: 'Vivid energy',
     description: 'High-contrast tones that stand out in busy layouts.',
-    accents: ['indigo', 'violet', 'magenta', 'crimson', 'cobalt', 'azure'],
+    accents: ['indigo', 'violet', 'magenta', 'crimson', 'cobalt', 'azure', 'lime'],
   },
   {
     id: 'botanical',
     label: 'Fresh & botanical',
     description: 'Nature-inspired greens and blues suited to calm products.',
-    accents: ['emerald', 'teal', 'seafoam', 'sage', 'cyan'],
+    accents: ['emerald', 'teal', 'seafoam', 'sage', 'cyan', 'mint'],
   },
   {
     id: 'warm',
@@ -211,7 +211,7 @@ const ACCENT_GROUPS: Array<{ id: string; label: string; description: string; acc
     id: 'muted',
     label: 'Sophisticated neutrals',
     description: 'Soft plums and greys that stay out of the way.',
-    accents: ['plum', 'orchid', 'mono', 'graphite'],
+    accents: ['plum', 'orchid', 'mono', 'graphite', 'pure'],
   },
 ]
 
@@ -1330,7 +1330,7 @@ function ProfileSettings() {
               <span className="text-xs text-muted-foreground">
                 {bioRemaining} characters left
               </span>
-        </div>
+            </div>
             <textarea
               id="settings-bio"
               value={bio}

@@ -919,8 +919,8 @@ export default function CreateArticlePage() {
                   {tags.map((tag) => (
                     <Badge
                       key={tag}
-                      variant="default"
-                            className="cursor-pointer hover:opacity-90 transition-opacity"
+                      variant="secondary"
+                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors font-medium text-xs"
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag} ×
@@ -1148,7 +1148,7 @@ export default function CreateArticlePage() {
                         {tags.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((tag) => (
-                              <Badge key={tag} variant="default">
+                              <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary font-medium text-xs">
                                 {tag}
                               </Badge>
                             ))}

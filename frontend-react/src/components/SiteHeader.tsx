@@ -17,7 +17,7 @@ const destinations = [
     label: 'Forum',
     description: 'Community debates, retrospectives, and shipping notes.',
     icon: MessageSquare,
-    path: '/',
+    path: '/forum',
   },
   {
     label: 'Networking',

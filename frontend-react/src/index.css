@@ -63,6 +63,20 @@
     line-height: calc(1.6 - (var(--aetheris-density) - 1) * 0.35);
     transition: background 0.35s ease, color 0.2s ease;
   }
+
+  /* Smooth scrolling for better GSAP animations */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Optimize for animations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
 }
 
 @layer utilities {

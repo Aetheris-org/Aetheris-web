@@ -53,6 +53,9 @@ export type AccentColor =
   | 'saffron'
   | 'sunset'
   | 'graphite'
+  | 'pure'
+  | 'lime'
+  | 'mint'
   | 'custom'
 
 type ResolvedTheme = 'light' | 'dark'
@@ -167,7 +170,7 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
 
 const DEFAULT_PREFERENCES: StoredPreferences = {
   theme: 'system',
-  accent: 'emerald',
+  accent: 'pure',
   surface: 'obsidian',
   radius: 0.5,
   customAccent: DEFAULT_CUSTOM_ACCENT,
@@ -631,12 +634,94 @@ export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig>
       },
     },
   },
+  pure: {
+    label: 'Pure',
+    description: 'Black on light theme, white on dark theme',
+    preview: '0 0% 0%',
+    values: {
+      light: {
+        primary: '0 0% 0%',
+        primaryForeground: '210 40% 98%',
+        accent: '0 0% 10%',
+        accentForeground: '210 40% 98%',
+        ring: '0 0% 0%',
+      },
+      dark: {
+        primary: '0 0% 100%',
+        primaryForeground: '222 47.4% 11.2%',
+        accent: '0 0% 20%',
+        accentForeground: '0 0% 100%',
+        ring: '0 0% 100%',
+      },
+    },
+  },
+  lime: {
+    label: 'Lime',
+    description: 'Vibrant lime for energetic interfaces',
+    preview: '75 94% 50%',
+    values: {
+      light: {
+        primary: '75 94% 38%',
+        primaryForeground: '75 100% 98%',
+        accent: '75 100% 95%',
+        accentForeground: '75 94% 28%',
+        ring: '75 94% 38%',
+      },
+      dark: {
+        primary: '75 94% 65%',
+        primaryForeground: '75 100% 12%',
+        accent: '75 48% 28%',
+        accentForeground: '75 100% 92%',
+        ring: '75 94% 65%',
+      },
+    },
+  },
+  mint: {
+    label: 'Mint',
+    description: 'Fresh mint for calm, refreshing vibes',
+    preview: '150 70% 50%',
+    values: {
+      light: {
+        primary: '150 70% 50%',
+        primaryForeground: '150 82% 96%',
+        accent: '150 100% 95%',
+        accentForeground: '150 80% 30%',
+        ring: '150 70% 50%',
+      },
+      dark: {
+        primary: '150 70% 60%',
+        primaryForeground: '150 80% 10%',
+        accent: '150 40% 24%',
+        accentForeground: '150 80% 88%',
+        ring: '150 70% 60%',
+      },
+    },
+  },
 }
 
 export const ACCENT_COLOR_PRESETS = Object.entries(ACCENT_COLORS).map(([value, config]) => ({
   value: value as Exclude<AccentColor, 'custom'>,
   ...config,
 }))
+
+interface SurfacePresetConfigLegacy {
+  label: string
+  description: string
+  values: Record<ResolvedTheme, {
+    background: string
+    foreground: string
+    card: string
+    cardForeground: string
+    popover: string
+    popoverForeground: string
+    muted: string
+    mutedForeground: string
+    secondary: string
+    secondaryForeground: string
+    border: string
+    input: string
+  }>
+}
 
 export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = {
   daylight: {
@@ -1614,6 +1699,9 @@ function loadPreferences(): StoredPreferences {
         accent === 'saffron' ||
         accent === 'sunset' ||
         accent === 'graphite' ||
+        accent === 'pure' ||
+        accent === 'lime' ||
+        accent === 'mint' ||
         accent === 'custom'
       return {
         theme: parsed.theme === 'light' || parsed.theme === 'dark' || parsed.theme === 'system' ? parsed.theme : DEFAULT_PREFERENCES.theme,
@@ -1655,6 +1743,9 @@ function loadPreferences(): StoredPreferences {
                 presetAccent === 'saffron' ||
                 presetAccent === 'sunset' ||
                 presetAccent === 'graphite' ||
+                presetAccent === 'pure' ||
+                presetAccent === 'lime' ||
+                presetAccent === 'mint' ||
                 presetAccent === 'custom'
               return {
                 ...preset,
@@ -1769,13 +1860,13 @@ let isInitialized = false
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   ...DEFAULT_PREFERENCES,
-  resolvedTheme: 'light',
+  resolvedTheme: 'light' as ResolvedTheme,
   initialize: () => {
     if (isInitialized || typeof window === 'undefined') return
     isInitialized = true
 
     const preferences = loadPreferences()
-    const resolvedTheme = resolveTheme(preferences.theme)
+    const resolvedTheme: ResolvedTheme = resolveTheme(preferences.theme)
 
     set((state) => {
       const nextState = {
@@ -1793,7 +1884,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = (event: MediaQueryListEvent) => {
       if (get().theme === 'system') {
-        const newResolved = event.matches ? 'dark' : 'light'
+        const newResolved: ResolvedTheme = event.matches ? 'dark' : 'light'
         set((state) => {
           const nextState = {
             ...state,
@@ -1812,7 +1903,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
   setTheme: (mode) => {
     set((state) => {
-      const resolvedTheme = resolveTheme(mode)
+      const resolvedTheme: ResolvedTheme = resolveTheme(mode)
       const nextState = {
         ...state,
         theme: mode,
@@ -1983,18 +2074,19 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       if (!preset) {
         return {}
       }
+      const resolvedTheme: ResolvedTheme = resolveTheme(preset.settings.theme)
       const nextState = {
         ...state,
         ...preset.settings,
         surface: preset.settings.surface,
         customAccent: normalizeCustomAccent(preset.settings.customAccent),
-        resolvedTheme: resolveTheme(preset.settings.theme),
+        resolvedTheme,
       }
       applyThemePreferences(nextState)
       savePreferences(extractPreferences(nextState))
       return {
         ...preset.settings,
-        resolvedTheme: nextState.resolvedTheme,
+        resolvedTheme,
         customAccent: nextState.customAccent,
         surface: nextState.surface,
       }
@@ -2010,5 +2102,4 @@ export type {
   ContrastMode,
   DepthStyle,
   MotionPreference,
-  AppearancePreset,
 }

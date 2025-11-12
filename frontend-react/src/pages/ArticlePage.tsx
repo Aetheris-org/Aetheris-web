@@ -44,6 +44,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -815,7 +816,7 @@ export default function ArticlePage() {
           <Card
             className={cn(
               'border-none bg-transparent shadow-none transition-all duration-[800ms]',
-              isHoverTarget && 'border border-border/60 bg-muted/25 shadow-md backdrop-blur-sm scale-[1.01]',
+              isHoverTarget && 'border border-border/60 bg-muted/25 shadow-md backdrop-blur-sm',
               dimClass
             )}
           >
@@ -1083,8 +1084,8 @@ export default function ArticlePage() {
                       Отправить
                     </Button>
                   </div>
-                </div>
-              )}
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>
@@ -1303,7 +1304,7 @@ export default function ArticlePage() {
             {article.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {article.tags.map((tag) => (
-                  <Badge key={tag} variant="default">
+                  <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary font-medium text-xs">
                     {tag}
                   </Badge>
                 ))}
@@ -1412,15 +1413,14 @@ export default function ArticlePage() {
               )}
             </div>
 
-            <Card className="border border-border/60 bg-card">
-              <CardContent className="pt-6 space-y-6">
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-6 space-y-6">
                 {/* Comment Input Form */}
                 <div className="space-y-3">
-                  <textarea
-                    placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
+                <textarea
+                  placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
                     className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
+                  value={commentText}
+                  onChange={(event) => setCommentText(event.target.value)}
                     disabled={!user}
                     ref={commentInputRef}
                     onKeyDown={(event) => {
@@ -1429,50 +1429,67 @@ export default function ArticlePage() {
                         handleSubmitComment()
                       }
                     }}
-                  />
-                  <div className="flex justify-end gap-2">
-                    {!user && (
-                      <Button variant="outline" onClick={() => navigate('/auth')}>
-                        Войти
-                      </Button>
-                    )}
-                    <Button
-                      onClick={handleSubmitComment}
+                />
+                <div className="flex justify-end gap-2">
+                  {!user && (
+                    <Button variant="outline" onClick={() => navigate('/auth')}>
+                      Войти
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleSubmitComment}
                       disabled={!user || !commentText.trim()}
                     >
                       Отправить комментарий
-                    </Button>
-                  </div>
+                  </Button>
+                </div>
                 </div>
 
                 {/* Separator */}
                 <Separator />
 
-                {/* Comments List */}
-                {isCommentsLoading || isCommentsRefetching ? (
-                  <div className="py-12 text-center text-muted-foreground">
-                    Загружаем комментарии…
+            {/* Comments List */}
+            {isCommentsLoading || isCommentsRefetching ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Skeleton className="h-9 w-9 rounded-full" />
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                            <div className="flex items-center gap-4 pt-1">
+                              <Skeleton className="h-6 w-16" />
+                              <Skeleton className="h-6 w-20" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : combinedComments.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">
-                    Пока нет комментариев. Будьте первым!
+                  Пока нет комментариев. Будьте первым!
                   </div>
-                ) : (
-                  <div className="space-y-4">
+            ) : (
+              <div className="space-y-4">
                     {renderCommentThread(
                       threadRootId && nodeLookup.has(threadRootId)
                         ? [nodeLookup.get(threadRootId)!]
                         : commentTree,
                       0,
                       {
-                        showStripes: !(threadRootId && nodeLookup.has(threadRootId)),
+                        showConnectors: !(threadRootId && nodeLookup.has(threadRootId)),
                         threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
                       }
                     )}
-                  </div>
+                      </div>
                 )}
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </article>
       </div>

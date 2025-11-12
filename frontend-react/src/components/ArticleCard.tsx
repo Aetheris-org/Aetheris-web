@@ -93,8 +93,8 @@ export function ArticleCard({
             {article.tags.slice(0, 4).map((tag) => (
               <Badge
                 key={tag}
-                variant="default"
-                className="rounded-md font-normal hover:opacity-90 cursor-pointer transition-opacity"
+                variant="secondary"
+                className="rounded-md font-medium text-xs bg-primary/10 text-primary hover:bg-primary/15 cursor-pointer transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   onTagClick?.(tag)

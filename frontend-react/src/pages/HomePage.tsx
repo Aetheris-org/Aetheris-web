@@ -362,19 +362,23 @@ export default function HomePage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative" data-view-mode-expander>
+                  <div className="relative" data-view-mode-expander style={{ height: '36px', width: '36px' }}>
                     <div
                       className={cn(
-                        'flex flex-col rounded-lg border border-border bg-background overflow-visible transition-all duration-200',
-                        isViewModeExpanded && 'shadow-lg'
+                        'absolute top-0 left-0 flex flex-col rounded-lg border border-border bg-background overflow-hidden transition-all duration-200',
+                        isViewModeExpanded && 'z-50 shadow-lg'
                       )}
+                      style={{
+                        height: isViewModeExpanded ? `${36 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 36)}px` : '36px',
+                        width: '36px',
+                      }}
                     >
                       <button
                         type="button"
                         onClick={() => setIsViewModeExpanded(!isViewModeExpanded)}
                         aria-label="Select view mode"
                         className={cn(
-                          'flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted',
+                          'flex h-9 w-9 shrink-0 items-center justify-center transition-colors hover:bg-muted',
                           isViewModeExpanded ? 'rounded-t-lg rounded-b-none' : 'rounded-lg'
                         )}
                       >
@@ -386,10 +390,8 @@ export default function HomePage() {
                       </button>
                       <div
                         className={cn(
-                          'absolute top-full left-0 right-0 z-50 flex flex-col rounded-b-lg border-x border-b border-border bg-background overflow-hidden transition-all duration-200',
-                          isViewModeExpanded
-                            ? 'opacity-100 translate-y-0'
-                            : 'opacity-0 -translate-y-2 pointer-events-none'
+                          'flex flex-col transition-all duration-200',
+                          isViewModeExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
                         )}
                       >
                         {viewModeOptions
@@ -400,7 +402,7 @@ export default function HomePage() {
                               <button
                                 key={option.id}
                                 type="button"
-                                className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg"
+                                className="flex h-9 w-9 shrink-0 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg"
                                 onClick={() => {
                                   setViewMode(option.id)
                                   setIsViewModeExpanded(false)
@@ -426,8 +428,8 @@ export default function HomePage() {
                   {selectedTags.map((tag) => (
                     <Badge
                       key={tag}
-                      variant="default"
-                      className="cursor-pointer hover:opacity-90 transition-opacity"
+                      variant="secondary"
+                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors font-medium text-xs"
                       onClick={() => handleTagClick(tag)}
                     >
                       {tag} ×
@@ -634,10 +636,10 @@ export default function HomePage() {
                     return (
                     <Badge
                       key={tag}
-                        variant="default"
+                        variant="secondary"
                         className={cn(
-                          'cursor-pointer rounded-md font-normal transition-opacity',
-                          isActive ? 'shadow-sm' : 'hover:opacity-90'
+                          'cursor-pointer rounded-md font-medium text-xs transition-colors bg-primary/10 text-primary',
+                          isActive ? 'shadow-sm bg-primary/15' : 'hover:bg-primary/15'
                         )}
                       onClick={() => handleTagClick(tag)}
                         aria-pressed={isActive}

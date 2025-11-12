@@ -1,757 +1,711 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { gsap } from 'gsap'
+import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import {
-  Users,
-  GraduationCap,
-  Code,
-  Trophy,
-  Coins,
-  Network,
-  MessageSquare,
-  Sparkles,
-  Shield,
-  Brain,
-  Layers,
-  Globe,
-  Gift,
-  Target,
-  Award,
-  BarChart3,
-  Users2,
-  MessageCircle,
-  Hash,
-  FileText,
-  PenTool,
-  Store,
-  DollarSign,
-  ArrowRight,
-  CheckCircle2,
-  Mail,
-  Flame,
-  Gamepad2,
-  BookOpen,
-  Rocket,
-  ShoppingBag,
-  Zap,
-  TrendingUp,
-  Heart,
-  Image as ImageIcon,
-  Video,
-  Music,
-  Palette,
-  Wand2,
-  Bot,
-  Database,
-  Cloud,
-  Microscope,
-  Terminal,
-  Bookmark,
-  Calendar,
-  Clock,
-  Bell,
-  Search,
-  Filter,
-  Settings,
-  Share,
-  Download,
-  Upload,
-  Activity,
-  Compass,
-  Map,
-  ChevronDown,
-} from 'lucide-react'
+import { SiteHeader } from '@/components/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { SiteHeader } from '@/components/SiteHeader'
-import { cn } from '@/lib/utils'
+import {
+  Sparkles,
+  Trophy,
+  Users,
+  GraduationCap,
+  Code,
+  Zap,
+  Shield,
+  Globe,
+  MessageSquare,
+  TrendingUp,
+  Coins,
+  Store,
+  Rocket,
+  Brain,
+  Heart,
+  Star,
+  Target,
+  Gamepad2,
+  BookOpen,
+  Briefcase,
+  DollarSign,
+  Lock,
+  Palette,
+  Boxes,
+  ChevronRight,
+  CheckCircle2,
+  ArrowRight,
+} from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
+
+interface Feature {
+  icon: typeof Sparkles
+  title: string
+  description: string
+  color: string
+}
+
+interface Stat {
+  value: string
+  label: string
+  icon: typeof Users
+}
+
+const mainFeatures: Feature[] = [
+  {
+    icon: Gamepad2,
+    title: 'Advanced Gamification',
+    description: 'Levels, achievements, battle passes, clans, and ranks. Your journey matters.',
+    color: 'text-purple-500',
+  },
+  {
+    icon: Users,
+    title: 'Networking Hub',
+    description: 'Connect with scientists, developers, gamers, and professionals worldwide.',
+    color: 'text-blue-500',
+  },
+  {
+    icon: GraduationCap,
+    title: 'Learning Platform',
+    description: 'Comprehensive courses, interactive articles, and educational content.',
+    color: 'text-green-500',
+  },
+  {
+    icon: Store,
+    title: 'Marketplace',
+    description: 'Trade cards, decorations, widgets, and exclusive NFT items.',
+    color: 'text-amber-500',
+  },
+  {
+    icon: Code,
+    title: 'Developer Tools',
+    description: 'Q&A platform, code sharing, and collaborative development space.',
+    color: 'text-cyan-500',
+  },
+  {
+    icon: DollarSign,
+    title: 'Monetization',
+    description: 'Earn from content creation, ads revenue, donations, and partnerships.',
+    color: 'text-emerald-500',
+  },
+  {
+    icon: Brain,
+    title: 'AI Features',
+    description: 'AI assistant, smart recommendations, and advanced content tools.',
+    color: 'text-indigo-500',
+  },
+  {
+    icon: Shield,
+    title: 'Privacy First',
+    description: 'OAuth2 only, email hashing, no personal data collection. Your privacy matters.',
+    color: 'text-red-500',
+  },
+]
+
+const gamificationFeatures: Feature[] = [
+  {
+    icon: Trophy,
+    title: 'Achievements System',
+    description: 'Unlock hundreds of achievements across different categories',
+    color: 'text-yellow-500',
+  },
+  {
+    icon: Target,
+    title: 'Daily Quests',
+    description: 'Complete challenges and earn rewards every day',
+    color: 'text-orange-500',
+  },
+  {
+    icon: Star,
+    title: 'Clan Wars',
+    description: 'Join clans, compete with others, and climb the leaderboards',
+    color: 'text-purple-500',
+  },
+  {
+    icon: Zap,
+    title: 'Battle Pass',
+    description: 'Seasonal content with exclusive rewards and cosmetics',
+    color: 'text-pink-500',
+  },
+]
+
+const platformFeatures: Feature[] = [
+  {
+    icon: BookOpen,
+    title: 'Rich Text Editor',
+    description: 'Advanced editor with countless formatting options',
+    color: 'text-blue-500',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Community Chat',
+    description: 'Global and country-specific chats, groups, and channels',
+    color: 'text-green-500',
+  },
+  {
+    icon: Briefcase,
+    title: 'Job Board',
+    description: 'Find collaborators, clients, and opportunities',
+    color: 'text-indigo-500',
+  },
+  {
+    icon: Palette,
+    title: 'Customization',
+    description: 'Widgets, decorations, themes, and profile customization',
+    color: 'text-pink-500',
+  },
+]
+
+const stats: Stat[] = [
+  { value: '50+', label: 'Features', icon: Boxes },
+  { value: '∞', label: 'Possibilities', icon: Sparkles },
+  { value: '100%', label: 'Privacy', icon: Shield },
+  { value: '24/7', label: 'Community', icon: Users },
+]
 
 export default function ForumLandingPage() {
   const navigate = useNavigate()
   const heroRef = useRef<HTMLDivElement>(null)
-  const heroTitleRef = useRef<HTMLHeadingElement>(null)
-  const heroSubtitleRef = useRef<HTMLParagraphElement>(null)
-  const particlesRef = useRef<HTMLDivElement>(null)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
+  const featuresRef = useRef<HTMLDivElement>(null)
+  const gamificationRef = useRef<HTMLDivElement>(null)
+  const platformRef = useRef<HTMLDivElement>(null)
+  const statsRef = useRef<HTMLDivElement>(null)
+  const ctaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero title split animation
-      if (heroTitleRef.current) {
-        const text = heroTitleRef.current.textContent || ''
-        heroTitleRef.current.innerHTML = text
-          .split('')
-          .map((char, i) => `<span class="hero-char" style="display: inline-block">${char === ' ' ? '&nbsp;' : char}</span>`)
-          .join('')
-
-        gsap.from('.hero-char', {
-          y: 100,
-          opacity: 0,
-          rotationX: -90,
-          duration: 0.8,
-          ease: 'back.out(1.2)',
-          stagger: 0.02,
-        })
-      }
-
-      // Hero subtitle animation
-      if (heroSubtitleRef.current) {
-        gsap.from(heroSubtitleRef.current, {
-          y: 50,
-          opacity: 0,
-          duration: 1,
-          ease: 'power3.out',
-          delay: 0.5,
-        })
-      }
-
-      // Floating particles
-      if (particlesRef.current) {
-        const particles = Array.from({ length: 50 }, () => {
-          const particle = document.createElement('div')
-          particle.className = 'absolute w-1 h-1 rounded-full bg-primary/30'
-          particle.style.left = `${Math.random() * 100}%`
-          particle.style.top = `${Math.random() * 100}%`
-          particlesRef.current?.appendChild(particle)
-          return particle
-        })
-
-        particles.forEach((particle, i) => {
-          gsap.to(particle, {
-            y: `+=${Math.random() * 200 + 100}`,
-            x: `+=${Math.random() * 100 - 50}`,
-            opacity: Math.random() * 0.5 + 0.2,
-            duration: Math.random() * 3 + 2,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: i * 0.1,
-          })
-        })
-      }
-
-      // Magnetic buttons
-      const buttons = document.querySelectorAll('.magnetic-btn')
-      buttons.forEach((btn) => {
-        btn.addEventListener('mousemove', (e) => {
-          const rect = btn.getBoundingClientRect()
-          const x = e.clientX - rect.left - rect.width / 2
-          const y = e.clientY - rect.top - rect.height / 2
-
-          gsap.to(btn, {
-            x: x * 0.3,
-            y: y * 0.3,
-            duration: 0.5,
-            ease: 'power2.out',
-          })
-        })
-
-        btn.addEventListener('mouseleave', () => {
-          gsap.to(btn, {
-            x: 0,
-            y: 0,
-            duration: 0.5,
-            ease: 'elastic.out(1, 0.5)',
-          })
-        })
+      // Hero animations
+      gsap.from('.hero-badge', {
+        opacity: 0,
+        y: -30,
+        duration: 0.8,
+        ease: 'back.out(1.7)',
       })
 
-      // 3D tilt cards
-      const cards = document.querySelectorAll('.tilt-card')
-      cards.forEach((card) => {
-        card.addEventListener('mousemove', (e) => {
-          const rect = card.getBoundingClientRect()
-          const x = e.clientX - rect.left
-          const y = e.clientY - rect.top
-          const centerX = rect.width / 2
-          const centerY = rect.height / 2
-          const rotateX = (y - centerY) / 10
-          const rotateY = (centerX - x) / 10
-
-          gsap.to(card, {
-            rotationX: rotateX,
-            rotationY: rotateY,
-            transformPerspective: 1000,
-            duration: 0.3,
-            ease: 'power2.out',
-          })
-        })
-
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            rotationX: 0,
-            rotationY: 0,
-            duration: 0.5,
-            ease: 'power2.out',
-          })
-        })
+      gsap.from('.hero-title', {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        delay: 0.2,
+        ease: 'power3.out',
       })
 
-      // Text reveal on scroll
-      ScrollTrigger.batch('.reveal-text', {
-        onEnter: (elements) => {
-          elements.forEach((el) => {
-            const text = el.textContent || ''
-            el.innerHTML = text
-              .split(' ')
-              .map((word) => `<span class="reveal-word" style="display: inline-block; overflow: hidden;"><span style="display: inline-block;">${word}</span></span>`)
-              .join(' ')
-
-            gsap.from(el.querySelectorAll('.reveal-word span'), {
-              y: '100%',
-              duration: 0.8,
-              ease: 'power3.out',
-              stagger: 0.05,
-            })
-          })
-        },
-        once: true,
+      gsap.from('.hero-description', {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        delay: 0.4,
+        ease: 'power2.out',
       })
 
-      // Stagger cards animation
-      ScrollTrigger.batch('.stagger-card', {
-        onEnter: (elements) => {
-          gsap.from(elements, {
-            y: 100,
-            opacity: 0,
-            scale: 0.8,
-            rotation: -10,
-            duration: 0.8,
-            ease: 'back.out(1.2)',
-            stagger: 0.1,
-          })
-        },
-        once: true,
+      gsap.from('.hero-buttons', {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        delay: 0.6,
+        ease: 'power2.out',
       })
 
-      // Parallax sections
-      gsap.utils.toArray<HTMLElement>('.parallax-section').forEach((section) => {
-        gsap.to(section, {
-          y: (i, el) => {
-            return -el.offsetHeight * 0.5
-          },
-          ease: 'none',
+      // Floating animation for hero elements
+      gsap.to('.hero-float', {
+        y: -20,
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      })
+
+      // Features grid animation
+      const featureCards = gsap.utils.toArray('.feature-card')
+      featureCards.forEach((card, index) => {
+        gsap.from(card as HTMLElement, {
           scrollTrigger: {
-            trigger: section,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
+            trigger: card as HTMLElement,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            once: true,
           },
-        })
-      })
-
-      // Counter animation
-      ScrollTrigger.batch('.counter', {
-        onEnter: (elements) => {
-          elements.forEach((el) => {
-            const target = parseInt(el.getAttribute('data-target') || '0')
-            const duration = 2
-            const obj = { value: 0 }
-            gsap.to(obj, {
-              value: target,
-              duration,
-              ease: 'power2.out',
-              onUpdate: () => {
-                el.textContent = Math.floor(obj.value).toString()
-              },
-            })
-          })
-        },
-        once: true,
-      })
-
-      // Morphing background
-      const morphBg = document.querySelector('.morph-bg')
-      if (morphBg) {
-        gsap.to(morphBg, {
-          morphSVG: 'M0,0 Q250,100 500,0 T1000,0',
-          duration: 3,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        })
-      }
-
-      // Interactive cursor follower
-      const cursor = document.querySelector('.cursor-follower')
-      if (cursor) {
-        gsap.to(cursor, {
-          x: mousePosition.x,
-          y: mousePosition.y,
-          duration: 0.3,
+          opacity: 0,
+          y: 40,
+          duration: 0.6,
+          delay: index * 0.08,
           ease: 'power2.out',
         })
-      }
+      })
+
+      // Gamification section
+      gsap.from('.gamification-header', {
+        scrollTrigger: {
+          trigger: gamificationRef.current,
+          start: 'top 75%',
+          toggleActions: 'play none none none',
+          once: true,
+        },
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        ease: 'power2.out',
+      })
+
+      const gamificationCards = gsap.utils.toArray('.gamification-card')
+      gamificationCards.forEach((card, index) => {
+        gsap.from(card as HTMLElement, {
+          scrollTrigger: {
+            trigger: card as HTMLElement,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            once: true,
+          },
+          opacity: 0,
+          y: 40,
+          duration: 0.6,
+          delay: index * 0.1,
+          ease: 'power2.out',
+        })
+      })
+
+      // Platform features
+      const platformCards = gsap.utils.toArray('.platform-card')
+      platformCards.forEach((card, index) => {
+        gsap.from(card as HTMLElement, {
+          scrollTrigger: {
+            trigger: card as HTMLElement,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            once: true,
+          },
+          opacity: 0,
+          y: 40,
+          scale: 0.9,
+          duration: 0.6,
+          delay: index * 0.1,
+          ease: 'power2.out',
+        })
+      })
+
+      // Stats animation
+      const statsItems = gsap.utils.toArray('.stat-item')
+      statsItems.forEach((item, index) => {
+        gsap.from(item as HTMLElement, {
+          scrollTrigger: {
+            trigger: statsRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+            once: true,
+          },
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          delay: index * 0.1,
+          ease: 'power2.out',
+        })
+      })
+
+      // CTA section
+      gsap.from('.cta-content', {
+        scrollTrigger: {
+          trigger: ctaRef.current,
+          start: 'top 80%',
+          toggleActions: 'play none none none',
+          once: true,
+        },
+        opacity: 0,
+        y: 40,
+        duration: 0.8,
+        ease: 'power2.out',
+      })
+
+      // Parallax effect for backgrounds
+      gsap.to('.parallax-bg', {
+        scrollTrigger: {
+          trigger: 'body',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1,
+        },
+        y: (_i, target) => ScrollTrigger.maxScroll(window) * target.dataset.speed,
+        ease: 'none',
+      })
     })
 
-    return () => ctx.revert()
-  }, [mousePosition])
-
-  const targetAudience = [
-    { icon: Microscope, label: 'Ученые', color: 'text-blue-500' },
-    { icon: Code, label: 'Разработчики', color: 'text-green-500' },
-    { icon: Terminal, label: 'IT специалисты', color: 'text-purple-500' },
-    { icon: Gamepad2, label: 'Геймеры', color: 'text-pink-500' },
-    { icon: GraduationCap, label: 'Учителя', color: 'text-orange-500' },
-    { icon: BookOpen, label: 'Студенты', color: 'text-cyan-500' },
-    { icon: Rocket, label: 'Начинающие', color: 'text-yellow-500' },
-    { icon: TrendingUp, label: 'Предприниматели', color: 'text-red-500' },
-  ]
-
-  const gamificationFeatures = [
-    { icon: Trophy, title: 'Достижения', desc: 'Система достижений с различными редкостями', color: 'from-yellow-500 to-orange-500' },
-    { icon: Target, title: 'Уровни', desc: 'Прогрессия уровней с наградами и бонусами', color: 'from-blue-500 to-cyan-500' },
-    { icon: Flame, title: 'Стрики', desc: 'Ежедневные активности и стрики для мотивации', color: 'from-red-500 to-pink-500' },
-    { icon: Award, title: 'Ранги', desc: 'Система рангов и статусов в сообществе', color: 'from-purple-500 to-indigo-500' },
-    { icon: Users2, title: 'Кланы', desc: 'Участие в кланах и соревнования между ними', color: 'from-green-500 to-emerald-500' },
-    { icon: BarChart3, title: 'Баттлпассы', desc: 'Сезонные баттлпассы с эксклюзивными наградами', color: 'from-violet-500 to-purple-500' },
-  ]
-
-  const platforms = [
-    {
-      icon: GraduationCap,
-      title: 'Платформа для курсов',
-      desc: 'Создавай и проходи курсы с интерактивными материалами',
-      features: ['Интерактивные уроки', 'Прогресс трекинг', 'Сертификаты', 'Когорты'],
-      gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-      icon: Network,
-      title: 'Нетворкинг',
-      desc: 'Находи партнеров, клиентов и единомышленников',
-      features: ['Поиск по навыкам', 'Рекомендации', 'События', 'Верификация'],
-      gradient: 'from-purple-500 to-pink-500',
-    },
-    {
-      icon: Code,
-      title: 'Для разработчиков',
-      desc: 'Инструменты, чейнджлоги и ресурсы для разработчиков',
-      features: ['API документация', 'SDK', 'Интеграции', 'DevTools'],
-      gradient: 'from-green-500 to-emerald-500',
-    },
-    {
-      icon: MessageCircle,
-      title: 'Q&A платформа',
-      desc: 'Задавай вопросы и получай экспертные ответы',
-      features: ['Экспертные ответы', 'Рейтинг вопросов', 'База знаний', 'Награды'],
-      gradient: 'from-orange-500 to-red-500',
-    },
-    {
-      icon: Hash,
-      title: 'Ask Me Anything',
-      desc: 'AMA сессии с экспертами и лидерами индустрии',
-      features: ['Прямые трансляции', 'Архив сессий', 'Интерактив', 'Записи'],
-      gradient: 'from-indigo-500 to-blue-500',
-    },
-    {
-      icon: Store,
-      title: 'Доска объявлений',
-      desc: 'Находи людей для любых целей в рамках правил',
-      features: ['Фильтры', 'Рекомендации', 'Безопасность', 'Модерация'],
-      gradient: 'from-pink-500 to-rose-500',
-    },
-  ]
-
-  const monetizationFeatures = [
-    {
-      icon: DollarSign,
-      title: 'Заработок на контенте',
-      desc: 'Процент с рекламы на твоей странице отчисляется тебе в виде внутренней валюты или денег',
-      gradient: 'from-green-500 to-emerald-500',
-    },
-    {
-      icon: Gift,
-      title: 'Донаты',
-      desc: 'Поддерживай любимых контент-криейтеров и получай эксклюзивный контент',
-      gradient: 'from-pink-500 to-rose-500',
-    },
-    {
-      icon: Coins,
-      title: 'Внутренняя валюта',
-      desc: 'Валюта похожая по функционалу на звезды в Telegram, имеет такой же вес как реальные деньги',
-      gradient: 'from-yellow-500 to-orange-500',
-    },
-    {
-      icon: ShoppingBag,
-      title: 'Маркетплейс',
-      desc: 'Торговая площадка где люди могут продавать украшения, карточки и прочее',
-      gradient: 'from-purple-500 to-indigo-500',
-    },
-  ]
+    return () => {
+      ctx.revert()
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
+    }
+  }, [])
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <div className="cursor-follower fixed w-6 h-6 rounded-full bg-primary/20 pointer-events-none z-50 mix-blend-difference" />
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SiteHeader />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
-        <div ref={particlesRef} className="absolute inset-0 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)]" />
+      <section ref={heroRef} className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden pt-8">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="parallax-bg absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" data-speed="0.3" />
+          <div className="parallax-bg absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" data-speed="0.5" />
+          <div className="parallax-bg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" data-speed="0.4" />
+        </div>
 
-        <div className="container mx-auto max-w-7xl relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-pulse">
-            <Sparkles className="h-4 w-4" />
-            Многосторонняя платформа нового поколения
-          </div>
+        <div className="container relative z-10 mx-auto px-4 py-20">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <Badge className="hero-badge text-sm px-4 py-2 bg-primary/10 text-primary border-primary/20">
+              <Sparkles className="w-4 h-4 mr-2 inline" />
+              The Ultimate Multi-Platform Experience
+            </Badge>
 
-          <h1 ref={heroTitleRef} className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-            Aetheris
-          </h1>
+            <h1 className="hero-title text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
+                Aetheris
+              </span>
+              <br />
+              <span className="text-foreground">Where Minds Connect</span>
+            </h1>
 
-          <p ref={heroSubtitleRef} className="text-2xl md:text-3xl text-muted-foreground mb-12 max-w-4xl mx-auto">
-            Экосистема для роста: обучение, нетворкинг, геймификация, заработок и сообщество
-          </p>
+            <p className="hero-description text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              A powerful ecosystem for scientists, developers, gamers, and learners.
+              <br />
+              <span className="font-semibold text-foreground">Gamification. Networking. Learning. Earning.</span>
+            </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="magnetic-btn text-lg px-8 py-6" onClick={() => navigate('/auth')}>
-              Начать бесплатно
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="magnetic-btn text-lg px-8 py-6" onClick={() => navigate('/courses')}>
-              Изучить возможности
-            </Button>
-          </div>
+            <div className="hero-buttons flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button size="lg" className="text-lg px-8 py-6 group" onClick={() => navigate('/auth')}>
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+                Explore Features
+                <ChevronRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
 
-          {/* Target Audience Icons */}
-          <div className="mt-20 grid grid-cols-4 md:grid-cols-8 gap-4 max-w-5xl mx-auto">
-            {targetAudience.map((item, i) => (
-              <div
-                key={i}
-                className="stagger-card flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/20 border border-border/60 hover:bg-muted/40 transition-colors"
-              >
-                <item.icon className={cn('h-8 w-8', item.color)} />
-                <span className="text-xs text-center">{item.label}</span>
+            <div className="hero-float pt-12">
+              <div className="inline-flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>No credit card required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>Privacy first</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>Free forever</span>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <ChevronDown className="h-8 w-8 text-muted-foreground" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hero-float">
+          <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex items-start justify-center p-2">
+            <div className="w-1 h-3 bg-muted-foreground/50 rounded-full animate-bounce" />
+          </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Мощные возможности
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Все инструменты для профессионального роста в одном месте
-          </p>
+      {/* Stats Bar */}
+      <section ref={statsRef} className="py-16 border-y border-border bg-muted/20">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon
+              return (
+                <div key={index} className="stat-item text-center space-y-2">
+                  <Icon className="w-8 h-8 mx-auto text-primary" />
+                  <div className="text-4xl font-bold text-foreground">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { icon: Brain, title: 'AI Помощник', desc: 'Продвинутый AI помощник и множество AI фич', gradient: 'from-cyan-500 to-blue-500' },
-              { icon: Layers, title: 'Интерактивные статьи', desc: 'Ветвящиеся интерактивные статьи с богатым контентом', gradient: 'from-green-500 to-emerald-500' },
-              { icon: FileText, title: 'Rich Text редактор', desc: 'Продвинутый редактор с огромной кучей возможностей', gradient: 'from-orange-500 to-red-500' },
-              { icon: Sparkles, title: 'NFT и украшения', desc: 'NFT плюшки, украшения для разных целей и виджетов', gradient: 'from-pink-500 to-rose-500' },
-              { icon: Bot, title: 'AI Фичи', desc: 'Множество AI возможностей для повышения продуктивности', gradient: 'from-purple-500 to-indigo-500' },
-              { icon: Wand2, title: 'Виджеты', desc: 'Кастомизируемые виджеты для персонализации', gradient: 'from-violet-500 to-purple-500' },
-              { icon: Database, title: 'Криптовалюта', desc: 'Возможность интеграции с криптовалютой в будущем', gradient: 'from-yellow-500 to-orange-500' },
-              { icon: Cloud, title: 'Облачные решения', desc: 'Масштабируемая инфраструктура для всех нужд', gradient: 'from-blue-500 to-cyan-500' },
-              { icon: Zap, title: 'Высокая производительность', desc: 'Оптимизированная платформа для максимальной скорости', gradient: 'from-amber-500 to-yellow-500' },
-            ].map((feature, i) => (
-              <Card
-                key={i}
-                className="tilt-card stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity', feature.gradient)} />
-                <CardHeader>
-                  <div className={cn('mb-4 w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center', feature.gradient)}>
-                    <feature.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-base">{feature.desc}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+      {/* Main Features */}
+      <section ref={featuresRef} className="py-24 relative overflow-hidden">
+        <div className="parallax-bg absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" data-speed="0.2" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-16 space-y-4">
+            <Badge className="text-sm px-4 py-2">Core Features</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Everything You Need,
+              <br />
+              <span className="text-primary">All In One Place</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              A comprehensive platform designed to meet all your professional and personal growth needs
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {mainFeatures.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <Card
+                  key={index}
+                  className="feature-card group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-border/50 bg-card/50 backdrop-blur"
+                >
+                  <CardHeader>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`w-6 h-6 ${feature.color}`} />
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base">{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* Gamification Section */}
-      <section className="py-32 px-4 bg-muted/30 relative parallax-section">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Продвинутая геймификация
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Зарабатывай награды, повышай уровень и соревнуйся с другими
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {gamificationFeatures.map((item, i) => (
-              <Card
-                key={i}
-                className="tilt-card stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden relative"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-20 transition-opacity blur-xl', item.color)} />
-                <CardHeader className="relative z-10">
-                  <div className={cn('mb-4 w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center', item.color)}>
-                    <item.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-xl">{item.title}</CardTitle>
-                  <CardDescription className="text-base">{item.desc}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+      <section ref={gamificationRef} className="py-24 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden">
+        <div className="parallax-bg absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" data-speed="0.3" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="gamification-header text-center mb-16 space-y-4">
+            <Badge className="text-sm px-4 py-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
+              <Gamepad2 className="w-4 h-4 mr-2 inline" />
+              Gamification
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Level Up Your
+              <br />
+              <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                Professional Journey
+              </span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Earn XP, unlock achievements, join clans, and compete in seasonal battle passes
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* Platforms Section */}
-      <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Множество платформ
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Специализированные платформы для разных целей
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {platforms.map((platform, i) => (
-              <Card
-                key={i}
-                className="tilt-card stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden relative"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity', platform.gradient)} />
-                <CardHeader className="relative z-10">
-                  <div className={cn('mb-4 w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center', platform.gradient)}>
-                    <platform.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-2xl">{platform.title}</CardTitle>
-                  <CardDescription className="text-base">{platform.desc}</CardDescription>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <ul className="space-y-3">
-                    {platform.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-3">
-                        <div className={cn('w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center flex-shrink-0', platform.gradient)}>
-                          <CheckCircle2 className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {gamificationFeatures.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <Card
+                  key={index}
+                  className="gamification-card relative overflow-hidden border-border/50 bg-card/80 backdrop-blur group hover:border-primary/50 transition-all duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="relative">
+                    <Icon className={`w-10 h-10 ${feature.color} mb-3`} />
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
-        </div>
-      </section>
 
-      {/* Community Section */}
-      <section className="py-32 px-4 bg-muted/30 relative parallax-section">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Сообщество
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Общайся, создавай группы и находи единомышленников
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: MessageSquare, title: 'Общий чат', desc: 'Чат с фильтрами по странам или глобальный', gradient: 'from-blue-500 to-cyan-500' },
-              { icon: Users2, title: 'Группы', desc: 'Создавай и управляй группами по интересам', gradient: 'from-purple-500 to-pink-500' },
-              { icon: Hash, title: 'Каналы', desc: 'Публичные каналы для обсуждений', gradient: 'from-green-500 to-emerald-500' },
-              { icon: PenTool, title: 'Блог и посты', desc: 'Веди блог и делись постами как в VK', gradient: 'from-orange-500 to-red-500' },
-            ].map((item, i) => (
-              <Card
-                key={i}
-                className="tilt-card stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden relative"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity', item.gradient)} />
-                <CardHeader className="relative z-10">
-                  <div className={cn('mb-4 w-12 h-12 rounded-lg bg-gradient-to-br flex items-center justify-center', item.gradient)}>
-                    <item.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
-                  <CardDescription className="text-sm">{item.desc}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Monetization Section */}
-      <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Зарабатывай на контенте
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Монетизируй свой контент и получай доход от рекламы
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {monetizationFeatures.map((item, i) => (
-              <Card
-                key={i}
-                className="tilt-card stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden relative"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity', item.gradient)} />
-                <CardHeader className="relative z-10">
-                  <div className={cn('mb-4 w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center', item.gradient)}>
-                    <item.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-2xl">{item.title}</CardTitle>
-                  <CardDescription className="text-base">{item.desc}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Additional Features */}
-      <section className="py-32 px-4 bg-muted/30 relative parallax-section">
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Дополнительные возможности
-          </h2>
-          <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto mb-20">
-            Еще больше функций для максимального комфорта
-          </p>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {[
-              { icon: Calendar, label: 'События' },
-              { icon: Bell, label: 'Уведомления' },
-              { icon: Search, label: 'Поиск' },
-              { icon: Filter, label: 'Фильтры' },
-              { icon: Settings, label: 'Настройки' },
-              { icon: Share, label: 'Шаринг' },
-              { icon: Bookmark, label: 'Закладки' },
-              { icon: Heart, label: 'Лайки' },
-              { icon: Download, label: 'Скачивание' },
-              { icon: Upload, label: 'Загрузка' },
-              { icon: Video, label: 'Видео' },
-              { icon: ImageIcon, label: 'Изображения' },
-              { icon: Music, label: 'Музыка' },
-              { icon: Palette, label: 'Дизайн' },
-              { icon: Compass, label: 'Навигация' },
-              { icon: Map, label: 'Карты' },
-              { icon: Clock, label: 'Время' },
-              { icon: Activity, label: 'Активность' },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="stagger-card flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/20 border border-border/60 hover:bg-muted/40 transition-colors group"
-              >
-                <item.icon className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-                <span className="text-xs text-center">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Privacy Section */}
-      <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="reveal-text text-5xl md:text-6xl font-bold text-center mb-4">
-            Приватность и безопасность
-          </h2>
-          <p className="text-xl text-muted-foreground text-center mb-20">
-            Мы не используем твои персональные данные
-          </p>
-
-          <div className="space-y-6">
-            {[
-              { icon: Shield, title: 'OAuth2', desc: 'Исключительно OAuth2 авторизация', gradient: 'from-green-500 to-emerald-500' },
-              { icon: Mail, title: 'Хеш почты', desc: 'Вместо почты используем хеш от неё', gradient: 'from-blue-500 to-cyan-500' },
-              { icon: Globe, title: 'Много провайдеров', desc: 'Поддержка огромного количества провайдеров', gradient: 'from-purple-500 to-pink-500' },
-            ].map((item, i) => (
-              <Card
-                key={i}
-                className="stagger-card border-border/60 bg-muted/20 hover:bg-muted/30 transition-all group overflow-hidden relative"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity', item.gradient)} />
-                <CardContent className="flex items-start gap-4 p-6 relative z-10">
-                  <div className={cn('w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0', item.gradient)}>
-                    <item.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-xl mb-1">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.desc}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-32 px-4 bg-muted/30 relative parallax-section">
-        <div className="container mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { value: '1000+', label: 'Активных пользователей', icon: Users },
-              { value: '500+', label: 'Курсов', icon: GraduationCap },
-              { value: '10000+', label: 'Статей', icon: FileText },
-              { value: '50+', label: 'Интеграций', icon: Code },
-            ].map((stat, i) => (
-              <Card
-                key={i}
-                className="stagger-card border-border/60 bg-muted/20 text-center p-8"
-              >
-                <stat.icon className="h-12 w-12 text-primary mx-auto mb-4" />
-                <div className="counter text-4xl font-bold mb-2" data-target={stat.value.replace(/\D/g, '')}>
-                  0
+          <div className="mt-16 text-center">
+            <Card className="max-w-3xl mx-auto bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
+              <CardHeader>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <Coins className="w-8 h-8 text-amber-500" />
+                  <CardTitle className="text-2xl">Internal Currency System</CardTitle>
                 </div>
-                <p className="text-muted-foreground">{stat.label}</p>
-              </Card>
-            ))}
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-lg">
+                  Earn rewards through activities, trade in marketplace, support creators, and unlock premium features.
+                  Future crypto integration planned for seamless transactions.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-4xl">
-          <Card className="stagger-card border-border/60 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)]" />
-            <CardHeader className="text-center relative z-10">
-              <CardTitle className="text-5xl md:text-6xl font-bold mb-4">
-                Готов начать?
-              </CardTitle>
-              <CardDescription className="text-xl">
-                Присоединяйся к сообществу и начни свой путь к успеху
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-              <Button size="lg" className="magnetic-btn text-lg px-8 py-6" onClick={() => navigate('/auth')}>
-                Создать аккаунт
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="magnetic-btn text-lg px-8 py-6" onClick={() => navigate('/courses')}>
-                Узнать больше
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Platform Features */}
+      <section ref={platformRef} className="py-24">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <Badge className="text-sm px-4 py-2">Platform Capabilities</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Powerful Tools For
+              <br />
+              <span className="text-primary">Every Creator</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
+            {platformFeatures.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <Card
+                  key={index}
+                  className="platform-card border-border/50 hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur"
+                >
+                  <CardHeader>
+                    <Icon className={`w-10 h-10 ${feature.color} mb-3`} />
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Additional features list */}
+          <div className="max-w-5xl mx-auto">
+            <Card className="bg-muted/20 border-border/50">
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">And So Much More...</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    'Interactive branching articles',
+                    'Advanced rich text editor',
+                    'Personal blog & wall posts',
+                    'Groups & channels',
+                    'Global & local chats',
+                    'Q&A platform',
+                    'Ask Me Anything sessions',
+                    'Job board & freelancing',
+                    'Course platform',
+                    'NFT collectibles',
+                    'Widgets & decorations',
+                    'Partnership opportunities',
+                    'Merchandise store',
+                    'Content monetization',
+                    'Ad revenue sharing',
+                    'Donation system',
+                    'Collaboration tools',
+                    'AI assistant (coming soon)',
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
+
+      {/* Privacy & Security Section */}
+      <section className="py-24 bg-gradient-to-b from-transparent to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-2 border-primary/20 bg-card/80 backdrop-blur overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+              <CardHeader className="text-center relative">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-3xl mb-2">Privacy First, Always</CardTitle>
+                <CardDescription className="text-lg">
+                  Your data belongs to you. We don't collect, sell, or misuse your personal information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="relative">
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="text-center space-y-2">
+                    <Lock className="w-8 h-8 mx-auto text-green-500" />
+                    <h4 className="font-semibold">OAuth2 Only</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Secure authentication through trusted providers
+                    </p>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <Globe className="w-8 h-8 mx-auto text-blue-500" />
+                    <h4 className="font-semibold">Email Hashing</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Your email is hashed, never stored in plain text
+                    </p>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <Heart className="w-8 h-8 mx-auto text-red-500" />
+                    <h4 className="font-semibold">Zero Tracking</h4>
+                    <p className="text-sm text-muted-foreground">
+                      No ads tracking, no data selling, ever
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section ref={ctaRef} className="py-32 relative overflow-hidden">
+        <div className="parallax-bg absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-blue-500/10 -z-10" data-speed="0.1" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="cta-content max-w-4xl mx-auto text-center space-y-8">
+            <Badge className="text-sm px-4 py-2 bg-primary text-primary-foreground">
+              <Rocket className="w-4 h-4 mr-2 inline" />
+              Join The Community
+            </Badge>
+
+            <h2 className="text-5xl md:text-6xl font-bold">
+              Ready To Start
+              <br />
+              <span className="bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
+                Your Journey?
+              </span>
+            </h2>
+
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of professionals, learners, and creators building their future on Aetheris
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+              <Button size="lg" className="text-lg px-10 py-7 group" onClick={() => navigate('/auth')}>
+                Create Free Account
+                <Sparkles className="ml-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-10 py-7" onClick={() => navigate('/')}>
+                Explore Platform
+              </Button>
+            </div>
+
+            <div className="pt-8 flex items-center justify-center gap-8 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span>Live now</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                <span>Growing fast</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>Active community</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/20 py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-muted-foreground">
+            <p className="text-sm">
+              © 2025 Aetheris. Built with <Heart className="w-4 h-4 inline text-red-500" /> for the community.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
+
