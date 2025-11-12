@@ -82,9 +82,18 @@ interface CommentReactionState {
   userReaction: 'up' | 'down' | null
 }
 
-const THREAD_CAPSULE_OFFSET = 18
-const THREAD_CAPSULE_PADDING = 16
-const THREAD_CAPSULE_RADIUS = 22
+const MAX_VISIBLE_STRIPE_DEPTH = 6
+const STRIPE_WIDTH = 2
+const STRIPE_GAP = 4
+const BASE_COMMENT_PADDING = 16
+const STRIPE_CLASSNAMES = [
+  'bg-border/80',
+  'bg-border/70',
+  'bg-border/60',
+  'bg-border/50',
+  'bg-border/40',
+  'bg-border/30',
+]
 
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
@@ -211,7 +220,7 @@ export default function ArticlePage() {
     }
 
     if (!article) {
-      toast({
+    toast({
         title: 'Подождите',
         description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
         variant: 'destructive',
@@ -662,9 +671,21 @@ export default function ArticlePage() {
       const initials = (node.author.username ?? 'U').slice(0, 2).toUpperCase()
 
       const commentDepth = depth
+      const stripeCount = showConnectors ? Math.min(depth, MAX_VISIBLE_STRIPE_DEPTH) : 0
+      const overflowDepth = Math.max(depth - MAX_VISIBLE_STRIPE_DEPTH, 0)
+      const gutterWidth = stripeCount * (STRIPE_WIDTH + STRIPE_GAP)
       const paddingLeft = showConnectors
-        ? commentDepth * THREAD_CAPSULE_OFFSET + THREAD_CAPSULE_PADDING
-        : 0
+        ? depth > 0
+          ? BASE_COMMENT_PADDING + gutterWidth
+          : 0
+        : depth > 0
+          ? BASE_COMMENT_PADDING + depth * 10
+          : 0
+
+      const containerStyle: CSSProperties = {
+        paddingLeft: paddingLeft ? `${paddingLeft}px` : undefined,
+        boxSizing: 'border-box',
+      }
 
       const isHoverTarget = hoveredCommentId === node.id
       const isInHoverPath =
@@ -684,40 +705,58 @@ export default function ArticlePage() {
         !isInHoverPath
       const dimClass = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-60' : undefined
 
-      const capsuleTone = isHoverTarget
-        ? 'border border-primary/60 bg-primary/5 shadow-[0_0_30px_rgba(var(--primary-rgb,99,102,241),0.18)]'
-        : isInHoverPath
-          ? 'border border-primary/40 bg-primary/5'
-          : 'border border-border/70 bg-card/75'
-      const dimOverlay = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-55' : undefined
-
       const commentElement = (
         <div
           key={`comment-${node.id}`}
           id={`comment-${node.id}`}
           className="relative space-y-3"
-          style={paddingLeft ? ({ paddingLeft: `${paddingLeft}px` } as CSSProperties) : undefined}
+          style={containerStyle}
           onMouseEnter={() => setHoveredCommentId(node.id)}
           onMouseLeave={() => setHoveredCommentId((prev) => (prev === node.id ? null : prev))}
         >
-          {showConnectors && commentDepth > 0 && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-4 left-[6px] -z-10 w-px bg-border/50"
-              style={{ opacity: isDimmedByHover ? 0.2 : isDimmedByDepth ? 0.45 : 0.75 }}
-            />
+          {showConnectors && stripeCount > 0 && (
+            <>
+              <div aria-hidden className="pointer-events-auto absolute left-0 top-0 bottom-0 flex">
+                {Array.from({ length: stripeCount }).map((_, stripeIndex) => {
+                  const stripeDepth = stripeIndex + 1
+                  const stripeActive =
+                    highlightDepth !== null ? stripeDepth >= highlightDepth : true
+                  const isLastStripe = stripeIndex === stripeCount - 1
+                  return (
+                    <span
+                      key={`stripe-${node.id}-${stripeIndex}`}
+                      className={cn(
+                        'h-full cursor-pointer rounded-full transition-opacity',
+                        STRIPE_CLASSNAMES[stripeIndex % STRIPE_CLASSNAMES.length],
+                        stripeActive ? 'opacity-60 hover:opacity-90' : 'opacity-20'
+                      )}
+                      style={{
+                        width: STRIPE_WIDTH,
+                        marginRight: isLastStripe ? 0 : STRIPE_GAP,
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setHighlightDepth((prev) =>
+                          prev === stripeDepth ? null : stripeDepth
+                        )
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
+          {overflowDepth > 0 && (
+            <span className="pointer-events-none absolute left-0 top-2 inline-flex -translate-x-3 select-none rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              +{overflowDepth}
+            </span>
           )}
           <Card
             className={cn(
-              'transition-colors transition-opacity duration-[800ms] shadow-sm',
-              capsuleTone,
-              dimOverlay,
-              commentDepth > 0
-                ? 'ml-[-12px] mr-[-8px] rounded-l-[var(--capsule-radius)] border-l-2'
-                : 'rounded-[var(--capsule-radius)]',
-              'border bg-card/80 backdrop-blur-[1.5px]'
+              'border-none bg-transparent shadow-none transition-all duration-[800ms]',
+              isHoverTarget && 'border border-border/60 bg-muted/25 shadow-md backdrop-blur-sm scale-[1.01]',
+              dimClass
             )}
-            style={{ '--capsule-radius': `${THREAD_CAPSULE_RADIUS}px` } as CSSProperties}
           >
             <CardContent className="pt-4 space-y-3">
               <div className="flex items-start gap-3">
@@ -1395,7 +1434,7 @@ export default function ArticlePage() {
                   <p className="text-xs text-muted-foreground">
                     +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
                   </p>
-                </div>
+          </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
                   <p className="text-xs text-muted-foreground">Статус синхронизации</p>
                   <p className="text-sm font-medium text-foreground">
@@ -1403,8 +1442,8 @@ export default function ArticlePage() {
                       ? 'Ожидает отправки в Strapi'
                       : 'Получен из Strapi'}
                   </p>
-                </div>
-              </div>
+      </div>
+    </div>
 
               <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
                 TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и

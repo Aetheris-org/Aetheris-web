@@ -17,11 +17,12 @@ export const SmartInput = Extension.create({
           return { variant }
         },
       }),
-      nodeInputRule({
-        find: TOGGLE_INPUT_REGEX,
-        type: this.editor.schema.nodes.details ?? this.editor.schema.nodes.toggle,
-        getAttributes: () => ({}),
-      }),
+      // Toggle временно отключен
+      // nodeInputRule({
+      //   find: TOGGLE_INPUT_REGEX,
+      //   type: this.editor.schema.nodes.details,
+      //   getAttributes: () => ({ open: false }),
+      // }),
     ]
   },
 })

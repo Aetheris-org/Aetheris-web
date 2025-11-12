@@ -17,6 +17,7 @@ import NotificationsPage from '@/pages/NotificationsPage'
 import DraftsPage from '@/pages/DraftsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import TrendingPage from '@/pages/TrendingPage'
+import AchievementsPage from '@/pages/AchievementsPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 
@@ -60,6 +61,7 @@ function App() {
           <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/achievements" element={<AchievementsPage />} />
         </Routes>
         <Toaster />
       </BrowserRouter>

@@ -1466,8 +1466,8 @@ function resolveTheme(mode: ThemeMode): ResolvedTheme {
 }
 
 function clampRadius(value: number) {
-  const min = 0.25
-  const max = 1
+  const min = 0
+  const max = 2
   if (Number.isNaN(value)) return DEFAULT_PREFERENCES.radius
   return Math.min(max, Math.max(min, value))
 }

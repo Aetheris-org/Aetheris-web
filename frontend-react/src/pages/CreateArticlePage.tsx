@@ -574,60 +574,59 @@ export default function CreateArticlePage() {
         </div>
       </header>
 
-      <div className="container py-8">
-        <div className="mx-auto max-w-4xl space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <Input
-              placeholder="Article title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
-            />
-          </div>
-
-          <Separator />
-
-          {/* Excerpt */}
-          <div className="space-y-2">
-            <Label htmlFor="excerpt">Excerpt (optional)</Label>
-            <Input
-              id="excerpt"
-              placeholder="Brief description of your article..."
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-            />
-          </div>
-
-          {/* Content */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <Label id="content-editor-label" htmlFor="content-editor" className="text-base font-medium">
-                Content
-              </Label>
-              <span className="text-xs text-muted-foreground">
-                Compose with rich formatting, keyboard shortcuts, and live previews.
-              </span>
+      <div className="flex h-[calc(100vh-4rem)] w-full">
+        {/* Main Editor Area - Full Width */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Title Bar */}
+          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="px-8 py-4">
+              <Input
+                placeholder="Article title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-2xl font-bold border-0 bg-transparent px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
+              />
             </div>
-            <RichTextEditor
-              id="content-editor"
-              ariaLabelledBy="content-editor-label"
-              value={content}
-              onChange={setContent}
-              placeholder="Write your article content here..."
-              characterLimit={20000}
-            />
           </div>
 
-          {/* Tags */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Tags</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* Editor Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-8 py-8">
+              <RichTextEditor
+                id="content-editor"
+                ariaLabelledBy="content-editor-label"
+                value={content}
+                onChange={setContent}
+                placeholder="Start writing your article..."
+                characterLimit={20000}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar - Article Settings */}
+        <div className="w-80 border-l bg-muted/30 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            {/* Excerpt */}
+            <div className="space-y-2">
+              <Label htmlFor="excerpt" className="text-sm font-medium">Excerpt</Label>
+              <Input
+                id="excerpt"
+                placeholder="Brief description..."
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            <Separator />
+
+            {/* Tags */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Tags</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Add a tag..."
+                  placeholder="Add tag..."
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -636,8 +635,9 @@ export default function CreateArticlePage() {
                       handleAddTag()
                     }
                   }}
+                  className="text-sm"
                 />
-                <Button onClick={handleAddTag}>Add</Button>
+                <Button onClick={handleAddTag} size="sm">Add</Button>
               </div>
 
               {tags.length > 0 && (
@@ -646,7 +646,7 @@ export default function CreateArticlePage() {
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="cursor-pointer"
+                      className="cursor-pointer text-xs"
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag} ×
@@ -654,98 +654,89 @@ export default function CreateArticlePage() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Difficulty */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Difficulty</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <Separator />
+
+            {/* Difficulty */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Difficulty</Label>
               <div className="flex gap-2">
                 {(['easy', 'medium', 'hard'] as const).map((level) => (
                   <Button
                     key={level}
                     variant={difficulty === level ? 'default' : 'outline'}
                     onClick={() => setDifficulty(level)}
-                    className="capitalize"
+                    size="sm"
+                    className="capitalize flex-1"
                   >
                     {level}
                   </Button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Preview Image */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Preview image</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
+            <Separator />
+
+            {/* Preview Image */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Preview Image</Label>
               {croppedImageUrl ? (
                 <>
-                  <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
+                  <div className="relative overflow-hidden rounded-lg border border-border/70 bg-muted/20">
                     <img
                       src={croppedImageUrl}
                       alt="Article preview"
                       className="aspect-video w-full object-cover"
                     />
-                    <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
-                      <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
-                        16:9
-                      </Badge>
-                      Perfect for social previews
-                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      className="gap-2"
+                      size="sm"
+                      className="gap-2 flex-1"
                       onClick={handleAdjustCrop}
                       disabled={!originalImageUrl}
                     >
-                      <Crop className="h-4 w-4" />
-                      Adjust crop
+                      <Crop className="h-3 w-3" />
+                      Adjust
                     </Button>
                     <Button
                       variant="outline"
-                      className="gap-2"
+                      size="sm"
+                      className="gap-2 flex-1"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <RefreshCw className="h-4 w-4" />
-                      Replace image
+                      <RefreshCw className="h-3 w-3" />
+                      Replace
                     </Button>
                     <Button
                       variant="ghost"
+                      size="sm"
                       className="gap-2 text-destructive hover:text-destructive"
                       onClick={resetPreviewImage}
                     >
-                      <XCircle className="h-4 w-4" />
+                      <XCircle className="h-3 w-3" />
                       Remove
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
-                  </p>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-6 py-12 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/40">
-                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 bg-muted/10 px-4 py-8 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/40">
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h4 className="mt-4 text-base font-semibold">Add a hero image</h4>
-                  <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-                    The preview appears on article cards, the homepage, and social shares. Recommended size 1200×630px.
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Add a hero image
                   </p>
                   <Button
-                    className="mt-6 gap-2"
+                    className="mt-3 gap-2"
                     variant="outline"
+                    size="sm"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <ImagePlus className="h-4 w-4" />
-                    Upload image
+                    <ImagePlus className="h-3 w-3" />
+                    Upload
                   </Button>
                 </div>
               )}
@@ -756,8 +747,8 @@ export default function CreateArticlePage() {
                 className="hidden"
                 onChange={handleImageSelection}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -257,7 +257,7 @@ function AppearanceOptionCard({
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
       className={cn(
-        'group relative flex h-full cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'group relative flex h-full cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0 focus-visible:ring-0',
         disabled && 'pointer-events-none opacity-60',
         active && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
       )}
@@ -1200,7 +1200,7 @@ function ProfileSettings() {
             </Label>
             <span className="text-xs text-muted-foreground">Recommended 1600 × 400px</span>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-dashed bg-muted/20">
+          <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50">
             <div className="aspect-[3/1] w-full">
               {coverPreview ? (
                 <img
@@ -2356,16 +2356,18 @@ function AppearanceSettings() {
         <Separator />
 
         <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold">Live preview</p>
-              <p className="text-sm text-muted-foreground">
-                Review how your appearance choices influence the interface.
-              </p>
-            </div>
-            <Badge variant="secondary">{resolvedTheme === 'dark' ? 'Dark theme' : 'Light theme'}</Badge>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="live-preview" className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:outline-none">
+              <AccordionTrigger className="px-4 py-3 text-left hover:no-underline focus-visible:outline-none">
+                <div className="flex w-full flex-col gap-0.5 pr-6">
+                  <span className="text-sm font-semibold">Live preview</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    Review how your appearance choices influence the interface.
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-2">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div
               className="rounded-xl border border-border/70 bg-background/95 text-foreground shadow-lg ring-1 ring-border/30 backdrop-blur-sm"
               style={{
@@ -2540,7 +2542,10 @@ function AppearanceSettings() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </section>
 
         <Separator />
@@ -2568,9 +2573,9 @@ function AppearanceSettings() {
                 <AccordionItem
                   key={group.id}
                   value={group.id}
-                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10"
+                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:outline-none"
                 >
-                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold">
+                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold hover:no-underline focus-visible:outline-none">
                     <div className="flex w-full flex-col gap-0.5 pr-6">
                       <span>{group.label}</span>
                       <span className="text-xs font-normal text-muted-foreground">{group.description}</span>
@@ -2677,9 +2682,9 @@ function AppearanceSettings() {
                 <AccordionItem
                   key={group.id}
                   value={group.id}
-                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10"
+                  className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:outline-none"
                 >
-                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold">
+                  <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold hover:no-underline focus-visible:outline-none">
                     <div className="flex w-full flex-col gap-0.5 pr-6">
                       <span>{group.label}</span>
                       <span className="text-xs font-normal text-muted-foreground">{group.description}</span>
@@ -2833,8 +2838,8 @@ function AppearanceSettings() {
             </div>
             <Slider
               value={[radius]}
-              min={0.25}
-              max={1}
+              min={0}
+              max={2}
               step={0.05}
               onValueChange={(value) => setRadius(value[0] ?? radius)}
               aria-label="Adjust global border radius"

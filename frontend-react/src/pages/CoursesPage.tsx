@@ -227,63 +227,63 @@ function HeroSection({
 }: HeroSectionProps) {
   return (
     <section className="grid gap-6 rounded-3xl border border-border/60 bg-muted/20 p-6 shadow-sm md:p-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <div className="space-y-5">
+          <div className="space-y-5">
         <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
           Courses · Cohorts
-        </Badge>
-        <div className="space-y-3">
+            </Badge>
+            <div className="space-y-3">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
             Build, launch, and grow with Aetheris learning paths.
-          </h1>
+              </h1>
           <p className="max-w-2xl text-base text-muted-foreground">
             Choose a verified program or fast-track with community-built workshops. Every cohort blends shadcn/ui
             foundations, Strapi automation, and real operator tactics.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
           <Button onClick={onLaunchClick} className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Launch your course
-          </Button>
+                <Sparkles className="h-4 w-4" />
+                Launch your course
+              </Button>
           <Button variant="outline" className="gap-2" onClick={onExploreClick}>
-            <Compass className="h-4 w-4" />
+                <Compass className="h-4 w-4" />
             Explore catalog
           </Button>
           {selectedSkills.length > 0 && (
             <Button variant="ghost" size="sm" onClick={onClearSkills}>
               Clear focus areas
-            </Button>
+              </Button>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
 
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-        {metrics.map((metric) => {
-          const Icon = metric.icon
-          return (
+            {metrics.map((metric) => {
+              const Icon = metric.icon
+              return (
             <Card
               key={metric.id}
               className="border-border/60 bg-background/90 shadow-sm transition hover:border-border"
             >
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
-                  <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {metric.label}
-                  </CardDescription>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <CardTitle className="text-2xl font-semibold">{metric.value}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 text-xs text-muted-foreground">
-                {metric.description}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-    </section>
+                      <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {metric.label}
+                      </CardDescription>
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                    </div>
+                    <CardTitle className="text-2xl font-semibold">{metric.value}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 text-xs text-muted-foreground">
+                    {metric.description}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </section>
   )
 }
 
@@ -311,18 +311,18 @@ function FiltersPanel({
   onResetFilters,
 }: FiltersPanelProps) {
   return (
-    <Card className="border-border/60 shadow-sm">
+          <Card className="border-border/60 shadow-sm">
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
+              <div>
             <CardTitle className="text-xl font-semibold">Refine your search</CardTitle>
             <CardDescription>Combine filters to narrow the catalog in a couple of clicks.</CardDescription>
-          </div>
+              </div>
           <Button variant="ghost" size="sm" onClick={onResetFilters}>
             Reset
-          </Button>
+              </Button>
         </div>
-      </CardHeader>
+            </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-2">
@@ -360,28 +360,28 @@ function FiltersPanel({
               <span className="text-xs text-muted-foreground">{selectedSkills.length} selected</span>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {courseSkills.map((skill) => {
-              const isActive = selectedSkills.includes(skill.id)
-              return (
-                <Button
-                  key={skill.id}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
+              <div className="flex flex-wrap gap-2">
+                {courseSkills.map((skill) => {
+                  const isActive = selectedSkills.includes(skill.id)
+                  return (
+                    <Button
+                      key={skill.id}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
                   className={cn(
                     'gap-2 rounded-full px-3 text-xs transition',
                     isActive && 'shadow-sm'
                   )}
                   onClick={() => onToggleSkill(skill.id)}
-                >
-                  {skill.label}
-                </Button>
-              )
-            })}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+                    >
+                      {skill.label}
+                    </Button>
+                  )
+                })}
+              </div>
+              </div>
+            </CardContent>
+          </Card>
   )
 }
 
@@ -393,26 +393,26 @@ interface FilterToggleGroupProps {
 }
 
 function FilterToggleGroup({ label, options, activeValue, onChange }: FilterToggleGroupProps) {
-  return (
+                  return (
     <div className="space-y-2">
       <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>
       <div className="flex flex-wrap gap-2 rounded-lg border border-border/60 bg-muted/20 p-1">
         {options.map((option) => {
           const isActive = activeValue === option
-          return (
-            <Button
+                  return (
+                    <Button
               key={option}
-              variant={isActive ? 'secondary' : 'ghost'}
-              size="sm"
-              className={cn('text-xs capitalize', isActive && 'shadow-sm')}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn('text-xs capitalize', isActive && 'shadow-sm')}
               onClick={() => onChange(option)}
-            >
+                    >
               {option}
-            </Button>
-          )
-        })}
-      </div>
-    </div>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
   )
 }
 
@@ -430,7 +430,7 @@ function CourseResultsSection({
   onResetFilters,
 }: CourseResultsSectionProps) {
   if (courses.length === 0) {
-    return (
+              return (
       <Card className="border-dashed border-border/60 bg-muted/10">
         <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
           <p className="text-sm text-muted-foreground">
@@ -438,10 +438,10 @@ function CourseResultsSection({
           </p>
           <Button size="sm" variant="outline" onClick={onResetFilters}>
             Reset filters
-          </Button>
-        </CardContent>
-      </Card>
-    )
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
   }
 
   return (
@@ -450,17 +450,17 @@ function CourseResultsSection({
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">{title}</h3>
           <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
+              </div>
         <Badge variant="outline" className="rounded-md text-xs uppercase">
           {courses.length} {courses.length === 1 ? 'course' : 'courses'}
-        </Badge>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
+                    </Badge>
+                  </div>
+                <div className="grid gap-4 md:grid-cols-2">
         {courses.map((course) => (
           <CourseCard key={course.id} course={course} />
-        ))}
-      </div>
-    </section>
+            ))}
+          </div>
+        </section>
   )
 }
 
@@ -473,7 +473,7 @@ function CourseCard({ course }: { course: CourseItem }) {
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-lg font-semibold leading-tight">{title}</CardTitle>
+          <CardTitle className="text-lg font-semibold leading-tight">{title}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               {author} · {duration}
             </CardDescription>
@@ -508,13 +508,13 @@ function CourseCard({ course }: { course: CourseItem }) {
           </span>
           <span>{formatNumber(students)} learners</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {skills.slice(0, 4).map((skill) => (
-            <Badge key={skill} variant="outline" className="rounded-md text-xs capitalize">
-              {skill.replace(/-/g, ' ')}
-            </Badge>
-          ))}
-        </div>
+          <div className="flex flex-wrap gap-2">
+            {skills.slice(0, 4).map((skill) => (
+              <Badge key={skill} variant="outline" className="rounded-md text-xs capitalize">
+                {skill.replace(/-/g, ' ')}
+              </Badge>
+            ))}
+          </div>
         <Button variant="ghost" size="sm" className="px-2 text-xs">
           View syllabus
         </Button>
@@ -542,8 +542,8 @@ function RecommendedCard({ courses }: { courses: CourseItem[] }) {
                 <p className="text-xs text-muted-foreground">{course.author}</p>
               </div>
               <Badge variant="outline" className="rounded-md text-xs capitalize">
-                {course.level}
-              </Badge>
+          {course.level}
+        </Badge>
             </div>
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="inline-flex items-center gap-1">
@@ -588,7 +588,7 @@ function LearningPathsCard({ bundles }: { bundles: CourseBundle[] }) {
                   </Badge>
                   <Badge variant="outline" className="rounded-md uppercase">
                     {bundle.bestFor}
-                  </Badge>
+        </Badge>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -626,8 +626,8 @@ function CohortsCard({ cohorts }: { cohorts: typeof courseCohorts }) {
                   {cohort.seats} seats · {formatCohortStatus(cohort.status)}
                 </span>
               </div>
-            </div>
-          </div>
+      </div>
+    </div>
         ))}
       </CardContent>
     </Card>

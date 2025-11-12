@@ -237,7 +237,7 @@ export function AccountSheet() {
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => navigate(`/profile/${user.id}?view=achievements`)}
+                  onClick={() => navigate('/achievements')}
                 >
                   <Sparkles className="h-4 w-4" />
                   Achievements

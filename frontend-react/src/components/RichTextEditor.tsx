@@ -15,7 +15,7 @@ import Link from '@tiptap/extension-link'
 import CharacterCount from '@tiptap/extension-character-count'
 import Typography from '@tiptap/extension-typography'
 import Image from '@tiptap/extension-image'
-import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details'
+// import Details from '@tiptap/extension-details' // Временно отключено из-за проблем с detailsSummary/detailsContent
 import { Extension, type Range, type Editor } from '@tiptap/core'
 import Suggestion, { type SuggestionOptions, type SuggestionProps } from '@tiptap/suggestion'
 import { createLowlight, common } from 'lowlight'
@@ -71,7 +71,8 @@ import { Callout, type CalloutVariant } from '@/extensions/callout'
 import { Column, Columns, COLUMN_LAYOUTS, type ColumnPresetKey } from '@/extensions/columns'
 import { SmartInput } from '@/extensions/smart-input'
 import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
-import { DragHandle } from '@/extensions/drag-handle'
+import DragHandle from '@tiptap/extension-drag-handle'
+import { offset } from '@floating-ui/dom'
 
 const lowlight = createLowlight(common)
 
@@ -163,21 +164,37 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
               className={cn(
                 'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors',
                 isActive
-                  ? 'bg-accent text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                  ? 'bg-primary/15 text-foreground shadow-sm ring-1 ring-primary/20'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
               )}
             >
               <span
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-md border border-border/80',
-                  isActive ? 'border-primary/50 bg-primary/10 text-primary' : 'bg-background/80'
+                  'flex h-8 w-8 items-center justify-center rounded-md border transition-colors',
+                  isActive
+                    ? 'border-primary/60 bg-primary/20 text-primary shadow-sm'
+                    : 'border-border/80 bg-background/80'
                 )}
               >
                 {item.icon}
               </span>
               <span className="flex flex-1 flex-col">
-                <span className="text-sm font-medium text-foreground">{item.title}</span>
-                <span className="text-xs text-muted-foreground">{item.description}</span>
+                <span
+                  className={cn(
+                    'text-sm font-medium transition-colors',
+                    isActive ? 'text-foreground' : 'text-foreground'
+                  )}
+                >
+                  {item.title}
+                </span>
+                <span
+                  className={cn(
+                    'text-xs transition-colors',
+                    isActive ? 'text-muted-foreground/80' : 'text-muted-foreground'
+                  )}
+                >
+                  {item.description}
+                </span>
               </span>
               {item.hint && (
                 <span className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
@@ -473,6 +490,7 @@ export function RichTextEditor({
         heading: {
           levels: [1, 2, 3],
         },
+        link: false, // Отключаем Link из StarterKit, используем свой
       }),
       Placeholder.configure({
         placeholder,
@@ -494,21 +512,12 @@ export function RichTextEditor({
           class: 'editor-image',
         },
       }),
-      Details.configure({
-        HTMLAttributes: {
-          class: 'editor-toggle',
-        },
-      }),
-      DetailsSummary.configure({
-        HTMLAttributes: {
-          class: 'editor-toggle-summary',
-        },
-      }),
-      DetailsContent.configure({
-        HTMLAttributes: {
-          class: 'editor-toggle-content',
-        },
-      }),
+      // Details временно отключен
+      // Details.configure({
+      //   HTMLAttributes: {
+      //     class: 'editor-toggle',
+      //   },
+      // }),
       Callout,
       Column,
       Columns,
@@ -522,11 +531,36 @@ export function RichTextEditor({
           'column',
           'blockquote',
           'codeBlock',
-          'details',
-          'detailsSummary',
+          // 'details', // Временно отключено
         ],
       }),
-      DragHandle,
+      DragHandle.configure({
+        render: () => {
+          const element = document.createElement('div')
+          element.className = 'editor-drag-handle'
+          element.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="2" cy="2" r="1" fill="currentColor"/>
+              <circle cx="6" cy="2" r="1" fill="currentColor"/>
+              <circle cx="10" cy="2" r="1" fill="currentColor"/>
+              <circle cx="2" cy="6" r="1" fill="currentColor"/>
+              <circle cx="6" cy="6" r="1" fill="currentColor"/>
+              <circle cx="10" cy="6" r="1" fill="currentColor"/>
+              <circle cx="2" cy="10" r="1" fill="currentColor"/>
+              <circle cx="6" cy="10" r="1" fill="currentColor"/>
+              <circle cx="10" cy="10" r="1" fill="currentColor"/>
+            </svg>
+          `
+          return element
+        },
+        computePositionConfig: {
+          placement: 'left-start', // Как в Notion - слева, на уровне начала блока
+          strategy: 'fixed',
+          middleware: [
+            offset({ mainAxis: -40, crossAxis: 0 }), // Смещение влево на 40px, без вертикального смещения
+          ],
+        },
+      }),
       CodeBlockLowlight.configure({
         lowlight,
       }),
@@ -767,34 +801,22 @@ export function RichTextEditor({
           editor.chain().focus().deleteRange(range).insertCallout('info').run()
         },
       },
-      {
-        id: 'toggle',
-        title: 'Toggle block',
-        description: 'Сворачиваемая секция',
-        icon: <ListTodo className="h-4 w-4" />,
-        keywords: ['details', 'collapse'],
-        command: ({ editor, range }) => {
-          editor
-            .chain()
-            .focus()
-            .deleteRange(range)
-            .insertContent({
-              type: 'details',
-              attrs: { open: false },
-              content: [
-                {
-                  type: 'detailsSummary',
-                  content: [{ type: 'text', text: 'Заголовок' }],
-                },
-                {
-                  type: 'detailsContent',
-                  content: [{ type: 'paragraph' }],
-                },
-              ],
-            })
-            .run()
-        },
-      },
+      // Toggle временно отключен
+      // {
+      //   id: 'toggle',
+      //   title: 'Toggle block',
+      //   description: 'Сворачиваемая секция',
+      //   icon: <ListTodo className="h-4 w-4" />,
+      //   keywords: ['details', 'collapse'],
+      //   command: ({ editor, range }) => {
+      //     editor
+      //       .chain()
+      //       .focus()
+      //       .deleteRange(range)
+      //       .toggleDetails()
+      //       .run()
+      //   },
+      // },
       {
         id: 'columns-two',
         title: 'Two columns',
@@ -931,13 +953,39 @@ export function RichTextEditor({
             {editor && (
               <BubbleMenu
                 editor={editor}
-                className="flex items-center gap-1 rounded-full border border-border/70 bg-card/95 px-2 py-1 shadow-xl backdrop-blur"
+                shouldShow={({ editor, view, state }) => {
+                  const { selection } = state
+                  
+                  // Не показываем если нет выделения
+                  if (selection.empty) {
+                    return false
+                  }
+                  
+                  // Не показываем если это NodeSelection (выбран весь блок через drag-handle)
+                  const isNodeSelection = selection.constructor.name === 'NodeSelection' || 
+                                          ('node' in selection && selection.node !== undefined)
+                  if (isNodeSelection) {
+                    return false
+                  }
+                  
+                  // Показываем только если выделен текст (TextSelection)
+                  // Проверяем что есть выделенный текст между from и to
+                  const { from, to } = selection
+                  if (from === to) {
+                    return false
+                  }
+                  
+                  // Проверяем что выделен именно текст, а не пустые блоки
+                  const text = state.doc.textBetween(from, to, ' ')
+                  return text.trim().length > 0
+                }}
                 tippyOptions={{
                   duration: 120,
                   placement: 'top',
                   appendTo: () => document.body,
                 }}
               >
+                <div className="flex items-center gap-1 rounded-full border border-border/70 bg-card/95 px-2 py-1 shadow-xl backdrop-blur">
                 {[
                   {
                     label: 'Bold',
@@ -1005,11 +1053,12 @@ export function RichTextEditor({
                     <Icon className="h-4 w-4" />
                   </button>
                 ))}
+                </div>
               </BubbleMenu>
             )}
 
             <div className="px-4 pb-8 pt-6 lg:flex lg:items-start lg:gap-10">
-              <div className="group/editor relative flex-1 transition-[box-shadow] focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.12)]">
+              <div className="group/editor relative flex-1 transition-[box-shadow] focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.04)]">
                 <EditorContent
                   editor={editor}
                   id={id}
