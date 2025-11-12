@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Calendar, Clock, Heart, Bookmark, Share2 } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Calendar, Clock, Heart, Bookmark, Share2, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -31,6 +32,8 @@ const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
 // TODO: Add the same character limit validation on the backend (Strapi schema)
 const EXCERPT_MAX_LENGTH = 500
+const TITLE_MAX_LENGTH = 200
+const CONTENT_MAX_LENGTH = 20000
 
 function normalizeRichText(value: string | null | undefined): string {
   if (!value) return ''
@@ -87,7 +90,11 @@ export default function CreateArticlePage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [isTitleFocused, setIsTitleFocused] = useState(false)
   const [isExcerptFocused, setIsExcerptFocused] = useState(false)
+  const [isContentExpanded, setIsContentExpanded] = useState(false)
+  const [shouldShowExpandButton, setShouldShowExpandButton] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const excerptTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const contentPreviewRef = useRef<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
@@ -142,6 +149,34 @@ export default function CreateArticlePage() {
   useEffect(() => {
     adjustTextareaHeight()
   }, [excerpt, adjustTextareaHeight])
+
+  // Check if content is long enough to need collapsing
+  useEffect(() => {
+    if (currentStep === 4 && contentPreviewRef.current && content.trim()) {
+      // Use requestAnimationFrame to ensure content is rendered
+      requestAnimationFrame(() => {
+        if (contentPreviewRef.current) {
+          const height = contentPreviewRef.current.scrollHeight
+          setShouldShowExpandButton(height > 600)
+          if (height <= 600) {
+            setIsContentExpanded(true)
+          } else {
+            setIsContentExpanded(false)
+          }
+        }
+      })
+    } else if (currentStep !== 4) {
+      // Reset when leaving review step
+      setIsContentExpanded(false)
+    }
+  }, [content, currentStep])
+
+  // Reset agreement when leaving guidelines step
+  useEffect(() => {
+    if (currentStep !== 5) {
+      setAgreedToTerms(false)
+    }
+  }, [currentStep])
 
   const formatDate = (date: string | Date) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date
@@ -598,6 +633,12 @@ export default function CreateArticlePage() {
       icon: Eye,
       description: 'Final preview',
     },
+    {
+      id: 5,
+      label: 'Guidelines',
+      icon: AlertCircle,
+      description: 'Publishing rules',
+    },
   ]
 
   const canGoNext = () => {
@@ -612,6 +653,8 @@ export default function CreateArticlePage() {
         return true // Preview image is optional
       case 4:
         return true // Review is always accessible
+      case 5:
+        return agreedToTerms // Guidelines requires agreement
       default:
         return false
     }
@@ -649,25 +692,6 @@ export default function CreateArticlePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveDraft}
-              className="gap-2"
-              disabled={isSavingDraft || isPublishing || isLoadingDraft}
-            >
-              <Save className="h-4 w-4" />
-              {isSavingDraft ? 'Saving...' : 'Save Draft'}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handlePublish}
-              disabled={isPublishing || isSavingDraft || isLoadingDraft}
-              className="gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              {isPublishing ? 'Publishing...' : 'Publish'}
-            </Button>
             <ThemeToggle />
             <AccountSheet />
           </div>
@@ -677,7 +701,7 @@ export default function CreateArticlePage() {
       <div className="container py-8">
         {/* Stepper - Compact and Modern */}
         <div className="mb-12">
-          <div className="flex items-center">
+          <div className="flex items-start">
             {steps.map((step, index) => {
               const StepIcon = step.icon
               const isActive = currentStep === step.id
@@ -686,76 +710,80 @@ export default function CreateArticlePage() {
               const stepNumber = index + 1
 
               return (
-                <div key={step.id} className="flex flex-1 items-center">
-                  <div className="flex flex-1 items-center">
+                <div key={step.id} className="flex items-start flex-1">
+                  <div className="flex flex-col items-center flex-shrink-0">
                     {/* Step Circle */}
-                    <div className="flex flex-col items-center flex-1">
-                      <button
-                        type="button"
-                        onClick={() => (isCompleted || isActive) && setCurrentStep(step.id)}
-                        disabled={isUpcoming}
+                    <button
+                      type="button"
+                      onClick={() => (isCompleted || isActive) && setCurrentStep(step.id)}
+                      disabled={isUpcoming}
+                      className={cn(
+                        'relative flex items-center justify-center transition-all duration-200',
+                        isActive && 'cursor-default',
+                        isCompleted && 'cursor-pointer hover:scale-105',
+                        isUpcoming && 'cursor-not-allowed opacity-50'
+                      )}
+                    >
+                      <div
                         className={cn(
-                          'relative flex items-center justify-center transition-all duration-300',
-                          isActive && 'cursor-default',
-                          isCompleted && 'cursor-pointer',
-                          isUpcoming && 'cursor-not-allowed'
+                          'relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-200 z-10',
+                          isActive
+                            ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                            : isCompleted
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-muted-foreground/30 bg-background text-muted-foreground'
                         )}
                       >
-                        <div
-                          className={cn(
-                            'relative flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300',
-                            isActive
-                              ? 'border-primary bg-primary text-primary-foreground scale-110'
-                              : isCompleted
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-border bg-muted text-muted-foreground'
-                          )}
-                        >
-                          {isCompleted ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <span className="text-xs font-semibold">{stepNumber}</span>
-                          )}
-                        </div>
-                        {isActive && (
-                          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                        {isCompleted ? (
+                          <Check className="h-5 w-5" />
+                        ) : isActive ? (
+                          <StepIcon className="h-5 w-5" />
+                        ) : (
+                          <span className="text-sm font-semibold">{stepNumber}</span>
                         )}
-                      </button>
-                      {/* Step Label */}
-                      <div className="mt-3 text-center">
-                        <p
-                          className={cn(
-                            'text-xs font-medium transition-colors',
-                            isActive
-                              ? 'text-foreground'
-                              : isCompleted
-                                ? 'text-muted-foreground'
-                                : 'text-muted-foreground/60'
-                          )}
-                        >
-                          {step.label}
+                      </div>
+                      {isActive && (
+                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '3s' }} />
+                      )}
+                    </button>
+                    {/* Step Label */}
+                    <div className="mt-3 text-center min-w-[80px] max-w-[100px]">
+                      <p
+                        className={cn(
+                          'text-xs font-medium transition-colors leading-tight',
+                          isActive
+                            ? 'text-foreground font-semibold'
+                            : isCompleted
+                              ? 'text-muted-foreground'
+                              : 'text-muted-foreground/50'
+                        )}
+                      >
+                        {step.label}
+                      </p>
+                      {step.description && (
+                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                          {step.description}
                         </p>
-                      </div>
+                      )}
                     </div>
-                    {/* Connector Line */}
-                    {index < steps.length - 1 && (
-                      <div className="mx-2 flex-1 h-px relative">
-                        <div
-                          className={cn(
-                            'absolute inset-0 transition-all duration-500',
-                            isCompleted
-                              ? 'bg-primary'
-                              : isActive
-                                ? 'bg-primary/30'
-                                : 'bg-border'
-                          )}
-                          style={{
-                            width: isCompleted ? '100%' : isActive ? '50%' : '0%',
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
+                  {/* Connector Line */}
+                  {index < steps.length - 1 && (
+                    <div className="flex-1 h-0.5 mx-2 mt-5 relative">
+                      <div className="absolute inset-0 bg-border rounded-full" />
+                      <div
+                        className={cn(
+                          'absolute inset-0 rounded-full transition-all duration-500',
+                          isCompleted
+                            ? 'bg-primary'
+                            : 'bg-transparent'
+                        )}
+                        style={{
+                          width: isCompleted ? '100%' : '0%',
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -776,15 +804,24 @@ export default function CreateArticlePage() {
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
           <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Article Title</Label>
-            <Input
-                    placeholder={isTitleFocused || title.trim() ? '' : 'Enter your article title...'}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onFocus={() => setIsTitleFocused(true)}
-              onBlur={() => setIsTitleFocused(false)}
-                    className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground/50 bg-transparent shadow-none break-words"
-                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-            />
+            <div className="relative">
+              <Input
+                      placeholder={isTitleFocused || title.trim() ? '' : 'Enter your article title...'}
+                value={title}
+                onChange={(e) => {
+                  const newValue = e.target.value.slice(0, TITLE_MAX_LENGTH)
+                  setTitle(newValue)
+                }}
+                onFocus={() => setIsTitleFocused(true)}
+                onBlur={() => setIsTitleFocused(false)}
+                      className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground/50 bg-transparent shadow-none break-words pr-20"
+                      style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                      maxLength={TITLE_MAX_LENGTH}
+              />
+              <div className="absolute bottom-2 right-0 text-xs text-muted-foreground">
+                {title.length}/{TITLE_MAX_LENGTH}
+              </div>
+            </div>
                   <p className="text-xs text-muted-foreground">
                     Choose a clear, descriptive title that captures the essence of your article.
                   </p>
@@ -882,8 +919,8 @@ export default function CreateArticlePage() {
                   {tags.map((tag) => (
                     <Badge
                       key={tag}
-                      variant="secondary"
-                            className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                      variant="default"
+                            className="cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag} ×
@@ -1030,7 +1067,7 @@ export default function CreateArticlePage() {
                 {/* Article Header */}
                 <div className="space-y-6">
                   {/* Title */}
-                  <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
+                  <h1 className="text-4xl font-bold tracking-tight lg:text-5xl break-words">
                     {title.trim() || <span className="text-muted-foreground italic">Untitled</span>}
                   </h1>
 
@@ -1049,15 +1086,49 @@ export default function CreateArticlePage() {
 
                 <Separator className="my-8" />
 
-                {/* Article Content */}
-                <div className="prose prose-neutral dark:prose-invert max-w-none">
-                  {content.trim() ? (
-                    <div
-                      className="text-foreground leading-relaxed break-words"
-                      dangerouslySetInnerHTML={{ __html: content }}
-                    />
-                  ) : (
-                    <p className="text-muted-foreground italic">No content yet</p>
+                {/* Article Content - Collapsible */}
+                <div className="space-y-4">
+                  <div className="prose prose-neutral dark:prose-invert max-w-none">
+                    {content.trim() ? (
+                      <div className="relative">
+                        <div
+                          ref={contentPreviewRef}
+                          className={cn(
+                            'text-foreground leading-relaxed break-words transition-all duration-500 ease-in-out',
+                            !isContentExpanded && shouldShowExpandButton && 'max-h-[600px] overflow-hidden'
+                          )}
+                        >
+                          <div dangerouslySetInnerHTML={{ __html: content }} />
+                        </div>
+                        {!isContentExpanded && shouldShowExpandButton && (
+                          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground italic">No content yet</p>
+                    )}
+                  </div>
+                  {shouldShowExpandButton && (
+                    <div className="flex justify-center -mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsContentExpanded(!isContentExpanded)}
+                        className="gap-2 relative z-10"
+                      >
+                        {isContentExpanded ? (
+                          <>
+                            <ChevronRight className="h-4 w-4 rotate-90" />
+                            Show less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronRight className="h-4 w-4 -rotate-90" />
+                            Show more content
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -1067,127 +1138,360 @@ export default function CreateArticlePage() {
                 <Card className="border-border/60 bg-muted/5">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold">Article Metadata</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Complete information about your article
-                    </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Excerpt */}
-                    {excerpt.trim() ? (
+                    {/* Main Info Grid */}
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {/* Tags */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-foreground">Excerpt</Label>
-                        <p className="text-base text-muted-foreground leading-relaxed">{excerpt}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {excerpt.length} / {EXCERPT_MAX_LENGTH} characters
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-foreground">Excerpt</Label>
-                        <p className="text-sm text-muted-foreground italic">No excerpt provided</p>
-                      </div>
-                    )}
-
-                    <Separator />
-
-                    {/* Tags and Difficulty */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-foreground">Tags</Label>
+                        <Label className="text-sm font-medium text-muted-foreground">Tags</Label>
                         {tags.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((tag) => (
-                              <Badge key={tag} variant="secondary">
+                              <Badge key={tag} variant="default">
                                 {tag}
                               </Badge>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No tags added</p>
+                          <p className="text-sm text-muted-foreground">No tags</p>
                         )}
-                        <p className="text-xs text-muted-foreground">{tags.length} tag{tags.length !== 1 ? 's' : ''}</p>
                       </div>
 
+                      {/* Difficulty */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-foreground">Difficulty Level</Label>
-                        <Badge variant="outline" className="capitalize text-base px-3 py-1">
-                          {difficulty}
-                        </Badge>
+                        <Label className="text-sm font-medium text-muted-foreground">Difficulty</Label>
+                        <div>
+                          <Badge variant="outline" className="capitalize w-fit">
+                            {difficulty}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
 
-                    <Separator />
-
-                    {/* Preview Image Info */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Preview Image</Label>
-                      {croppedImageUrl ? (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-green-600 dark:text-green-400">
-                            <ImageIcon className="h-3 w-3 mr-1" />
-                            Uploaded
-                          </Badge>
-                          <p className="text-sm text-muted-foreground">Hero image is ready</p>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">No preview image</p>
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    {/* Detailed Statistics */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Content Statistics</Label>
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Title</p>
-                          <p className="text-lg font-semibold">{title.length}</p>
-                          <p className="text-xs text-muted-foreground">characters</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Content</p>
-                          <p className="text-lg font-semibold">
-                            {getPlainTextFromHtml(content).length}
+                    {/* Excerpt */}
+                    {excerpt.trim() && (
+                      <>
+                        <Separator />
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-muted-foreground">Excerpt</Label>
+                          <p className="text-sm text-foreground leading-relaxed break-words">{excerpt}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {excerpt.length} / {EXCERPT_MAX_LENGTH} characters
                           </p>
-                          <p className="text-xs text-muted-foreground">characters</p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Words</p>
-                          <p className="text-lg font-semibold">
+                      </>
+                    )}
+
+                    {/* Statistics */}
+                    <Separator />
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-muted-foreground">Statistics</Label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Words</p>
+                          <p className="text-base font-semibold">
                             {getPlainTextFromHtml(content).split(/\s+/).filter(Boolean).length}
                           </p>
-                          <p className="text-xs text-muted-foreground">total</p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Reading Time</p>
-                          <p className="text-lg font-semibold">
-                            {estimateReadTime(getPlainTextFromHtml(content))}
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Title</p>
+                          <p className="text-base font-semibold">
+                            {title.length} / {TITLE_MAX_LENGTH}
                           </p>
-                          <p className="text-xs text-muted-foreground">minutes</p>
                         </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Additional Info */}
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium text-foreground">Author</Label>
-                        <p className="text-sm text-muted-foreground">
-                          {user?.nickname || user?.email || 'Not specified'}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium text-foreground">Status</Label>
-                        <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
-                          Draft
-                        </Badge>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Content</p>
+                          <p className="text-base font-semibold">
+                            {getPlainTextFromHtml(content).length} / {CONTENT_MAX_LENGTH}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            )}
+
+            {/* Step 5: Guidelines */}
+            {currentStep === 5 && (
+              <div className="space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-bold">Publishing Guidelines</h2>
+                  <p className="text-muted-foreground">
+                    Review the rules and requirements before publishing your article
+                  </p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Content Requirements */}
+                  <Card className="border-green-200 dark:border-green-900/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-1.5">
+                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        Requirements
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Title</p>
+                            <p className="text-xs text-muted-foreground">
+                              10-{TITLE_MAX_LENGTH} characters, clear and descriptive
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Content</p>
+                            <p className="text-xs text-muted-foreground">
+                              Min 100 words, max {CONTENT_MAX_LENGTH.toLocaleString()} characters
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Excerpt</p>
+                            <p className="text-xs text-muted-foreground">
+                              Optional, up to {EXCERPT_MAX_LENGTH} characters
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Content Guidelines */}
+                  <Card className="border-blue-200 dark:border-blue-900/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-1.5">
+                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        Guidelines
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Originality</p>
+                            <p className="text-xs text-muted-foreground">
+                              Original content or properly attributed
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Quality</p>
+                            <p className="text-xs text-muted-foreground">
+                              Well-written, informative, valuable content
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Formatting</p>
+                            <p className="text-xs text-muted-foreground">
+                              Proper structure, headings, readability
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Prohibited Content */}
+                  <Card className="border-red-200 dark:border-red-900/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
+                        <div className="rounded-full bg-red-100 dark:bg-red-900/30 p-1.5">
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        Prohibited
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Harmful Content</p>
+                            <p className="text-xs text-muted-foreground">
+                              Hateful, discriminatory, or violent content
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Spam & Misinformation</p>
+                            <p className="text-xs text-muted-foreground">
+                              Clickbait, spam, misleading information
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Copyright</p>
+                            <p className="text-xs text-muted-foreground">
+                              No copyright or IP violations
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Inappropriate Media</p>
+                            <p className="text-xs text-muted-foreground">
+                              Explicit, violent, or inappropriate images
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Publishing Rules */}
+                  <Card className="border-amber-200 dark:border-amber-900/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-1.5">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        Publishing
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Review Process</p>
+                            <p className="text-xs text-muted-foreground">
+                              All articles are subject to review
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Edits</p>
+                            <p className="text-xs text-muted-foreground">
+                              Significant changes may require re-review
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Tags & Categories</p>
+                            <p className="text-xs text-muted-foreground">
+                              Use relevant tags and difficulty levels
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">Hero Image</p>
+                            <p className="text-xs text-muted-foreground">
+                              Optional but recommended for visibility
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Important Notes */}
+                <div className="rounded-lg border-2 border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-1">
+                      <p className="font-semibold text-amber-900 dark:text-amber-100">Important</p>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        By publishing, you confirm that you have read and agree to follow all guidelines. 
+                        Violations may result in content removal or account restrictions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Agreement Checkbox */}
+                <div className={cn(
+                  "flex items-start space-x-4 rounded-lg border-2 p-5 transition-all",
+                  agreedToTerms 
+                    ? "border-green-500 dark:border-green-400 bg-green-50/50 dark:bg-green-950/20" 
+                    : "border-red-500 dark:border-red-400 bg-red-50/50 dark:bg-red-950/20"
+                )}>
+                  <Checkbox
+                    id="agree-terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked) => {
+                      setAgreedToTerms(checked === true)
+                    }}
+                    className={cn(
+                      "mt-0.5 h-5 w-5",
+                      agreedToTerms 
+                        ? "border-green-500 dark:border-green-400 data-[state=checked]:bg-green-500 dark:data-[state=checked]:bg-green-400" 
+                        : "border-red-500 dark:border-red-400"
+                    )}
+                  />
+                  <div className="space-y-2 flex-1">
+                    <Label
+                      htmlFor="agree-terms"
+                      className={cn(
+                        "text-base font-semibold leading-tight cursor-pointer block flex items-center",
+                        agreedToTerms 
+                          ? "text-green-700 dark:text-green-300" 
+                          : "text-red-700 dark:text-red-300"
+                      )}
+                    >
+                      <div 
+                        className="transition-all duration-500 overflow-visible flex items-center flex-shrink-0 justify-end"
+                        style={{
+                          width: agreedToTerms ? '0' : '32px',
+                          opacity: agreedToTerms ? 0 : 1,
+                          marginRight: agreedToTerms ? '0' : '8px',
+                          paddingLeft: agreedToTerms ? '0' : '4px',
+                          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}
+                      >
+                        {!agreedToTerms && (
+                          <ChevronLeft className="h-4 w-4 animate-point-to-checkbox text-red-600 dark:text-red-400" />
+                        )}
+                      </div>
+                      <span 
+                        className="transition-all duration-500 inline-block"
+                        style={{
+                          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}
+                      >
+                        I confirm that I have read and agree to follow all publishing guidelines and rules
+                      </span>
+                    </Label>
+                    <p className={cn(
+                      "text-sm",
+                      agreedToTerms 
+                        ? "text-green-600 dark:text-green-400" 
+                        : "text-red-600 dark:text-red-400"
+                    )}>
+                      You must check this box to proceed with publishing your article.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1210,14 +1514,45 @@ export default function CreateArticlePage() {
               </span>
             </div>
 
-            <Button
-              onClick={handleNext}
-              disabled={!canGoNext() || currentStep === steps.length - 1}
-              className="gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSaveDraft}
+                className="gap-2"
+                disabled={isSavingDraft || isPublishing || isLoadingDraft}
+              >
+                <Save className="h-4 w-4" />
+                {isSavingDraft ? 'Saving...' : 'Save Draft'}
+              </Button>
+              {currentStep === steps.length - 1 ? (
+                <Button
+                  onClick={handlePublish}
+                  disabled={isPublishing || isSavingDraft || isLoadingDraft || !canGoNext()}
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  {isPublishing ? 'Publishing...' : 'Publish'}
+                </Button>
+              ) : currentStep === steps.length - 2 ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!canGoNext()}
+                  className="gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Complete
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={!canGoNext()}
+                  className="gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -454,7 +454,19 @@ export default function AchievementsPage() {
 
   const [activeCategory, setActiveCategory] = useState<AchievementCategory>('all')
   const [sortBy, setSortBy] = useState<'default' | 'rarity-asc' | 'rarity-desc' | 'name' | 'unlocked'>('default')
-  const [isHeroExpanded, setIsHeroExpanded] = useState(true)
+  const [isHeroExpanded, setIsHeroExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('achievements-hero-expanded')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('achievements-hero-expanded', String(isHeroExpanded))
+    }
+  }, [isHeroExpanded])
 
   // Transform store achievements with metadata
   const allAchievements = useMemo(() => {
@@ -502,7 +514,9 @@ export default function AchievementsPage() {
 
   const unlockedCount = allAchievements.filter((a) => a.unlocked).length
   const totalCount = allAchievements.length
-  const completionRate = Math.round((unlockedCount / totalCount) * 100)
+  const completionRate = totalCount > 0 && unlockedCount > 0 
+    ? Math.round((unlockedCount / totalCount) * 100) 
+    : 0
 
   const achievementsByCategory = useMemo(() => {
     const grouped: Record<string, typeof allAchievements> = {}

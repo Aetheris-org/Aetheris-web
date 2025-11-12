@@ -18,6 +18,7 @@ import DraftsPage from '@/pages/DraftsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import TrendingPage from '@/pages/TrendingPage'
 import AchievementsPage from '@/pages/AchievementsPage'
+import ForumLandingPage from '@/pages/ForumLandingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 
@@ -62,6 +63,7 @@ function App() {
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/forum" element={<ForumLandingPage />} />
         </Routes>
         <Toaster />
       </BrowserRouter>

@@ -62,8 +62,8 @@ export function ArticleCardSquare({
             {article.tags.slice(0, 2).map((tag) => (
               <Badge
                 key={tag}
-                variant="secondary"
-                className="rounded-md text-xs font-normal hover:bg-secondary/80 cursor-pointer transition-colors"
+                variant="default"
+                className="rounded-md text-xs font-normal hover:opacity-90 cursor-pointer transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation()
                   onTagClick?.(tag)

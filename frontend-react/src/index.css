@@ -94,12 +94,34 @@
     }
   }
 
+  @keyframes legendary-border-pulse {
+    0%, 100% {
+      border-color: hsl(var(--primary) / 0.5);
+    }
+    50% {
+      border-color: hsl(var(--primary) / 1);
+    }
+  }
+
   .animate-legendary-glow {
-    animation: legendary-glow 3s ease-in-out infinite;
+    animation: legendary-glow 2s ease-in-out infinite, legendary-border-pulse 2s ease-in-out infinite;
   }
 
   .animate-legendary-shimmer {
-    animation: legendary-shimmer 4s ease-in-out infinite;
+    animation: legendary-shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes point-to-checkbox {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-8px);
+    }
+  }
+
+  .animate-point-to-checkbox {
+    animation: point-to-checkbox 1.5s ease-in-out infinite;
   }
 }
 

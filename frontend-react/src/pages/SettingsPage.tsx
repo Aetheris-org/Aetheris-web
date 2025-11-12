@@ -1330,7 +1330,7 @@ function ProfileSettings() {
               <span className="text-xs text-muted-foreground">
                 {bioRemaining} characters left
               </span>
-            </div>
+        </div>
             <textarea
               id="settings-bio"
               value={bio}
@@ -2448,7 +2448,7 @@ function AppearanceSettings() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
                         Nova Rivera
                       </div>
@@ -2460,12 +2460,12 @@ function AppearanceSettings() {
                         <Flame className="h-3.5 w-3.5" />
                         Trending
             </span>
-                    </div>
+          </div>
                     <Button variant="outline" size="sm" className="w-full justify-between">
                       Continue reading
                       <CornerDownRight className="h-4 w-4" />
                     </Button>
-                    </div>
+        </div>
                   </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">

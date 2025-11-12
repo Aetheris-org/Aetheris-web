@@ -81,11 +81,10 @@ export default function HomePage() {
       icon: LayoutGrid,
     },
   ]
-  const currentViewOption = viewModeOptions.find((option) => option.id === viewMode) ?? viewModeOptions[0]
-  const CurrentViewIcon = currentViewOption.icon
   // State
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [isViewModeExpanded, setIsViewModeExpanded] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
@@ -222,6 +221,23 @@ export default function HomePage() {
     setPage(1)
   }
 
+  // Close view mode expander when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (isViewModeExpanded && !target.closest('[data-view-mode-expander]')) {
+        setIsViewModeExpanded(false)
+      }
+    }
+
+    if (isViewModeExpanded) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [isViewModeExpanded])
+
   const handleDismissSpotlight = () => {
     setIsSpotlightDismissed(true)
     if (typeof window !== 'undefined') {
@@ -235,30 +251,12 @@ export default function HomePage() {
 
       <main className="container space-y-10 pb-12 pt-6">
         <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-            {viewModeOptions.map((option) => {
-                      const Icon = option.icon
-              const isActive = option.id === viewMode
-                      return (
-                <Button
-                          key={option.id}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className={cn('gap-2 px-3 text-xs', isActive && 'shadow-sm')}
-                  onClick={() => setViewMode(option.id)}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden md:inline">{option.label}</span>
-                </Button>
-              )
-            })}
-          </div>
-
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/notifications')}
+              disabled={!user}
               aria-label={
                 unreadNotifications > 0
                   ? `Open notifications, ${unreadNotifications} unread`
@@ -267,18 +265,21 @@ export default function HomePage() {
               className="relative"
             >
               <Bell className="h-4 w-4" />
-              {unreadNotifications > 0 && (
+              {user && unreadNotifications > 0 && (
                 <span className="absolute right-1 top-1 inline-flex h-2 w-2">
                   <span className="h-full w-full rounded-full bg-primary" />
                 </span>
               )}
             </Button>
-            {user && (
-              <Button size="sm" onClick={() => navigate('/create')} className="gap-2">
-                <PenSquare className="h-4 w-4" />
-                Start discussion
-              </Button>
-            )}
+            <Button
+              size="sm"
+              onClick={() => navigate('/create')}
+              disabled={!user}
+              className="gap-2"
+            >
+              <PenSquare className="h-4 w-4" />
+              Create article
+            </Button>
           </div>
         </section>
 
@@ -348,7 +349,7 @@ export default function HomePage() {
         <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
           <div className="space-y-6">
             <div className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -360,9 +361,63 @@ export default function HomePage() {
                     className="pl-9"
                   />
                 </div>
-                <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <div className="relative" data-view-mode-expander>
+                    <div
+                      className={cn(
+                        'flex flex-col rounded-lg border border-border bg-background overflow-visible transition-all duration-200',
+                        isViewModeExpanded && 'shadow-lg'
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsViewModeExpanded(!isViewModeExpanded)}
+                        aria-label="Select view mode"
+                        className={cn(
+                          'flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted',
+                          isViewModeExpanded ? 'rounded-t-lg rounded-b-none' : 'rounded-lg'
+                        )}
+                      >
+                        {(() => {
+                          const currentOption = viewModeOptions.find((option) => option.id === viewMode)
+                          const Icon = currentOption?.icon
+                          return Icon ? <Icon className="h-4 w-4" /> : null
+                        })()}
+                      </button>
+                      <div
+                        className={cn(
+                          'absolute top-full left-0 right-0 z-50 flex flex-col rounded-b-lg border-x border-b border-border bg-background overflow-hidden transition-all duration-200',
+                          isViewModeExpanded
+                            ? 'opacity-100 translate-y-0'
+                            : 'opacity-0 -translate-y-2 pointer-events-none'
+                        )}
+                      >
+                        {viewModeOptions
+                          .filter((option) => option.id !== viewMode)
+                          .map((option) => {
+                            const Icon = option.icon
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg"
+                                onClick={() => {
+                                  setViewMode(option.id)
+                                  setIsViewModeExpanded(false)
+                                }}
+                                aria-label={option.label}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </button>
+                            )
+                          })}
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {selectedTags.length > 0 && (
@@ -371,8 +426,8 @@ export default function HomePage() {
                   {selectedTags.map((tag) => (
                     <Badge
                       key={tag}
-                      variant="secondary"
-                      className="cursor-pointer"
+                      variant="default"
+                      className="cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => handleTagClick(tag)}
                     >
                       {tag} ×
@@ -579,10 +634,10 @@ export default function HomePage() {
                     return (
                     <Badge
                       key={tag}
-                        variant={isActive ? 'default' : 'secondary'}
+                        variant="default"
                         className={cn(
-                          'cursor-pointer rounded-md font-normal transition-colors',
-                          isActive ? 'shadow-sm' : 'hover:bg-secondary/80'
+                          'cursor-pointer rounded-md font-normal transition-opacity',
+                          isActive ? 'shadow-sm' : 'hover:opacity-90'
                         )}
                       onClick={() => handleTagClick(tag)}
                         aria-pressed={isActive}
