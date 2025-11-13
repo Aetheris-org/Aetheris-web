@@ -1,7 +1,7 @@
 <template>
   <div class="legal-community-rules-container">
     <!-- Body -->
-    <h2 class="page-title">{{ $t('legal.sidebar.forumRules') }}</h2>
+    <h2 class="page-title">{{ $t('legal.sidebar.communityRules') }}</h2>
     <div class="content-wrapper">
       <!-- Sidebar -->
       <div class="sidebar">

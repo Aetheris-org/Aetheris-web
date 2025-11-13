@@ -45,6 +45,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -178,6 +179,8 @@ export default function ArticlePage() {
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
   const replyInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const articleContentRef = useRef<HTMLDivElement | null>(null)
+  const [readingProgress, setReadingProgress] = useState(0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -196,6 +199,85 @@ export default function ArticlePage() {
     queryFn: () => getArticle(id as string, { userId: user?.id }),
     enabled: !!id,
   })
+
+  // Track reading progress
+  useEffect(() => {
+    if (!article) {
+      setReadingProgress(0)
+      return
+    }
+
+    const handleScroll = () => {
+      if (!articleContentRef.current) {
+        setReadingProgress(0)
+        return
+      }
+
+      const element = articleContentRef.current
+      const rect = element.getBoundingClientRect()
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      
+      // Get the absolute position of the element from the top of the document
+      const elementTop = scrollTop + rect.top
+      // Get element height - use scrollHeight for content that may overflow
+      const elementHeight = element.scrollHeight || element.offsetHeight || rect.height
+      const elementBottom = elementTop + elementHeight
+      
+      // Calculate progress: how much of the article has been scrolled through
+      let progress = 0
+      
+      // Calculate the viewport boundaries
+      const viewportTop = scrollTop
+      const viewportBottom = scrollTop + windowHeight
+      
+      // If article hasn't been reached yet
+      if (viewportBottom < elementTop) {
+        progress = 0
+      }
+      // If article has been completely scrolled past
+      else if (viewportTop >= elementBottom) {
+        progress = 100
+      }
+      // Article is being read - calculate progress
+      else {
+        // How much of the article has been scrolled through
+        // Progress = (how far we've scrolled into the article) / (total scrollable distance)
+        const scrolledIntoArticle = Math.max(0, viewportTop - elementTop)
+        const totalScrollable = Math.max(1, elementHeight - windowHeight) // Use 1 to avoid division by zero
+        progress = Math.min(100, Math.max(0, (scrolledIntoArticle / totalScrollable) * 100))
+      }
+      
+      setReadingProgress(Math.round(progress))
+    }
+
+    // Use requestAnimationFrame for smoother updates
+    let ticking = false
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', handleScroll, { passive: true })
+    
+    // Initial calculation after content is rendered
+    // Use longer delay to ensure content is fully loaded
+    const timeoutId = setTimeout(() => {
+      handleScroll()
+    }, 800)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', handleScroll)
+      clearTimeout(timeoutId)
+    }
+  }, [article])
 
   const {
     data: commentsResponse,
@@ -1084,8 +1166,8 @@ export default function ArticlePage() {
                       Отправить
                     </Button>
                   </div>
-                  </div>
-                )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -1248,6 +1330,12 @@ export default function ArticlePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {/* Reading Progress Bar */}
+        {readingProgress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1">
+            <Progress value={readingProgress} className="h-1 rounded-none" />
+          </div>
+        )}
         <div className="container flex h-16 items-center justify-between">
           <Button
             variant="ghost"
@@ -1265,7 +1353,7 @@ export default function ArticlePage() {
         </div>
       </header>
 
-      <div className="container py-8">
+      <div className="container pt-8 pb-6">
         <article className="w-full">
           {article.previewImage && (
             <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
@@ -1304,7 +1392,7 @@ export default function ArticlePage() {
             {article.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {article.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary font-medium text-xs">
+                  <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
                     {tag}
                   </Badge>
                 ))}
@@ -1353,7 +1441,7 @@ export default function ArticlePage() {
           <Separator className="my-8" />
 
           {/* Article Content */}
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <div className="prose prose-neutral dark:prose-invert max-w-none" ref={articleContentRef}>
             <div
               className="text-foreground leading-relaxed break-words"
               dangerouslySetInnerHTML={{ __html: article.content }}
@@ -1418,17 +1506,17 @@ export default function ArticlePage() {
                 <div className="space-y-3">
                 <textarea
                   placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
-                    className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
-                    disabled={!user}
-                    ref={commentInputRef}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault()
-                        handleSubmitComment()
-                      }
-                    }}
+                  disabled={!user}
+                  ref={commentInputRef}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault()
+                      handleSubmitComment()
+                    }
+                  }}
                 />
                 <div className="flex justify-end gap-2">
                   {!user && (
@@ -1438,9 +1526,9 @@ export default function ArticlePage() {
                   )}
                   <Button
                     onClick={handleSubmitComment}
-                      disabled={!user || !commentText.trim()}
-                    >
-                      Отправить комментарий
+                    disabled={!user || !commentText.trim()}
+                  >
+                    Отправить комментарий
                   </Button>
                 </div>
                 </div>
@@ -1471,24 +1559,24 @@ export default function ArticlePage() {
                       </div>
                     ))}
                   </div>
-                ) : combinedComments.length === 0 ? (
+              ) : combinedComments.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">
                   Пока нет комментариев. Будьте первым!
                   </div>
             ) : (
               <div className="space-y-4">
-                    {renderCommentThread(
-                      threadRootId && nodeLookup.has(threadRootId)
-                        ? [nodeLookup.get(threadRootId)!]
-                        : commentTree,
-                      0,
-                      {
+                  {renderCommentThread(
+                    threadRootId && nodeLookup.has(threadRootId)
+                      ? [nodeLookup.get(threadRootId)!]
+                      : commentTree,
+                    0,
+                    {
                         showConnectors: !(threadRootId && nodeLookup.has(threadRootId)),
-                        threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
-                      }
-                    )}
-                      </div>
-                )}
+                      threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
+                    }
+                  )}
+              </div>
+            )}
             </div>
           </div>
         </article>
@@ -1538,7 +1626,7 @@ export default function ArticlePage() {
                       Ответ на @{infoParent.author.username}
                     </p>
                   )}
-              </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1575,7 +1663,7 @@ export default function ArticlePage() {
                   <p className="text-xs text-muted-foreground">
                     +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
                   </p>
-          </div>
+                </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
                   <p className="text-xs text-muted-foreground">Статус синхронизации</p>
                   <p className="text-sm font-medium text-foreground">
@@ -1583,8 +1671,8 @@ export default function ArticlePage() {
                       ? 'Ожидает отправки в Strapi'
                       : 'Получен из Strapi'}
                   </p>
-      </div>
-    </div>
+                </div>
+              </div>
 
               <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
                 TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и
@@ -1652,7 +1740,7 @@ export default function ArticlePage() {
                     </>
                   )}
                 </Button>
-              </div>
+    </div>
             </div>
 
             {/* Social sharing buttons */}
@@ -1688,30 +1776,30 @@ export default function ArticlePage() {
                     </div>
                   )}
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                   {currentPageItems.map((target) => {
-                    const Icon = target.icon
-                    return (
-                      <Button
-                        key={target.label}
+                  const Icon = target.icon
+                  return (
+                    <Button
+                      key={target.label}
                         variant="outline"
                         className="h-auto justify-start gap-3 p-3.5 hover:bg-accent/50 transition-colors overflow-hidden"
-                        onClick={() => handleExternalShare(target.href)}
-                      >
+                      onClick={() => handleExternalShare(target.href)}
+                    >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                          <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" />
                         </div>
                         <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left overflow-hidden">
                           <span className="text-sm font-medium leading-tight truncate w-full">
                             {target.label}
-                          </span>
+                      </span>
                           <span className="text-xs text-muted-foreground leading-tight truncate w-full">
                             {target.description}
                           </span>
                         </div>
-                      </Button>
-                    )
-                  })}
+                    </Button>
+                  )
+                })}
                 </div>
               </div>
             )}
@@ -1726,7 +1814,7 @@ export default function ArticlePage() {
                   onClick={handleNativeShare}
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                    <Share2 className="h-4 w-4" />
+                <Share2 className="h-4 w-4" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left overflow-hidden">
                     <span className="text-sm font-medium leading-tight truncate w-full">Share via device</span>
@@ -1734,7 +1822,7 @@ export default function ArticlePage() {
                       Use your device's sharing options
                     </span>
                   </div>
-                </Button>
+              </Button>
               </div>
             )}
           </div>

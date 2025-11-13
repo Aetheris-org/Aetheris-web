@@ -2,9 +2,11 @@ import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
+import { SiteFooter } from '@/components/SiteFooter'
 import HomePage from '@/pages/HomePage'
 import NetworkingPage from '@/pages/NetworkingPage'
 import CoursesPage from '@/pages/CoursesPage'
+import CourseDetailPage from '@/pages/CourseDetailPage'
 import DevelopersPage from '@/pages/DevelopersPage'
 import ArticlePage from '@/pages/ArticlePage'
 import ProfilePage from '@/pages/ProfilePage'
@@ -19,6 +21,11 @@ import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import TrendingPage from '@/pages/TrendingPage'
 import AchievementsPage from '@/pages/AchievementsPage'
 import ForumLandingPage from '@/pages/ForumLandingPage'
+import FriendsPage from '@/pages/FriendsPage'
+import ExplorePage from '@/pages/ExplorePage'
+import EventDetailPage from '@/pages/EventDetailPage'
+import ExploreAchievementsPage from '@/pages/ExploreAchievementsPage'
+import PricingPage from '@/pages/PricingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 
@@ -47,9 +54,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<ForumLandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/forum" element={<HomePage />} />
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/explore/events/:id" element={<EventDetailPage />} />
+          <Route path="/explore/achievements" element={<ExploreAchievementsPage />} />
           <Route path="/networking" element={<NetworkingPage />} />
           <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:slug" element={<CourseDetailPage />} />
           <Route path="/developers" element={<DevelopersPage />} />
           <Route path="/trending" element={<TrendingPage />} />
           <Route path="/article/:id" element={<ArticlePage />} />
@@ -63,8 +76,9 @@ function App() {
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
-          <Route path="/forum" element={<ForumLandingPage />} />
+          <Route path="/friends" element={<FriendsPage />} />
         </Routes>
+        <SiteFooter />
         <Toaster />
       </BrowserRouter>
     </QueryClientProvider>

@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Sparkles,
@@ -21,7 +21,6 @@ import {
   Store,
   Rocket,
   Brain,
-  Heart,
   Star,
   Target,
   Gamepad2,
@@ -30,679 +29,764 @@ import {
   DollarSign,
   Lock,
   Palette,
-  Boxes,
-  ChevronRight,
   CheckCircle2,
   ArrowRight,
+  Lightbulb,
+  Network,
+  Flame,
+  Crown,
+  Gift,
+  Megaphone,
+  Video,
+  Heart,
+  ChevronDown,
 } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
-interface Feature {
-  icon: typeof Sparkles
-  title: string
-  description: string
-  color: string
-}
-
-interface Stat {
-  value: string
-  label: string
-  icon: typeof Users
-}
-
-const mainFeatures: Feature[] = [
-  {
-    icon: Gamepad2,
-    title: 'Advanced Gamification',
-    description: 'Levels, achievements, battle passes, clans, and ranks. Your journey matters.',
-    color: 'text-purple-500',
-  },
-  {
-    icon: Users,
-    title: 'Networking Hub',
-    description: 'Connect with scientists, developers, gamers, and professionals worldwide.',
-    color: 'text-blue-500',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Learning Platform',
-    description: 'Comprehensive courses, interactive articles, and educational content.',
-    color: 'text-green-500',
-  },
-  {
-    icon: Store,
-    title: 'Marketplace',
-    description: 'Trade cards, decorations, widgets, and exclusive NFT items.',
-    color: 'text-amber-500',
-  },
-  {
-    icon: Code,
-    title: 'Developer Tools',
-    description: 'Q&A platform, code sharing, and collaborative development space.',
-    color: 'text-cyan-500',
-  },
-  {
-    icon: DollarSign,
-    title: 'Monetization',
-    description: 'Earn from content creation, ads revenue, donations, and partnerships.',
-    color: 'text-emerald-500',
-  },
-  {
-    icon: Brain,
-    title: 'AI Features',
-    description: 'AI assistant, smart recommendations, and advanced content tools.',
-    color: 'text-indigo-500',
-  },
-  {
-    icon: Shield,
-    title: 'Privacy First',
-    description: 'OAuth2 only, email hashing, no personal data collection. Your privacy matters.',
-    color: 'text-red-500',
-  },
-]
-
-const gamificationFeatures: Feature[] = [
-  {
-    icon: Trophy,
-    title: 'Achievements System',
-    description: 'Unlock hundreds of achievements across different categories',
-    color: 'text-yellow-500',
-  },
-  {
-    icon: Target,
-    title: 'Daily Quests',
-    description: 'Complete challenges and earn rewards every day',
-    color: 'text-orange-500',
-  },
-  {
-    icon: Star,
-    title: 'Clan Wars',
-    description: 'Join clans, compete with others, and climb the leaderboards',
-    color: 'text-purple-500',
-  },
-  {
-    icon: Zap,
-    title: 'Battle Pass',
-    description: 'Seasonal content with exclusive rewards and cosmetics',
-    color: 'text-pink-500',
-  },
-]
-
-const platformFeatures: Feature[] = [
-  {
-    icon: BookOpen,
-    title: 'Rich Text Editor',
-    description: 'Advanced editor with countless formatting options',
-    color: 'text-blue-500',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Community Chat',
-    description: 'Global and country-specific chats, groups, and channels',
-    color: 'text-green-500',
-  },
-  {
-    icon: Briefcase,
-    title: 'Job Board',
-    description: 'Find collaborators, clients, and opportunities',
-    color: 'text-indigo-500',
-  },
-  {
-    icon: Palette,
-    title: 'Customization',
-    description: 'Widgets, decorations, themes, and profile customization',
-    color: 'text-pink-500',
-  },
-]
-
-const stats: Stat[] = [
-  { value: '50+', label: 'Features', icon: Boxes },
-  { value: '∞', label: 'Possibilities', icon: Sparkles },
-  { value: '100%', label: 'Privacy', icon: Shield },
-  { value: '24/7', label: 'Community', icon: Users },
-]
-
 export default function ForumLandingPage() {
   const navigate = useNavigate()
   const heroRef = useRef<HTMLDivElement>(null)
-  const featuresRef = useRef<HTMLDivElement>(null)
-  const gamificationRef = useRef<HTMLDivElement>(null)
-  const platformRef = useRef<HTMLDivElement>(null)
-  const statsRef = useRef<HTMLDivElement>(null)
-  const ctaRef = useRef<HTMLDivElement>(null)
+  const horizontalRef = useRef<HTMLDivElement>(null)
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null)
+
+  // Прокрутка в начало страницы при загрузке
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero animations
-      gsap.from('.hero-badge', {
+      // Hero fade in
+      gsap.from('.hero-content', {
         opacity: 0,
-        y: -30,
-        duration: 0.8,
-        ease: 'back.out(1.7)',
-      })
-
-      gsap.from('.hero-title', {
-        opacity: 0,
-        y: 50,
+        y: 30,
         duration: 1,
-        delay: 0.2,
-        ease: 'power3.out',
-      })
-
-      gsap.from('.hero-description', {
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        delay: 0.4,
         ease: 'power2.out',
       })
 
-      gsap.from('.hero-buttons', {
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        delay: 0.6,
-        ease: 'power2.out',
-      })
-
-      // Floating animation for hero elements
-      gsap.to('.hero-float', {
-        y: -20,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-
-      // Features grid animation
-      const featureCards = gsap.utils.toArray('.feature-card')
-      featureCards.forEach((card, index) => {
-        gsap.from(card as HTMLElement, {
-          scrollTrigger: {
-            trigger: card as HTMLElement,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
+      // Scroll indicator - скрывается при скролле
+      if (scrollIndicatorRef.current) {
+        gsap.to(scrollIndicatorRef.current, {
           opacity: 0,
-          y: 40,
-          duration: 0.6,
-          delay: index * 0.08,
-          ease: 'power2.out',
-        })
-      })
-
-      // Gamification section
-      gsap.from('.gamification-header', {
-        scrollTrigger: {
-          trigger: gamificationRef.current,
-          start: 'top 75%',
-          toggleActions: 'play none none none',
-          once: true,
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        ease: 'power2.out',
-      })
-
-      const gamificationCards = gsap.utils.toArray('.gamification-card')
-      gamificationCards.forEach((card, index) => {
-        gsap.from(card as HTMLElement, {
-          scrollTrigger: {
-            trigger: card as HTMLElement,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
-          opacity: 0,
-          y: 40,
-          duration: 0.6,
-          delay: index * 0.1,
-          ease: 'power2.out',
-        })
-      })
-
-      // Platform features
-      const platformCards = gsap.utils.toArray('.platform-card')
-      platformCards.forEach((card, index) => {
-        gsap.from(card as HTMLElement, {
-          scrollTrigger: {
-            trigger: card as HTMLElement,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
-          opacity: 0,
-          y: 40,
-          scale: 0.9,
-          duration: 0.6,
-          delay: index * 0.1,
-          ease: 'power2.out',
-        })
-      })
-
-      // Stats animation
-      const statsItems = gsap.utils.toArray('.stat-item')
-      statsItems.forEach((item, index) => {
-        gsap.from(item as HTMLElement, {
-          scrollTrigger: {
-            trigger: statsRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
-          opacity: 0,
-          y: 20,
+          y: -20,
           duration: 0.5,
-          delay: index * 0.1,
           ease: 'power2.out',
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: true,
+          },
         })
+      }
+
+      // Animated geometric background parallax - движение без размытия
+      const bgElements = [
+        // Геометрические формы - медленное движение
+        { selector: '.bg-shape-1', x: -200, y: 150, rotation: 25, scale: 1.3, scrub: 3 },
+        { selector: '.bg-shape-2', x: 250, y: -200, rotation: -30, scale: 1.2, scrub: 3 },
+        { selector: '.bg-shape-3', x: -150, y: 300, scale: 1.5, scrub: 3 },
+        
+        // Вертикальные линии - движение в стороны
+        { selector: '.bg-line-1', x: 100, scrub: 2.5 },
+        { selector: '.bg-line-2', x: -80, scrub: 2.5 },
+        { selector: '.bg-line-3', x: 120, scrub: 2.5 },
+        
+        // Горизонтальные линии - движение вверх-вниз
+        { selector: '.bg-line-h1', y: -150, scrub: 2.5 },
+        { selector: '.bg-line-h2', y: 200, scrub: 2.5 },
+        { selector: '.bg-line-h3', y: -180, scrub: 2.5 },
+        
+        // Сетка - легкое движение
+        { selector: '.bg-grid', x: 50, y: 50, scrub: 4 },
+      ]
+
+      bgElements.forEach((element) => {
+        const el = document.querySelector(element.selector) as HTMLElement
+        if (el) {
+          const animProps: any = {
+            ease: 'none',
+            scrollTrigger: {
+              trigger: document.body,
+              start: 'top top',
+              end: 'max',
+              scrub: element.scrub || 2,
+            },
+          }
+          
+          if (element.x !== undefined) animProps.x = element.x
+          if (element.y !== undefined) animProps.y = element.y
+          if (element.rotation !== undefined) animProps.rotation = element.rotation
+          if (element.scale !== undefined) animProps.scale = element.scale
+          
+          gsap.to(el, animProps)
+        }
       })
 
-      // CTA section
-      gsap.from('.cta-content', {
-        scrollTrigger: {
-          trigger: ctaRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none',
-          once: true,
-        },
-        opacity: 0,
-        y: 40,
-        duration: 0.8,
-        ease: 'power2.out',
-      })
+      // Легкая анимация нижней линии при скролле
+      const bottomLine = document.querySelector('.bg-bottom-line') as HTMLElement
+      if (bottomLine) {
+        gsap.to(bottomLine, {
+          opacity: 0.5,
+          scaleX: 1.1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: document.body,
+            start: 'top top',
+            end: 'max',
+            scrub: 2,
+          },
+        })
+      }
 
-      // Parallax effect for backgrounds
-      gsap.to('.parallax-bg', {
-        scrollTrigger: {
-          trigger: 'body',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1,
-        },
-        y: (_i, target) => ScrollTrigger.maxScroll(window) * target.dataset.speed,
-        ease: 'none',
+      // HORIZONTAL SCROLL - вертикальный скролл = горизонтальное движение
+      const horizontalSection = horizontalRef.current
+      if (horizontalSection) {
+        const sections = gsap.utils.toArray<HTMLElement>('.h-section')
+        const totalWidth = sections.reduce((acc, section) => acc + section.offsetWidth, 0)
+        
+        gsap.to(sections, {
+          xPercent: -100 * (sections.length - 1),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: horizontalSection,
+            pin: true,
+            scrub: 1,
+            end: () => `+=${totalWidth}`,
+          },
+        })
+      }
+
+      // Feature cards fade in - надежная анимация
+      const featureCards = gsap.utils.toArray<HTMLElement>('.feature-card')
+      
+      // Анимация появления при скролле с явным указанием начального состояния
+      featureCards.forEach((card, index) => {
+        // Устанавливаем начальное состояние для каждой карточки
+        gsap.set(card, {
+          opacity: 0,
+          scale: 0.8,
+          y: 20,
+        })
+        
+        // Анимация с fromTo для надежности
+        gsap.fromTo(card, 
+          {
+            opacity: 0,
+            scale: 0.8,
+            y: 20,
+          },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'back.out(1.7)',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 90%',
+              end: 'bottom 10%',
+              once: true,
+              toggleActions: 'play none none none',
+              invalidateOnRefresh: true,
+            },
+            delay: (index % 6) * 0.05,
+          }
+        )
       })
+      
+      // Fallback: если карточки уже в viewport при загрузке, показываем их сразу
+      const checkInitialVisibility = () => {
+        featureCards.forEach((card, index) => {
+          const rect = card.getBoundingClientRect()
+          const isInViewport = rect.top < window.innerHeight && rect.bottom > 0
+          if (isInViewport) {
+            // Если карточка уже видна, показываем её сразу
+            gsap.to(card, {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              duration: 0.4,
+              ease: 'power2.out',
+              delay: (index % 6) * 0.05,
+            })
+          }
+        })
+      }
+      
+      // Проверяем после небольшой задержки, чтобы ScrollTrigger успел инициализироваться
+      setTimeout(() => {
+        checkInitialVisibility()
+        // Обновляем ScrollTrigger на случай, если страница уже прокручена
+        ScrollTrigger.refresh()
+      }, 200)
     })
 
     return () => {
       ctx.revert()
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
+      ScrollTrigger.getAll().forEach((t) => t.kill())
     }
   }, [])
 
+  const features = [
+    {
+      icon: Gamepad2,
+      title: 'Уровни как в игре',
+      description: 'Кланы, PvP-рейтинг, сезонные пассы. Будто играешь, но качаешь реальные скиллы.',
+      color: 'from-purple-500 to-pink-500',
+    },
+    {
+      icon: Brain,
+      title: 'AI всё понимает',
+      description: 'Умный помощник который реально помогает, а не просто болтает. И подсказывает контент.',
+      color: 'from-blue-500 to-cyan-500',
+    },
+    {
+      icon: Store,
+      title: 'Свой магазин',
+      description: 'Торгуй карточками, украшениями, NFT. Крути бизнес на внутренней валюте или крипте.',
+      color: 'from-amber-500 to-orange-500',
+    },
+    {
+      icon: Network,
+      title: 'Тусовка по интересам',
+      description: 'Чаты по странам и глобальные. Группы, каналы - как в Телеге, но лучше.',
+      color: 'from-green-500 to-emerald-500',
+    },
+    {
+      icon: GraduationCap,
+      title: 'Учись чему хочешь',
+      description: 'Курсы от профи, интерактивные статьи с выбором, туториалы. Всё в одном месте.',
+      color: 'from-indigo-500 to-purple-500',
+    },
+    {
+      icon: DollarSign,
+      title: 'Бабки капают',
+      description: 'Делаешь контент? Донаты, реклама, премиум, партнёрки - всё работает сразу.',
+      color: 'from-emerald-500 to-teal-500',
+    },
+    {
+      icon: Code,
+      title: 'Рай для кодеров',
+      description: 'Q&A лучше чем SO, шаринг кода, совместная разработка. Всё что нужно девелоперу.',
+      color: 'from-cyan-500 to-blue-500',
+    },
+    {
+      icon: MessageSquare,
+      title: 'Твой блог тут',
+      description: 'Пости, веди блог, создавай каналы. Как VK встретился с Reddit и добавили геймификацию.',
+      color: 'from-pink-500 to-rose-500',
+    },
+    {
+      icon: Briefcase,
+      title: 'Найди работу/проект',
+      description: 'Доска объявлений где можно всё: работу, фриланс, соискателей, партнёров.',
+      color: 'from-violet-500 to-purple-500',
+    },
+    {
+      icon: BookOpen,
+      title: 'Редактор-монстр',
+      description: 'Серьёзно, там куча всего. Markdown, медиа, эмбеды - делай красоту без костылей.',
+      color: 'from-orange-500 to-red-500',
+    },
+    {
+      icon: Star,
+      title: 'Свои токены',
+      description: 'Внутренняя валюта прямо как звёзды в ТГ. Копишь, тратишь, конвертируешь.',
+      color: 'from-yellow-500 to-amber-500',
+    },
+    {
+      icon: Shield,
+      title: 'Анонимность на максималках',
+      description: 'Мы даже email не знаем. Только OAuth2 и хеш. Утечка? Да там взять нечего.',
+      color: 'from-red-500 to-pink-500',
+    },
+  ]
+
+  const stats = [
+    { value: '∞', label: 'Возможностей', icon: Sparkles },
+    { value: '100%', label: 'Приватность', icon: Shield },
+    { value: '24/7', label: 'Комьюнити', icon: Users },
+    { value: '0₽', label: 'Навсегда', icon: Gift },
+  ]
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <SiteHeader />
+    <div className="min-h-screen relative overflow-x-hidden">
+      {/* Animated geometric background - No blur */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        {/* Базовый градиент */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
+        
+        {/* Анимированная сетка */}
+        <div className="bg-grid absolute inset-0 opacity-30" style={{
+          backgroundImage: `
+            linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px',
+        }} />
+        
+        {/* Геометрические линии - вертикальные */}
+        <div className="bg-line-1 absolute top-0 left-[20%] w-px h-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+        <div className="bg-line-2 absolute top-0 left-[50%] w-px h-full bg-gradient-to-b from-transparent via-primary/18 to-transparent" />
+        <div className="bg-line-3 absolute top-0 left-[80%] w-px h-full bg-gradient-to-b from-transparent via-primary/15 to-transparent" />
+        
+        {/* Геометрические линии - горизонтальные */}
+        <div className="bg-line-h1 absolute top-[25%] left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+        <div className="bg-line-h2 absolute top-[50%] left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/12 to-transparent" />
+        <div className="bg-line-h3 absolute top-[75%] left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+        
+        {/* Большие геометрические формы - градиенты без размытия */}
+        <div className="bg-shape-1 absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-primary/8 via-transparent to-transparent" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
+        <div className="bg-shape-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-primary/6 via-transparent to-transparent" style={{ clipPath: 'polygon(0% 100%, 50% 0%, 100% 100%, 0% 50%)' }} />
+        <div className="bg-shape-3 absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-bl from-primary/5 via-transparent to-transparent" style={{ clipPath: 'circle(50% at 50% 50%)' }} />
+        
+        {/* Анимированные точки/круги с плавающим движением */}
+        <div 
+          className="bg-dot-1 absolute top-[20%] left-[15%] w-3 h-3 rounded-full bg-primary/40"
+          style={{
+            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
+            animation: 'float-dot 6s ease-in-out infinite',
+            animationDelay: '0s',
+          }}
+        />
+        <div 
+          className="bg-dot-2 absolute top-[40%] right-[20%] w-4 h-4 rounded-full bg-primary/35"
+          style={{
+            boxShadow: '0 0 10px hsl(var(--primary) / 0.35)',
+            animation: 'float-dot 7s ease-in-out infinite',
+            animationDelay: '1s',
+          }}
+        />
+        <div 
+          className="bg-dot-3 absolute bottom-[30%] left-[60%] w-3 h-3 rounded-full bg-primary/40"
+          style={{
+            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
+            animation: 'float-dot 8s ease-in-out infinite',
+            animationDelay: '2s',
+          }}
+        />
+        <div 
+          className="bg-dot-4 absolute top-[60%] right-[40%] w-5 h-5 rounded-full bg-primary/30"
+          style={{
+            boxShadow: '0 0 12px hsl(var(--primary) / 0.3)',
+            animation: 'float-dot 5.5s ease-in-out infinite',
+            animationDelay: '0.5s',
+          }}
+        />
+        <div 
+          className="bg-dot-5 absolute bottom-[20%] left-[30%] w-4 h-4 rounded-full bg-primary/30"
+          style={{
+            boxShadow: '0 0 10px hsl(var(--primary) / 0.3)',
+            animation: 'float-dot 6.5s ease-in-out infinite',
+            animationDelay: '1.5s',
+          }}
+        />
+        <div 
+          className="bg-dot-6 absolute top-[80%] right-[60%] w-3 h-3 rounded-full bg-primary/40"
+          style={{
+            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
+            animation: 'float-dot 7.5s ease-in-out infinite',
+            animationDelay: '2.5s',
+          }}
+        />
+        
+        {/* CSS анимации для точек */}
+        <style>{`
+          @keyframes float-dot {
+            0%, 100% {
+              transform: translate(0, 0) scale(1);
+              opacity: 0.4;
+            }
+            25% {
+              transform: translate(15px, -20px) scale(1.2);
+              opacity: 0.6;
+            }
+            50% {
+              transform: translate(-10px, -30px) scale(1.3);
+              opacity: 0.8;
+            }
+            75% {
+              transform: translate(-15px, -10px) scale(1.1);
+              opacity: 0.6;
+            }
+          }
+        `}</style>
+        
+        {/* Простая градиентная линия внизу */}
+        <div className="bg-bottom-line absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
+
+      <div className="relative" style={{ zIndex: 10 }}>
+        <SiteHeader transparent />
+      </div>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden pt-8">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="parallax-bg absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" data-speed="0.3" />
-          <div className="parallax-bg absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" data-speed="0.5" />
-          <div className="parallax-bg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" data-speed="0.4" />
-        </div>
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-20 pb-12 sm:pt-24 sm:pb-16 overflow-hidden" style={{ zIndex: 1 }}>
+        <div className="hero-content container max-w-7xl mx-auto text-center space-y-8 sm:space-y-12 relative" style={{ zIndex: 10 }}>
 
-        <div className="container relative z-10 mx-auto px-4 py-20">
-          <div className="max-w-5xl mx-auto text-center space-y-8">
-            <Badge className="hero-badge text-sm px-4 py-2 bg-primary/10 text-primary border-primary/20">
-              <Sparkles className="w-4 h-4 mr-2 inline" />
-              The Ultimate Multi-Platform Experience
-            </Badge>
-
-            <h1 className="hero-title text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
+          {/* Main heading */}
+          <div className="space-y-6">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
                 Aetheris
               </span>
-              <br />
-              <span className="text-foreground">Where Minds Connect</span>
             </h1>
-
-            <p className="hero-description text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              A powerful ecosystem for scientists, developers, gamers, and learners.
-              <br />
-              <span className="font-semibold text-foreground">Gamification. Networking. Learning. Earning.</span>
+            <p className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+              Где рождаются идеи
             </p>
+            <p className="text-xl sm:text-2xl bg-gradient-to-r from-foreground/90 via-foreground/80 to-muted-foreground bg-clip-text text-transparent max-w-3xl mx-auto leading-relaxed">
+              Если бы Reddit, Discord, Coursera и Steam сделали ребёнка, а потом добавили туда игровые механики из WoW - вот это был бы Aetheris
+            </p>
+          </div>
 
-            <div className="hero-buttons flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="text-lg px-8 py-6 group" onClick={() => navigate('/auth')}>
-                Get Started Free
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Explore Features
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
+          {/* Simple subtitle */}
+          <p className="text-lg bg-gradient-to-r from-foreground/80 via-muted-foreground to-foreground/60 bg-clip-text text-transparent max-w-2xl mx-auto">
+            Для ученых • разработчиков • геймеров • студентов • фрилансеров
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
+            <Button
+              size="lg"
+              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
+              onClick={() => navigate('/forum')}
+            >
+              Начать бесплатно
+              <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto"
+              onClick={() => navigate('/pricing')}
+            >
+              Тарифы
+              <ChevronDown className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 text-xs sm:text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">Без кредитной карты</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">100% конфиденциально</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">Бесплатно навсегда</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Scroll indicator - fixed внизу экрана */}
+        <div ref={scrollIndicatorRef} className="fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-50">
+          <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 text-primary/50 animate-bounce" />
+        </div>
+      </section>
+
+      {/* HORIZONTAL SCROLL CONTAINER - скроллишь вниз, едет вправо */}
+      <div ref={horizontalRef} className="horizontal-wrapper" style={{ zIndex: 1, position: 'relative' }}>
+        <div className="horizontal-sections flex min-h-screen">
+          
+          {/* Section 1: Stats */}
+          <section className="h-section w-screen min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 flex-shrink-0">
+            <div className="container max-w-6xl mx-auto">
+              <div className="text-center mb-8 sm:mb-12">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">В цифрах</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+                {stats.map((stat, i) => (
+                  <div key={i} className="text-center space-y-1 sm:space-y-2">
+                    <stat.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto text-primary mb-2 sm:mb-4" />
+                    <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground font-medium">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
+          </section>
 
-            <div className="hero-float pt-12">
-              <div className="inline-flex items-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  <span>No credit card required</span>
+          {/* Section 2: Gamification */}
+          <section className="h-section w-screen min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 flex-shrink-0">
+            <div className="container max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
+                <div className="space-y-4 sm:space-y-6">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm">
+                    <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Игровые механики
+                  </Badge>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                    Прокачивайся
+                    <br />
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      прямо как в любимой MMORPG
+                    </span>
+                  </h2>
+                  <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent">
+                    Помнишь то чувство когда получал новый уровень в WoW? Вот это у нас тут на каждом шагу.
+                  </p>
+                  <div className="flex flex-wrap gap-2 sm:gap-3 pt-2 sm:pt-4">
+                    <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
+                      <Trophy className="w-4 h-4 mr-2" />
+                      500+ Ачивок
+                    </Badge>
+                    <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
+                      <Crown className="w-4 h-4 mr-2" />
+                      50 Уровней
+                    </Badge>
+                    <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
+                      <Flame className="w-4 h-4 mr-2" />
+                      Кланы
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  <span>Privacy first</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  <span>Free forever</span>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Trophy className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">500+</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Достижений</div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">50</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Уровней</div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">∞</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Кланов</div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Star className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">4</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Сезона/год</div>
+                    </div>
+                  </Card>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hero-float">
-          <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex items-start justify-center p-2">
-            <div className="w-1 h-3 bg-muted-foreground/50 rounded-full animate-bounce" />
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section ref={statsRef} className="py-16 border-y border-border bg-muted/20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon
-              return (
-                <div key={index} className="stat-item text-center space-y-2">
-                  <Icon className="w-8 h-8 mx-auto text-primary" />
-                  <div className="text-4xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Main Features */}
-      <section ref={featuresRef} className="py-24 relative overflow-hidden">
-        <div className="parallax-bg absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" data-speed="0.2" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16 space-y-4">
-            <Badge className="text-sm px-4 py-2">Core Features</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Everything You Need,
-              <br />
-              <span className="text-primary">All In One Place</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              A comprehensive platform designed to meet all your professional and personal growth needs
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {mainFeatures.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <Card
-                  key={index}
-                  className="feature-card group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-border/50 bg-card/50 backdrop-blur"
-                >
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`w-6 h-6 ${feature.color}`} />
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Gamification Section */}
-      <section ref={gamificationRef} className="py-24 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden">
-        <div className="parallax-bg absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" data-speed="0.3" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="gamification-header text-center mb-16 space-y-4">
-            <Badge className="text-sm px-4 py-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
-              <Gamepad2 className="w-4 h-4 mr-2 inline" />
-              Gamification
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Level Up Your
-              <br />
-              <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                Professional Journey
-              </span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Earn XP, unlock achievements, join clans, and compete in seasonal battle passes
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {gamificationFeatures.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <Card
-                  key={index}
-                  className="gamification-card relative overflow-hidden border-border/50 bg-card/80 backdrop-blur group hover:border-primary/50 transition-all duration-300"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardHeader className="relative">
-                    <Icon className={`w-10 h-10 ${feature.color} mb-3`} />
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <CardDescription>{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-
-          <div className="mt-16 text-center">
-            <Card className="max-w-3xl mx-auto bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
-              <CardHeader>
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <Coins className="w-8 h-8 text-amber-500" />
-                  <CardTitle className="text-2xl">Internal Currency System</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-lg">
-                  Earn rewards through activities, trade in marketplace, support creators, and unlock premium features.
-                  Future crypto integration planned for seamless transactions.
+          {/* Section 3: Monetization */}
+          <section className="h-section w-screen min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 flex-shrink-0">
+            <div className="container max-w-6xl mx-auto">
+              <div className="text-center space-y-4 sm:space-y-6">
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm">
+                  <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  Монетизация
+                </Badge>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                  Деньги за то,
+                  <br />
+                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    что ты и так делаешь
+                  </span>
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
+                  Пишешь посты? Делаешь туториалы? Стримишь код? Всё это можно монетизировать.
                 </p>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto pt-6 sm:pt-8">
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden text-left">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative flex items-start gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Реклама</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Процент от рекламы идет напрямую тебе</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden text-left">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative flex items-start gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Донаты</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Фаны поддерживают напрямую</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden text-left">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative flex items-start gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Валюта</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Конвертируй в реальные деньги</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden text-left">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative flex items-start gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
+                        <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Партнерства</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Коллаборации с брендами</p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 4: Privacy */}
+          <section className="h-section w-screen min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 flex-shrink-0">
+            <div className="container max-w-5xl mx-auto">
+              <Card className="p-6 sm:p-8 md:p-12 border border-border/40 bg-card/40 backdrop-blur-sm hover:border-primary/30 hover:bg-card/60 transition-all">
+                <div className="text-center space-y-4 sm:space-y-6">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center mx-auto">
+                    <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                    Мы не знаем твой email. Серьёзно.
+                  </h2>
+                  <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-2">
+                    Только OAuth2 - входишь через Google, GitHub, Discord и т.д. Вместо почты храним хеш. Даже если нас взломают - взять нечего.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3 sm:gap-4 pt-2 sm:pt-4">
+                    <Badge variant="secondary" className="px-4 py-2">
+                      <Lock className="w-4 h-4 mr-2" />
+                      OAuth2
+                    </Badge>
+                    <Badge variant="secondary" className="px-4 py-2">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Хеш вместо email
+                    </Badge>
+                    <Badge variant="secondary" className="px-4 py-2">
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      0 данных
+                    </Badge>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </section>
+
         </div>
-      </section>
+      </div>
 
-      {/* Platform Features */}
-      <section ref={platformRef} className="py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
-            <Badge className="text-sm px-4 py-2">Platform Capabilities</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Powerful Tools For
+      {/* Features Grid - обычный скролл */}
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+        <div className="container max-w-7xl mx-auto">
+          <div className="text-center mb-12 sm:mb-16 md:mb-20 space-y-3 sm:space-y-4">
+            <Badge className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2">Что внутри</Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+              Твой новый дом
               <br />
-              <span className="text-primary">Every Creator</span>
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                в интернете
+              </span>
             </h2>
+            <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
+              Серьезно, мы засунули сюда всё. Даже больше чем нужно
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
-            {platformFeatures.map((feature, index) => {
-              const Icon = feature.icon
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {features.map((feature, i) => {
+              // Используем primary с разными opacity для визуального разнообразия
+              const opacityLevels = [20, 25, 30, 35, 40, 45]
+              const opacity = opacityLevels[i % opacityLevels.length]
+              const color = {
+                border: `border-primary/${opacity}`,
+                hoverBorder: `hover:border-primary/50`,
+                hoverBg: 'hover:bg-primary/5',
+                icon: 'text-primary',
+                iconBg: 'bg-primary/5',
+              }
               return (
                 <Card
-                  key={index}
-                  className="platform-card border-border/50 hover:border-primary/50 transition-all duration-300 bg-card/50 backdrop-blur"
+                  key={i}
+                  className={`feature-card p-4 sm:p-6 border ${color.border} bg-card/40 backdrop-blur-sm ${color.hoverBorder} ${color.hoverBg} hover:bg-card/60 transition-all duration-300 group`}
                 >
-                  <CardHeader>
-                    <Icon className={`w-10 h-10 ${feature.color} mb-3`} />
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>{feature.description}</CardDescription>
-                  </CardContent>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border ${color.border} ${color.iconBg} p-2 sm:p-3 mb-3 sm:mb-4 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <feature.icon className={`w-6 h-6 sm:w-8 sm:h-8 ${color.icon}`} />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">{feature.title}</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground">{feature.description}</p>
                 </Card>
               )
             })}
           </div>
-
-          {/* Additional features list */}
-          <div className="max-w-5xl mx-auto">
-            <Card className="bg-muted/20 border-border/50">
-              <CardHeader>
-                <CardTitle className="text-2xl text-center">And So Much More...</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    'Interactive branching articles',
-                    'Advanced rich text editor',
-                    'Personal blog & wall posts',
-                    'Groups & channels',
-                    'Global & local chats',
-                    'Q&A platform',
-                    'Ask Me Anything sessions',
-                    'Job board & freelancing',
-                    'Course platform',
-                    'NFT collectibles',
-                    'Widgets & decorations',
-                    'Partnership opportunities',
-                    'Merchandise store',
-                    'Content monetization',
-                    'Ad revenue sharing',
-                    'Donation system',
-                    'Collaboration tools',
-                    'AI assistant (coming soon)',
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </section>
 
-      {/* Privacy & Security Section */}
-      <section className="py-24 bg-gradient-to-b from-transparent to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-2 border-primary/20 bg-card/80 backdrop-blur overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-              <CardHeader className="text-center relative">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-3xl mb-2">Privacy First, Always</CardTitle>
-                <CardDescription className="text-lg">
-                  Your data belongs to you. We don't collect, sell, or misuse your personal information.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="text-center space-y-2">
-                    <Lock className="w-8 h-8 mx-auto text-green-500" />
-                    <h4 className="font-semibold">OAuth2 Only</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Secure authentication through trusted providers
-                    </p>
-                  </div>
-                  <div className="text-center space-y-2">
-                    <Globe className="w-8 h-8 mx-auto text-blue-500" />
-                    <h4 className="font-semibold">Email Hashing</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Your email is hashed, never stored in plain text
-                    </p>
-                  </div>
-                  <div className="text-center space-y-2">
-                    <Heart className="w-8 h-8 mx-auto text-red-500" />
-                    <h4 className="font-semibold">Zero Tracking</h4>
-                    <p className="text-sm text-muted-foreground">
-                      No ads tracking, no data selling, ever
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section ref={ctaRef} className="py-32 relative overflow-hidden">
-        <div className="parallax-bg absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-blue-500/10 -z-10" data-speed="0.1" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="cta-content max-w-4xl mx-auto text-center space-y-8">
-            <Badge className="text-sm px-4 py-2 bg-primary text-primary-foreground">
-              <Rocket className="w-4 h-4 mr-2 inline" />
-              Join The Community
-            </Badge>
-
-            <h2 className="text-5xl md:text-6xl font-bold">
-              Ready To Start
-              <br />
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
-                Your Journey?
-              </span>
-            </h2>
-
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of professionals, learners, and creators building their future on Aetheris
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-              <Button size="lg" className="text-lg px-10 py-7 group" onClick={() => navigate('/auth')}>
-                Create Free Account
-                <Sparkles className="ml-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-10 py-7" onClick={() => navigate('/')}>
-                Explore Platform
-              </Button>
-            </div>
-
-            <div className="pt-8 flex items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span>Live now</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>Growing fast</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>Active community</span>
-              </div>
-            </div>
+      {/* Final CTA */}
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+        <div className="container max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+          <Badge className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 bg-primary">
+            <Rocket className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+            Начни сейчас
+          </Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+            Ну что, заходишь?
+            <br />
+            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              Регистрация за 10 секунд
+            </span>
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
+            Кликаешь на кнопку, выбираешь Google/GitHub/Discord, всё. Добро пожаловать в Aetheris. Серьёзно, даже email вводить не надо.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2 sm:pt-4 px-4">
+            <Button
+              size="lg"
+              className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
+              onClick={() => navigate('/auth')}
+            >
+              Регистрация бесплатно
+              <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto">
+              Смотреть демо
+              <Video className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-muted/20 py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-muted-foreground">
-            <p className="text-sm">
-              © 2025 Aetheris. Built with <Heart className="w-4 h-4 inline text-red-500" /> for the community.
-            </p>
-          </div>
+      <footer className="border-t border-border/50 py-12 px-4 relative" style={{ zIndex: 1 }}>
+        <div className="container max-w-6xl mx-auto text-center text-muted-foreground">
+          <p>© 2025 Aetheris. Создано с ❤️ для комьюнити.</p>
         </div>
       </footer>
     </div>

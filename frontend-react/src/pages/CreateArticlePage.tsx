@@ -698,7 +698,7 @@ export default function CreateArticlePage() {
         </div>
       </header>
 
-      <div className="container py-8">
+      <div className="container pt-8 pb-6">
         {/* Stepper - Compact and Modern */}
         <div className="mb-12">
           <div className="flex items-start">
@@ -805,9 +805,9 @@ export default function CreateArticlePage() {
           <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Article Title</Label>
             <div className="relative">
-              <Input
+            <Input
                       placeholder={isTitleFocused || title.trim() ? '' : 'Enter your article title...'}
-                value={title}
+              value={title}
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, TITLE_MAX_LENGTH)
                   setTitle(newValue)
@@ -835,10 +835,10 @@ export default function CreateArticlePage() {
                   </Label>
             <div className="relative">
               <Textarea
-                id="excerpt"
+              id="excerpt"
                 ref={excerptTextareaRef}
                 placeholder={isExcerptFocused || excerpt.trim() ? '' : 'Brief description of your article...'}
-                value={excerpt}
+              value={excerpt}
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, EXCERPT_MAX_LENGTH)
                   setExcerpt(newValue)
@@ -852,7 +852,7 @@ export default function CreateArticlePage() {
               />
               <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
                 {excerpt.length}/{EXCERPT_MAX_LENGTH}
-              </div>
+          </div>
             </div>
                   <p className="text-xs text-muted-foreground">
                     A short summary that appears in article previews and search results.
@@ -920,7 +920,7 @@ export default function CreateArticlePage() {
                     <Badge
                       key={tag}
                       variant="secondary"
-                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors font-medium text-xs"
+                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs"
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag} ×
@@ -1047,7 +1047,7 @@ export default function CreateArticlePage() {
               />
             </CardContent>
           </Card>
-              </div>
+        </div>
             )}
 
             {/* Step 4: Review */}
@@ -1148,7 +1148,7 @@ export default function CreateArticlePage() {
                         {tags.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary font-medium text-xs">
+                              <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
                                 {tag}
                               </Badge>
                             ))}

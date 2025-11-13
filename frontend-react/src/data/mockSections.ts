@@ -1288,3 +1288,451 @@ export const developerSupportChecklists: DeveloperSupportChecklist[] = [
   },
 ]
 
+// ==================== STARTUPS & DEVELOPMENT JOURNAL ====================
+
+export interface Startup {
+  id: string
+  name: string
+  tagline: string
+  description: string
+  logo: string
+  coverImage?: string
+  category: 'saas' | 'mobile-app' | 'web-app' | 'ai-ml' | 'blockchain' | 'hardware' | 'other'
+  stage: 'idea' | 'mvp' | 'beta' | 'launched' | 'scaling'
+  foundedDate: string
+  team: {
+    size: number
+    members: Array<{
+      id: string
+      name: string
+      role: string
+      avatar?: string
+    }>
+  }
+  stats: {
+    followers: number
+    totalDonations: number
+    updates: number
+    investors: number
+  }
+  links: {
+    website?: string
+    github?: string
+    twitter?: string
+    discord?: string
+  }
+  tags: string[]
+  isVerified: boolean
+  isFeatured: boolean
+}
+
+export interface DevelopmentJournalEntry {
+  id: string
+  startupId: string
+  startup: {
+    name: string
+    logo: string
+  }
+  title: string
+  content: string
+  excerpt: string
+  type: 'update' | 'milestone' | 'roadmap' | 'review'
+  publishedAt: string
+  author: {
+    id: string
+    name: string
+    avatar?: string
+  }
+  stats: {
+    views: number
+    reactions: number
+    comments: number
+  }
+  tags: string[]
+  previewImage?: string
+}
+
+export interface StartupInvestor {
+  id: string
+  userId: string
+  username: string
+  avatar?: string
+  amount: number
+  date: string
+  isAnonymous: boolean
+}
+
+export interface DevelopmentTool {
+  id: string
+  name: string
+  description: string
+  category: 'promotion' | 'analytics' | 'integration' | 'monetization'
+  icon: string
+  price: {
+    type: 'free' | 'paid' | 'freemium'
+    amount?: number
+    period?: 'month' | 'year' | 'one-time'
+  }
+  features: string[]
+  isPopular: boolean
+  usedBy: number
+}
+
+export const startups: Startup[] = [
+  {
+    id: 'startup-1',
+    name: 'CodeFlow AI',
+    tagline: 'AI-powered code review assistant',
+    description: 'Автоматизированный помощник для ревью кода, использующий машинное обучение для выявления потенциальных проблем и предложения улучшений.',
+    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=codeflow',
+    coverImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect fill="%231e293b" width="800" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="32" fill="%2394a3b8"%3ECodeFlow AI%3C/text%3E%3C/svg%3E',
+    category: 'ai-ml',
+    stage: 'beta',
+    foundedDate: '2024-06-15',
+    team: {
+      size: 5,
+      members: [
+        { id: 'member-1', name: 'Alex Chen', role: 'CEO & Founder', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex' },
+        { id: 'member-2', name: 'Maria Rodriguez', role: 'CTO', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=maria' },
+        { id: 'member-3', name: 'Dmitry Ivanov', role: 'Lead ML Engineer', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dmitry' },
+      ],
+    },
+    stats: {
+      followers: 1247,
+      totalDonations: 15000,
+      updates: 23,
+      investors: 42,
+    },
+    links: {
+      website: 'https://codeflow.ai',
+      github: 'https://github.com/codeflow-ai',
+      twitter: 'https://twitter.com/codeflowai',
+    },
+    tags: ['AI', 'Code Review', 'DevTools', 'Machine Learning'],
+    isVerified: true,
+    isFeatured: true,
+  },
+  {
+    id: 'startup-2',
+    name: 'TaskMaster Pro',
+    tagline: 'Next-gen project management for remote teams',
+    description: 'Современная система управления проектами с акцентом на удаленную работу, интеграцией с популярными инструментами и продвинутой аналитикой.',
+    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=taskmaster',
+    coverImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect fill="%231e293b" width="800" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="32" fill="%2394a3b8"%3ETaskMaster Pro%3C/text%3E%3C/svg%3E',
+    category: 'saas',
+    stage: 'launched',
+    foundedDate: '2023-11-20',
+    team: {
+      size: 8,
+      members: [
+        { id: 'member-4', name: 'Sarah Johnson', role: 'Founder & CEO', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah' },
+        { id: 'member-5', name: 'James Park', role: 'Head of Product', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=james' },
+      ],
+    },
+    stats: {
+      followers: 3421,
+      totalDonations: 45000,
+      updates: 67,
+      investors: 128,
+    },
+    links: {
+      website: 'https://taskmasterpro.com',
+      github: 'https://github.com/taskmaster-pro',
+      twitter: 'https://twitter.com/taskmasterpro',
+      discord: 'https://discord.gg/taskmaster',
+    },
+    tags: ['SaaS', 'Project Management', 'Remote Work', 'Productivity'],
+    isVerified: true,
+    isFeatured: true,
+  },
+  {
+    id: 'startup-3',
+    name: 'HealthTrack',
+    tagline: 'Personal health monitoring made simple',
+    description: 'Мобильное приложение для отслеживания здоровья с интеграцией носимых устройств и персонализированными рекомендациями.',
+    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=healthtrack',
+    category: 'mobile-app',
+    stage: 'mvp',
+    foundedDate: '2024-09-10',
+    team: {
+      size: 3,
+      members: [
+        { id: 'member-6', name: 'Dr. Emily Watson', role: 'Founder', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily' },
+      ],
+    },
+    stats: {
+      followers: 892,
+      totalDonations: 8500,
+      updates: 15,
+      investors: 23,
+    },
+    links: {
+      website: 'https://healthtrack.app',
+      github: 'https://github.com/healthtrack',
+    },
+    tags: ['Health', 'Mobile', 'Wearables', 'Wellness'],
+    isVerified: false,
+    isFeatured: false,
+  },
+  {
+    id: 'startup-4',
+    name: 'EcoChain',
+    tagline: 'Blockchain for sustainable supply chains',
+    description: 'Блокчейн-платформа для отслеживания и верификации устойчивых цепочек поставок с прозрачностью для потребителей.',
+    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=ecochain',
+    coverImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect fill="%231e293b" width="800" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="32" fill="%2394a3b8"%3EEcoChain%3C/text%3E%3C/svg%3E',
+    category: 'blockchain',
+    stage: 'beta',
+    foundedDate: '2024-03-05',
+    team: {
+      size: 6,
+      members: [
+        { id: 'member-7', name: 'Michael Green', role: 'CEO', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=michael' },
+        { id: 'member-8', name: 'Lisa Chen', role: 'Blockchain Lead', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisa' },
+      ],
+    },
+    stats: {
+      followers: 2156,
+      totalDonations: 32000,
+      updates: 41,
+      investors: 87,
+    },
+    links: {
+      website: 'https://ecochain.io',
+      github: 'https://github.com/ecochain',
+      twitter: 'https://twitter.com/ecochain',
+    },
+    tags: ['Blockchain', 'Sustainability', 'Supply Chain', 'Web3'],
+    isVerified: true,
+    isFeatured: false,
+  },
+]
+
+export const developmentJournalEntries: DevelopmentJournalEntry[] = [
+  {
+    id: 'journal-1',
+    startupId: 'startup-1',
+    startup: {
+      name: 'CodeFlow AI',
+      logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=codeflow',
+    },
+    title: 'Introducing AI-Powered Code Suggestions v2.0',
+    content: '<p>Мы рады представить новую версию нашего AI-движка для предложений кода...</p>',
+    excerpt: 'Новая версия AI-движка с улучшенной точностью на 40% и поддержкой 15 новых языков программирования.',
+    type: 'update',
+    publishedAt: '2025-02-15T10:00:00Z',
+    author: {
+      id: 'member-1',
+      name: 'Alex Chen',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
+    },
+    stats: {
+      views: 3421,
+      reactions: 287,
+      comments: 45,
+    },
+    tags: ['AI', 'Release', 'Features'],
+    previewImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="300"%3E%3Crect fill="%231e293b" width="600" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="24" fill="%2394a3b8"%3EAI Update%3C/text%3E%3C/svg%3E',
+  },
+  {
+    id: 'journal-2',
+    startupId: 'startup-2',
+    startup: {
+      name: 'TaskMaster Pro',
+      logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=taskmaster',
+    },
+    title: 'Roadmap 2025: What\'s Coming Next',
+    content: '<p>Наши планы на следующий год включают множество захватывающих функций...</p>',
+    excerpt: 'Обзор планов развития на 2025 год: новые интеграции, мобильное приложение и AI-ассистент для планирования.',
+    type: 'roadmap',
+    publishedAt: '2025-02-10T14:30:00Z',
+    author: {
+      id: 'member-4',
+      name: 'Sarah Johnson',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+    },
+    stats: {
+      views: 5678,
+      reactions: 412,
+      comments: 89,
+    },
+    tags: ['Roadmap', 'Planning', '2025'],
+    previewImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="300"%3E%3Crect fill="%231e293b" width="600" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="24" fill="%2394a3b8"%3ERoadmap 2025%3C/text%3E%3C/svg%3E',
+  },
+  {
+    id: 'journal-3',
+    startupId: 'startup-1',
+    startup: {
+      name: 'CodeFlow AI',
+      logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=codeflow',
+    },
+    title: 'Milestone: 10,000 Active Users!',
+    content: '<p>Мы достигли невероятной вехи - 10,000 активных пользователей...</p>',
+    excerpt: 'Празднуем достижение 10,000 активных пользователей и делимся статистикой роста.',
+    type: 'milestone',
+    publishedAt: '2025-02-05T09:00:00Z',
+    author: {
+      id: 'member-2',
+      name: 'Maria Rodriguez',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=maria',
+    },
+    stats: {
+      views: 4532,
+      reactions: 567,
+      comments: 123,
+    },
+    tags: ['Milestone', 'Growth', 'Community'],
+  },
+  {
+    id: 'journal-4',
+    startupId: 'startup-4',
+    startup: {
+      name: 'EcoChain',
+      logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=ecochain',
+    },
+    title: 'Beta Launch: Supply Chain Transparency Platform',
+    content: '<p>Сегодня мы запускаем бета-версию нашей платформы для прозрачности цепочек поставок...</p>',
+    excerpt: 'Открытая бета нашей блокчейн-платформы для отслеживания устойчивых цепочек поставок.',
+    type: 'update',
+    publishedAt: '2025-02-01T12:00:00Z',
+    author: {
+      id: 'member-7',
+      name: 'Michael Green',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=michael',
+    },
+    stats: {
+      views: 2891,
+      reactions: 234,
+      comments: 56,
+    },
+    tags: ['Beta', 'Launch', 'Blockchain'],
+    previewImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="300"%3E%3Crect fill="%231e293b" width="600" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="24" fill="%2394a3b8"%3EBeta Launch%3C/text%3E%3C/svg%3E',
+  },
+  {
+    id: 'journal-5',
+    startupId: 'startup-3',
+    startup: {
+      name: 'HealthTrack',
+      logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=healthtrack',
+    },
+    title: 'Development Update: January 2025',
+    content: '<p>Обзор прогресса разработки за январь 2025...</p>',
+    excerpt: 'Месячный отчет о разработке: новые функции, исправления багов и планы на февраль.',
+    type: 'review',
+    publishedAt: '2025-01-31T16:00:00Z',
+    author: {
+      id: 'member-6',
+      name: 'Dr. Emily Watson',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily',
+    },
+    stats: {
+      views: 1456,
+      reactions: 98,
+      comments: 23,
+    },
+    tags: ['Update', 'Development', 'Monthly'],
+  },
+]
+
+export const developmentTools: DevelopmentTool[] = [
+  {
+    id: 'tool-1',
+    name: 'Startup Boost',
+    description: 'Продвижение вашего стартапа в топ на 7 дней с гарантированным охватом 10,000+ разработчиков',
+    category: 'promotion',
+    icon: 'TrendingUp',
+    price: {
+      type: 'paid',
+      amount: 99,
+      period: 'one-time',
+    },
+    features: [
+      'Размещение в топе на главной странице',
+      'Выделение в списке стартапов',
+      'Упоминание в еженедельной рассылке',
+      'Аналитика охвата',
+    ],
+    isPopular: true,
+    usedBy: 127,
+  },
+  {
+    id: 'tool-2',
+    name: 'Advanced Analytics',
+    description: 'Подробная аналитика посещаемости, вовлеченности и конверсии для вашего стартапа',
+    category: 'analytics',
+    icon: 'BarChart3',
+    price: {
+      type: 'freemium',
+      amount: 29,
+      period: 'month',
+    },
+    features: [
+      'Детальная статистика просмотров',
+      'Анализ источников трафика',
+      'Отслеживание конверсии донатов',
+      'Экспорт данных в CSV',
+      'Сравнение с конкурентами',
+    ],
+    isPopular: true,
+    usedBy: 89,
+  },
+  {
+    id: 'tool-3',
+    name: 'GitHub Integration',
+    description: 'Автоматическая синхронизация активности GitHub с журналом разработки',
+    category: 'integration',
+    icon: 'GitBranch',
+    price: {
+      type: 'free',
+    },
+    features: [
+      'Отображение активных веток',
+      'Автоматические посты о коммитах',
+      'Статистика контрибьюторов',
+      'Интеграция с релизами',
+    ],
+    isPopular: false,
+    usedBy: 234,
+  },
+  {
+    id: 'tool-4',
+    name: 'Investor Dashboard',
+    description: 'Специальная панель для инвесторов с детальной информацией о прогрессе стартапа',
+    category: 'monetization',
+    icon: 'DollarSign',
+    price: {
+      type: 'paid',
+      amount: 49,
+      period: 'month',
+    },
+    features: [
+      'Приватные обновления для инвесторов',
+      'Финансовые метрики и прогнозы',
+      'Ежемесячные отчеты',
+      'Прямая связь с командой',
+    ],
+    isPopular: false,
+    usedBy: 45,
+  },
+  {
+    id: 'tool-5',
+    name: 'Community Badge',
+    description: 'Верификационный значок для проверенных стартапов',
+    category: 'promotion',
+    icon: 'BadgeCheck',
+    price: {
+      type: 'paid',
+      amount: 199,
+      period: 'year',
+    },
+    features: [
+      'Значок верификации на странице',
+      'Повышенное доверие сообщества',
+      'Приоритет в поиске',
+      'Упоминание в блоге платформы',
+    ],
+    isPopular: true,
+    usedBy: 67,
+  },
+]
+

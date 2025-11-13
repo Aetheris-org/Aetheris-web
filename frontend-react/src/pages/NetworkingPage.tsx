@@ -1,108 +1,81 @@
-import { useMemo, useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Slider } from '@/components/ui/slider'
+import { 
+  Search, 
+  SlidersHorizontal, 
+  Briefcase, 
+  Users, 
+  Zap,
+  Star,
+  MapPin,
+  Clock,
+  DollarSign,
+  TrendingUp,
+  CheckCircle2,
+  Eye,
+  MessageSquare,
+  X,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react'
 import { SiteHeader } from '@/components/SiteHeader'
-import type { NetworkingOpportunity } from '@/data/mockSections'
-import {
-  networkingOpportunities,
-  networkingHighlights,
-  networkingSavedSearches,
-  featuredCompanies,
-  talentSignals,
-  networkingEvents,
-} from '@/data/mockSections'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { SlidersHorizontal } from 'lucide-react'
+import type { CompanyJobListing, ClientRequest, FreelancerOffer } from '@/types/networking'
+import { 
+  mockCompanyJobs, 
+  mockClientRequests, 
+  mockFreelancerOffers 
+} from '@/data/networkingMockData'
 
+/**
+ * NETWORKING PAGE
+ * 
+ * Страница нетворкинга с тремя основными разделами:
+ * 1. Вакансии от компаний (платные аккаунты)
+ * 2. Запросы от заказчиков (фриланс)
+ * 3. Предложения от фрилансеров
+ * 
+ * Все предложения можно фильтровать и бустить за деньги.
+ */
+
+// Константы для фильтров
 const keywordModes = [
-  { id: 'title', label: 'Title' },
-  { id: 'description', label: 'Description' },
-  { id: 'company', label: 'Company' },
-] as const
-
-type KeywordMode = (typeof keywordModes)[number]['id']
-
-type PriceFilter = 'all' | 'monthly' | 'hourly' | 'project' | 'shift'
-
-type PaymentFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'project'
-
-const paymentFrequencies: Array<{ id: PaymentFrequency; label: string }> = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'biweekly', label: 'Twice a month' },
-  { id: 'monthly', label: 'Monthly' },
-  { id: 'project', label: 'Per project' },
+  { id: 'title' as const, label: 'Title' },
+  { id: 'description' as const, label: 'Description' },
+  { id: 'company' as const, label: 'Company' },
 ]
 
 const educationOptions = [
-  { id: 'none', label: 'Not required / unspecified' },
+  { id: 'none', label: 'Not required' },
   { id: 'secondary-vocational', label: 'Secondary vocational' },
   { id: 'higher', label: 'Higher' },
-] as const
-
-const experienceOptions = [
-  { id: 'any', label: 'Any experience' },
-  { id: 'none', label: 'No experience' },
-  { id: '1-3', label: '1-3 years' },
-  { id: '3-6', label: '3-6 years' },
-  { id: '6+', label: '6+ years' },
-] as const
-
-const employmentOptions = [
-  { id: 'full-time', label: 'Full-time' },
-  { id: 'part-time', label: 'Part-time' },
-  { id: 'project', label: 'Project-based' },
-  { id: 'shift', label: 'Shift work' },
-  { id: 'contract', label: 'GPC/side contract' },
-  { id: 'internship', label: 'Internship' },
-] as const
+]
 
 const scheduleOptions = [
-  '6/1',
-  '5/2',
-  '4/3',
-  '4/2',
-  '3/3',
-  '3/2',
-  '2/2',
-  '2/1',
-  '1/3',
-  '1/2',
-  'weekends',
-  'flexible',
-  'other',
-  '4/4',
-] as const
+  '5/2', '6/1', '4/3', '4/2', '3/3', '3/2', '2/2', '2/1', '1/3', '1/2', 
+  'weekends', 'flexible', 'other', '4/4',
+]
 
 const workingHourOptions = [
-  '2 hours',
-  '3 hours',
-  '4 hours',
-  '5 hours',
-  '6 hours',
-  '7 hours',
-  '8 hours',
-  '9 hours',
-  '10 hours',
-  '11 hours',
-  '12 hours',
-  '24 hours',
-  'Agreement',
-  'Other',
-] as const
+  '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '7 hours', '8 hours',
+  '9 hours', '10 hours', '11 hours', '12 hours', '24 hours', 'Agreement', 'Other',
+]
 
 const workFormats = [
   { id: 'onsite', label: "Employer's site" },
   { id: 'remote', label: 'Remote' },
   { id: 'hybrid', label: 'Hybrid' },
   { id: 'travel', label: 'Travel-required' },
-] as const
+]
 
 const otherFilters = [
   { id: 'withAddress', label: 'With address' },
@@ -111,14 +84,15 @@ const otherFilters = [
   { id: 'teenFriendly', label: 'Available for 14+' },
   { id: 'accreditedIt', label: 'Accredited IT company' },
   { id: 'lowResponses', label: '< 10 applications' },
-] as const
+]
 
-const sortOptions = [
-  { id: 'relevance', label: 'Relevance' },
-  { id: 'updated-desc', label: 'Most recently updated' },
-  { id: 'salary-desc', label: 'Salary: high to low' },
-  { id: 'salary-asc', label: 'Salary: low to high' },
-] as const
+const paymentFrequencies = [
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'biweekly', label: 'Twice a month' },
+  { id: 'monthly', label: 'Monthly' },
+  { id: 'project', label: 'Per project' },
+]
 
 const timeframeOptions = [
   { id: 'all', label: 'All time' },
@@ -126,996 +100,1387 @@ const timeframeOptions = [
   { id: 'week', label: 'Past week' },
   { id: 'three-days', label: 'Past 3 days' },
   { id: 'day', label: 'Past day' },
-] as const
+]
 
 const pageSizeOptions = [
   { id: '20', label: '20 listings' },
   { id: '50', label: '50 listings' },
   { id: '100', label: '100 listings' },
-] as const
+]
 
 export default function NetworkingPage() {
   const navigate = useNavigate()
-  const [keywordMode, setKeywordMode] = useState<KeywordMode>('title')
-  const [keyword, setKeyword] = useState('')
-  const [specializationCategory, setSpecializationCategory] = useState('all')
-  const [specialization, setSpecialization] = useState('all')
-  const [industry, setIndustry] = useState('all')
-  const [country, setCountry] = useState('all')
-  const [region, setRegion] = useState('all')
-  const [district, setDistrict] = useState('all')
-  const [compensationPeriod, setCompensationPeriod] = useState<PriceFilter>('all')
-  const [compensationRange, setCompensationRange] = useState<[number, number]>([0, 120])
-  const [compensationSpecifiedOnly, setCompensationSpecifiedOnly] = useState(false)
-  const [selectedFrequencies, setSelectedFrequencies] = useState<PaymentFrequency[]>([])
+  
+  // Hero section state
+  const [isHeroExpanded, setIsHeroExpanded] = useState(false)
+  
+  // Основной таб: companies | freelance
+  const [mainTab, setMainTab] = useState<'companies' | 'freelance'>('companies')
+  
+  // Подтаб фриланса: requests | offers
+  const [freelanceTab, setFreelanceTab] = useState<'requests' | 'offers'>('requests')
+  
+  // Фильтры
+  const [searchQuery, setSearchQuery] = useState('')
+  const [keywordMode, setKeywordMode] = useState<'title' | 'description' | 'company'>('title')
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortBy, setSortBy] = useState<'relevance' | 'newest' | 'rating' | 'boosted'>('boosted')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [showBoostedOnly, setShowBoostedOnly] = useState(false)
+  
+  // Фильтры для компаний
+  const [employmentTypes, setEmploymentTypes] = useState<string[]>([])
+  const [experienceLevels, setExperienceLevels] = useState<string[]>([])
   const [selectedEducation, setSelectedEducation] = useState<string[]>([])
-  const [experience, setExperience] = useState<(typeof experienceOptions)[number]['id']>('any')
-  const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<string[]>([])
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([])
   const [selectedWorkingHours, setSelectedWorkingHours] = useState<string[]>([])
   const [eveningOrNightShifts, setEveningOrNightShifts] = useState(false)
   const [selectedWorkFormats, setSelectedWorkFormats] = useState<string[]>([])
+  const [remoteOnly, setRemoteOnly] = useState(false)
+  const [compensationMin, setCompensationMin] = useState<number>(0)
+  const [compensationMax, setCompensationMax] = useState<number>(200)
+  const [compensationPeriod, setCompensationPeriod] = useState<'all' | 'hourly' | 'monthly' | 'yearly' | 'project'>('all')
+  const [compensationSpecifiedOnly, setCompensationSpecifiedOnly] = useState(false)
+  const [selectedPaymentFrequencies, setSelectedPaymentFrequencies] = useState<string[]>([])
   const [selectedOtherFlags, setSelectedOtherFlags] = useState<string[]>([])
-  const [sortOrder, setSortOrder] = useState<string>('relevance')
   const [timeframe, setTimeframe] = useState<string>('all')
   const [pageSize, setPageSize] = useState<string>('20')
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-
-  const specializationCategories = useMemo(() => {
-    const items = new Set(networkingOpportunities.map((item) => item.company.specializationCategory))
-    return ['all', ...Array.from(items)]
-  }, [])
-
-  const specializationOptions = useMemo(() => {
-    const pool = specializationCategory === 'all'
-      ? networkingOpportunities
-      : networkingOpportunities.filter((item) => item.company.specializationCategory === specializationCategory)
-    const items = new Set(pool.map((item) => item.company.specialization))
-    return ['all', ...Array.from(items)]
-  }, [specializationCategory])
-
-  const industryOptions = useMemo(() => {
-    const items = new Set(networkingOpportunities.map((item) => item.company.industry))
-    return ['all', ...Array.from(items)]
-  }, [])
-
-  const countryOptions = useMemo(() => {
-    const items = new Set(networkingOpportunities.map((item) => item.company.country))
-    return ['all', ...Array.from(items)]
-  }, [])
-
-  const regionOptions = useMemo(() => {
-    const pool = country === 'all' ? networkingOpportunities : networkingOpportunities.filter((item) => item.company.country === country)
-    const items = new Set(pool.map((item) => item.company.region))
-    return ['all', ...Array.from(items)]
-  }, [country])
-
-  const districtOptions = useMemo(() => {
-    const pool = networkingOpportunities.filter((item) => {
-      if (country !== 'all' && item.company.country !== country) return false
-      if (region !== 'all' && item.company.region !== region) return false
-      return Boolean(item.company.district)
+  
+  // Фильтры для фриланса
+  const [budgetMin, setBudgetMin] = useState<number | undefined>()
+  const [budgetMax, setBudgetMax] = useState<number | undefined>()
+  const [availability, setAvailability] = useState<string[]>([])
+  
+  // Фильтрация данных
+  const filteredCompanies = useMemo(() => {
+    let results = [...mockCompanyJobs]
+    
+    if (searchQuery) {
+      const targetField = keywordMode === 'title' ? 'title' : keywordMode === 'description' ? 'description' : 'companyName'
+      results = results.filter(job => 
+        job[targetField].toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    
+    if (showBoostedOnly) {
+      results = results.filter(job => job.boosted)
+    }
+    
+    if (employmentTypes.length > 0) {
+      results = results.filter(job => employmentTypes.includes(job.employmentType))
+    }
+    
+    if (experienceLevels.length > 0) {
+      results = results.filter(job => experienceLevels.includes(job.experienceLevel))
+    }
+    
+    if (remoteOnly) {
+      results = results.filter(job => job.location.remote)
+    }
+    
+    if (selectedTags.length > 0) {
+      results = results.filter(job => 
+        selectedTags.some(tag => job.tags.includes(tag))
+      )
+    }
+    
+    if (compensationSpecifiedOnly) {
+      results = results.filter(job => job.salary.min || job.salary.max)
+    }
+    
+    // Сортировка
+    results.sort((a, b) => {
+      if (sortBy === 'boosted') {
+        if (a.boosted && !b.boosted) return -1
+        if (!a.boosted && b.boosted) return 1
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
+      if (sortBy === 'rating') {
+        return b.companyRating.average - a.companyRating.average
+      }
+      return 0
     })
-    const items = new Set(pool.map((item) => item.company.district).filter(Boolean) as string[])
-    return ['all', ...Array.from(items)]
-  }, [country, region])
-
+    
+    return results
+  }, [mockCompanyJobs, searchQuery, keywordMode, showBoostedOnly, employmentTypes, experienceLevels, remoteOnly, selectedTags, compensationSpecifiedOnly, sortBy])
+  
+  const filteredClientRequests = useMemo(() => {
+    let results = [...mockClientRequests]
+    
+    if (searchQuery) {
+      results = results.filter(req => 
+        req.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    
+    if (showBoostedOnly) {
+      results = results.filter(req => req.boosted)
+    }
+    
+    if (selectedTags.length > 0) {
+      results = results.filter(req => 
+        selectedTags.some(tag => req.tags.includes(tag))
+      )
+    }
+    
+    if (budgetMin !== undefined) {
+      results = results.filter(req => {
+        const min = req.budget.min ?? req.budget.max ?? 0
+        return min >= budgetMin
+      })
+    }
+    
+    if (budgetMax !== undefined) {
+      results = results.filter(req => {
+        const max = req.budget.max ?? req.budget.min ?? Infinity
+        return max <= budgetMax
+      })
+    }
+    
+    // Сортировка
+    results.sort((a, b) => {
+      if (sortBy === 'boosted') {
+        if (a.boosted && !b.boosted) return -1
+        if (!a.boosted && b.boosted) return 1
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
+      if (sortBy === 'rating') {
+        return b.clientRating.average - a.clientRating.average
+      }
+      return 0
+    })
+    
+    return results
+  }, [mockClientRequests, searchQuery, showBoostedOnly, selectedTags, budgetMin, budgetMax, sortBy])
+  
+  const filteredFreelancerOffers = useMemo(() => {
+    let results = [...mockFreelancerOffers]
+    
+    if (searchQuery) {
+      results = results.filter(offer => 
+        offer.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        offer.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        offer.freelancerName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    
+    if (showBoostedOnly) {
+      results = results.filter(offer => offer.boosted)
+    }
+    
+    if (selectedTags.length > 0) {
+      results = results.filter(offer => 
+        selectedTags.some(tag => offer.skills.includes(tag))
+      )
+    }
+    
+    if (availability.length > 0) {
+      results = results.filter(offer => availability.includes(offer.availability))
+    }
+    
+    // Сортировка
+    results.sort((a, b) => {
+      if (sortBy === 'boosted') {
+        if (a.boosted && !b.boosted) return -1
+        if (!a.boosted && b.boosted) return 1
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
+      if (sortBy === 'rating') {
+        return b.freelancerRating.average - a.freelancerRating.average
+      }
+      return 0
+    })
+    
+    return results
+  }, [mockFreelancerOffers, searchQuery, showBoostedOnly, selectedTags, availability, sortBy])
+  
+  // Популярные теги
+  const popularTags = useMemo(() => {
+    const allTags = new Set<string>()
+    mockCompanyJobs.forEach(job => job.tags.forEach(tag => allTags.add(tag)))
+    mockClientRequests.forEach(req => req.tags.forEach(tag => allTags.add(tag)))
+    mockFreelancerOffers.forEach(offer => offer.skills.forEach(skill => allTags.add(skill)))
+    return Array.from(allTags).slice(0, 12)
+  }, [])
+  
   const toggleValue = <T,>(list: T[], setList: (value: T[]) => void, value: T) => {
     setList(list.includes(value) ? list.filter((item) => item !== value) : [...list, value])
   }
-
-  const filteredOpportunities = useMemo(() => {
-    const [minSlider, maxSlider] = compensationRange
-    const minCompensation = minSlider * 1000
-    const maxCompensation = maxSlider * 1000
-    const timeframeDays: Record<string, number> = {
-      all: Infinity,
-      month: 30,
-      week: 7,
-      'three-days': 3,
-      day: 1,
-    }
-    const now = Date.now()
-
-    const matches = networkingOpportunities.filter((item) => {
-      if (keyword) {
-        const targetField =
-          keywordMode === 'title'
-            ? item.title
-            : keywordMode === 'description'
-            ? item.summary
-            : item.company.name
-        if (!targetField.toLowerCase().includes(keyword.toLowerCase())) return false
-      }
-
-      if (specializationCategory !== 'all' && item.company.specializationCategory !== specializationCategory) {
-        return false
-      }
-
-      if (specialization !== 'all' && item.company.specialization !== specialization) {
-        return false
-      }
-
-      if (industry !== 'all' && item.company.industry !== industry) {
-        return false
-      }
-
-      if (country !== 'all' && item.company.country !== country) {
-        return false
-      }
-
-      if (region !== 'all' && item.company.region !== region) {
-        return false
-      }
-
-      if (district !== 'all' && item.company.district !== district) {
-        return false
-      }
-
-      if (compensationSpecifiedOnly && !item.compensation.specified) {
-        return false
-      }
-
-      if (compensationPeriod !== 'all' && item.compensation.period !== compensationPeriod) {
-        return false
-      }
-
-      if (selectedFrequencies.length > 0 && !selectedFrequencies.includes(item.compensation.frequency)) {
-        return false
-      }
-
-      if (item.compensation.specified) {
-        const min = item.compensation.min ?? item.compensation.max ?? 0
-        const max = item.compensation.max ?? item.compensation.min ?? min
-        if (max < minCompensation || min > maxCompensation) {
-          return false
-        }
-      }
-
-      if (selectedEducation.length > 0 && !selectedEducation.includes(item.educationRequirement)) {
-        return false
-      }
-
-      if (experience !== 'any' && item.experienceLevel !== experience) {
-        return false
-      }
-
-      if (selectedEmploymentTypes.length > 0 && !selectedEmploymentTypes.some((type) => item.employmentTypes.includes(type as any))) {
-        return false
-      }
-
-      if (selectedSchedules.length > 0 && !selectedSchedules.includes(item.schedule)) {
-        return false
-      }
-
-      if (selectedWorkingHours.length > 0 && !selectedWorkingHours.includes(item.workingHours.hoursPerDay)) {
-        return false
-      }
-
-      if (eveningOrNightShifts && !item.workingHours.eveningOrNight) {
-        return false
-      }
-
-      if (selectedWorkFormats.length > 0 && !selectedWorkFormats.includes(item.workFormat)) {
-        return false
-      }
-
-      if (selectedOtherFlags.length > 0 && !selectedOtherFlags.every((flag) => item.otherFlags.includes(flag as any))) {
-        return false
-      }
-
-      if (timeframe !== 'all') {
-        const daysLimit = timeframeDays[timeframe]
-        const diffDays = (now - new Date(item.publishedAt).getTime()) / (1000 * 60 * 60 * 24)
-        if (diffDays > daysLimit) {
-          return false
-        }
-      }
-
-      return item.status === 'open'
-    })
-
-    const sorted = [...matches].sort((a, b) => {
-      switch (sortOrder) {
-        case 'updated-desc':
-          return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        case 'salary-desc': {
-          const maxA = a.compensation.max ?? a.compensation.min ?? 0
-          const maxB = b.compensation.max ?? b.compensation.min ?? 0
-          return maxB - maxA
-        }
-        case 'salary-asc': {
-          const minA = a.compensation.min ?? a.compensation.max ?? 0
-          const minB = b.compensation.min ?? b.compensation.max ?? 0
-          return minA - minB
-        }
-        default:
-          return 0
-      }
-    })
-
-    const limit = parseInt(pageSize, 10) || sorted.length
-    return {
-      total: sorted.length,
-      results: sorted.slice(0, limit),
-    }
-  }, [
-    keyword,
-    keywordMode,
-    specializationCategory,
-    specialization,
-    industry,
-    country,
-    region,
-    district,
-    compensationRange,
-    compensationPeriod,
-    compensationSpecifiedOnly,
-    selectedFrequencies,
-    selectedEducation,
-    experience,
-    selectedEmploymentTypes,
-    selectedSchedules,
-    selectedWorkingHours,
-    eveningOrNightShifts,
-    selectedWorkFormats,
-    selectedOtherFlags,
-    timeframe,
-    sortOrder,
-    pageSize,
-  ])
+  
+  const handleClearFilters = () => {
+    setSearchQuery('')
+    setKeywordMode('title')
+    setSelectedTags([])
+    setShowBoostedOnly(false)
+    setEmploymentTypes([])
+    setExperienceLevels([])
+    setSelectedEducation([])
+    setSelectedSchedules([])
+    setSelectedWorkingHours([])
+    setEveningOrNightShifts(false)
+    setSelectedWorkFormats([])
+    setRemoteOnly(false)
+    setCompensationMin(0)
+    setCompensationMax(200)
+    setCompensationPeriod('all')
+    setCompensationSpecifiedOnly(false)
+    setSelectedPaymentFrequencies([])
+    setSelectedOtherFlags([])
+    setTimeframe('all')
+    setPageSize('20')
+    setBudgetMin(undefined)
+    setBudgetMax(undefined)
+    setAvailability([])
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-
-      <main className="container space-y-10 pb-12 pt-6">
-        <section className="grid gap-6 rounded-2xl border border-border/60 bg-muted/20 p-6 shadow-sm lg:grid-cols-[1.4fr_1fr]">
-          <div className="space-y-4">
-            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-              Networking marketplace
-            </Badge>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Match with collaborators, clients, and engineering mentors.
-              </h1>
-              <p className="max-w-3xl text-base text-muted-foreground">
-                Discover verified experts, design partners, and product teams looking for their next collaborator.
-                Every listing is curated by the Aetheris guild to keep conversations focused, humane, and productive.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={() => navigate('/create')} className="gap-2">
-                Submit an opportunity
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/developers')}>
-                Browse maintainer toolkits
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            {networkingHighlights.map((highlight) => (
-              <Card key={highlight.id} className="border-border/60 bg-background shadow-sm">
-                <CardHeader className="space-y-1">
-                  <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {highlight.label}
-                  </CardDescription>
-                  <CardTitle className="flex items-baseline gap-2 text-2xl font-semibold">
-                    {highlight.value}
-                    {highlight.delta && <span className="text-xs font-medium text-emerald-500">{highlight.delta}</span>}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 rounded-xl border border-border/60 bg-background p-6 shadow-sm">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-              <Input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                placeholder="Search listings"
-                className="max-w-lg"
-              />
-              <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-                {keywordModes.map((mode) => {
-                  const isActive = keywordMode === mode.id
-                  return (
-                    <Button
-                      key={mode.id}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs', isActive && 'shadow-sm')}
-                      onClick={() => setKeywordMode(mode.id)}
-                    >
-                      {mode.label}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-                onClick={() => setShowAdvancedFilters((prev) => !prev)}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                {showAdvancedFilters ? 'Hide advanced filters' : 'Show advanced filters'}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => {
-                setKeyword('')
-                setKeywordMode('title')
-                setSpecializationCategory('all')
-                setSpecialization('all')
-                setIndustry('all')
-                setCountry('all')
-                setRegion('all')
-                setDistrict('all')
-                setCompensationPeriod('all')
-                setCompensationRange([0, 120])
-                setCompensationSpecifiedOnly(false)
-                setSelectedFrequencies([])
-                setSelectedEducation([])
-                setExperience('any')
-                setSelectedEmploymentTypes([])
-                setSelectedSchedules([])
-                setSelectedWorkingHours([])
-                setEveningOrNightShifts(false)
-                setSelectedWorkFormats([])
-                setSelectedOtherFlags([])
-                setSortOrder('relevance')
-                setTimeframe('all')
-                setPageSize('20')
-              }}>
-                Reset all
-              </Button>
-            </div>
-          </div>
-
-          {showAdvancedFilters && (
-            <div className="grid gap-4">
-              <Card className="border border-border/60 bg-muted/20">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">Specialization & company</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <FilterGroup
-                    label="Specialization category"
-                    options={specializationCategories}
-                    value={specializationCategory}
-                    onChange={setSpecializationCategory}
-                  />
-                  <FilterGroup
-                    label="Specialization"
-                    options={specializationOptions}
-                    value={specialization}
-                    onChange={setSpecialization}
-                  />
-                  <FilterGroup label="Industry" options={industryOptions} value={industry} onChange={setIndustry} />
-                  <FilterGroup label="Country" options={countryOptions} value={country} onChange={setCountry} />
-                  <FilterGroup label="Region" options={regionOptions} value={region} onChange={setRegion} />
-                  <FilterGroup label="District" options={districtOptions} value={district} onChange={setDistrict} />
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border/60 bg-muted/20">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">Compensation</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-[2fr_1fr]">
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Range (in thousands)</p>
-                    <Slider
-                      value={compensationRange}
-                      onValueChange={(value) => setCompensationRange(value as [number, number])}
-                      min={0}
-                      max={150}
-                      step={5}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>from {compensationRange[0]}k</span>
-                      <span>to {compensationRange[1]}k</span>
+      
+      <main className="container space-y-8 pb-12 pt-6">
+        {/* Hero Section */}
+        <HeroSection
+          isExpanded={isHeroExpanded}
+          onToggle={() => setIsHeroExpanded(!isHeroExpanded)}
+        />
+        
+        {/* Stats */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            icon={Briefcase}
+            label="Active Jobs"
+            value={mockCompanyJobs.filter(j => j.status === 'active').length}
+            trend="+12% this week"
+          />
+          <StatCard
+            icon={Users}
+            label="Freelancers"
+            value={mockFreelancerOffers.length}
+            trend="Top rated available"
+          />
+          <StatCard
+            icon={MessageSquare}
+            label="Client Requests"
+            value={mockClientRequests.filter(r => r.status === 'open').length}
+            trend="New today"
+          />
+          <StatCard
+            icon={Zap}
+            label="Boosted Listings"
+            value={[...mockCompanyJobs, ...mockClientRequests, ...mockFreelancerOffers].filter((item: any) => item.boosted).length}
+            trend="Premium visibility"
+          />
+        </div>
+        
+        {/* Main Content */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-6">
+            {/* Search & Filters */}
+            <Card>
+              <CardContent className="space-y-4 pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search opportunities..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Payment period</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(['all', 'monthly', 'hourly', 'project', 'shift'] as PriceFilter[]).map((period) => {
-                        const isActive = compensationPeriod === period
+                    <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+                      {keywordModes.map((mode) => {
+                        const isActive = keywordMode === mode.id
                         return (
                           <Button
-                            key={period}
+                            key={mode.id}
                             variant={isActive ? 'secondary' : 'ghost'}
                             size="sm"
-                            className={cn('text-xs capitalize', isActive && 'shadow-sm')}
-                            onClick={() => setCompensationPeriod(period)}
+                            className={cn('text-xs', isActive && 'shadow-sm')}
+                            onClick={() => setKeywordMode(mode.id)}
                           >
-                            {period === 'all' ? 'Any' : period}
+                            {mode.label}
                           </Button>
                         )
                       })}
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Payment frequency</p>
-                      <div className="flex flex-wrap gap-2">
-                        {paymentFrequencies.map((frequency) => (
-                          <Button
-                            key={frequency.id}
-                            variant={selectedFrequencies.includes(frequency.id) ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className={cn('text-xs', selectedFrequencies.includes(frequency.id) && 'shadow-sm')}
-                            onClick={() => toggleValue(selectedFrequencies, setSelectedFrequencies, frequency.id)}
-                          >
-                            {frequency.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="boosted">Boosted first</SelectItem>
+                        <SelectItem value="newest">Newest first</SelectItem>
+                        <SelectItem value="rating">Highest rated</SelectItem>
+                        <SelectItem value="relevance">Most relevant</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button
-                      variant={compensationSpecifiedOnly ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs', compensationSpecifiedOnly && 'shadow-sm')}
-                      onClick={() => setCompensationSpecifiedOnly((prev) => !prev)}
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={cn(showFilters && 'bg-muted')}
                     >
-                      Only with specified salary
+                      <SlidersHorizontal className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border/60 bg-muted/20">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">Profile & experience</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Education</p>
-                    <div className="flex flex-wrap gap-2">
-                      {educationOptions.map((option) => (
-                        <Button
-                          key={option.id}
-                          variant={selectedEducation.includes(option.id) ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', selectedEducation.includes(option.id) && 'shadow-sm')}
-                          onClick={() => toggleValue(selectedEducation, setSelectedEducation, option.id)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Experience</p>
-                    <div className="flex flex-wrap gap-2">
-                      {experienceOptions.map((option) => (
-                        <Button
-                          key={option.id}
-                          variant={experience === option.id ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', experience === option.id && 'shadow-sm')}
-                          onClick={() => setExperience(option.id)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border/60 bg-muted/20">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">Working model</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <FilterToggleGroup
-                    label="Employment type"
-                    options={employmentOptions.map((option) => option.id)}
-                    renderLabel={(id) => employmentOptions.find((item) => item.id === id)?.label ?? id}
-                    values={selectedEmploymentTypes}
-                    onToggle={(value) => toggleValue(selectedEmploymentTypes, setSelectedEmploymentTypes, value)}
-                  />
-                  <FilterToggleGroup
-                    label="Schedule"
-                    options={scheduleOptions as unknown as string[]}
-                    values={selectedSchedules}
-                    onToggle={(value) => toggleValue(selectedSchedules, setSelectedSchedules, value)}
-                  />
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Working hours per day</p>
-                    <div className="flex flex-wrap gap-2">
-                      {workingHourOptions.map((option) => (
-                        <Button
-                          key={option}
-                          variant={selectedWorkingHours.includes(option) ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', selectedWorkingHours.includes(option) && 'shadow-sm')}
-                          onClick={() => toggleValue(selectedWorkingHours, setSelectedWorkingHours, option)}
-                        >
-                          {option}
-                        </Button>
-                      ))}
-                    </div>
-                    <Button
-                      variant={eveningOrNightShifts ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs', eveningOrNightShifts && 'shadow-sm')}
-                      onClick={() => setEveningOrNightShifts((prev) => !prev)}
-                    >
-                      Evening or night shifts
-                    </Button>
-                  </div>
-                  <FilterToggleGroup
-                    label="Work format"
-                    options={workFormats.map((option) => option.id)}
-                    renderLabel={(id) => workFormats.find((item) => item.id === id)?.label ?? id}
-                    values={selectedWorkFormats}
-                    onToggle={(value) => toggleValue(selectedWorkFormats, setSelectedWorkFormats, value)}
-                  />
-                  <FilterToggleGroup
-                    label="Other parameters"
-                    options={otherFilters.map((option) => option.id)}
-                    renderLabel={(id) => otherFilters.find((item) => item.id === id)?.label ?? id}
-                    values={selectedOtherFlags}
-                    onToggle={(value) => toggleValue(selectedOtherFlags, setSelectedOtherFlags, value)}
-                  />
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Sorting</p>
-                    <div className="flex flex-wrap gap-2">
-                      {sortOptions.map((option) => (
-                        <Button
-                          key={option.id}
-                          variant={sortOrder === option.id ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', sortOrder === option.id && 'shadow-sm')}
-                          onClick={() => setSortOrder(option.id)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                    <Separator className="my-2" />
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Timeframe</p>
-                    <div className="flex flex-wrap gap-2">
-                      {timeframeOptions.map((option) => (
-                        <Button
-                          key={option.id}
-                          variant={timeframe === option.id ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', timeframe === option.id && 'shadow-sm')}
-                          onClick={() => setTimeframe(option.id)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                    <Separator className="my-2" />
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Results per page</p>
-                    <div className="flex flex-wrap gap-2">
-                      {pageSizeOptions.map((option) => (
-                        <Button
-                          key={option.id}
-                          variant={pageSize === option.id ? 'secondary' : 'ghost'}
-                          size="sm"
-                          className={cn('text-xs', pageSize === option.id && 'shadow-sm')}
-                          onClick={() => setPageSize(option.id)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold tracking-tight">Open opportunities</h2>
-            <CardDescription>
-              Showing {filteredOpportunities.results.length} of {filteredOpportunities.total} matches
-            </CardDescription>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            {filteredOpportunities.results.map((item) => (
-              <OpportunityCard key={item.id} {...item} />
-            ))}
-            {filteredOpportunities.results.length === 0 && (
-              <Card className="border-dashed bg-muted/40">
-                <CardContent className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center text-sm text-muted-foreground">
-                  <span>No opportunities match the current filters.</span>
-                  <Button variant="ghost" size="sm" onClick={() => setShowAdvancedFilters(true)}>
-                    Adjust filters
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">Saved searches</CardTitle>
-                <CardDescription>Set alerts and let opportunities find you.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">
-                Manage alerts
-              </Button>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              {networkingSavedSearches.map((search) => (
-                <Card key={search.id} className="border-border/50 bg-muted/30">
-                  <CardHeader className="space-y-2">
-                    <CardTitle className="text-sm font-semibold">{search.title}</CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      {search.criteria.map((criterion) => (
-                        <Badge key={criterion} variant="outline" className="rounded-md text-xs">
-                          {criterion}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex justify-between">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                      Open search
-                    </Button>
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground">
-                      Set reminder
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Upcoming sessions</CardTitle>
-              <CardDescription>Join live or async events curated by the community.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {networkingEvents.map((event) => (
-                <div key={event.id} className="rounded-lg border border-border/40 bg-background/60 p-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold leading-tight">{event.title}</h4>
-                    <Badge variant={event.format === 'live' ? 'secondary' : 'outline'} className="rounded-md text-xs">
-                      {event.format === 'live' ? 'Live' : 'Async drop'}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(event.date).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                    {' · '}
-                    {event.host}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">{event.description}</p>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">Featured companies</CardTitle>
-                <CardDescription>Studios and teams actively partnering with Aetheris members.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">
-                View hiring guide
-              </Button>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              {featuredCompanies.map((company) => (
-                <Card key={company.id} className="border border-border/50">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-base font-semibold">{company.name}</CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">
-                      {company.focus}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-                      <Badge variant="outline" className="rounded-md px-2">
-                        {company.openings} openings
+                {/* Active Filters */}
+                {(selectedTags.length > 0 || showBoostedOnly || employmentTypes.length > 0) && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Filters:</span>
+                    {showBoostedOnly && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Zap className="h-3 w-3" />
+                        Boosted only
+                        <button onClick={() => setShowBoostedOnly(false)} className="ml-1">
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
-                      <div className="flex flex-wrap gap-1">
-                        {company.hiringFormats.map((format) => (
-                          <Badge key={format} variant="secondary" className="rounded-md text-[10px] uppercase">
-                            {format}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="px-2 text-xs" asChild>
-                      <a href={`https://${company.contact}`} target="_blank" rel="noreferrer">
-                        View open roles
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Talent signals</CardTitle>
-              <CardDescription>High-signal members currently taking on new collaborations.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {talentSignals.map((signal) => (
-                <div key={signal.id} className="rounded-lg border border-border/40 bg-background/60 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="text-sm font-semibold leading-tight">{signal.name}</h4>
-                      <p className="text-xs text-muted-foreground">{signal.role}</p>
-                    </div>
-                    <Badge variant="outline" className="rounded-md text-xs">
-                      {signal.responseTime}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{signal.summary}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {signal.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="rounded-md text-xs">
+                    )}
+                    {selectedTags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="gap-1">
                         {tag}
+                        <button onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}>
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
+                    {employmentTypes.map(type => (
+                      <Badge key={type} variant="secondary" className="gap-1 capitalize">
+                        {type}
+                        <button onClick={() => setEmploymentTypes(prev => prev.filter(t => t !== type))}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs">
+                      Clear all
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="mt-3 px-2 text-xs">
-                    Start intro
-                  </Button>
+                )}
+                
+                {/* Extended Filters */}
+                {showFilters && mainTab === 'companies' && (
+                  <div className="space-y-4 rounded-lg border border-border/60 bg-muted/20 p-4">
+                    {/* Quick Filters */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Quick filters</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant={showBoostedOnly ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setShowBoostedOnly(!showBoostedOnly)}
+                          className="gap-2"
+                        >
+                          <Zap className="h-3 w-3" />
+                          Boosted only
+                        </Button>
+                        <Button
+                          variant={remoteOnly ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setRemoteOnly(!remoteOnly)}
+                        >
+                          Remote only
+                        </Button>
+                        <Button
+                          variant={compensationSpecifiedOnly ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCompensationSpecifiedOnly(!compensationSpecifiedOnly)}
+                        >
+                          With salary
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Compensation */}
+                    <Card className="border-border/60 bg-background/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold">Compensation</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Salary range (in thousands)</Label>
+                          <Slider
+                            value={[compensationMin, compensationMax]}
+                            onValueChange={(value) => {
+                              setCompensationMin(value[0])
+                              setCompensationMax(value[1])
+                            }}
+                            min={0}
+                            max={300}
+                            step={10}
+                            className="py-4"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>from {compensationMin}k</span>
+                            <span>to {compensationMax}k</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Payment period</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(['all', 'hourly', 'monthly', 'yearly', 'project'] as const).map(period => (
+                              <Button
+                                key={period}
+                                variant={compensationPeriod === period ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setCompensationPeriod(period)}
+                                className="text-xs capitalize"
+                              >
+                                {period === 'all' ? 'Any' : period}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Payment frequency</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {paymentFrequencies.map(freq => (
+                              <Button
+                                key={freq.id}
+                                variant={selectedPaymentFrequencies.includes(freq.id) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(selectedPaymentFrequencies, setSelectedPaymentFrequencies, freq.id)}
+                                className="text-xs"
+                              >
+                                {freq.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Separator />
+                    
+                    {/* Employment & Experience */}
+                    <Card className="border-border/60 bg-background/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold">Employment & Experience</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Employment type</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {['full-time', 'part-time', 'contract', 'internship'].map(type => (
+                              <Button
+                                key={type}
+                                variant={employmentTypes.includes(type) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(employmentTypes, setEmploymentTypes, type)}
+                                className="text-xs capitalize"
+                              >
+                                {type.replace('-', ' ')}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Experience level</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {['junior', 'middle', 'senior', 'lead'].map(level => (
+                              <Button
+                                key={level}
+                                variant={experienceLevels.includes(level) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(experienceLevels, setExperienceLevels, level)}
+                                className="text-xs capitalize"
+                              >
+                                {level}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Education</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {educationOptions.map(option => (
+                              <Button
+                                key={option.id}
+                                variant={selectedEducation.includes(option.id) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(selectedEducation, setSelectedEducation, option.id)}
+                                className="text-xs"
+                              >
+                                {option.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Separator />
+                    
+                    {/* Working Model */}
+                    <Card className="border-border/60 bg-background/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold">Working Model</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Work format</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {workFormats.map(format => (
+                              <Button
+                                key={format.id}
+                                variant={selectedWorkFormats.includes(format.id) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(selectedWorkFormats, setSelectedWorkFormats, format.id)}
+                                className="text-xs"
+                              >
+                                {format.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Schedule</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {scheduleOptions.slice(0, 8).map(schedule => (
+                              <Button
+                                key={schedule}
+                                variant={selectedSchedules.includes(schedule) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(selectedSchedules, setSelectedSchedules, schedule)}
+                                className="text-xs"
+                              >
+                                {schedule}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Working hours per day</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {workingHourOptions.slice(0, 8).map(hours => (
+                              <Button
+                                key={hours}
+                                variant={selectedWorkingHours.includes(hours) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(selectedWorkingHours, setSelectedWorkingHours, hours)}
+                                className="text-xs"
+                              >
+                                {hours}
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            variant={eveningOrNightShifts ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setEveningOrNightShifts(!eveningOrNightShifts)}
+                            className="text-xs"
+                          >
+                            Evening or night shifts
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Separator />
+                    
+                    {/* Other Parameters */}
+                    <Card className="border-border/60 bg-background/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold">Other Parameters</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {otherFilters.map(filter => (
+                            <Button
+                              key={filter.id}
+                              variant={selectedOtherFlags.includes(filter.id) ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => toggleValue(selectedOtherFlags, setSelectedOtherFlags, filter.id)}
+                              className="text-xs"
+                            >
+                              {filter.label}
+                            </Button>
+                          ))}
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Timeframe</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {timeframeOptions.map(option => (
+                              <Button
+                                key={option.id}
+                                variant={timeframe === option.id ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setTimeframe(option.id)}
+                                className="text-xs"
+                              >
+                                {option.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Results per page</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {pageSizeOptions.map(option => (
+                              <Button
+                                key={option.id}
+                                variant={pageSize === option.id ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setPageSize(option.id)}
+                                className="text-xs"
+                              >
+                                {option.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                
+                {/* Freelance Filters */}
+                {showFilters && mainTab === 'freelance' && (
+                  <div className="space-y-4 rounded-lg border border-border/60 bg-muted/20 p-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Quick filters</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant={showBoostedOnly ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setShowBoostedOnly(!showBoostedOnly)}
+                          className="gap-2"
+                        >
+                          <Zap className="h-3 w-3" />
+                          Boosted only
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {freelanceTab === 'offers' && (
+                      <>
+                        <Separator />
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Availability</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {['available', 'busy', 'unavailable'].map(status => (
+                              <Button
+                                key={status}
+                                variant={availability.includes(status) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleValue(availability, setAvailability, status)}
+                                className="capitalize"
+                              >
+                                {status}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Budget range</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Min</Label>
+                          <Input
+                            type="number"
+                            placeholder="Min budget"
+                            value={budgetMin ?? ''}
+                            onChange={(e) => setBudgetMin(e.target.value ? Number(e.target.value) : undefined)}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Max</Label>
+                          <Input
+                            type="number"
+                            placeholder="Max budget"
+                            value={budgetMax ?? ''}
+                            onChange={(e) => setBudgetMax(e.target.value ? Number(e.target.value) : undefined)}
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Tabs */}
+            <Tabs value={mainTab} onValueChange={(value: any) => setMainTab(value)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="companies" className="gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Companies ({filteredCompanies.length})
+                </TabsTrigger>
+                <TabsTrigger value="freelance" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  Freelance ({freelanceTab === 'requests' ? filteredClientRequests.length : filteredFreelancerOffers.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="companies" className="mt-6 space-y-4">
+                {filteredCompanies.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                      <Briefcase className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                      <p className="text-lg font-medium">No companies found</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Try adjusting your filters or search query
+                      </p>
+                      <Button variant="outline" onClick={handleClearFilters} className="mt-4">
+                        Clear filters
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  filteredCompanies.map(job => (
+                    <CompanyJobCard key={job.id} job={job} />
+                  ))
+                )}
+              </TabsContent>
+              
+              <TabsContent value="freelance" className="mt-6 space-y-4">
+                <Tabs value={freelanceTab} onValueChange={(value: any) => setFreelanceTab(value)}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="requests">
+                      Client Requests ({filteredClientRequests.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="offers">
+                      Freelancer Offers ({filteredFreelancerOffers.length})
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="requests" className="mt-6 space-y-4">
+                    {filteredClientRequests.length === 0 ? (
+                      <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                          <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                          <p className="text-lg font-medium">No client requests found</p>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Try adjusting your filters or search query
+                          </p>
+                          <Button variant="outline" onClick={handleClearFilters} className="mt-4">
+                            Clear filters
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      filteredClientRequests.map(request => (
+                        <ClientRequestCard key={request.id} request={request} />
+                      ))
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="offers" className="mt-6 space-y-4">
+                    {filteredFreelancerOffers.length === 0 ? (
+                      <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                          <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                          <p className="text-lg font-medium">No freelancer offers found</p>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Try adjusting your filters or search query
+                          </p>
+                          <Button variant="outline" onClick={handleClearFilters} className="mt-4">
+                            Clear filters
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      filteredFreelancerOffers.map(offer => (
+                        <FreelancerOfferCard key={offer.id} offer={offer} />
+                      ))
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          {/* Sidebar */}
+          <aside className="space-y-6">
+            {/* Popular Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Popular Skills</CardTitle>
+                <CardDescription className="text-xs">
+                  Filter by trending technologies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {popularTags.map(tag => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? 'default' : 'outline'}
+                      className="cursor-pointer transition-colors hover:bg-primary/10"
+                      onClick={() => setSelectedTags(prev => 
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      )}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
+              </CardContent>
+            </Card>
+            
+            {/* Boost Info */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Zap className="h-4 w-4 text-primary" />
+                  Boost Your Listing
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Get 10x more visibility
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>Appear at the top of search results</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>Highlighted with premium badge</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>30-day boost duration</span>
+                  </li>
+                </ul>
+                <Button className="w-full gap-2">
+                  <Zap className="h-4 w-4" />
+                  Boost Listing
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Help */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Need Help?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start" size="sm">
+                  How to post a job
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="sm">
+                  Pricing & payments
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="sm">
+                  Safety guidelines
+                </Button>
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
       </main>
     </div>
   )
 }
 
-function FilterGroup({
-  label,
-  options,
-  value,
-  onChange,
-}: {
+// Component: Stat Card
+function StatCard({ 
+  icon: Icon, 
+  label, 
+  value, 
+  trend 
+}: { 
+  icon: any
   label: string
-  options: string[]
-  value: string
-  onChange: (value: string) => void
+  value: number
+  trend: string
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const isActive = value === option
-          return (
-            <Button
-              key={option}
-              variant={isActive ? 'secondary' : 'ghost'}
-              size="sm"
-              className={cn('text-xs', isActive && 'shadow-sm')}
-              onClick={() => onChange(option)}
-            >
-              {option === 'all' ? 'Any' : option}
-            </Button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function FilterToggleGroup({
-  label,
-  options,
-  values,
-  onToggle,
-  renderLabel,
-}: {
-  label: string
-  options: string[]
-  values: string[]
-  onToggle: (value: string) => void
-  renderLabel?: (value: string) => string
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const isActive = values.includes(option)
-          return (
-            <Button
-              key={option}
-              variant={isActive ? 'secondary' : 'ghost'}
-              size="sm"
-              className={cn('text-xs', isActive && 'shadow-sm')}
-              onClick={() => onToggle(option)}
-            >
-              {renderLabel ? renderLabel(option) : option}
-            </Button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function OpportunityCard({
-  title,
-  summary,
-  tags,
-  contact,
-  availability,
-  location,
-  status,
-  category,
-  engagement,
-  responseTime,
-  budgetRange,
-  company,
-  compensation,
-  educationRequirement,
-  experienceLevel,
-  employmentTypes,
-  schedule,
-  workingHours,
-  workFormat,
-  otherFlags,
-  publishedAt,
-}: NetworkingOpportunity) {
-  const compensationLabel = () => {
-    if (!compensation.specified) return 'Salary on request'
-    const min = compensation.min ?? compensation.max
-    const max = compensation.max ?? compensation.min
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: compensation.currency,
-      maximumFractionDigits: 0,
-    })
-    if (min && max && min !== max) {
-      return `${formatter.format(min)} – ${formatter.format(max)} · ${compensation.period}`
-    }
-    if (min)
-      return `${formatter.format(min)} · ${compensation.period}`
-    return `${formatter.format(max ?? 0)} · ${compensation.period}`
-  }
-
-  return (
-    <Card className="flex h-full flex-col border-border/60 shadow-sm">
-      <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-semibold leading-tight">{title}</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              {company.name} · {location}
-            </CardDescription>
-          </div>
-          <Badge variant="secondary" className="rounded-md capitalize">
-            {category}
-          </Badge>
+    <Card>
+      <CardContent className="flex items-center gap-4 pt-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+          <Icon className="h-6 w-6 text-primary" />
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{availability}</span>
-          <span>•</span>
-          <span className="capitalize">{engagement}</span>
-          <span>•</span>
-          <span className="capitalize">{workFormat}</span>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-4 text-sm text-muted-foreground">
-        <p className="leading-relaxed">{summary}</p>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="rounded-md">
-              #{tag}
-            </Badge>
-          ))}
-        </div>
-        <Separator className="my-1" />
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-foreground">{compensationLabel()}</span>
-            {budgetRange && <span>{budgetRange}</span>}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-md capitalize">
-              Education: {educationRequirement.replace('-', ' ')}
-            </Badge>
-            <Badge variant="outline" className="rounded-md capitalize">
-              Experience: {experienceLevel}
-            </Badge>
-            <Badge variant="outline" className="rounded-md capitalize">
-              Schedule: {schedule}
-            </Badge>
-            <Badge variant="outline" className="rounded-md capitalize">
-              Hours: {workingHours.hoursPerDay}
-            </Badge>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {employmentTypes.map((type) => (
-              <Badge key={type} variant="secondary" className="rounded-md text-xs capitalize">
-                {type}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <Separator className="my-1" />
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span>{responseTime}</span>
-          <span>•</span>
-          <span>{formatRelativeTime(new Date(publishedAt))}</span>
-          {otherFlags.includes('accreditedIt') && <Badge variant="outline">Accredited IT</Badge>}
-          {otherFlags.includes('accessible') && <Badge variant="outline">Accessible</Badge>}
-        </div>
-        <div className="mt-auto flex items-center justify-between">
-          <Badge variant="outline" className="rounded-md text-xs capitalize">
-            {status}
-          </Badge>
-          <Button variant="ghost" size="sm" className="px-2 text-xs" asChild>
-            <a href={`mailto:${contact}`} aria-label={`Contact ${contact}`}>
-              Request intro
-            </a>
-          </Button>
+        <div className="flex-1">
+          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-xs text-primary">{trend}</p>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function formatRelativeTime(date: Date): string {
-  const diffSeconds = Math.floor((Date.now() - date.getTime()) / 1000)
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-
-  if (diffSeconds < 60) return 'moments ago'
-
-  const diffMinutes = Math.floor(diffSeconds / 60)
-  if (diffMinutes < 60) {
-    return rtf.format(-diffMinutes, 'minute')
+// Component: Company Job Card
+function CompanyJobCard({ job }: { job: CompanyJobListing }) {
+  const formatSalary = () => {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: job.salary.currency,
+      maximumFractionDigits: 0,
+    })
+    
+    if (job.salary.min && job.salary.max) {
+      return `${formatter.format(job.salary.min)} - ${formatter.format(job.salary.max)}`
+    }
+    if (job.salary.min) {
+      return `From ${formatter.format(job.salary.min)}`
+    }
+    if (job.salary.max) {
+      return `Up to ${formatter.format(job.salary.max)}`
+    }
+    return 'Competitive salary'
   }
-
-  const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) {
-    return rtf.format(-diffHours, 'hour')
-  }
-
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) {
-    return rtf.format(-diffDays, 'day')
-  }
-
-  const diffWeeks = Math.floor(diffDays / 7)
-  if (diffWeeks < 5) {
-    return rtf.format(-diffWeeks, 'week')
-  }
-
-  const diffMonths = Math.floor(diffDays / 30)
-  if (diffMonths < 12) {
-    return rtf.format(-diffMonths, 'month')
-  }
-
-  const diffYears = Math.floor(diffDays / 365)
-  return rtf.format(-diffYears, 'year')
+  
+  return (
+    <Card className={cn(
+      'transition-all hover:shadow-md',
+      job.boosted && 'border-primary/50 bg-primary/5'
+    )}>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            {job.companyLogo && (
+              <img 
+                src={job.companyLogo} 
+                alt={job.companyName}
+                className="h-12 w-12 rounded-lg border bg-background object-cover"
+              />
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">{job.title}</CardTitle>
+                {job.companyVerified && (
+                  <Badge variant="secondary" className="gap-1 text-xs">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                )}
+                {job.boosted && (
+                  <Badge className="gap-1 bg-primary text-xs">
+                    <Zap className="h-3 w-3 fill-current" />
+                    Boosted
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-medium">{job.companyName}</span>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  <span>{job.companyRating.average.toFixed(1)}</span>
+                  <span className="text-xs">({job.companyRating.count})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {job.description}
+        </p>
+        
+        <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <DollarSign className="h-4 w-4" />
+            <span>{formatSalary()}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span>
+              {job.location.city ? `${job.location.city}, ${job.location.country}` : job.location.country}
+              {job.location.remote && ' (Remote)'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span className="capitalize">{job.employmentType.replace('-', ' ')}</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {job.tags.slice(0, 5).map(tag => (
+            <Badge key={tag} variant="outline" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+          {job.tags.length > 5 && (
+            <Badge variant="outline" className="text-xs">
+              +{job.tags.length - 5} more
+            </Badge>
+          )}
+        </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{job.viewsCount} views</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              <span>{job.applicationsCount} applicants</span>
+            </div>
+          </div>
+          <Button size="sm">View Details</Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
+// Component: Client Request Card
+function ClientRequestCard({ request }: { request: ClientRequest }) {
+  const formatBudget = () => {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: request.budget.currency,
+      maximumFractionDigits: 0,
+    })
+    
+    if (request.budget.type === 'hourly') {
+      if (request.budget.min && request.budget.max) {
+        return `${formatter.format(request.budget.min)} - ${formatter.format(request.budget.max)}/hr`
+      }
+      return `${formatter.format(request.budget.min ?? request.budget.max ?? 0)}/hr`
+    }
+    
+    if (request.budget.min && request.budget.max) {
+      return `${formatter.format(request.budget.min)} - ${formatter.format(request.budget.max)}`
+    }
+    return formatter.format(request.budget.min ?? request.budget.max ?? 0)
+  }
+  
+  return (
+    <Card className={cn(
+      'transition-all hover:shadow-md',
+      request.boosted && 'border-primary/50 bg-primary/5'
+    )}>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            {request.clientAvatar && (
+              <img 
+                src={request.clientAvatar} 
+                alt={request.clientName}
+                className="h-10 w-10 rounded-full border bg-background"
+              />
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">{request.title}</CardTitle>
+                {request.boosted && (
+                  <Badge className="gap-1 bg-primary text-xs">
+                    <Zap className="h-3 w-3 fill-current" />
+                    Boosted
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{request.clientName}</span>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  <span>{request.clientRating.average.toFixed(1)}</span>
+                  <span className="text-xs">({request.clientRating.count})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-3">
+          {request.description}
+        </p>
+        
+        <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <DollarSign className="h-4 w-4" />
+            <span className="font-medium">{formatBudget()}</span>
+          </div>
+          {request.duration && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>{request.duration}</span>
+            </div>
+          )}
+          <Badge variant="secondary" className="text-xs">
+            {request.category}
+          </Badge>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {request.tags.slice(0, 5).map(tag => (
+            <Badge key={tag} variant="outline" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+          {request.tags.length > 5 && (
+            <Badge variant="outline" className="text-xs">
+              +{request.tags.length - 5} more
+            </Badge>
+          )}
+        </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{request.viewsCount} views</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              <span>{request.proposalsCount} proposals</span>
+            </div>
+          </div>
+          <Button size="sm">Submit Proposal</Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Component: Freelancer Offer Card
+function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
+  const formatPricing = () => {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: offer.pricing.currency,
+      maximumFractionDigits: 0,
+    })
+    
+    if (offer.pricing.hourlyRate) {
+      return `${formatter.format(offer.pricing.hourlyRate)}/hr`
+    }
+    
+    if (offer.pricing.projectRate) {
+      return `${formatter.format(offer.pricing.projectRate.min)} - ${formatter.format(offer.pricing.projectRate.max)}/project`
+    }
+    
+    return 'Contact for pricing'
+  }
+  
+  const availabilityColors = {
+    available: 'bg-green-500/10 text-green-700 dark:text-green-400',
+    busy: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+    unavailable: 'bg-red-500/10 text-red-700 dark:text-red-400',
+  }
+  
+  return (
+    <Card className={cn(
+      'transition-all hover:shadow-md',
+      offer.boosted && 'border-primary/50 bg-primary/5'
+    )}>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            {offer.freelancerAvatar && (
+              <img 
+                src={offer.freelancerAvatar} 
+                alt={offer.freelancerName}
+                className="h-12 w-12 rounded-full border bg-background"
+              />
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">{offer.freelancerName}</CardTitle>
+                {offer.freelancerVerified && (
+                  <Badge variant="secondary" className="gap-1 text-xs">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                )}
+                {offer.boosted && (
+                  <Badge className="gap-1 bg-primary text-xs">
+                    <Zap className="h-3 w-3 fill-current" />
+                    Boosted
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  <span>{offer.freelancerRating.average.toFixed(1)}</span>
+                  <span className="text-xs">({offer.freelancerRating.count})</span>
+                </div>
+                <span>•</span>
+                <span>{offer.experience.projectsCompleted} projects</span>
+              </div>
+            </div>
+          </div>
+          <Badge className={cn('capitalize', availabilityColors[offer.availability])}>
+            {offer.availability}
+          </Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <div>
+          <h4 className="font-semibold">{offer.title}</h4>
+          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+            {offer.description}
+          </p>
+        </div>
+        
+        <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <DollarSign className="h-4 w-4" />
+            <span className="font-medium">{formatPricing()}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>Responds {offer.responseTime}</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {offer.skills.slice(0, 6).map(skill => (
+            <Badge key={skill} variant="outline" className="text-xs">
+              {skill}
+            </Badge>
+          ))}
+          {offer.skills.length > 6 && (
+            <Badge variant="outline" className="text-xs">
+              +{offer.skills.length - 6} more
+            </Badge>
+          )}
+        </div>
+        
+        {offer.portfolio.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {offer.portfolio.slice(0, 3).map(item => (
+              <div 
+                key={item.id}
+                className="group relative aspect-video overflow-hidden rounded-lg border bg-muted"
+              >
+                {item.image && (
+                  <img 
+                    src={item.image} 
+                    alt={item.title}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{offer.viewsCount} views</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              <span>{offer.contactsCount} contacts</span>
+            </div>
+          </div>
+          <Button size="sm">View Profile</Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface HeroSectionProps {
+  isExpanded: boolean
+  onToggle: () => void
+}
+
+function HeroSection({ isExpanded, onToggle }: HeroSectionProps) {
+  return (
+    <section
+      className={cn(
+        'rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-background to-background shadow-sm transition-all duration-300 overflow-hidden',
+        isExpanded ? 'p-8 max-h-[1000px]' : 'px-8 py-3 max-h-14'
+      )}
+    >
+      {isExpanded ? (
+        <div className="mx-auto max-w-3xl space-y-4 text-center relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-8 w-8 rounded-full"
+            onClick={onToggle}
+            aria-label="Collapse hero section"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs uppercase tracking-wider">
+            <Briefcase className="mr-2 h-3 w-3" />
+            Professional Networking
+          </Badge>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            Find opportunities.<br />Build connections.
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Connect with companies, clients, and freelancers. Discover your next project or hire top talent.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Button size="lg" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Post an opportunity
+            </Button>
+            <Button size="lg" variant="outline">
+              Browse all listings
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 w-full">
+          <Briefcase className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-semibold text-foreground">Find opportunities. Build connections.</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0 rounded-full -mr-1 ml-auto"
+            onClick={onToggle}
+            aria-label="Expand hero section"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+    </section>
+  )
+}

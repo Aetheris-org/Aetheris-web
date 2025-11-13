@@ -94,7 +94,7 @@ export function ArticleCard({
               <Badge
                 key={tag}
                 variant="secondary"
-                className="rounded-md font-medium text-xs bg-primary/10 text-primary hover:bg-primary/15 cursor-pointer transition-colors"
+                className="rounded-md text-xs bg-primary/10 text-primary hover:bg-primary/15 cursor-pointer transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   onTagClick?.(tag)

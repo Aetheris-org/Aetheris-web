@@ -8,8 +8,6 @@ import {
   LayoutGrid,
   List,
   Rows,
-  PenSquare,
-  Bell,
   Hash,
   Compass,
   GraduationCap,
@@ -23,7 +21,6 @@ import type { LucideIcon } from 'lucide-react'
 import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
-import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,7 +56,6 @@ export default function HomePage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
-  const unreadNotifications = useNotificationsStore(selectUnreadCount)
   const viewModeOptions: Array<{
     id: 'default' | 'line' | 'square'
     label: string
@@ -249,51 +245,18 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="container space-y-10 pb-12 pt-6">
-        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+      <main className="container space-y-10 pb-6 pt-6">
+        {!isSpotlightDismissed && (
+        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/15 p-6 shadow-sm">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/notifications')}
-              disabled={!user}
-              aria-label={
-                unreadNotifications > 0
-                  ? `Open notifications, ${unreadNotifications} unread`
-                  : 'Open notifications'
-              }
-              className="relative"
-            >
-              <Bell className="h-4 w-4" />
-              {user && unreadNotifications > 0 && (
-                <span className="absolute right-1 top-1 inline-flex h-2 w-2">
-                  <span className="h-full w-full rounded-full bg-primary" />
-                </span>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => navigate('/create')}
-              disabled={!user}
-              className="gap-2"
-            >
-              <PenSquare className="h-4 w-4" />
-              Create article
-            </Button>
-          </div>
-        </section>
-
-        {!isSpotlightDismissed && (
-        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/15 p-6 shadow-sm">
-          <Button
-            variant="ghost"
-            size="icon"
             className="absolute right-3 top-3 h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
             onClick={handleDismissSpotlight}
             aria-label="Dismiss spotlight"
           >
             <X className="h-3.5 w-3.5" />
-          </Button>
+            </Button>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-6 lg:max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
@@ -362,23 +325,33 @@ export default function HomePage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative" data-view-mode-expander style={{ height: '36px', width: '36px' }}>
+                  <div className="relative" data-view-mode-expander style={{ height: '40px', width: '40px' }}>
                     <div
                       className={cn(
-                        'absolute top-0 left-0 flex flex-col rounded-lg border border-border bg-background overflow-hidden transition-all duration-200',
+                        'absolute top-0 left-0 flex flex-col rounded-lg border border-border bg-background transition-all duration-200',
                         isViewModeExpanded && 'z-50 shadow-lg'
                       )}
                       style={{
-                        height: isViewModeExpanded ? `${36 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 36)}px` : '36px',
-                        width: '36px',
+                        height: isViewModeExpanded ? `${40 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 40)}px` : '40px',
+                        width: '40px',
                       }}
                     >
                       <button
                         type="button"
                         onClick={() => setIsViewModeExpanded(!isViewModeExpanded)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape' && isViewModeExpanded) {
+                            setIsViewModeExpanded(false)
+                            e.currentTarget.focus()
+                          } else if (e.key === 'ArrowDown' && !isViewModeExpanded) {
+                            e.preventDefault()
+                            setIsViewModeExpanded(true)
+                          }
+                        }}
                         aria-label="Select view mode"
+                        aria-expanded={isViewModeExpanded}
                         className={cn(
-                          'flex h-9 w-9 shrink-0 items-center justify-center transition-colors hover:bg-muted',
+                          'flex h-10 w-10 shrink-0 items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:z-10',
                           isViewModeExpanded ? 'rounded-t-lg rounded-b-none' : 'rounded-lg'
                         )}
                       >
@@ -396,16 +369,37 @@ export default function HomePage() {
                       >
                         {viewModeOptions
                           .filter((option) => option.id !== viewMode)
-                          .map((option) => {
+                          .map((option, index) => {
                             const Icon = option.icon
                             return (
                               <button
                                 key={option.id}
                                 type="button"
-                                className="flex h-9 w-9 shrink-0 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg"
+                                tabIndex={isViewModeExpanded ? 0 : -1}
+                                className="flex h-10 w-10 shrink-0 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:z-10"
                                 onClick={() => {
                                   setViewMode(option.id)
                                   setIsViewModeExpanded(false)
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') {
+                                    setIsViewModeExpanded(false)
+                                    const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
+                                    mainButton?.focus()
+                                  } else if (e.key === 'ArrowDown') {
+                                    e.preventDefault()
+                                    const nextButton = e.currentTarget.parentElement?.children[index + 1] as HTMLButtonElement
+                                    nextButton?.focus()
+                                  } else if (e.key === 'ArrowUp') {
+                                    e.preventDefault()
+                                    if (index === 0) {
+                                      const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
+                                      mainButton?.focus()
+                                    } else {
+                                      const prevButton = e.currentTarget.parentElement?.children[index - 1] as HTMLButtonElement
+                                      prevButton?.focus()
+                                    }
+                                  }
                                 }}
                                 aria-label={option.label}
                               >
@@ -417,8 +411,8 @@ export default function HomePage() {
                     </div>
                   </div>
                   <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-                    <SlidersHorizontal className="h-4 w-4" />
-                  </Button>
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Button>
                 </div>
               </div>
 
@@ -429,7 +423,7 @@ export default function HomePage() {
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors font-medium text-xs"
+                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs"
                       onClick={() => handleTagClick(tag)}
                     >
                       {tag} ×
@@ -638,7 +632,7 @@ export default function HomePage() {
                       key={tag}
                         variant="secondary"
                         className={cn(
-                          'cursor-pointer rounded-md font-medium text-xs transition-colors bg-primary/10 text-primary',
+                          'cursor-pointer rounded-md text-xs transition-colors bg-primary/10 text-primary',
                           isActive ? 'shadow-sm bg-primary/15' : 'hover:bg-primary/15'
                         )}
                       onClick={() => handleTagClick(tag)}

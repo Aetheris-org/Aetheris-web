@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Flame, CalendarDays, BarChart3, CornerDownRight, Filter, Hash, Clock } from 'lucide-react'
+import { Flame, CalendarDays, BarChart3, CornerDownRight, Hash, Clock, X } from 'lucide-react'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
 import { trendingArticlesMock } from '@/data/mockSections'
@@ -26,6 +26,23 @@ export default function TrendingPage() {
   const [timeframe, setTimeframe] = useState<TimeframeValue>('24h')
   const [category, setCategory] = useState<string>('All topics')
   const [search, setSearch] = useState('')
+  const [isHeroDismissed, setIsHeroDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('trending-hero-dismissed')
+      return saved === 'true'
+    }
+    return false
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHeroDismissed) {
+      localStorage.setItem('trending-hero-dismissed', 'true')
+    }
+  }, [isHeroDismissed])
+
+  const handleDismissHero = () => {
+    setIsHeroDismissed(true)
+  }
 
   const filteredArticles = useMemo(() => {
     return trendingArticlesMock.filter((article) => {
@@ -48,37 +65,48 @@ export default function TrendingPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="container space-y-10 pb-12 pt-6">
-        <section className="rounded-3xl border border-border/60 bg-muted/10 p-6 shadow-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-3">
-              <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-                Leaderboard
-              </Badge>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Hot reads across the Aetheris guild.
-              </h1>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                Discover what the community canʼt stop discussing. Rankings refresh every few hours based on views,
-                reactions, and meaningful replies.
-              </p>
+      <main className="container space-y-10 pb-6 pt-6">
+        {!isHeroDismissed && (
+          <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/10 p-6 shadow-sm">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-3 top-3 h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+              onClick={handleDismissHero}
+              aria-label="Dismiss hero section"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-3">
+                <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
+                  Leaderboard
+                </Badge>
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  Hot reads across the Aetheris guild.
+                </h1>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  Discover what the community canʼt stop discussing. Rankings refresh every few hours based on views,
+                  reactions, and meaningful replies.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {timeframes.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={item.id === timeframe ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn('gap-2 text-xs', item.id === timeframe && 'shadow-sm')}
+                    onClick={() => setTimeframe(item.id)}
+                  >
+                    <Clock className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {timeframes.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={item.id === timeframe ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className={cn('gap-2 text-xs', item.id === timeframe && 'shadow-sm')}
-                  onClick={() => setTimeframe(item.id)}
-                >
-                  <Clock className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {topArticle && (
           <section className="grid gap-6 rounded-3xl border border-border/70 bg-background/80 p-6 shadow-sm lg:grid-cols-[1.4fr_1fr]">

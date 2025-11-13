@@ -42,7 +42,7 @@ const PaginationLink = ({
     aria-current={isActive ? 'page' : undefined}
     className={cn(
       'flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
-      isActive && 'border-border bg-accent text-accent-foreground',
+      isActive && 'border-primary bg-primary text-primary-foreground shadow-sm',
       className
     )}
     {...props}

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -12,6 +12,7 @@ import {
   User,
   Flame,
   Award,
+  Users,
 } from 'lucide-react'
 import {
   Sheet,
@@ -32,10 +33,12 @@ import { useNotificationsStore, selectUnreadCount } from '@/stores/notifications
 import { selectReadingListCount, useReadingListStore } from '@/stores/readingListStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { Progress } from '@/components/ui/progress'
+import { FriendsSheet } from '@/components/FriendsSheet'
 
 export function AccountSheet() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [friendsSheetOpen, setFriendsSheetOpen] = useState(false)
   const { user, logout } = useAuthStore((state) => ({
     user: state.user,
     logout: state.logout,
@@ -211,7 +214,7 @@ export function AccountSheet() {
               </SheetClose>
               <SheetClose asChild>
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   className="justify-start gap-2"
                   onClick={() => navigate('/create')}
                 >
@@ -223,14 +226,10 @@ export function AccountSheet() {
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() =>
-                    navigate('/settings/profile', {
-                      state: { from: location.pathname },
-                    })
-                  }
+                  onClick={() => setFriendsSheetOpen(true)}
                 >
-                  <Settings className="h-4 w-4" />
-                  Settings
+                  <Users className="h-4 w-4" />
+                  Friends
                 </Button>
               </SheetClose>
               <SheetClose asChild>
@@ -244,6 +243,20 @@ export function AccountSheet() {
                 </Button>
               </SheetClose>
             </div>
+            <SheetClose asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() =>
+                  navigate('/settings/profile', {
+                    state: { from: location.pathname },
+                  })
+                }
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </SheetClose>
           </section>
 
           <Separator />
@@ -293,12 +306,17 @@ export function AccountSheet() {
         </div>
 
         <SheetFooter className="mt-8 border-t border-border/60 pt-6">
-          <Button variant="destructive" className="w-full gap-2" onClick={handleLogout}>
+          <Button 
+            variant="outline" 
+            className="w-full gap-2 border-border/60 hover:bg-muted/50 hover:border-border" 
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4" />
             Sign out
           </Button>
         </SheetFooter>
       </SheetContent>
+      <FriendsSheet open={friendsSheetOpen} onOpenChange={setFriendsSheetOpen} />
     </Sheet>
   )
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Badge } from '@/components/ui/badge'
@@ -6,456 +6,373 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
-  courseBundles,
-  courseCohorts,
-  courseFaq,
-  courseSkills,
-  courseTestimonials,
-  featuredCourses,
-} from '@/data/mockSections'
-import type { CourseBundle, CourseFaqEntry, CourseItem } from '@/data/mockSections'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import {
-  ArrowUpRight,
-  CalendarDays,
+  BookOpen,
   Clock,
-  Compass,
+  Filter,
+  GraduationCap,
+  Search,
+  ShieldCheck,
   Sparkles,
   Star,
-  Target,
+  TrendingUp,
   Users,
+  Zap,
+  Award,
+  Play,
+  CheckCircle2,
+  DollarSign,
+  Lock,
+  Crown,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
+import type { Course, CourseFilters } from '@/types/courses'
+import { mockCourses, mockCategories, mockAuthors } from '@/data/coursesMockData'
 
-type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced'
-type PriceFilter = 'all' | 'free' | 'paid'
+type ViewMode = 'all' | 'verified' | 'community'
 
 export default function CoursesPage() {
   const navigate = useNavigate()
-  const [activeLevel, setActiveLevel] = useState<LevelFilter>('all')
-  const [activePrice, setActivePrice] = useState<PriceFilter>('all')
-  const [keyword, setKeyword] = useState('')
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>()
+  const [selectedLevel, setSelectedLevel] = useState<Course['level']>()
+  const [selectedPricing, setSelectedPricing] = useState<'free' | 'paid' | 'subscription' | 'level-gated'>()
+  
+  // Состояние для hero секции
+  const [isHeroExpanded, setIsHeroExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('courses-hero-expanded')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
 
-  const heroMetrics = useMemo(() => {
-    const totalLearners = featuredCourses.reduce((sum, course) => sum + course.students, 0)
-    const officialCount = featuredCourses.filter((course) => course.isOfficial).length
-    const topRating =
-      featuredCourses.reduce((sum, course) => sum + course.rating, 0) / featuredCourses.length
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('courses-hero-expanded', String(isHeroExpanded))
+    }
+  }, [isHeroExpanded])
 
-    return [
-      {
-        id: 'metric-1',
-        label: 'Learners',
-        value: formatNumber(totalLearners),
-        description: 'Creators enrolled across the guild',
-        icon: Users,
-      },
-      {
-        id: 'metric-2',
-        label: 'Official programs',
-        value: officialCount.toString(),
-        description: 'Certificate-ready cohorts curated by Aetheris',
-        icon: Target,
-      },
-      {
-        id: 'metric-3',
-        label: 'Avg. rating',
-        value: topRating.toFixed(1),
-        description: 'Learner feedback across all tracks',
-        icon: Star,
-      },
-    ]
+  // Filter courses based on current filters
+  const filteredCourses = useMemo(() => {
+    return mockCourses.filter((course) => {
+      // View mode filter
+      if (viewMode === 'verified' && !course.isVerified) return false
+      if (viewMode === 'community' && course.isVerified) return false
+
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesSearch =
+          course.title.toLowerCase().includes(query) ||
+          course.description.toLowerCase().includes(query) ||
+          course.author.username.toLowerCase().includes(query) ||
+          course.tags.some((tag) => tag.toLowerCase().includes(query))
+        if (!matchesSearch) return false
+      }
+
+      // Category filter
+      if (selectedCategory && course.category !== selectedCategory) return false
+
+      // Level filter
+      if (selectedLevel && course.level !== selectedLevel) return false
+
+      // Pricing filter
+      if (selectedPricing) {
+        if (course.access.pricing.type !== selectedPricing) return false
+      }
+
+      return true
+    })
+  }, [viewMode, searchQuery, selectedCategory, selectedLevel, selectedPricing])
+
+  const verifiedCourses = filteredCourses.filter((c) => c.isVerified)
+  const communityCourses = filteredCourses.filter((c) => !c.isVerified)
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalStudents = mockCourses.reduce((sum, course) => sum + course.stats.enrolledStudents, 0)
+    const verifiedCount = mockCourses.filter((c) => c.isVerified).length
+    const avgRating =
+      mockCourses.reduce((sum, course) => sum + course.stats.averageRating, 0) / mockCourses.length
+
+    return {
+      totalCourses: mockCourses.length,
+      totalStudents,
+      verifiedCount,
+      avgRating: avgRating.toFixed(1),
+      activeCreators: mockAuthors.length,
+    }
   }, [])
 
-  const filteredCourses = useMemo(() => {
-    return featuredCourses.filter((course) => {
-      const matchesLevel = activeLevel === 'all' || course.level === activeLevel
-      const matchesPrice = activePrice === 'all' || course.price === activePrice
-      const matchesKeyword = keyword
-        ? [course.title, course.shortDescription, course.author]
-            .join(' ')
-            .toLowerCase()
-            .includes(keyword.toLowerCase())
-        : true
-      const matchesSkills =
-        selectedSkills.length === 0 ||
-        selectedSkills.every((skill) => course.skills.includes(skill))
-
-      return matchesLevel && matchesPrice && matchesKeyword && matchesSkills
-    })
-  }, [activeLevel, activePrice, keyword, selectedSkills])
-
-  const officialResults = filteredCourses.filter((course) => course.isOfficial)
-  const communityResults = filteredCourses.filter((course) => !course.isOfficial)
-
-  const recommendedCourses = useMemo(() => {
-    if (selectedSkills.length === 0) {
-      return [...featuredCourses].sort((a, b) => b.rating - a.rating).slice(0, 3)
-    }
-
-    const courseIdScore = new Map<string, number>()
-    selectedSkills.forEach((skillId) => {
-      const skill = courseSkills.find((item) => item.id === skillId)
-      skill?.courseIds.forEach((courseId) => {
-        courseIdScore.set(courseId, (courseIdScore.get(courseId) ?? 0) + 1)
-      })
-    })
-
-    const scored = featuredCourses
-      .map((course) => ({
-        course,
-        score: courseIdScore.get(course.id) ?? 0,
-      }))
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score || b.course.rating - a.course.rating)
-      .map((item) => item.course)
-
-    if (scored.length > 0) {
-      return scored.slice(0, 3)
-    }
-
-    return [...featuredCourses].sort((a, b) => b.rating - a.rating).slice(0, 3)
-  }, [selectedSkills])
-
   const resetFilters = () => {
-    setActiveLevel('all')
-    setActivePrice('all')
-    setKeyword('')
-    setSelectedSkills([])
+    setSearchQuery('')
+    setSelectedCategory(undefined)
+    setSelectedLevel(undefined)
+    setSelectedPricing(undefined)
   }
 
-  const toggleSkill = (skillId: string) => {
-    setSelectedSkills((prev) =>
-      prev.includes(skillId) ? prev.filter((id) => id !== skillId) : [...prev, skillId]
-    )
-  }
+  const hasActiveFilters = searchQuery || selectedCategory || selectedLevel || selectedPricing
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      <main className="container flex flex-col gap-10 pb-16 pt-6">
+
+      <main className="container py-8 space-y-8">
+        {/* Hero Section */}
         <HeroSection
-          metrics={heroMetrics}
-          onLaunchClick={() => navigate('/create')}
-          onExploreClick={() => resetFilters()}
-          selectedSkills={selectedSkills}
-          onClearSkills={() => setSelectedSkills([])}
+          isExpanded={isHeroExpanded}
+          onToggle={() => setIsHeroExpanded(!isHeroExpanded)}
+          stats={stats}
+          onCreateCourse={() => navigate('/courses/create')}
+          onViewVerified={() => setViewMode('verified')}
         />
 
-        <FiltersPanel
-          activeLevel={activeLevel}
-          onLevelChange={setActiveLevel}
-          activePrice={activePrice}
-          onPriceChange={setActivePrice}
-          keyword={keyword}
-          onKeywordChange={setKeyword}
-          selectedSkills={selectedSkills}
-          onToggleSkill={toggleSkill}
-          onResetFilters={resetFilters}
-        />
-
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-8">
-            <div className="flex items-center justify-between gap-3">
+        {/* Filters Section */}
+        <Card className="border-border/60">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold tracking-tight">Courses</h2>
-                <p className="text-sm text-muted-foreground">
-                  {filteredCourses.length} {filteredCourses.length === 1 ? 'result' : 'results'} based on
-                  your filters
-                </p>
+                <CardTitle className="text-xl">Найдите свой курс</CardTitle>
+                <CardDescription>
+                  Используйте фильтры для поиска подходящего курса
+                </CardDescription>
               </div>
-              <Button size="sm" variant="ghost" onClick={resetFilters}>
-                Clear filters
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  Сбросить фильтры
               </Button>
+          )}
             </div>
-
-            <CourseResultsSection
-              title="Official programs"
-              description="Certificate-backed experiences curated by the Aetheris team."
-              courses={officialResults}
-              onResetFilters={resetFilters}
-            />
-
-            <CourseResultsSection
-              title="Community courses"
-              description="Peer-led workshops and on-demand series from guild creators."
-              courses={communityResults}
-              onResetFilters={resetFilters}
-            />
-          </div>
-
-          <aside className="space-y-6">
-            <RecommendedCard courses={recommendedCourses} />
-            <LearningPathsCard bundles={courseBundles} />
-            <CohortsCard cohorts={courseCohorts} />
-            <TestimonialsCard testimonials={courseTestimonials.slice(0, 2)} />
-            <QuickFaqCard faqs={courseFaq.slice(0, 3)} />
-          </aside>
+                  </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+                placeholder="Поиск по названию, автору, тегам..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-11"
+              />
         </div>
+
+            {/* Filter buttons */}
+            <div className="space-y-4">
+        <div className="space-y-2">
+                <Label className="text-sm font-medium">Категория</Label>
+              <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={!selectedCategory ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(undefined)}
+                  >
+                    Все
+                  </Button>
+                  {mockCategories.map((category) => (
+                    <Button
+                      key={category.id}
+                      variant={selectedCategory === category.name ? 'secondary' : 'outline'}
+                      size="sm"
+                      onClick={() =>
+                        setSelectedCategory(selectedCategory === category.name ? undefined : category.name)
+                      }
+                    >
+                      {category.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Уровень</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['beginner', 'intermediate', 'advanced', 'expert'].map((level) => (
+                      <Button
+                        key={level}
+                        variant={selectedLevel === level ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() =>
+                          setSelectedLevel(selectedLevel === level ? undefined : (level as Course['level']))
+                        }
+                      >
+                        {level === 'beginner' && 'Начальный'}
+                        {level === 'intermediate' && 'Средний'}
+                        {level === 'advanced' && 'Продвинутый'}
+                        {level === 'expert' && 'Эксперт'}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Доступ</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 'free', label: 'Бесплатно' },
+                      { value: 'paid', label: 'Платно' },
+                      { value: 'subscription', label: 'Подписка' },
+                      { value: 'level-gated', label: 'По уровню' },
+                    ].map((pricing) => (
+                      <Button
+                        key={pricing.value}
+                        variant={selectedPricing === pricing.value ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() =>
+                          setSelectedPricing(
+                            selectedPricing === pricing.value
+                              ? undefined
+                              : (pricing.value as typeof selectedPricing)
+                          )
+                        }
+                      >
+                        {pricing.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              </div>
+            </CardContent>
+          </Card>
+
+        {/* View Mode Tabs */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="all" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              Все
+            </TabsTrigger>
+            <TabsTrigger value="verified" className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Верифицированные
+            </TabsTrigger>
+            <TabsTrigger value="community" className="gap-2">
+              <Users className="h-4 w-4" />
+              Сообщество
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-6 mt-6">
+            {verifiedCourses.length > 0 && (
+              <CourseSection
+                title="Верифицированные курсы"
+                description="Проверены модерацией и соответствуют высоким стандартам качества"
+                courses={verifiedCourses}
+                icon={ShieldCheck}
+              />
+            )}
+
+            {communityCourses.length > 0 && (
+              <>
+                {verifiedCourses.length > 0 && <Separator />}
+                <CourseSection
+                  title="Курсы от сообщества"
+                  description="Авторские материалы от опытных разработчиков"
+                  courses={communityCourses}
+                  icon={Users}
+                />
+              </>
+            )}
+
+            {filteredCourses.length === 0 && (
+              <EmptyState
+                title="Курсы не найдены"
+                description="Попробуйте изменить фильтры или поисковый запрос"
+                onReset={resetFilters}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="verified" className="space-y-6 mt-6">
+            {verifiedCourses.length > 0 ? (
+              <CourseSection
+                title="Верифицированные курсы"
+                description="Проверены модерацией и соответствуют высоким стандартам качества"
+                courses={verifiedCourses}
+                icon={ShieldCheck}
+              />
+            ) : (
+              <EmptyState
+                title="Верифицированные курсы не найдены"
+                description="Попробуйте изменить фильтры"
+                onReset={resetFilters}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="community" className="space-y-6 mt-6">
+            {communityCourses.length > 0 ? (
+              <CourseSection
+                title="Курсы от сообщества"
+                description="Авторские материалы от опытных разработчиков"
+                courses={communityCourses}
+                icon={Users}
+              />
+            ) : (
+              <EmptyState
+                title="Курсы от сообщества не найдены"
+                description="Попробуйте изменить фильтры"
+                onReset={resetFilters}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )
 }
 
-interface HeroSectionProps {
-  metrics: Array<{
-    id: string
-    label: string
-    value: string
-    description: string
-    icon: typeof Users
-  }>
-  onLaunchClick: () => void
-  onExploreClick: () => void
-  selectedSkills: string[]
-  onClearSkills: () => void
-}
-
-function HeroSection({
-  metrics,
-  onLaunchClick,
-  onExploreClick,
-  selectedSkills,
-  onClearSkills,
-}: HeroSectionProps) {
-  return (
-    <section className="grid gap-6 rounded-3xl border border-border/60 bg-muted/20 p-6 shadow-sm md:p-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <div className="space-y-5">
-        <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-          Courses · Cohorts
-            </Badge>
-            <div className="space-y-3">
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            Build, launch, and grow with Aetheris learning paths.
-              </h1>
-          <p className="max-w-2xl text-base text-muted-foreground">
-            Choose a verified program or fast-track with community-built workshops. Every cohort blends shadcn/ui
-            foundations, Strapi automation, and real operator tactics.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-          <Button onClick={onLaunchClick} className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Launch your course
-              </Button>
-          <Button variant="outline" className="gap-2" onClick={onExploreClick}>
-                <Compass className="h-4 w-4" />
-            Explore catalog
-          </Button>
-          {selectedSkills.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={onClearSkills}>
-              Clear focus areas
-              </Button>
-          )}
-            </div>
-          </div>
-
-      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {metrics.map((metric) => {
-              const Icon = metric.icon
-              return (
-            <Card
-              key={metric.id}
-              className="border-border/60 bg-background/90 shadow-sm transition hover:border-border"
-            >
-              <CardHeader className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                      <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {metric.label}
-                      </CardDescription>
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                    </div>
-                    <CardTitle className="text-2xl font-semibold">{metric.value}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 text-xs text-muted-foreground">
-                    {metric.description}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-  )
-}
-
-interface FiltersPanelProps {
-  activeLevel: LevelFilter
-  onLevelChange: (value: LevelFilter) => void
-  activePrice: PriceFilter
-  onPriceChange: (value: PriceFilter) => void
-  keyword: string
-  onKeywordChange: (value: string) => void
-  selectedSkills: string[]
-  onToggleSkill: (skillId: string) => void
-  onResetFilters: () => void
-}
-
-function FiltersPanel({
-  activeLevel,
-  onLevelChange,
-  activePrice,
-  onPriceChange,
-  keyword,
-  onKeywordChange,
-  selectedSkills,
-  onToggleSkill,
-  onResetFilters,
-}: FiltersPanelProps) {
-  return (
-          <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-            <CardTitle className="text-xl font-semibold">Refine your search</CardTitle>
-            <CardDescription>Combine filters to narrow the catalog in a couple of clicks.</CardDescription>
-              </div>
-          <Button variant="ghost" size="sm" onClick={onResetFilters}>
-            Reset
-              </Button>
-        </div>
-            </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="course-search" className="text-xs uppercase tracking-wide text-muted-foreground">
-              Keyword
-            </Label>
-            <Input
-              id="course-search"
-              value={keyword}
-              onChange={(event) => onKeywordChange(event.target.value)}
-              placeholder="Search by course, instructor, or outcome"
-              className="h-11"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <FilterToggleGroup
-              label="Level"
-              options={['all', 'beginner', 'intermediate', 'advanced']}
-              activeValue={activeLevel}
-              onChange={(value) => onLevelChange(value as LevelFilter)}
-            />
-            <FilterToggleGroup
-              label="Price"
-              options={['all', 'free', 'paid']}
-              activeValue={activePrice}
-              onChange={(value) => onPriceChange(value as PriceFilter)}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Focus areas</Label>
-            {selectedSkills.length > 0 && (
-              <span className="text-xs text-muted-foreground">{selectedSkills.length} selected</span>
-            )}
-          </div>
-              <div className="flex flex-wrap gap-2">
-                {courseSkills.map((skill) => {
-                  const isActive = selectedSkills.includes(skill.id)
-                  return (
-                    <Button
-                      key={skill.id}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                  className={cn(
-                    'gap-2 rounded-full px-3 text-xs transition',
-                    isActive && 'shadow-sm'
-                  )}
-                  onClick={() => onToggleSkill(skill.id)}
-                    >
-                      {skill.label}
-                    </Button>
-                  )
-                })}
-              </div>
-              </div>
-            </CardContent>
-          </Card>
-  )
-}
-
-interface FilterToggleGroupProps {
+interface StatCardProps {
+  icon: typeof BookOpen
   label: string
-  options: string[]
-  activeValue: string
-  onChange: (value: string) => void
+  value: string
 }
 
-function FilterToggleGroup({ label, options, activeValue, onChange }: FilterToggleGroupProps) {
+function StatCard({ icon: Icon, label, value }: StatCardProps) {
                   return (
-    <div className="space-y-2">
-      <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>
-      <div className="flex flex-wrap gap-2 rounded-lg border border-border/60 bg-muted/20 p-1">
-        {options.map((option) => {
-          const isActive = activeValue === option
-                  return (
-                    <Button
-              key={option}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs capitalize', isActive && 'shadow-sm')}
-              onClick={() => onChange(option)}
-                    >
-              {option}
-                    </Button>
-                  )
-                })}
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <div>
+        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-xs text-muted-foreground">{label}</div>
               </div>
             </div>
   )
 }
 
-interface CourseResultsSectionProps {
+interface CourseSectionProps {
   title: string
   description: string
-  courses: CourseItem[]
-  onResetFilters: () => void
+  courses: Course[]
+  icon: typeof ShieldCheck
 }
 
-function CourseResultsSection({
-  title,
-  description,
-  courses,
-  onResetFilters,
-}: CourseResultsSectionProps) {
-  if (courses.length === 0) {
-              return (
-      <Card className="border-dashed border-border/60 bg-muted/10">
-        <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No {title.toLowerCase()} match your filters right now.
-          </p>
-          <Button size="sm" variant="outline" onClick={onResetFilters}>
-            Reset filters
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-  }
-
+function CourseSection({ title, description, courses, icon: Icon }: CourseSectionProps) {
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{title}</h3>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold">{title}</h2>
           <p className="text-sm text-muted-foreground">{description}</p>
               </div>
-        <Badge variant="outline" className="rounded-md text-xs uppercase">
-          {courses.length} {courses.length === 1 ? 'course' : 'courses'}
+        <Badge variant="secondary" className="ml-auto">
+          {courses.length}
                     </Badge>
                   </div>
-                <div className="grid gap-4 md:grid-cols-2">
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {courses.map((course) => (
           <CourseCard key={course.id} course={course} />
             ))}
@@ -464,243 +381,282 @@ function CourseResultsSection({
   )
 }
 
-function CourseCard({ course }: { course: CourseItem }) {
-  const { title, shortDescription, author, level, duration, price, isOfficial, format, rating, students, skills } =
-    course
+interface CourseCardProps {
+  course: Course
+}
+
+function CourseCard({ course }: CourseCardProps) {
+  const navigate = useNavigate()
+
+  const getPricingBadge = () => {
+    switch (course.access.pricing.type) {
+      case 'free':
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Zap className="h-3 w-3" />
+            Бесплатно
+          </Badge>
+        )
+      case 'paid':
+        return (
+          <Badge variant="outline" className="gap-1">
+            <DollarSign className="h-3 w-3" />
+            {course.access.pricing.price} {course.access.pricing.currency}
+          </Badge>
+        )
+      case 'subscription':
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Crown className="h-3 w-3" />
+            {course.access.pricing.requiredTier}
+          </Badge>
+        )
+      case 'level-gated':
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Lock className="h-3 w-3" />
+            Уровень {course.access.pricing.requiredLevel}+
+          </Badge>
+        )
+    }
+  }
 
   return (
-    <Card className="h-full border-border/60 shadow-sm transition hover:border-border">
+    <Card
+      className="group h-full cursor-pointer border-border/60 transition-all hover:border-border hover:shadow-md"
+      onClick={() => navigate(`/courses/${course.slug}`)}
+    >
       <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-          <CardTitle className="text-lg font-semibold leading-tight">{title}</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              {author} · {duration}
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 flex-1 min-w-0">
+            <CardTitle className="text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+              {course.title}
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {course.author.username}
+              {course.author.verified && (
+                <CheckCircle2 className="inline-block ml-1 h-3 w-3 text-primary" />
+              )}
             </CardDescription>
           </div>
-          <Badge variant={isOfficial ? 'secondary' : 'outline'} className="rounded-md text-xs uppercase">
-            {isOfficial ? 'Official' : 'Community'}
-          </Badge>
+          {course.isVerified && (
+            <div className="flex-shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+              </div>
+            </div>
+          )}
         </div>
+
+        <p className="text-sm text-muted-foreground line-clamp-2">{course.shortDescription}</p>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm text-muted-foreground">
-        <p className="line-clamp-3">{shortDescription}</p>
-        <div className="flex items-center justify-between text-xs">
-          <Badge variant="outline" className="rounded-md capitalize">
-            {level}
+
+      <CardContent className="space-y-4">
+        {/* Stats */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+            <span className="font-medium">{course.stats.averageRating}</span>
+            <span>({formatNumber(course.stats.totalReviews)})</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            <span>{formatNumber(course.stats.enrolledStudents)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{formatDuration(course.totalDuration)}</span>
+          </div>
+        </div>
+
+        {/* Level and Pricing */}
+        <div className="flex items-center justify-between gap-2">
+          <Badge variant="outline" className="text-xs capitalize">
+            {course.level === 'beginner' && 'Начальный'}
+            {course.level === 'intermediate' && 'Средний'}
+            {course.level === 'advanced' && 'Продвинутый'}
+            {course.level === 'expert' && 'Эксперт'}
           </Badge>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="rounded-md capitalize">
-              {format}
-            </Badge>
-            <Badge
-              variant={price === 'free' ? 'secondary' : 'outline'}
-              className="rounded-md uppercase tracking-wide"
-            >
-              {price === 'free' ? 'Free' : 'Paid'}
-            </Badge>
-          </div>
+          {getPricingBadge()}
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 text-primary" />
-            {rating.toFixed(1)}
-          </span>
-          <span>{formatNumber(students)} learners</span>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5">
+          {course.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+          {course.tags.length > 3 && (
+            <Badge variant="secondary" className="text-xs">
+              +{course.tags.length - 3}
+            </Badge>
+          )}
         </div>
-          <div className="flex flex-wrap gap-2">
-            {skills.slice(0, 4).map((skill) => (
-              <Badge key={skill} variant="outline" className="rounded-md text-xs capitalize">
-                {skill.replace(/-/g, ' ')}
-              </Badge>
-            ))}
+
+        {/* Certificate badge */}
+        {course.providesCertificate && (
+          <div className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+            <Award className="h-4 w-4 text-primary" />
+            <span className="text-xs font-medium">Выдается сертификат</span>
           </div>
-        <Button variant="ghost" size="sm" className="px-2 text-xs">
-          View syllabus
+        )}
+
+        {/* CTA */}
+        <Button variant="outline" className="w-full gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          <Play className="h-4 w-4" />
+          Начать обучение
         </Button>
       </CardContent>
     </Card>
   )
 }
 
-function RecommendedCard({ courses }: { courses: CourseItem[] }) {
+interface EmptyStateProps {
+  title: string
+  description: string
+  onReset: () => void
+}
+
+function EmptyState({ title, description, onReset }: EmptyStateProps) {
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base font-semibold">Suggested for you</CardTitle>
-        <CardDescription>Curated with your focus areas and learner ratings.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {courses.map((course) => (
-          <div
-            key={`recommended-${course.id}`}
-            className="rounded-lg border border-border/40 bg-background/90 p-3 text-sm text-muted-foreground"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-medium text-foreground">{course.title}</p>
-                <p className="text-xs text-muted-foreground">{course.author}</p>
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+          <Filter className="h-8 w-8 text-muted-foreground" />
               </div>
-              <Badge variant="outline" className="rounded-md text-xs capitalize">
-          {course.level}
-        </Badge>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 text-primary" />
-                {course.rating.toFixed(1)}
-              </span>
-              <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs">
-                View
-                <ArrowUpRight className="h-3 w-3" />
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-sm text-muted-foreground mb-4 max-w-md">{description}</p>
+        <Button variant="outline" onClick={onReset}>
+          Сбросить фильтры
               </Button>
-            </div>
-          </div>
-        ))}
       </CardContent>
     </Card>
   )
 }
 
-function LearningPathsCard({ bundles }: { bundles: CourseBundle[] }) {
-  return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base font-semibold">Learning paths</CardTitle>
-        <CardDescription>Follow a structured sprint with defined outcomes.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Accordion type="single" collapsible className="space-y-2">
-          {bundles.map((bundle) => (
-            <AccordionItem key={bundle.id} value={bundle.id} className="border-border/40">
-              <AccordionTrigger className="text-left text-sm font-medium">
-                {bundle.title}
-              </AccordionTrigger>
-              <AccordionContent className="space-y-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">{bundle.goal}</p>
-                <p>{bundle.description}</p>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <Badge variant="outline" className="rounded-md uppercase">
-                    {bundle.duration}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-md uppercase">
-                    {bundle.focus}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-md uppercase">
-                    {bundle.bestFor}
-        </Badge>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </CardContent>
-    </Card>
-  )
+function formatNumber(num: number): string {
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}k`
+  }
+  return num.toString()
 }
 
-function CohortsCard({ cohorts }: { cohorts: typeof courseCohorts }) {
+function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0) {
+    return `${hours}ч ${mins}м`
+  }
+  return `${mins}м`
+}
+
+interface HeroSectionProps {
+  isExpanded: boolean
+  onToggle: () => void
+  stats: {
+    totalCourses: number
+    totalStudents: number
+    verifiedCount: number
+    avgRating: string
+    activeCreators: number
+  }
+  onCreateCourse: () => void
+  onViewVerified: () => void
+}
+
+function HeroSection({ isExpanded, onToggle, stats, onCreateCourse, onViewVerified }: HeroSectionProps) {
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base font-semibold">Upcoming cohorts</CardTitle>
-        <CardDescription>Reserve a seat before enrollment closes.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {cohorts.map((cohort) => (
-          <div
-            key={cohort.id}
-            className="rounded-lg border border-border/40 bg-muted/20 p-3 text-sm text-muted-foreground"
+    <section
+      className={cn(
+        'relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-background to-background shadow-sm transition-all duration-300',
+        isExpanded ? 'p-8 md:p-12 max-h-[1000px]' : 'px-8 py-3 max-h-14'
+      )}
+    >
+      {isExpanded ? (
+        <div className="relative z-10 space-y-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-8 w-8 rounded-full z-20"
+            onClick={onToggle}
+            aria-label="Collapse hero section"
           >
-            <p className="font-medium text-foreground">{cohort.title}</p>
-            <div className="mt-2 space-y-1 text-xs">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-3.5 w-3.5" />
-                <span>
-                  {formatDate(cohort.startDate)} – {formatDate(cohort.endDate)}
-                </span>
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5">
+            <GraduationCap className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Образовательная платформа</span>
+          </div>
+
+          <div className="space-y-4 max-w-3xl">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Учитесь у лучших создателей сообщества
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Верифицированные курсы от модерации и авторские материалы от опытных разработчиков.
+              Развивайтесь, зарабатывайте репутацию и делитесь знаниями.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button size="lg" className="gap-2" onClick={onCreateCourse}>
+              <Sparkles className="h-4 w-4" />
+              Создать курс
+            </Button>
+            <Button size="lg" variant="outline" className="gap-2" onClick={onViewVerified}>
+              <ShieldCheck className="h-4 w-4" />
+              Верифицированные курсы
+            </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5" />
-                <span>
-                  {cohort.seats} seats · {formatCohortStatus(cohort.status)}
-                </span>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
+            <StatCard icon={BookOpen} label="Курсов" value={stats.totalCourses.toString()} />
+            <StatCard icon={Users} label="Студентов" value={formatNumber(stats.totalStudents)} />
+            <StatCard icon={ShieldCheck} label="Верифицировано" value={stats.verifiedCount.toString()} />
+            <StatCard icon={Star} label="Средний рейтинг" value={stats.avgRating} />
               </div>
       </div>
-    </div>
-        ))}
-      </CardContent>
-    </Card>
-  )
-}
-
-function TestimonialsCard({
-  testimonials,
-}: {
-  testimonials: typeof courseTestimonials
-}) {
-  return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base font-semibold">Learner stories</CardTitle>
-        <CardDescription>Proof from teams shipping real outcomes.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="space-y-2 rounded-lg border border-border/40 bg-background/90 p-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{testimonial.name}</p>
-              <p className="text-xs text-muted-foreground">{testimonial.role}</p>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">“{testimonial.quote}”</p>
-            <Badge variant="outline" className="rounded-md text-xs uppercase">
-              {testimonial.outcome}
-            </Badge>
+      ) : (
+        <div className="flex items-center gap-3 w-full relative z-10">
+          <GraduationCap className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-semibold text-foreground">Учитесь у лучших создателей сообщества</span>
           </div>
-        ))}
-      </CardContent>
-    </Card>
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>{stats.totalCourses}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Users className="h-3.5 w-3.5" />
+              <span>{formatNumber(stats.totalStudents)}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>{stats.verifiedCount}</span>
+    </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Star className="h-3.5 w-3.5" />
+              <span>{stats.avgRating}</span>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0 rounded-full -mr-1"
+            onClick={onToggle}
+            aria-label="Expand hero section"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+      
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-0" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-0" />
+    </section>
   )
-}
-
-function QuickFaqCard({ faqs }: { faqs: CourseFaqEntry[] }) {
-  return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base font-semibold">FAQ</CardTitle>
-        <CardDescription>Fast answers before you join a cohort.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Accordion type="single" collapsible className="space-y-2">
-          {faqs.map((faq) => (
-            <AccordionItem key={faq.id} value={faq.id} className="border-border/40">
-              <AccordionTrigger className="text-left text-sm font-medium">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </CardContent>
-    </Card>
-  )
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
-}
-
-function formatCohortStatus(status: 'enrolling' | 'waitlist' | 'closed') {
-  if (status === 'enrolling') return 'Enrolling'
-  if (status === 'waitlist') return 'Waitlist open'
-  return 'Closed'
 }

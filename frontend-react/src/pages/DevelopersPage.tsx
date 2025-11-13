@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,655 +7,777 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SiteHeader } from '@/components/SiteHeader'
 import {
-  developerResources,
-  developerToolkits,
-  developerCompatibilityMatrix,
-  developerRoadmap,
-  developerStarters,
-  developerSnippets,
-  developerOfficeHours,
-  developerContributors,
-  developerSupportChecklists,
-} from '@/data/mockSections'
-import type {
-  DeveloperResource,
-  DeveloperSnippet,
-  DeveloperSnippetExample,
-  DeveloperSupportChecklist,
+  startups,
+  developmentJournalEntries,
+  developmentTools,
+  type Startup,
+  type DevelopmentJournalEntry,
+  type DevelopmentTool,
 } from '@/data/mockSections'
 import { cn } from '@/lib/utils'
 import {
-  ArrowUpRight,
-  CheckCircle2,
-  Clock,
-  Compass,
-  FileCode2,
-  Gauge,
-  GitBranch,
-  Layers2,
   Rocket,
-  ShieldCheck,
+  TrendingUp,
   Users,
+  Heart,
+  BadgeCheck,
+  Calendar,
+  Eye,
+  MessageCircle,
+  Search,
+  Filter,
+  ExternalLink,
+  Github,
+  Twitter,
+  Globe,
+  BarChart3,
+  GitBranch,
+  DollarSign,
+  Zap,
+  Star,
+  ArrowUpRight,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 
-const categoryLabels: Record<DeveloperResource['category'], string> = {
-  changelog: 'Changelog',
-  'open-source': 'Open source',
-  guideline: 'Guidelines',
-  tooling: 'Tooling',
+type StartupCategory = Startup['category'] | 'all'
+type StartupStage = Startup['stage'] | 'all'
+type JournalType = DevelopmentJournalEntry['type'] | 'all'
+type ToolCategory = DevelopmentTool['category'] | 'all'
+
+const categoryLabels: Record<Startup['category'], string> = {
+  'saas': 'SaaS',
+  'mobile-app': 'Mobile App',
+  'web-app': 'Web App',
+  'ai-ml': 'AI/ML',
+  'blockchain': 'Blockchain',
+  'hardware': 'Hardware',
+  'other': 'Other',
 }
 
-const categories = ['changelog', 'open-source', 'guideline', 'tooling'] as const
-const statusFilters = ['all', 'stable', 'beta', 'deprecated'] as const
+const stageLabels: Record<Startup['stage'], string> = {
+  'idea': 'Idea',
+  'mvp': 'MVP',
+  'beta': 'Beta',
+  'launched': 'Launched',
+  'scaling': 'Scaling',
+}
 
-type CategoryFilter = (typeof categories)[number]
-type StatusFilter = (typeof statusFilters)[number]
+const journalTypeLabels: Record<DevelopmentJournalEntry['type'], string> = {
+  'update': 'Update',
+  'milestone': 'Milestone',
+  'roadmap': 'Roadmap',
+  'review': 'Review',
+}
 
-type SnippetLanguage = DeveloperSnippetExample['language']
-
-const languageLabels: Record<SnippetLanguage, string> = {
-  curl: 'cURL',
-  typescript: 'TypeScript',
-  bash: 'Bash',
-  graphql: 'GraphQL',
+const toolCategoryLabels: Record<DevelopmentTool['category'], string> = {
+  'promotion': 'Promotion',
+  'analytics': 'Analytics',
+  'integration': 'Integration',
+  'monetization': 'Monetization',
 }
 
 export default function DevelopersPage() {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('changelog')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [keyword, setKeyword] = useState('')
+  
+  // Состояние для журнала разработок
+  const [activeTab, setActiveTab] = useState<'startups' | 'journal'>('startups')
+  const [categoryFilter, setCategoryFilter] = useState<StartupCategory>('all')
+  const [stageFilter, setStageFilter] = useState<StartupStage>('all')
+  const [journalTypeFilter, setJournalTypeFilter] = useState<JournalType>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Состояние для инструментов
+  const [toolCategoryFilter, setToolCategoryFilter] = useState<ToolCategory>('all')
+  
+  // Состояние для hero секции
+  const [isHeroExpanded, setIsHeroExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('developers-hero-expanded')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
 
-  const resourcesByCategory = useMemo(() => {
-    return developerResources.reduce<Record<string, DeveloperResource[]>>((acc, item) => {
-      const key = item.category
-      acc[key] = acc[key] ? [...acc[key], item] : [item]
-      return acc
-    }, {})
-  }, [])
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('developers-hero-expanded', String(isHeroExpanded))
+    }
+  }, [isHeroExpanded])
 
-  const summaryMetrics = useMemo(
-    () => [
-      {
-        id: 'metric-1',
-        label: 'Active resources',
-        value: developerResources.length.toString(),
-        description: 'Changelog, guides & tooling currently maintained',
-        icon: FileCode2,
-      },
-      {
-        id: 'metric-2',
-        label: 'Starter templates',
-        value: developerStarters.length.toString(),
-        description: 'Ready-to-fork project setups for Aetheris stacks',
-        icon: Rocket,
-      },
-      {
-        id: 'metric-3',
-        label: 'Office hours this month',
-        value: developerOfficeHours.length.toString(),
-        description: 'Live mentoring sessions with platform engineers',
-        icon: Users,
-      },
-      {
-        id: 'metric-4',
-        label: 'Verified integrations',
-        value: developerCompatibilityMatrix.filter((item) => item.status === 'stable').length.toString(),
-        description: 'Stacks certified against the latest release',
-        icon: ShieldCheck,
-      },
-    ],
-    []
-  )
-
-  const filteredResources = useMemo(() => {
-    const data = resourcesByCategory[activeCategory] ?? []
-    return data.filter((resource) => {
-      const matchesKeyword = keyword
-        ? [resource.title, resource.summary, resource.maintainer]
-            .join(' ')
-            .toLowerCase()
-            .includes(keyword.toLowerCase())
-        : true
-      const matchesStatus = statusFilter === 'all' || resource.status === statusFilter
-      return matchesKeyword && matchesStatus
+  // Фильтрация стартапов
+  const filteredStartups = useMemo(() => {
+    return startups.filter((startup) => {
+      const matchesCategory = categoryFilter === 'all' || startup.category === categoryFilter
+      const matchesStage = stageFilter === 'all' || startup.stage === stageFilter
+      const matchesSearch = searchQuery === '' || 
+        startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      return matchesCategory && matchesStage && matchesSearch
     })
-  }, [activeCategory, keyword, resourcesByCategory, statusFilter])
+  }, [categoryFilter, stageFilter, searchQuery])
 
-  const resetFilters = () => {
-    setActiveCategory('changelog')
-    setStatusFilter('all')
-    setKeyword('')
-  }
+  // Фильтрация журналов
+  const filteredJournals = useMemo(() => {
+    return developmentJournalEntries.filter((entry) => {
+      const matchesType = journalTypeFilter === 'all' || entry.type === journalTypeFilter
+      const matchesSearch = searchQuery === '' ||
+        entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        entry.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        entry.startup.name.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      return matchesType && matchesSearch
+    })
+  }, [journalTypeFilter, searchQuery])
+
+  // Фильтрация инструментов
+  const filteredTools = useMemo(() => {
+    return developmentTools.filter((tool) => {
+      return toolCategoryFilter === 'all' || tool.category === toolCategoryFilter
+    })
+  }, [toolCategoryFilter])
+
+  const featuredStartups = startups.filter(s => s.isFeatured)
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="container space-y-10 pb-12 pt-6">
-        <section className="grid gap-6 rounded-2xl border border-border/60 bg-muted/20 p-6 shadow-sm lg:grid-cols-[1.4fr_1fr]">
-          <div className="space-y-5">
-            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-              Developer Hub
-            </Badge>
-            <div className="space-y-3">
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Build, ship, and scale faster with guild-grade playbooks.
-              </h1>
-              <p className="max-w-3xl text-base text-muted-foreground">
-                Tap into curated release notes, verified integrations, and automation kits maintained by the Aetheris
-                engineering guild. Everything in one place—from sandbox-ready starters to office hours with platform mentors.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={() => navigate('/create')} className="gap-2">
-                <ArrowUpRight className="h-4 w-4" />
-                Publish a technical update
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/networking')} className="gap-2">
-                <Compass className="h-4 w-4" />
-                Find a maintainer partner
-              </Button>
-            </div>
-          </div>
+      <main className="container space-y-10 pb-6 pt-6">
+        {/* Hero Section */}
+        <HeroSection
+          isExpanded={isHeroExpanded}
+          onToggle={() => setIsHeroExpanded(!isHeroExpanded)}
+          stats={{
+            startups: startups.length,
+            publications: developmentJournalEntries.length,
+            followers: startups.reduce((acc, s) => acc + s.stats.followers, 0),
+            donations: startups.reduce((acc, s) => acc + s.stats.totalDonations, 0),
+          }}
+        />
 
-          <div className="grid gap-3 md:grid-cols-2">
-            {summaryMetrics.map((metric) => {
-              const Icon = metric.icon
-              return (
-                <Card key={metric.id} className="border-border/60 bg-background/90 shadow-sm">
-                  <CardHeader className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {metric.label}
-                      </CardDescription>
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                    </div>
-                    <CardTitle className="text-2xl font-semibold">{metric.value}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 text-xs text-muted-foreground">
-                    {metric.description}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* Featured Startups */}
+        {featuredStartups.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-semibold">Compatibility matrix</CardTitle>
-                <CardDescription>Stay on the supported path before running upgrades.</CardDescription>
+                <h2 className="text-2xl font-bold tracking-tight">Избранные стартапы</h2>
+                <p className="text-sm text-muted-foreground">Проекты, рекомендованные сообществом</p>
               </div>
               <Button variant="outline" size="sm" className="gap-2">
-                <Gauge className="h-4 w-4" />
-                View advisory log
+                <Star className="h-4 w-4" />
+                Все избранные
               </Button>
-            </CardHeader>
-            <CardContent className="overflow-hidden">
-              <div className="hidden grid-cols-[1.1fr_0.9fr_0.9fr_auto_1.4fr] gap-4 rounded-xl bg-muted/40 px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
-                <span>Stack</span>
-                <span>Current</span>
-                <span>Recommended</span>
-                <span>Status</span>
-                <span>Notes</span>
+                    </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              {featuredStartups.map((startup) => (
+                <FeaturedStartupCard key={startup.id} startup={startup} onClick={() => navigate(`/startup/${startup.id}`)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Main Content - Tabs */}
+        <section className="space-y-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'startups' | 'journal')} className="w-full">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <TabsList className="w-fit">
+                <TabsTrigger value="startups" className="gap-2">
+                  <Rocket className="h-4 w-4" />
+                  Стартапы
+                </TabsTrigger>
+                <TabsTrigger value="journal" className="gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Журнал разработок
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Search and Filters */}
+              <div className="flex flex-1 items-center gap-2 sm:max-w-md">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Поиск..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </div>
-              <div className="space-y-3">
-                {developerCompatibilityMatrix.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="grid gap-4 rounded-xl border border-border/60 bg-background/90 px-5 py-4 text-sm shadow-sm transition hover:border-border md:grid-cols-[1.1fr_0.9fr_0.9fr_auto_1.4fr]"
+            </div>
+
+            <TabsContent value="startups" className="space-y-6 mt-6">
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value as StartupCategory)}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+                >
+                  <option value="all">Все категории</option>
+                  {Object.entries(categoryLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                <select
+                  value={stageFilter}
+                  onChange={(e) => setStageFilter(e.target.value as StartupStage)}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+                >
+                  <option value="all">Все стадии</option>
+                  {Object.entries(stageLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                {(categoryFilter !== 'all' || stageFilter !== 'all' || searchQuery) && (
+                    <Button
+                    variant="ghost"
+                      size="sm"
+                    onClick={() => {
+                      setCategoryFilter('all')
+                      setStageFilter('all')
+                      setSearchQuery('')
+                    }}
                   >
-                    <span className="font-medium text-foreground">{entry.stack}</span>
-                    <span className="text-muted-foreground">{entry.currentVersion}</span>
-                    <span className="text-muted-foreground">{entry.recommendedVersion}</span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'w-fit min-w-[86px] justify-center rounded-full px-3 py-1 text-xs font-semibold capitalize',
-                        compatStatusClasses(entry.status)
-                      )}
-                    >
-                      {entry.status}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground md:text-sm">{entry.notes}</span>
-                  </div>
+                    Сбросить
+                    </Button>
+                )}
+              </div>
+
+              {/* Startups Grid */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredStartups.map((startup) => (
+                  <StartupCard key={startup.id} startup={startup} onClick={() => navigate(`/startup/${startup.id}`)} />
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">Roadmap signals</CardTitle>
-                <CardDescription>Track milestones across discovery, QA, and launches.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <GitBranch className="h-4 w-4" />
-                Subscribe to updates
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {developerRoadmap.map((item) => (
-                <div key={item.id} className="group relative pl-6">
-                  <span className="absolute left-0 top-1 h-3 w-3 rounded-full border-2 border-primary bg-background" />
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-sm font-semibold leading-tight group-hover:text-primary transition-colors">
-                        {item.title}
-                      </h3>
-                      <Badge variant={roadmapStatusVariant(item.status)} className="capitalize">
-                        {item.status.replace('-', ' ')}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Target {formatDate(item.targetDate)} · {item.focus}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">Starter templates</CardTitle>
-                <CardDescription>Spin up production-ready projects with one command.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Layers2 className="h-4 w-4" />
-                Browse templates
-              </Button>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              {developerStarters.map((starter) => (
-                <Card key={starter.id} className="border border-border/50">
-                  <CardHeader className="space-y-2">
-                    <CardTitle className="text-base font-semibold">{starter.title}</CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">
-                      {starter.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-muted-foreground">
-                    <div className="rounded-md border border-dashed border-border/60 bg-muted/30 p-3 font-mono text-xs">
-                      {starter.command}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {starter.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="rounded-md text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button asChild variant="ghost" size="sm" className="gap-2 px-2 text-xs">
-                      <a href={starter.repoUrl} target="_blank" rel="noreferrer">
-                        View repository
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Toolkit drops</CardTitle>
-              <CardDescription>Automation, scripts, and integration helpers ready to use.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {developerToolkits.map((toolkit) => (
-                <div key={toolkit.id} className="rounded-lg border border-border/50 bg-background/80 p-4">
-                  <h4 className="text-sm font-semibold leading-tight">{toolkit.title}</h4>
-                  <p className="mt-1 text-sm text-muted-foreground">{toolkit.description}</p>
-                  <Button asChild variant="ghost" size="sm" className="mt-3 gap-2 px-2 text-xs">
-                    <a href={toolkit.href}>
-                      {toolkit.actionLabel}
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="grid gap-6 rounded-xl border border-border/60 bg-background p-6 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-xl font-semibold">Resource library</CardTitle>
-              <CardDescription>Filter by category, release status, or maintainer.</CardDescription>
-            </div>
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-1">
-                {categories.map((category) => {
-                  const isActive = activeCategory === category
-                  return (
-                    <Button
-                      key={category}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs capitalize', isActive && 'shadow-sm')}
-                      onClick={() => setActiveCategory(category)}
-                    >
-                      {categoryLabels[category]}
-                    </Button>
-                  )
-                })}
-              </div>
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-1">
-                {statusFilters.map((status) => {
-                  const isActive = statusFilter === status
-                  return (
-                    <Button
-                      key={status}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn('text-xs capitalize', isActive && 'shadow-sm')}
-                      onClick={() => setStatusFilter(status)}
-                    >
-                      {status}
-                    </Button>
-                  )
-                })}
-              </div>
-              <Input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                placeholder="Search resources or maintainers"
-                className="max-w-sm"
-              />
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
-                Reset
-              </Button>
-            </div>
           </div>
 
-          <div className="space-y-4">
-            {filteredResources.map((resource) => (
-              <DeveloperResourceCard key={resource.id} resource={resource} />
-            ))}
-            {filteredResources.length === 0 && (
-              <Card className="border-dashed bg-muted/40">
-                <CardContent className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center text-sm text-muted-foreground">
-                  <span>No resources yet under these filters.</span>
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/create')}>
-                    Create update
-                  </Button>
+              {filteredStartups.length === 0 && (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <Rocket className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-lg font-medium">Стартапы не найдены</p>
+                    <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры</p>
                 </CardContent>
               </Card>
             )}
-          </div>
-        </section>
+            </TabsContent>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Integration recipes</CardTitle>
-              <CardDescription>Copy-paste snippets for common workflows.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {developerSnippets.map((snippet) => (
-                <SnippetCard key={snippet.id} snippet={snippet} />
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Office hours</CardTitle>
-              <CardDescription>Secure a slot with guild mentors for deep technical dives.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {developerOfficeHours.map((session) => (
-                <div key={session.id} className="rounded-lg border border-border/40 bg-background/80 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="text-sm font-semibold leading-tight">{session.mentor}</h4>
-                      <p className="text-xs text-muted-foreground">{session.role}</p>
-                    </div>
-                    <Badge variant={session.format === 'live' ? 'secondary' : 'outline'} className="capitalize">
-                      {session.format}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{session.topic}</p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {formatDateTime(session.date)}
-                    </span>
-                    <span>{session.slotsRemaining} slots left</span>
-                  </div>
-                  <Button asChild variant="ghost" size="sm" className="mt-3 gap-2 px-2 text-xs">
-                    <a href={session.bookingLink}>
-                      Book session
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </a>
+            <TabsContent value="journal" className="space-y-6 mt-6">
+              {/* Journal Type Filter */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                {(['all', 'update', 'milestone', 'roadmap', 'review'] as const).map((type) => (
+                  <Button
+                    key={type}
+                    variant={journalTypeFilter === type ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={() => setJournalTypeFilter(type)}
+                    className="capitalize"
+                  >
+                    {type === 'all' ? 'Все' : journalTypeLabels[type]}
                   </Button>
+                ))}
                 </div>
-              ))}
+
+              {/* Journal Entries */}
+              <div className="space-y-4">
+                {filteredJournals.map((entry) => (
+                  <JournalEntryCard key={entry.id} entry={entry} onClick={() => navigate(`/journal/${entry.id}`)} />
+                ))}
+              </div>
+
+              {filteredJournals.length === 0 && (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-lg font-medium">Записи не найдены</p>
+                    <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры</p>
             </CardContent>
           </Card>
+              )}
+            </TabsContent>
+          </Tabs>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">Contributor leaderboard</CardTitle>
-                <CardDescription>Shout-out to the people keeping the platform resilient.</CardDescription>
+        {/* Development Tools Section */}
+        <section className="space-y-6 rounded-2xl border border-border/60 bg-muted/20 p-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Zap className="h-6 w-6 text-primary" />
+              Инструменты для разработки
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Монетизация, аналитика и интеграции для продвижения вашего стартапа
+            </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Users className="h-4 w-4" />
-                Nominate contributor
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="hidden grid-cols-4 gap-3 rounded-lg bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
-                <span>Contributor</span>
-                <span>Commits</span>
-                <span>Issues triaged</span>
-                <span>PRs merged</span>
-              </div>
-              {developerContributors.map((contributor) => (
-                <div
-                  key={contributor.id}
-                  className="grid gap-3 rounded-lg border border-border/50 bg-background/80 px-4 py-3 text-sm md:grid-cols-4"
-                >
-                  <div>
-                    <p className="font-semibold text-foreground">{contributor.name}</p>
-                    <p className="text-xs text-muted-foreground">{contributor.role}</p>
-                  </div>
-                  <span>{contributor.commits}</span>
-                  <span>{contributor.issuesTriaged}</span>
-                  <span>{contributor.pullRequests}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
 
-          <Card className="border-border/60 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Ops & support playbooks</CardTitle>
-              <CardDescription>Quick checklists to keep incidents rare and calm.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {developerSupportChecklists.map((checklist) => (
-                <SupportChecklist key={checklist.id} checklist={checklist} />
-              ))}
-            </CardContent>
-          </Card>
+          {/* Tool Category Filter */}
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'promotion', 'analytics', 'integration', 'monetization'] as const).map((category) => (
+              <Button
+                key={category}
+                variant={toolCategoryFilter === category ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setToolCategoryFilter(category)}
+                className="capitalize"
+              >
+                {category === 'all' ? 'Все инструменты' : toolCategoryLabels[category]}
+              </Button>
+            ))}
+                </div>
+
+          {/* Tools Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTools.map((tool) => (
+              <DevelopmentToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
         </section>
       </main>
     </div>
   )
 }
 
-function DeveloperResourceCard({ resource }: { resource: DeveloperResource }) {
+// ==================== COMPONENTS ====================
+
+function FeaturedStartupCard({ startup, onClick }: { startup: Startup; onClick: () => void }) {
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="space-y-2">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-lg font-semibold leading-tight">{resource.title}</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              {formatDate(resource.publishedAt)} · {resource.maintainer}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-md capitalize">
-              {resource.category.replace('-', ' ')}
-            </Badge>
-            <Badge variant={resourceStatusVariant(resource.status)} className="capitalize">
-              {resource.status}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              Verified {formatDate(resource.lastVerified)}
-            </span>
+    <Card 
+      className="group relative overflow-hidden border-border/60 bg-background shadow-sm hover:shadow-md transition-all cursor-pointer"
+      onClick={onClick}
+    >
+      {startup.coverImage && (
+        <div className="relative h-32 w-full overflow-hidden">
+          <img
+            src={startup.coverImage}
+            alt={startup.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        </div>
+      )}
+      <CardHeader className={cn("space-y-3", startup.coverImage && "-mt-8 relative z-10")}>
+        <div className="flex items-start gap-3">
+          <img
+            src={startup.logo}
+            alt={startup.name}
+            className="h-12 w-12 rounded-lg border-2 border-background shadow-sm"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold leading-tight truncate">{startup.name}</h3>
+              {startup.isVerified && (
+                <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-1">{startup.tagline}</p>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">{resource.summary}</p>
+        
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary" className="capitalize text-xs">
+            {categoryLabels[startup.category]}
+            </Badge>
+          <Badge variant="outline" className="capitalize text-xs">
+            {stageLabels[startup.stage]}
+            </Badge>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="gap-1 text-xs">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {resource.status === 'stable' ? 'Safe to adopt' : resource.status === 'beta' ? 'Counts as beta' : 'Sunsetting'}
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground line-clamp-2">{startup.description}</p>
+        
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">{startup.stats.followers} подписчиков</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">${(startup.stats.totalDonations / 1000).toFixed(1)}K</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function StartupCard({ startup, onClick }: { startup: Startup; onClick: () => void }) {
+  return (
+    <Card 
+      className="group relative overflow-hidden border-border/60 hover:border-border transition-all cursor-pointer"
+      onClick={onClick}
+    >
+      <CardHeader className="space-y-3">
+        <div className="flex items-start gap-3">
+          <img
+            src={startup.logo}
+            alt={startup.name}
+            className="h-12 w-12 rounded-lg border border-border"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold leading-tight truncate">{startup.name}</h3>
+              {startup.isVerified && (
+                <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-1">{startup.tagline}</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-1.5">
+          {startup.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs bg-primary/10 text-primary">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            <span>{startup.stats.followers}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span>{startup.stats.updates} updates</span>
+          </div>
+          <Badge variant="outline" className="capitalize text-xs">
+            {stageLabels[startup.stage]}
           </Badge>
         </div>
-        <Button asChild variant="ghost" size="sm" className="gap-2 px-2 text-xs self-start">
-          <a href={resource.link}>
-            Open resource
-            <ArrowUpRight className="h-3.5 w-3.5" />
+        
+        <div className="flex items-center gap-2">
+          {startup.links.website && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" asChild onClick={(e) => e.stopPropagation()}>
+              <a href={startup.links.website} target="_blank" rel="noopener noreferrer">
+                <Globe className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
+          {startup.links.github && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" asChild onClick={(e) => e.stopPropagation()}>
+              <a href={startup.links.github} target="_blank" rel="noopener noreferrer">
+                <Github className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
+          {startup.links.twitter && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" asChild onClick={(e) => e.stopPropagation()}>
+              <a href={startup.links.twitter} target="_blank" rel="noopener noreferrer">
+                <Twitter className="h-3.5 w-3.5" />
           </a>
         </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-function SnippetCard({ snippet }: { snippet: DeveloperSnippet }) {
-  const [activeLanguage, setActiveLanguage] = useState<SnippetLanguage>(snippet.examples[0]?.language ?? 'typescript')
+function JournalEntryCard({ entry, onClick }: { entry: DevelopmentJournalEntry; onClick: () => void }) {
+  const typeColors = {
+    update: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+    milestone: 'bg-green-500/10 text-green-700 dark:text-green-400',
+    roadmap: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
+    review: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
+  }
 
   return (
-    <Card className="border border-border/60">
-      <CardHeader className="space-y-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold leading-tight">{snippet.title}</CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {snippet.stack}
+    <Card 
+      className="group overflow-hidden border-border/60 hover:border-border transition-all cursor-pointer"
+      onClick={onClick}
+    >
+      <div className="flex flex-col md:flex-row gap-4">
+        {entry.previewImage && (
+          <div className="relative w-full md:w-48 h-48 md:h-auto overflow-hidden">
+            <img
+              src={entry.previewImage}
+              alt={entry.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+        )}
+        
+        <div className="flex-1 p-6 space-y-3">
+          <div className="flex items-start gap-3">
+            <img
+              src={entry.startup.logo}
+              alt={entry.startup.name}
+              className="h-10 w-10 rounded-lg border border-border flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-semibold leading-tight group-hover:text-primary transition-colors">
+                  {entry.title}
+                </h3>
+                <Badge className={cn("capitalize text-xs", typeColors[entry.type])}>
+                  {journalTypeLabels[entry.type]}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="font-medium">{entry.startup.name}</span>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(entry.publishedAt).toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </div>
+                <span>•</span>
+                <span>{entry.author.name}</span>
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground line-clamp-2">{entry.excerpt}</p>
+          
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" />
+              <span>{entry.stats.views.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Heart className="h-3.5 w-3.5" />
+              <span>{entry.stats.reactions}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span>{entry.stats.comments}</span>
+            </div>
+          </div>
+          
+          {entry.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {entry.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs bg-primary/10 text-primary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function DevelopmentToolCard({ tool }: { tool: DevelopmentTool }) {
+  const iconMap: Record<string, any> = {
+    TrendingUp,
+    BarChart3,
+    GitBranch,
+    DollarSign,
+    BadgeCheck,
+  }
+  
+  const Icon = iconMap[tool.icon] || Zap
+
+  return (
+    <Card className="relative overflow-hidden border-border/60 hover:border-border transition-all">
+      {tool.isPopular && (
+        <div className="absolute top-3 right-3">
+          <Badge className="bg-primary/10 text-primary text-xs">
+            <Star className="h-3 w-3 mr-1" />
+            Popular
           </Badge>
         </div>
-        <CardDescription className="text-sm text-muted-foreground">{snippet.summary}</CardDescription>
+      )}
+      
+      <CardHeader className="space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold leading-tight">{tool.name}</h3>
+            <Badge variant="outline" className="mt-1 capitalize text-xs">
+              {toolCategoryLabels[tool.category]}
+            </Badge>
+          </div>
+        </div>
+        
+        <p className="text-sm text-muted-foreground line-clamp-2">{tool.description}</p>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        <Tabs value={activeLanguage} onValueChange={(value) => setActiveLanguage(value as SnippetLanguage)}>
-          <TabsList className="w-fit bg-muted/30">
-            {snippet.examples.map((example) => (
-              <TabsTrigger key={example.id} value={example.language} className="text-xs">
-                {languageLabels[example.language]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {snippet.examples.map((example) => (
-            <TabsContent key={example.id} value={example.language} className="mt-4 space-y-3">
-              {example.description && (
-                <p className="text-xs text-muted-foreground">{example.description}</p>
-              )}
-              <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/40">
-                <pre className="max-h-60 overflow-auto p-4 text-xs font-mono text-foreground/90">
-                  <code>{example.code}</code>
-                </pre>
-              </div>
-            </TabsContent>
+        <div className="space-y-2">
+          {tool.features.slice(0, 3).map((feature, index) => (
+            <div key={index} className="flex items-start gap-2 text-xs text-muted-foreground">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+              <span>{feature}</span>
+            </div>
           ))}
-        </Tabs>
+        </div>
+        
+        <div className="flex items-center justify-between pt-2 border-t">
+          <div className="text-sm">
+            {tool.price.type === 'free' ? (
+              <span className="font-semibold text-primary">Бесплатно</span>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-bold">${tool.price.amount}</span>
+                {tool.price.period && (
+                  <span className="text-xs text-muted-foreground">/{tool.price.period === 'month' ? 'мес' : tool.price.period === 'year' ? 'год' : ''}</span>
+                )}
+              </div>
+            )}
+            {tool.price.type === 'freemium' && (
+              <span className="text-xs text-muted-foreground">+ free tier</span>
+            )}
+          </div>
+          
+          <Button size="sm" className="gap-2">
+            Узнать больше
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        
+        <div className="text-xs text-muted-foreground">
+          {tool.usedBy} команд используют
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-function SupportChecklist({ checklist }: { checklist: DeveloperSupportChecklist }) {
+interface HeroSectionProps {
+  isExpanded: boolean
+  onToggle: () => void
+  stats: {
+    startups: number
+    publications: number
+    followers: number
+    donations: number
+  }
+}
+
+function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
   return (
-    <div className="rounded-lg border border-border/50 bg-background/80 p-4">
-      <h4 className="text-sm font-semibold leading-tight">{checklist.title}</h4>
-      <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-        {checklist.items.map((item) => (
-          <li key={item.id} className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-            <span>{item.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <section
+      className={cn(
+        'rounded-3xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-muted/20 shadow-sm transition-all duration-300 overflow-hidden',
+        isExpanded ? 'p-8 max-h-[1000px]' : 'px-8 py-3 max-h-14'
+      )}
+    >
+      {isExpanded ? (
+        <div className="space-y-6 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-8 w-8 rounded-full"
+            onClick={onToggle}
+            aria-label="Collapse hero section"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs uppercase tracking-[0.3em]">
+            <Rocket className="mr-2 h-3.5 w-3.5" />
+            Development Hub
+          </Badge>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              Журнал разработок стартапов
+            </h1>
+            <p className="max-w-3xl text-lg text-muted-foreground">
+              Следите за развитием инновационных проектов, поддерживайте команды и будьте в курсе последних обновлений из мира стартапов.
+            </p>
+          </div>
+          
+          {/* Статистика */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-4">
+            <div className="rounded-xl border border-border/60 bg-background/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Rocket className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.startups}</p>
+                  <p className="text-xs text-muted-foreground">Активных стартапов</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.publications}</p>
+                  <p className="text-xs text-muted-foreground">Публикаций</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.followers}</p>
+                  <p className="text-xs text-muted-foreground">Подписчиков</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Heart className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    ${(stats.donations / 1000).toFixed(0)}K
+                  </p>
+                  <p className="text-xs text-muted-foreground">Собрано донатов</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 w-full">
+          <Rocket className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-semibold text-foreground">Журнал разработок стартапов</span>
+          </div>
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Rocket className="h-3.5 w-3.5" />
+              <span>{stats.startups}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span>{stats.publications}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Users className="h-3.5 w-3.5" />
+              <span>{stats.followers}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Heart className="h-3.5 w-3.5" />
+              <span>${(stats.donations / 1000).toFixed(0)}K</span>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0 rounded-full -mr-1"
+            onClick={onToggle}
+            aria-label="Expand hero section"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+    </section>
   )
 }
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
-
-function resourceStatusVariant(status: DeveloperResource['status']) {
-  switch (status) {
-    case 'stable':
-      return 'secondary'
-    case 'beta':
-      return 'outline'
-    case 'deprecated':
-      return 'destructive'
-    default:
-      return 'outline'
-  }
-}
-
-function compatStatusClasses(status: 'stable' | 'planned' | 'outdated') {
-  switch (status) {
-    case 'stable':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    case 'planned':
-      return 'border-border/60 bg-background text-muted-foreground'
-    case 'outdated':
-      return 'border-destructive/20 bg-destructive text-destructive-foreground'
-    default:
-      return ''
-  }
-}
-
-function roadmapStatusVariant(status: 'in-progress' | 'qa' | 'released' | 'planned') {
-  switch (status) {
-    case 'released':
-      return 'secondary'
-    case 'in-progress':
-      return 'outline'
-    case 'qa':
-      return 'secondary'
-    case 'planned':
-      return 'outline'
-    default:
-      return 'outline'
-  }
-}
-

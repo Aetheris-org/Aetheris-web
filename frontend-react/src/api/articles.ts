@@ -221,16 +221,16 @@ function logAxiosError(label: string, error: unknown) {
 
 export async function getArticle(id: string, _options: GetArticleOptions = {}): Promise<Article> {
   const params: Record<string, unknown> = {
-    populate: {
-      author: {
-        fields: ['id', 'username'],
-        populate: {
-          avatar: { fields: ['url'] }
-        }
-      },
-      preview_image: { fields: ['url'] }
+      populate: {
+        author: {
+          fields: ['id', 'username'],
+          populate: {
+            avatar: { fields: ['url'] }
+          }
+        },
+        preview_image: { fields: ['url'] }
+      }
     }
-  }
 
   try {
     const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/api/articles/${id}`, {
@@ -254,9 +254,9 @@ export async function getDraftArticle(id: number): Promise<Article> {
       headers: {
         'X-Require-Auth': 'true',
       },
-    })
-
-    return transformArticle(unwrapStrapiResponse(res.data))
+  })
+  
+  return transformArticle(unwrapStrapiResponse(res.data))
   } catch (error) {
     logAxiosError('[api/getDraftArticle] request failed', error)
     throw error

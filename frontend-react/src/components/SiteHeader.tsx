@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Compass, MessageSquare, UsersRound, GraduationCap, Code2 } from 'lucide-react'
+import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
+import { useAuthStore } from '@/stores/authStore'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,12 @@ const destinations = [
     description: 'Community debates, retrospectives, and shipping notes.',
     icon: MessageSquare,
     path: '/forum',
+  },
+  {
+    label: 'Explore',
+    description: 'Duels, clan wars, leaderboards, and epic events.',
+    icon: Swords,
+    path: '/explore',
   },
   {
     label: 'Networking',
@@ -39,19 +46,32 @@ const destinations = [
   },
 ]
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  transparent?: boolean
+}
+
+export function SiteHeader({ transparent = false }: SiteHeaderProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
 
-  const activeDestination = destinations.find((item) =>
-    item.path === '/'
-      ? location.pathname === '/'
-      : location.pathname.startsWith(item.path)
-  )
+  // На лендинге (/) не показываем навигацию
+  const isLandingPage = location.pathname === '/'
+
+  const activeDestination = destinations.find((item) => {
+    return location.pathname.startsWith(item.path)
+  })
   const ActiveIcon = activeDestination?.icon ?? Compass
 
+  // Кнопка создания статьи показывается только на странице форума и только для авторизованных пользователей
+  const showCreateButton = location.pathname === '/forum' && user
+
+  const headerClasses = transparent
+    ? 'sticky top-0 z-50 w-full'
+    : 'sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={headerClasses}>
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -63,6 +83,7 @@ export function SiteHeader() {
             Aetheris
           </button>
 
+          {!isLandingPage && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -105,9 +126,30 @@ export function SiteHeader() {
               })}
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
+          {isLandingPage && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => navigate('/pricing')}
+              className="gap-2"
+            >
+              Pricing
+            </Button>
+          )}
+          {showCreateButton && (
+            <Button
+              size="sm"
+              onClick={() => navigate('/create')}
+              className="gap-2"
+            >
+              <PenSquare className="h-4 w-4" />
+              Create
+            </Button>
+          )}
           <ThemeToggle />
           <AccountSheet />
         </div>
