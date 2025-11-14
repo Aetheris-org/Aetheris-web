@@ -98,13 +98,40 @@ export default function ForumLandingPage() {
         { selector: '.bg-line-h2', y: 200, scrub: 2.5 },
         { selector: '.bg-line-h3', y: -180, scrub: 2.5 },
         
-        // Сетка - легкое движение
-        { selector: '.bg-grid', x: 50, y: 50, scrub: 4 },
+        // Сетка - легкое движение (будет обработано отдельно)
+        { selector: '.bg-grid', isGrid: true, scrub: 4 },
       ]
 
       bgElements.forEach((element) => {
         const el = document.querySelector(element.selector) as HTMLElement
         if (el) {
+          // Специальная обработка для сетки - эффект перспективы, где границы сдвигаются друг к другу
+          if ((element as any).isGrid) {
+            // Комбинируем backgroundPosition и transform для создания эффекта глубины
+            gsap.fromTo(el, 
+              { 
+                backgroundPosition: '0px 0px',
+                x: 0,
+                y: 0,
+                scale: 1,
+              },
+              {
+                backgroundPosition: '120px 120px',
+                x: 40,
+                y: 40,
+                scale: 1.05,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: document.body,
+                  start: 'top top',
+                  end: 'max',
+                  scrub: element.scrub || 4,
+                },
+              }
+            )
+            return
+          }
+          
           const animProps: any = {
             ease: 'none',
             scrollTrigger: {
@@ -784,9 +811,9 @@ export default function ForumLandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-12 px-4 relative" style={{ zIndex: 1 }}>
+      <footer className="pt-8 pb-16 sm:pb-20 px-4 relative" style={{ zIndex: 1 }}>
         <div className="container max-w-6xl mx-auto text-center text-muted-foreground">
-          <p>© 2025 Aetheris. Создано с ❤️ для комьюнити.</p>
+          <p className="text-sm sm:text-base">© 2025 Aetheris. Создано с ❤️ для комьюнити.</p>
         </div>
       </footer>
     </div>

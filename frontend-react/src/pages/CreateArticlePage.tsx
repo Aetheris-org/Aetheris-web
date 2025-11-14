@@ -27,6 +27,7 @@ import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
 import { createDraftArticle, updateDraftArticle, publishArticle, getDraftArticle } from '@/api/articles'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
@@ -66,6 +67,7 @@ export default function CreateArticlePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { user } = useAuthStore()
+  const { t } = useTranslation()
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -198,8 +200,8 @@ export default function CreateArticlePage() {
 
     if (!currentUser) {
       toast({
-        title: 'Authentication required',
-        description: 'Sign in to save drafts.',
+        title: t('createArticle.authRequired'),
+        description: t('createArticle.authRequiredToSave'),
         variant: 'destructive',
       })
       navigate('/auth')
@@ -213,8 +215,8 @@ export default function CreateArticlePage() {
 
     if (!hasTitle && !hasBody) {
       toast({
-        title: 'Add content first',
-        description: 'Start by adding a title or some content before saving.',
+        title: t('createArticle.addContentFirst'),
+        description: t('createArticle.addContentFirstDescription'),
         variant: 'destructive',
       })
       return
@@ -227,19 +229,19 @@ export default function CreateArticlePage() {
 
       try {
         previewImageId = await uploadPreviewImageAsset()
-      } catch (error) {
+    } catch (error) {
         console.error('Preview upload failed', error)
-        toast({
-          title: 'Image upload failed',
-          description: 'We could not upload the preview image. Try again or continue without it.',
-          variant: 'destructive',
-        })
+      toast({
+          title: t('createArticle.imageUploadFailed'),
+          description: t('createArticle.imageUploadFailedDescription'),
+        variant: 'destructive',
+      })
         setIsSavingDraft(false)
         return
       }
 
       const payload = {
-        title: title.trim() || 'Untitled draft',
+        title: title.trim() || t('createArticle.untitledDraft'),
         content: sanitizedContent || (hasBody ? content : ''),
         excerpt: excerpt.trim() || null,
         tags,
@@ -264,8 +266,8 @@ export default function CreateArticlePage() {
       loadedDraftIdRef.current = saved.databaseId
 
       toast({
-        title: 'Draft saved',
-        description: 'Your latest changes are safe.',
+        title: t('createArticle.draftSaved'),
+        description: t('createArticle.draftSavedDescription'),
       })
     } catch (error: unknown) {
       console.error('Failed to save draft', error)
@@ -276,8 +278,8 @@ export default function CreateArticlePage() {
             ? error.message
             : undefined
       toast({
-        title: 'Unable to save draft',
-        description: message || 'Please try again or copy your content before leaving.',
+        title: t('createArticle.unableToSaveDraft'),
+        description: message || t('createArticle.unableToSaveDraftDescription'),
         variant: 'destructive',
       })
     } finally {
@@ -322,8 +324,8 @@ export default function CreateArticlePage() {
 
     if (!file.type.startsWith('image/')) {
       toast({
-        title: 'Unsupported file',
-        description: 'Please choose an image file (JPG, PNG, WEBP).',
+        title: t('createArticle.unsupportedFile'),
+        description: t('createArticle.unsupportedFileDescription'),
         variant: 'destructive',
       })
       return
@@ -370,8 +372,8 @@ export default function CreateArticlePage() {
     } catch (error) {
       console.error('Failed to crop image', error)
       toast({
-        title: 'Image processing failed',
-        description: 'We could not process this image. Try another one.',
+        title: t('createArticle.imageProcessingFailed'),
+        description: t('createArticle.imageProcessingFailedDescription'),
         variant: 'destructive',
       })
     } finally {
@@ -384,14 +386,14 @@ export default function CreateArticlePage() {
     setIsProcessingImage(false)
     if (!croppedImageUrl && originalImageUrl) {
       if (originalImageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(originalImageUrl)
+      URL.revokeObjectURL(originalImageUrl)
       }
       setOriginalImageUrl(null)
       setCroppedImageBlob(null)
     }
     if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
       if (selectedImageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(selectedImageUrl)
+      URL.revokeObjectURL(selectedImageUrl)
       }
     }
     setSelectedImageUrl(null)
@@ -454,8 +456,8 @@ export default function CreateArticlePage() {
         console.error('Failed to load draft', error)
         if (!cancelled) {
           toast({
-            title: 'Unable to load draft',
-            description: 'We could not open this draft. It may have been removed.',
+            title: t('createArticle.unableToLoadDraft'),
+            description: t('createArticle.unableToLoadDraftDescription'),
             variant: 'destructive',
           })
         }
@@ -513,8 +515,8 @@ export default function CreateArticlePage() {
 
     if (!currentUser) {
       toast({
-        title: 'Authentication required',
-        description: 'You must be logged in to publish articles',
+        title: t('createArticle.authRequired'),
+        description: t('createArticle.authRequiredToPublish'),
         variant: 'destructive',
       })
       navigate('/auth')
@@ -528,8 +530,8 @@ export default function CreateArticlePage() {
 
     if (!hasTitle || !hasBody) {
       toast({
-        title: 'Missing information',
-        description: 'Add a title and the main content before publishing.',
+        title: t('createArticle.missingInformation'),
+        description: t('createArticle.missingInformationDescription'),
         variant: 'destructive',
       })
       return
@@ -542,31 +544,31 @@ export default function CreateArticlePage() {
 
       try {
         previewImageId = await uploadPreviewImageAsset()
-      } catch (error) {
+        } catch (error) {
         console.error('Preview upload failed', error)
-        toast({
-          title: 'Image upload failed',
-          description: 'Preview upload did not complete. You can retry or publish without it.',
-          variant: 'destructive',
-        })
-        setIsPublishing(false)
-        return
+          toast({
+          title: t('createArticle.imageUploadFailed'),
+          description: t('createArticle.imageUploadFailedPublishDescription'),
+            variant: 'destructive',
+          })
+          setIsPublishing(false)
+          return
       }
 
       const payload = {
-        title: title.trim(),
+            title: title.trim(),
         content: sanitizedContent,
-        excerpt: excerpt.trim() || null,
-        tags,
-        difficulty,
+            excerpt: excerpt.trim() || null,
+            tags,
+            difficulty,
         previewImageId,
       }
 
       const publishedArticle = await publishArticle(payload, draftId)
-
+      
       toast({
-        title: 'Article published!',
-        description: 'Your article is now live.',
+        title: t('createArticle.articlePublished'),
+        description: t('createArticle.articlePublishedDescription'),
       })
       resetPreviewImage()
       setTitle('')
@@ -593,8 +595,8 @@ export default function CreateArticlePage() {
             ? error.message
             : undefined
       toast({
-        title: 'Publication failed',
-        description: message || 'Something went wrong while publishing your article.',
+        title: t('createArticle.publicationFailed'),
+        description: message || t('createArticle.publicationFailedDescription'),
         variant: 'destructive',
       })
     } finally {
@@ -605,39 +607,39 @@ export default function CreateArticlePage() {
   const steps = [
     {
       id: 0,
-      label: 'Basic Info',
+      label: t('createArticle.steps.basicInfo'),
       icon: Type,
-      description: 'Title and excerpt',
+      description: t('createArticle.steps.basicInfoDescription'),
     },
     {
       id: 1,
-      label: 'Content',
+      label: t('createArticle.steps.content'),
       icon: FileText,
-      description: 'Article content',
+      description: t('createArticle.steps.contentDescription'),
     },
     {
       id: 2,
-      label: 'Metadata',
+      label: t('createArticle.steps.metadata'),
       icon: Tag,
-      description: 'Tags and difficulty',
+      description: t('createArticle.steps.metadataDescription'),
     },
     {
       id: 3,
-      label: 'Preview',
+      label: t('createArticle.steps.preview'),
       icon: ImageIcon,
-      description: 'Hero image',
+      description: t('createArticle.steps.previewDescription'),
     },
     {
       id: 4,
-      label: 'Review',
+      label: t('createArticle.steps.review'),
       icon: Eye,
-      description: 'Final preview',
+      description: t('createArticle.steps.reviewDescription'),
     },
     {
       id: 5,
-      label: 'Guidelines',
+      label: t('createArticle.steps.guidelines'),
       icon: AlertCircle,
-      description: 'Publishing rules',
+      description: t('createArticle.steps.guidelinesDescription'),
     },
   ]
 
@@ -688,7 +690,7 @@ export default function CreateArticlePage() {
               Back
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Create Article</h1>
+            <h1 className="text-lg font-semibold">{t('createArticle.title')}</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -803,10 +805,10 @@ export default function CreateArticlePage() {
             {currentStep === 0 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
           <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Article Title</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t('createArticle.articleTitle')}</Label>
             <div className="relative">
             <Input
-                      placeholder={isTitleFocused || title.trim() ? '' : 'Enter your article title...'}
+                      placeholder={isTitleFocused || title.trim() ? '' : t('createArticle.titlePlaceholder')}
               value={title}
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, TITLE_MAX_LENGTH)
@@ -823,7 +825,7 @@ export default function CreateArticlePage() {
               </div>
             </div>
                   <p className="text-xs text-muted-foreground">
-                    Choose a clear, descriptive title that captures the essence of your article.
+                    {t('createArticle.titleHint')}
                   </p>
           </div>
 
@@ -831,13 +833,13 @@ export default function CreateArticlePage() {
 
           <div className="space-y-2">
                   <Label htmlFor="excerpt" className="text-sm font-medium">
-                    Excerpt <span className="text-muted-foreground font-normal">(optional)</span>
+                    {t('createArticle.excerpt')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                   </Label>
             <div className="relative">
               <Textarea
               id="excerpt"
                 ref={excerptTextareaRef}
-                placeholder={isExcerptFocused || excerpt.trim() ? '' : 'Brief description of your article...'}
+                placeholder={isExcerptFocused || excerpt.trim() ? '' : t('createArticle.excerptPlaceholder')}
               value={excerpt}
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, EXCERPT_MAX_LENGTH)
@@ -855,7 +857,7 @@ export default function CreateArticlePage() {
           </div>
             </div>
                   <p className="text-xs text-muted-foreground">
-                    A short summary that appears in article previews and search results.
+                    {t('createArticle.excerptHint')}
                   </p>
           </div>
               </div>
@@ -867,10 +869,10 @@ export default function CreateArticlePage() {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <Label id="content-editor-label" htmlFor="content-editor" className="text-base font-medium">
-                      Article Content
+                      {t('createArticle.content')}
                     </Label>
                     <span className="text-xs text-muted-foreground">
-                      Rich text editor with formatting, shortcuts, and live previews
+                      {t('createArticle.contentHint')}
                     </span>
                   </div>
                   <RichTextEditor
@@ -878,7 +880,7 @@ export default function CreateArticlePage() {
                     ariaLabelledBy="content-editor-label"
               value={content}
                     onChange={setContent}
-                    placeholder="Start writing your article content here..."
+                    placeholder={t('createArticle.contentPlaceholder')}
                     characterLimit={20000}
             />
           </div>
@@ -892,16 +894,16 @@ export default function CreateArticlePage() {
             <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Tag className="h-5 w-5" />
-                      Tags
+                      {t('createArticle.tags')}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Add tags to help readers find your article. Press Enter to add.
+                      {t('createArticle.tagsDescription')}
                     </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Add a tag..."
+                  placeholder={t('createArticle.tagsPlaceholder')}
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {

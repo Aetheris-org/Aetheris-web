@@ -34,8 +34,10 @@ import { selectReadingListCount, useReadingListStore } from '@/stores/readingLis
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { Progress } from '@/components/ui/progress'
 import { FriendsSheet } from '@/components/FriendsSheet'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export function AccountSheet() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [friendsSheetOpen, setFriendsSheetOpen] = useState(false)
@@ -76,8 +78,24 @@ export function AccountSheet() {
 
   if (!user) {
     return (
-      <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
-        Sign In
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => {
+          const currentPath = location.pathname + location.search
+          console.log('🔐 Sign in clicked, current path:', currentPath)
+          // Не сохраняем redirect если уже на странице авторизации
+          if (currentPath !== '/auth' && currentPath !== '/auth?') {
+            const redirectUrl = `/auth?redirect=${encodeURIComponent(currentPath)}`
+            console.log('🔗 Navigating to auth with redirect:', redirectUrl)
+            navigate(redirectUrl)
+          } else {
+            console.log('🔗 Navigating to auth without redirect')
+            navigate('/auth')
+          }
+        }}
+      >
+        {t('accountSheet.signIn')}
       </Button>
     )
   }
@@ -87,7 +105,7 @@ export function AccountSheet() {
       <SheetTrigger asChild>
         <button
           className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted transition hover:border-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          aria-label="Open account menu"
+          aria-label={t('accountSheet.openMenu')}
         >
           {user.avatar ? (
             <img
@@ -102,9 +120,9 @@ export function AccountSheet() {
       </SheetTrigger>
       <SheetContent side="right" className="w-[360px] sm:w-[420px] overflow-y-auto">
         <SheetHeader className="items-start space-y-2">
-          <SheetTitle>Workspace hub</SheetTitle>
+          <SheetTitle>{t('accountSheet.workspaceHub')}</SheetTitle>
           <SheetDescription>
-            Review your profile at a glance, jump back into writing, and manage your account.
+            {t('accountSheet.workspaceDescription')}
           </SheetDescription>
         </SheetHeader>
 
@@ -123,11 +141,10 @@ export function AccountSheet() {
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
                     <div className="group relative max-w-full">
-                      <p
-                        className="truncate text-xs text-muted-foreground"
-                        title={user.email ? `Signed in as ${user.email}` : undefined}
-                      >
-                        Signed in as {user.email}
+                      <p className="truncate text-xs text-muted-foreground">
+                        {t('accountSheet.signedInAs')} {user.email ? (
+                          <span className="truncate">{user.email}</span>
+                        ) : null}
                       </p>
                       {user.email && (
                         <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 w-max max-w-[280px] rounded-md border border-border/60 bg-card/95 px-2 py-1 text-[11px] font-medium text-foreground shadow-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100">
@@ -139,40 +156,38 @@ export function AccountSheet() {
                 </div>
                 <Badge variant="outline" className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-3 py-1 text-xs text-primary">
                   <Award className="h-3 w-3" />
-                  Level {level}
+                  {t('accountSheet.level', { level })}
                 </Badge>
               </div>
 
               <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
                 <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  <span>Progress to next level</span>
+                  <span>{t('accountSheet.progressToNextLevel')}</span>
                   <span>{xpProgress}%</span>
                 </div>
                 <Progress value={xpProgress} className="h-2" />
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>
-                    {xpIntoLevel} / {xpForLevel} XP this level
-                  </span>
-                  <span>{xpRemaining} XP remaining</span>
+                  <span>{t('accountSheet.xpProgress', { current: xpIntoLevel, total: xpForLevel })}</span>
+                  <span>{t('accountSheet.xpRemaining', { xp: xpRemaining })}</span>
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-2 rounded-lg border border-border/50 bg-muted/10 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Daily streak
+                    {t('accountSheet.dailyStreak')}
                   </p>
                   <p className="flex items-center gap-1 text-base font-semibold text-foreground">
                     <Flame className="h-4 w-4 text-primary" />
-                    {streakDays} day{streakDays === 1 ? '' : 's'}
+                    {t('accountSheet.days', { count: streakDays })}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Stay consistent to keep rewards flowing.
+                    {t('accountSheet.streakDescription')}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 rounded-lg border border-border/50 bg-muted/10 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Notifications
+                    {t('accountSheet.notifications')}
                   </p>
                   <p className="flex items-center gap-2 text-base font-semibold text-foreground">
                     <Bell className="h-4 w-4 text-primary" />
@@ -185,22 +200,22 @@ export function AccountSheet() {
                       className="mt-1 h-8 w-full justify-center rounded-md border border-primary/20 bg-muted/10 text-[11px] font-medium text-primary hover:bg-primary/15 focus-visible:ring-1 focus-visible:ring-primary/30"
                       onClick={() => navigate('/notifications')}
                     >
-                      Review inbox
+                      {t('accountSheet.reviewInbox')}
                     </Button>
                   </SheetClose>
                 </div>
               </div>
 
               <div className="rounded-lg border border-border/50 bg-muted/10 p-3 text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">Lifetime experience:</span>{' '}
-                {experience} XP earned across Aetheris.
+                <span className="font-medium text-foreground">{t('accountSheet.lifetimeExperience')}</span>{' '}
+                {t('accountSheet.xpEarned', { xp: experience })}
               </div>
             </CardContent>
           </Card>
 
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Quick actions
+              {t('accountSheet.quickActions')}
             </h3>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <SheetClose asChild>
@@ -209,7 +224,7 @@ export function AccountSheet() {
                   onClick={() => navigate(`/profile/${user.id}`)}
                 >
                   <User className="h-4 w-4" />
-                  View profile
+                  {t('accountSheet.viewProfile')}
                 </Button>
               </SheetClose>
               <SheetClose asChild>
@@ -219,7 +234,7 @@ export function AccountSheet() {
                   onClick={() => navigate('/create')}
                 >
                   <PenSquare className="h-4 w-4" />
-                  Write a story
+                  {t('accountSheet.writeStory')}
                 </Button>
               </SheetClose>
               <SheetClose asChild>
@@ -229,7 +244,7 @@ export function AccountSheet() {
                   onClick={() => setFriendsSheetOpen(true)}
                 >
                   <Users className="h-4 w-4" />
-                  Friends
+                  {t('accountSheet.friends')}
                 </Button>
               </SheetClose>
               <SheetClose asChild>
@@ -239,31 +254,31 @@ export function AccountSheet() {
                   onClick={() => navigate('/achievements')}
                 >
                   <Sparkles className="h-4 w-4" />
-                  Achievements
+                  {t('accountSheet.achievements')}
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button
+                  variant="outline"
+                  className="col-span-1 sm:col-span-2 justify-start gap-2"
+                  onClick={() =>
+                    navigate('/settings/profile', {
+                      state: { from: location.pathname },
+                    })
+                  }
+                >
+                  <Settings className="h-4 w-4" />
+                  {t('accountSheet.settings')}
                 </Button>
               </SheetClose>
             </div>
-            <SheetClose asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() =>
-                  navigate('/settings/profile', {
-                    state: { from: location.pathname },
-                  })
-                }
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-            </SheetClose>
           </section>
 
           <Separator />
 
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Keep exploring
+              {t('accountSheet.keepExploring')}
             </h3>
             <div className="grid gap-2">
               <SheetClose asChild>
@@ -274,7 +289,7 @@ export function AccountSheet() {
                 >
                   <span className="flex items-center gap-2">
                     <Bookmark className="h-4 w-4" />
-                    Reading list
+                    {t('accountSheet.readingList')}
                   </span>
                   {readingListCount > 0 && (
                     <Badge variant="secondary" className="rounded-md px-2 py-0 text-xs font-medium">
@@ -290,7 +305,7 @@ export function AccountSheet() {
                   onClick={() => navigate('/drafts')}
                 >
                   <FileText className="h-4 w-4" />
-                  Drafts
+                  {t('accountSheet.drafts')}
                 </Button>
               </SheetClose>
               <Button
@@ -299,7 +314,7 @@ export function AccountSheet() {
                 onClick={() => navigate('/help')}
               >
                 <HelpCircle className="h-4 w-4" />
-                Help center
+                {t('accountSheet.helpCenter')}
               </Button>
             </div>
           </section>
@@ -312,7 +327,7 @@ export function AccountSheet() {
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {t('accountSheet.signOut')}
           </Button>
         </SheetFooter>
       </SheetContent>

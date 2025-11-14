@@ -14,6 +14,10 @@ export default function AuthCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    // Проверяем sessionStorage в самом начале
+    const initialRedirect = sessionStorage.getItem('auth_redirect')
+    console.log('🔍 AuthCallbackPage mounted, initial auth_redirect:', initialRedirect)
+    
     const handleCallback = async () => {
       const searchParams = new URLSearchParams(location.search)
       const hashParams = new URLSearchParams(
@@ -136,7 +140,13 @@ export default function AuthCallbackPage() {
         const user = await getCurrentUser()
         setUser(user)
 
-        const redirect = sessionStorage.getItem('auth_redirect') || '/'
+        const savedRedirect = sessionStorage.getItem('auth_redirect')
+        console.log('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
+        
+        // Используем сохраненный redirect, если он есть (даже если это '/')
+        // Если redirect не был сохранен, используем '/forum' (главная страница со статьями)
+        const redirect = savedRedirect !== null ? savedRedirect : '/forum'
+        console.log('🚀 Navigating to:', redirect)
         sessionStorage.removeItem('auth_redirect')
         navigate(redirect, { replace: true })
       } catch (error) {
@@ -145,7 +155,13 @@ export default function AuthCallbackPage() {
         setTimeout(() => navigate('/auth', { replace: true }), 3000)
         }
       } else {
-        const redirect = sessionStorage.getItem('auth_redirect') || '/'
+        const savedRedirect = sessionStorage.getItem('auth_redirect')
+        console.log('🔍 Checking auth_redirect from sessionStorage (userFromExchange):', savedRedirect)
+        
+        // Используем сохраненный redirect, если он есть (даже если это '/')
+        // Если redirect не был сохранен, используем '/forum' (главная страница со статьями)
+        const redirect = savedRedirect !== null ? savedRedirect : '/forum'
+        console.log('🚀 Navigating to:', redirect)
         sessionStorage.removeItem('auth_redirect')
         navigate(redirect, { replace: true })
       }

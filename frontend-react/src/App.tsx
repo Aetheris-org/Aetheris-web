@@ -28,6 +28,7 @@ import ExploreAchievementsPage from '@/pages/ExploreAchievementsPage'
 import PricingPage from '@/pages/PricingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useI18nStore } from '@/stores/i18nStore'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,10 +42,15 @@ const queryClient = new QueryClient({
 function App() {
   const initializeAuth = useAuthStore((state) => state.initialize)
   const initializeTheme = useThemeStore((state) => state.initialize)
+  const initializeI18n = useI18nStore((state) => state.initialize)
 
   useEffect(() => {
     initializeTheme()
   }, [initializeTheme])
+
+  useEffect(() => {
+    initializeI18n()
+  }, [initializeI18n])
 
   useEffect(() => {
     void initializeAuth()

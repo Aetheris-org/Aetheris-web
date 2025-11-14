@@ -2,6 +2,7 @@ import { Calendar, Clock, User, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface ArticleCardProps {
   article: Article
@@ -16,6 +17,8 @@ export function ArticleCard({
   onArticleClick,
   hidePreview = false,
 }: ArticleCardProps) {
+  const { t } = useTranslation()
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -69,7 +72,7 @@ export function ArticleCard({
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              <span>{estimateReadTime(article.content)} min read</span>
+              <span>{estimateReadTime(article.content)} {t('article.readTime')}</span>
             </div>
           </div>
         </div>

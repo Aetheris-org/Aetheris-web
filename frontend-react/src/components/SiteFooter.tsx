@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { Github, Twitter, Mail, Heart, Code2, MessageSquare, UsersRound, GraduationCap, ChevronUp } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export function SiteFooter() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
   const footerRef = useRef<HTMLElement>(null)
 
@@ -22,16 +24,16 @@ export function SiteFooter() {
   }, [isExpanded])
 
   const navItems = [
-    { icon: MessageSquare, label: 'Форум', path: '/' },
-    { icon: UsersRound, label: 'Нетворкинг', path: '/networking' },
-    { icon: GraduationCap, label: 'Курсы', path: '/courses' },
-    { icon: Code2, label: 'Разработчикам', path: '/developers' },
+    { icon: MessageSquare, label: t('header.forum'), path: '/' },
+    { icon: UsersRound, label: t('header.networking'), path: '/networking' },
+    { icon: GraduationCap, label: t('header.courses'), path: '/courses' },
+    { icon: Code2, label: t('header.developers'), path: '/developers' },
   ]
 
   const resourceItems = [
-    { label: 'Помощь', path: '/help' },
-    { label: 'Популярное', path: '/trending' },
-    { label: 'Достижения', path: '/achievements' },
+    { label: t('help.title'), path: '/help' },
+    { label: t('trending.title'), path: '/trending' },
+    { label: t('achievements.title'), path: '/achievements' },
   ]
 
   const contactItems = [
@@ -52,15 +54,15 @@ export function SiteFooter() {
         <button
           onClick={() => setIsExpanded(true)}
           className="w-full flex items-center justify-between"
-          aria-label="Развернуть футер"
+          aria-label={t('footer.expand')}
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 flex-1">
             <p className="text-xs text-muted-foreground">
-              © {currentYear} Aetheris. Все права защищены.
+              {t('footer.copyright', { year: currentYear })}
             </p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Powered by</span>
-              <span className="font-medium text-foreground">passion</span>
+              <span>{t('footer.poweredBy')}</span>
+              <span className="font-medium text-foreground">{t('footer.passion')}</span>
             </div>
           </div>
           <ChevronUp className="h-3 w-3 text-muted-foreground/20 ml-4 flex-shrink-0" />
@@ -80,7 +82,7 @@ export function SiteFooter() {
             <button
               onClick={() => setIsExpanded(false)}
               className="text-left w-full group"
-              aria-label="Свернуть футер"
+              aria-label={t('footer.collapse')}
             >
               <div>
                 <h3 className="text-xl font-semibold tracking-tight mb-2 group-hover:text-primary transition-colors">Aetheris</h3>
@@ -88,17 +90,17 @@ export function SiteFooter() {
               </div>
             </button>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Платформа для разработчиков, где можно делиться знаниями, находить единомышленников и расти профессионально.
+              {t('footer.description')}
             </p>
             <div className="flex items-center gap-2 pt-2">
               <Heart className="h-3.5 w-3.5 text-primary fill-primary" />
-              <span className="text-xs text-muted-foreground">Сделано с любовью для сообщества</span>
+              <span className="text-xs text-muted-foreground">{t('footer.madeWithLove')}</span>
             </div>
           </div>
 
           {/* Навигация */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-foreground">Навигация</h4>
+            <h4 className="text-sm font-semibold text-foreground">{t('footer.navigation')}</h4>
             <nav className="flex flex-col gap-2.5">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -118,7 +120,7 @@ export function SiteFooter() {
 
           {/* Ресурсы */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-foreground">Ресурсы</h4>
+            <h4 className="text-sm font-semibold text-foreground">{t('footer.resources')}</h4>
             <nav className="flex flex-col gap-2.5">
               {resourceItems.map((item) => (
                 <button
@@ -134,7 +136,7 @@ export function SiteFooter() {
 
           {/* Контакты */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-foreground">Контакты</h4>
+            <h4 className="text-sm font-semibold text-foreground">{t('footer.contacts')}</h4>
             <div className="flex flex-col gap-2.5">
               {contactItems.map((item) => {
                 const Icon = item.icon
@@ -160,20 +162,20 @@ export function SiteFooter() {
         {/* Нижняя часть с кнопкой сворачивания */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {currentYear} Aetheris. Все права защищены.
+            {t('footer.copyright', { year: currentYear })}
           </p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Powered by</span>
-              <span className="font-medium text-foreground">passion</span>
+              <span>{t('footer.poweredBy')}</span>
+              <span className="font-medium text-foreground">{t('footer.passion')}</span>
             </div>
             <button
               onClick={() => setIsExpanded(false)}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-              aria-label="Свернуть футер"
+              aria-label={t('footer.collapse')}
             >
               <ChevronUp className="h-3.5 w-3.5 rotate-180" />
-              <span>Свернуть</span>
+              <span>{t('footer.collapse')}</span>
             </button>
           </div>
         </div>

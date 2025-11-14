@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { getDraftArticles, deleteArticle } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { useToast } from '@/components/ui/use-toast'
+import { useTranslation } from '@/hooks/useTranslation'
 
 function DraftSkeleton() {
   return (
@@ -33,6 +34,7 @@ export default function DraftsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation()
   const user = useAuthStore((state) => state.user)
 
   const {
@@ -77,20 +79,20 @@ export default function DraftsPage() {
       await deleteArticle(draftId)
       await refetch()
       toast({
-        title: 'Draft removed',
-        description: 'The draft has been deleted.',
+        title: t('drafts.deleted'),
+        description: t('drafts.deletedDescription'),
       })
       queryClient.invalidateQueries({ queryKey: ['drafts', user?.id] })
     } catch (error: unknown) {
       console.error('[DraftsPage] Failed to remove draft', error)
       toast({
-        title: 'Unable to remove draft',
+        title: t('drafts.deleteError'),
         description:
           typeof error === 'object' && error && 'response' in error
             ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
             : error instanceof Error
               ? error.message
-              : 'Please try again in a moment.',
+              : t('drafts.deleteErrorDescription'),
         variant: 'destructive',
       })
     }
@@ -103,10 +105,10 @@ export default function DraftsPage() {
           <div className="container flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-                Back
+                {t('common.back')}
               </Button>
               <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-lg font-semibold">Drafts</h1>
+              <h1 className="text-lg font-semibold">{t('drafts.title')}</h1>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -119,11 +121,11 @@ export default function DraftsPage() {
           <Card className="max-w-md border-dashed bg-muted/20">
             <CardContent className="flex flex-col items-center gap-4 py-10">
               <FileText className="h-12 w-12 text-muted-foreground" />
-              <CardTitle className="text-xl">Sign in to manage drafts</CardTitle>
+              <CardTitle className="text-xl">{t('drafts.signInToManage')}</CardTitle>
               <CardDescription>
-                Drafts are tied to your account so you can keep writing across devices.
+                {t('drafts.signInDescription')}
               </CardDescription>
-              <Button onClick={() => navigate('/auth')}>Sign in</Button>
+              <Button onClick={() => navigate('/auth')}>{t('auth.signIn')}</Button>
             </CardContent>
           </Card>
         </main>
@@ -137,15 +139,15 @@ export default function DraftsPage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-              Back
+              {t('common.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Drafts</h1>
+            <h1 className="text-lg font-semibold">{t('drafts.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleCreateDraft} className="gap-2">
               <PencilLine className="h-4 w-4" />
-              New draft
+              {t('drafts.newDraft')}
             </Button>
             <ThemeToggle />
             <AccountSheet />
@@ -164,22 +166,22 @@ export default function DraftsPage() {
           <Card className="mx-auto max-w-2xl border-dashed bg-muted/30 text-center">
             <CardContent className="flex flex-col items-center gap-4 py-12">
               <FileText className="h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">Could not load drafts</CardTitle>
+              <CardTitle className="text-xl">{t('drafts.error')}</CardTitle>
               <CardDescription>
-                {error instanceof Error ? error.message : 'Something went wrong while fetching your drafts.'}
+                {error instanceof Error ? error.message : t('drafts.errorDescription')}
               </CardDescription>
-              <Button onClick={() => refetch()}>Retry</Button>
+              <Button onClick={() => refetch()}>{t('common.retry')}</Button>
             </CardContent>
           </Card>
         ) : formattedDrafts.length === 0 ? (
           <Card className="mx-auto max-w-2xl border-dashed bg-muted/30 text-center">
             <CardContent className="flex flex-col items-center gap-4 py-12">
               <FileText className="h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">No drafts yet</CardTitle>
+              <CardTitle className="text-xl">{t('drafts.noDrafts')}</CardTitle>
               <CardDescription>
-                Save unfinished pieces as drafts and they will appear here for quick access.
+                {t('drafts.noDraftsDescription')}
               </CardDescription>
-              <Button onClick={handleCreateDraft}>Start writing</Button>
+              <Button onClick={handleCreateDraft}>{t('drafts.startWriting')}</Button>
             </CardContent>
           </Card>
         ) : (
@@ -187,11 +189,11 @@ export default function DraftsPage() {
             <Card>
               <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Your drafts</CardTitle>
+                  <CardTitle>{t('drafts.yourDrafts')}</CardTitle>
                   <CardDescription>
                     {formattedDrafts.length === 1
-                      ? 'One draft waiting for you'
-                      : `${formattedDrafts.length} drafts ready to continue`}
+                      ? t('drafts.oneDraftWaiting')
+                      : t('drafts.draftsReady', { count: formattedDrafts.length })}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -205,11 +207,11 @@ export default function DraftsPage() {
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                         <Badge variant="outline" className="gap-1">
                           <FileText className="h-3.5 w-3.5" />
-                          Draft
+                          {t('drafts.draft')}
                         </Badge>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          Updated {new Date(draft.updatedAt || draft.createdAt).toLocaleString()}
+                          {t('drafts.updated')} {new Date(draft.updatedAt || draft.createdAt).toLocaleString()}
                         </span>
                         {draft.difficulty && (
                           <Badge variant="secondary" className="uppercase tracking-wide">
@@ -217,9 +219,9 @@ export default function DraftsPage() {
                           </Badge>
                         )}
                       </div>
-                      <h2 className="text-xl font-semibold text-foreground">{draft.title || 'Untitled draft'}</h2>
+                      <h2 className="text-xl font-semibold text-foreground">{draft.title || t('drafts.untitledDraft')}</h2>
                       <p className="text-sm text-muted-foreground line-clamp-3">
-                        {draft.excerpt || draft.content.slice(0, 220) || 'Empty draft'}
+                        {draft.excerpt || draft.content.slice(0, 220) || t('drafts.emptyDraft')}
                         {draft.content.length > 220 ? '…' : ''}
                       </p>
                       {draft.tags?.length ? (
@@ -239,7 +241,7 @@ export default function DraftsPage() {
                         onClick={() => handleContinueDraft(draft.databaseId)}
                       >
                         <PencilLine className="h-4 w-4" />
-                        Continue writing
+                        {t('drafts.continueWriting')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -248,7 +250,7 @@ export default function DraftsPage() {
                         onClick={() => handleDeleteDraft(draft.databaseId)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete draft
+                        {t('drafts.delete')}
                       </Button>
                     </div>
                   </CardContent>

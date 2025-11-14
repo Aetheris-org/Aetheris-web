@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
 
@@ -49,12 +50,14 @@ function DiscordIcon(props: LucideProps) {
 export default function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { t } = useTranslation()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const redirectTarget = useMemo(() => searchParams.get('redirect') || '/', [searchParams])
+  const hasExplicitRedirect = useMemo(() => searchParams.has('redirect'), [searchParams])
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
@@ -79,8 +82,19 @@ export default function AuthPage() {
     if (isLoading) return
     setIsLoading(true)
 
-    if (redirectTarget && redirectTarget !== '/') {
+    // Сохраняем redirect в sessionStorage, если он был явно передан в URL
+    // Это нужно для OAuth callback, чтобы вернуть пользователя на ту же страницу
+    // Важно: сохраняем даже если redirectTarget это '/', так как это может быть лендинг
+    if (hasExplicitRedirect) {
+      console.log('💾 Saving auth_redirect to sessionStorage:', redirectTarget)
       sessionStorage.setItem('auth_redirect', redirectTarget)
+      // Проверяем, что значение действительно сохранилось
+      const saved = sessionStorage.getItem('auth_redirect')
+      console.log('✅ Verified saved redirect:', saved)
+    } else {
+      // Если redirect не был передан, значит пользователь зашел напрямую на /auth
+      // В этом случае после авторизации перенаправим на /forum (главная страница со статьями)
+      console.log('⚠️ No explicit redirect found, will use /forum after auth')
     }
 
     window.location.href = `${API_BASE}/api/connect/google`
@@ -96,14 +110,14 @@ export default function AuthPage() {
         <Card className="shadow-lg border-border/60">
           <CardHeader className="space-y-2">
             <CardTitle className="flex items-center justify-between text-2xl font-bold">
-              <span>Aetheris Account</span>
+              <span>{t('auth.accountTitle')}</span>
               <Badge variant="secondary" className="gap-1 text-[11px] uppercase tracking-wide">
                 <Shield className="h-3 w-3" />
-                Secure OAuth
+                {t('auth.secureOAuth')}
               </Badge>
             </CardTitle>
             <CardDescription>
-              Sign in to sync your reading list, publish stories, and keep track of your stats.
+              {t('auth.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -116,8 +130,8 @@ export default function AuthPage() {
 
             <Tabs defaultValue="oauth" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="oauth">One-click sign-in</TabsTrigger>
-                <TabsTrigger value="coming-soon">Coming soon</TabsTrigger>
+                <TabsTrigger value="oauth">{t('auth.oneClickSignIn')}</TabsTrigger>
+                <TabsTrigger value="coming-soon">{t('auth.comingSoon')}</TabsTrigger>
               </TabsList>
               <TabsContent value="oauth" className="space-y-4">
           <Button
@@ -129,7 +143,7 @@ export default function AuthPage() {
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Перенаправляем…</span>
+                <span>{t('auth.signingIn')}</span>
               </>
             ) : (
               <>
@@ -139,7 +153,7 @@ export default function AuthPage() {
                         <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042л3.007-2.332z" fill="#FBBC05" />
                         <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958л3.007 2.332z" fill="#EA4335" />
                 </svg>
-                      <span>Continue with Google</span>
+                      <span>{t('auth.continueWithGoogle')}</span>
               </>
             )}
           </Button>
@@ -147,22 +161,22 @@ export default function AuthPage() {
                 <div className="space-y-2 rounded-lg border border-muted-foreground/10 bg-muted/20 p-3 text-xs text-muted-foreground">
                   <p className="flex items-center gap-2">
                     <Shield className="h-3.5 w-3.5 text-primary" />
-                    We never store your Google password. Authentication flows through Google OAuth.
+                    {t('auth.neverStorePassword')}
                   </p>
                   <p>
-                    Two-factor authentication is enforced on admin accounts. You can enable it inside settings once logged in.
+                    {t('auth.twoFactorInfo')}
                   </p>
                 </div>
               </TabsContent>
               <TabsContent value="coming-soon" className="space-y-4">
                 {[
-                  { label: 'Continue with GitHub', icon: Github },
-                  { label: 'Continue with Apple ID', icon: Apple },
-                  { label: 'Continue with Twitter', icon: Twitter },
-                  { label: 'Continue with LinkedIn', icon: Linkedin },
-                  { label: 'Continue with Slack', icon: MessagesSquare },
-                  { label: 'Continue with Figma', icon: Sparkles },
-                  { label: 'Continue with Discord', icon: DiscordIcon },
+                  { label: t('auth.continueWithGitHub'), icon: Github },
+                  { label: t('auth.continueWithApple'), icon: Apple },
+                  { label: t('auth.continueWithTwitter'), icon: Twitter },
+                  { label: t('auth.continueWithLinkedIn'), icon: Linkedin },
+                  { label: t('auth.continueWithSlack'), icon: MessagesSquare },
+                  { label: t('auth.continueWithFigma'), icon: Sparkles },
+                  { label: t('auth.continueWithDiscord'), icon: DiscordIcon },
                 ].map((provider) => (
                   <Button
                     key={provider.label}
@@ -175,12 +189,12 @@ export default function AuthPage() {
                       {provider.label}
                     </span>
                     <Badge variant="secondary" className="gap-1 text-[10px] uppercase tracking-wide">
-                      Soon
+                      {t('auth.soon')}
                     </Badge>
                   </Button>
                 ))}
                 <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                  Additional providers are in development. Want to request one? Let us know via support chat after signing in.
+                  {t('auth.additionalProviders')}
                 </div>
               </TabsContent>
             </Tabs>
@@ -191,16 +205,16 @@ export default function AuthPage() {
               <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
                 <Smartphone className="mt-0.5 h-4 w-4 text-primary" />
                 <div>
-                  <p className="font-medium text-foreground">Where you left off</p>
-                  <p>We restore your reading list, in-progress drafts, and editor preferences on every device.</p>
+                  <p className="font-medium text-foreground">{t('auth.whereYouLeftOff')}</p>
+                  <p>{t('auth.whereYouLeftOffDescription')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
                 <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
                 <div>
-                  <p className="font-medium text-foreground">Invite-only beta</p>
+                  <p className="font-medium text-foreground">{t('auth.inviteOnlyBeta')}</p>
                   <p>
-                    Using Aetheris during the beta ensures your feedback directly shapes the product. More integrations are rolling out soon.
+                    {t('auth.inviteOnlyBetaDescription')}
                   </p>
                 </div>
               </div>
@@ -212,26 +226,26 @@ export default function AuthPage() {
           <CardHeader className="space-y-4">
             <CardTitle className="flex items-center gap-2 text-xl">
               <Shield className="h-5 w-5 text-primary" />
-              Why sign in?
+              {t('auth.whySignIn')}
             </CardTitle>
             <CardDescription>
-              A tailored experience with synced workspace, private drafts, and analytics tailored to your writing.
+              {t('auth.whySignInDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
               {[
                 {
-                  title: 'Synced reading list',
-                  description: 'Save articles to revisit later and keep them synced across devices.',
+                  title: t('auth.syncedReadingList'),
+                  description: t('auth.syncedReadingListDescription'),
                 },
                 {
-                  title: 'Author dashboard',
-                  description: 'Track article views, reactions, and community engagement at a glance.',
+                  title: t('auth.authorDashboard'),
+                  description: t('auth.authorDashboardDescription'),
                 },
                 {
-                  title: 'Instant editor access',
-                  description: 'Jump straight into the draft editor without losing your last edits.',
+                  title: t('auth.instantEditorAccess'),
+                  description: t('auth.instantEditorAccessDescription'),
                 },
               ].map((feature) => (
                 <div key={feature.title} className="rounded-lg border border-border/60 bg-background/70 p-3 text-sm">
@@ -245,11 +259,11 @@ export default function AuthPage() {
 
             <div className="space-y-3 text-xs text-muted-foreground">
               <p>
-                By continuing, you agree to our Terms of Service and Privacy Policy. We only use your email for authentication and account recovery.
+                {t('auth.termsAndPrivacy')}
               </p>
               <p className="flex items-center gap-2 text-muted-foreground/80">
                 <Shield className="h-3.5 w-3.5" />
-                Need help? Reach us at <span className="font-medium text-primary">hello@aetheris.dev</span>
+                {t('auth.needHelp')} <span className="font-medium text-primary">hello@aetheris.dev</span>
               </p>
             </div>
         </CardContent>

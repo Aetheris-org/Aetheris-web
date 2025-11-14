@@ -10,21 +10,15 @@ import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
 import { trendingArticlesMock } from '@/data/mockSections'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
-const timeframes = [
-  { id: '24h', label: 'Last 24h' },
-  { id: '7d', label: 'Last 7 days' },
-  { id: '30d', label: 'Last 30 days' },
-] as const
-
-type TimeframeValue = (typeof timeframes)[number]['id']
-
-const categories = ['All topics', 'Architecture', 'Community', 'Mentorship', 'UI', 'Growth']
+type TimeframeValue = '24h' | '7d' | '30d'
 
 export default function TrendingPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [timeframe, setTimeframe] = useState<TimeframeValue>('24h')
-  const [category, setCategory] = useState<string>('All topics')
+  const [category, setCategory] = useState<string>(t('trending.categories.all'))
   const [search, setSearch] = useState('')
   const [isHeroDismissed, setIsHeroDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -44,10 +38,26 @@ export default function TrendingPage() {
     setIsHeroDismissed(true)
   }
 
+  const timeframes = [
+    { id: '24h' as const, label: t('trending.timeframes.24h') },
+    { id: '7d' as const, label: t('trending.timeframes.7d') },
+    { id: '30d' as const, label: t('trending.timeframes.30d') },
+  ]
+
+  const categories = [
+    t('trending.categories.all'),
+    t('trending.categories.architecture'),
+    t('trending.categories.community'),
+    t('trending.categories.mentorship'),
+    t('trending.categories.ui'),
+    t('trending.categories.growth'),
+  ]
+
   const filteredArticles = useMemo(() => {
     return trendingArticlesMock.filter((article) => {
+      const allTopicsLabel = t('trending.categories.all')
       const matchesCategory =
-        category === 'All topics' || article.tags.some((tag) => tag.toLowerCase() === category.toLowerCase())
+        category === allTopicsLabel || article.tags.some((tag) => tag.toLowerCase() === category.toLowerCase())
       const matchesSearch = search
         ? [article.title, article.summary, article.author]
             .join(' ')
@@ -56,7 +66,7 @@ export default function TrendingPage() {
         : true
       return matchesCategory && matchesSearch
     })
-  }, [category, search])
+  }, [category, search, t])
 
   const topArticle = filteredArticles[0]
   const restArticles = filteredArticles.slice(1)
@@ -73,21 +83,20 @@ export default function TrendingPage() {
               size="icon"
               className="absolute right-3 top-3 h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
               onClick={handleDismissHero}
-              aria-label="Dismiss hero section"
+              aria-label={t('trending.dismissHero')}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-3">
                 <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-                  Leaderboard
+                  {t('trending.leaderboard')}
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Hot reads across the Aetheris guild.
+                  {t('trending.heading')}
                 </h1>
                 <p className="max-w-2xl text-sm text-muted-foreground">
-                  Discover what the community canʼt stop discussing. Rankings refresh every few hours based on views,
-                  reactions, and meaningful replies.
+                  {t('trending.description')}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -113,7 +122,7 @@ export default function TrendingPage() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 <Flame className="h-4 w-4 text-primary" />
-                Top article right now
+                {t('trending.topArticle')}
               </div>
               <div className="space-y-3">
                 <h2 className="text-2xl font-semibold leading-tight text-foreground">{topArticle.title}</h2>
@@ -123,11 +132,11 @@ export default function TrendingPage() {
                   <Separator orientation="vertical" className="h-4" />
                   <span>{formatDate(topArticle.publishedAt)}</span>
                   <Separator orientation="vertical" className="h-4" />
-                  <span>{topArticle.views.toLocaleString()} views</span>
+                  <span>{topArticle.views.toLocaleString()} {t('home.trending.views')}</span>
                   <span>•</span>
-                  <span>{topArticle.reactions} reactions</span>
+                  <span>{topArticle.reactions} {t('home.trending.reactions')}</span>
                   <span>•</span>
-                  <span>{topArticle.comments} comments</span>
+                  <span>{topArticle.comments} {t('profile.comments')}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {topArticle.tags.map((tag) => (
@@ -139,41 +148,41 @@ export default function TrendingPage() {
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => navigate(`/article/${topArticle.id}`)}>
-                  Read article
+                  {t('trending.readArticle')}
                 </Button>
                 <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate(`/article/${topArticle.id}`)}>
-                  Save for later
+                  {t('trending.saveForLater')}
                   <CornerDownRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <Card className="border border-border/60">
               <CardHeader>
-                <CardTitle className="text-base font-semibold">Leaderboard metrics</CardTitle>
+                <CardTitle className="text-base font-semibold">{t('trending.leaderboardMetrics')}</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  Signals tracked to determine article rank.
+                  {t('trending.metricsDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
                 <div className="flex items-start gap-3">
                   <BarChart3 className="mt-1 h-4 w-4 text-primary" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">Composite score</p>
-                    <p>Weighted across views (50%), reactions (35%), meaningful comments (15%).</p>
+                    <p className="text-sm font-medium text-foreground">{t('trending.compositeScore')}</p>
+                    <p>{t('trending.compositeScoreDescription')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CalendarDays className="mt-1 h-4 w-4 text-primary" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">Recency bias</p>
-                    <p>Articles older than 30 days gradually drop off unless activity spikes.</p>
+                    <p className="text-sm font-medium text-foreground">{t('trending.recencyBias')}</p>
+                    <p>{t('trending.recencyBiasDescription')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Hash className="mt-1 h-4 w-4 text-primary" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">Topic diversity</p>
-                    <p>At least one slot reserved for each major guild topic.</p>
+                    <p className="text-sm font-medium text-foreground">{t('trending.topicDiversity')}</p>
+                    <p>{t('trending.topicDiversityDescription')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -184,12 +193,12 @@ export default function TrendingPage() {
         <section className="space-y-6 rounded-3xl border border-border/60 bg-muted/10 p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
-              <CardTitle className="text-xl font-semibold">Explore the leaderboard</CardTitle>
-              <CardDescription>Filter by topic or search keywords to find whatʼs resonating.</CardDescription>
+              <CardTitle className="text-xl font-semibold">{t('trending.exploreLeaderboard')}</CardTitle>
+              <CardDescription>{t('trending.exploreDescription')}</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Input
-                placeholder="Search titles or authors"
+                placeholder={t('trending.searchPlaceholder')}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="w-full max-w-xs"
@@ -231,11 +240,11 @@ export default function TrendingPage() {
                     <Separator orientation="vertical" className="h-4" />
                     <span>{formatDate(article.publishedAt)}</span>
                     <Separator orientation="vertical" className="h-4" />
-                    <span>{article.views.toLocaleString()} views</span>
+                    <span>{article.views.toLocaleString()} {t('home.trending.views')}</span>
                     <span>•</span>
-                    <span>{article.reactions} reactions</span>
+                    <span>{article.reactions} {t('home.trending.reactions')}</span>
                     <span>•</span>
-                    <span>{article.comments} comments</span>
+                    <span>{article.comments} {t('profile.comments')}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end justify-between gap-3 text-xs text-muted-foreground">
@@ -247,7 +256,7 @@ export default function TrendingPage() {
                     ))}
                   </div>
                   <Button variant="ghost" size="sm" className="px-2 text-xs" onClick={() => navigate(`/article/${article.id}`)}>
-                    Open article
+                    {t('trending.openArticle')}
                   </Button>
                 </div>
               </div>
@@ -258,11 +267,11 @@ export default function TrendingPage() {
         <section className="rounded-3xl border border-border/60 bg-background/80 p-6 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
-              <CardTitle className="text-xl font-semibold">Want your article to trend?</CardTitle>
-              <CardDescription>Ship something impactful and the guild will surface it on the leaderboard.</CardDescription>
+              <CardTitle className="text-xl font-semibold">{t('trending.wantToTrend')}</CardTitle>
+              <CardDescription>{t('trending.wantToTrendDescription')}</CardDescription>
             </div>
             <Button size="sm" className="gap-2" onClick={() => navigate('/create')}>
-              Publish new article
+              {t('trending.publishNewArticle')}
             </Button>
           </div>
         </section>

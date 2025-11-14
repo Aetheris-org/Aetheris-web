@@ -23,12 +23,7 @@ import {
   selectUnreadCount,
 } from '@/stores/notificationsStore'
 import type { NotificationCategory, NotificationType, Notification } from '@/types/notification'
-
-const categoryLabels: Record<NotificationCategory, string> = {
-  today: 'Today',
-  'this-week': 'This week',
-  earlier: 'Earlier',
-}
+import { useTranslation } from '@/hooks/useTranslation'
 
 function getNotificationIcon(type: NotificationType) {
   switch (type) {
@@ -47,11 +42,18 @@ function getNotificationIcon(type: NotificationType) {
 }
 
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const notifications = useNotificationsStore(selectNotifications)
   const unreadCount = useNotificationsStore(selectUnreadCount)
   const markAllAsRead = useNotificationsStore((state) => state.markAllAsRead)
   const markAsRead = useNotificationsStore((state) => state.markAsRead)
+
+  const categoryLabels: Record<NotificationCategory, string> = {
+    today: t('notifications.groups.today'),
+    'this-week': t('notifications.groups.thisWeek'),
+    earlier: t('notifications.groups.earlier'),
+  }
 
   const groupedNotifications = useMemo(() => {
     return notifications.reduce<Record<NotificationCategory, Notification[]>>(
@@ -84,13 +86,13 @@ export default function NotificationsPage() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('notifications.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
             <div>
-              <h1 className="text-lg font-semibold">Notifications</h1>
+              <h1 className="text-lg font-semibold">{t('notifications.title')}</h1>
               <p className="text-xs text-muted-foreground">
-                Stay up to date with reactions, comments, and editorial updates.
+                {t('notifications.description')}
               </p>
             </div>
           </div>
@@ -104,7 +106,7 @@ export default function NotificationsPage() {
               disabled={unreadCount === 0}
             >
               <Check className="h-4 w-4" />
-              Mark all as read
+              {t('notifications.markAllAsRead')}
             </Button>
             <ThemeToggle />
             <AccountSheet />
@@ -117,29 +119,29 @@ export default function NotificationsPage() {
           <Card className="border-border/70 bg-muted/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle className="text-base font-semibold">Inbox overview</CardTitle>
+                <CardTitle className="text-base font-semibold">{t('notifications.inboxOverview')}</CardTitle>
                 <CardDescription>
                   {unreadCount > 0
-                    ? `You have ${unreadCount} unread ${unreadCount === 1 ? 'notification' : 'notifications'}.`
-                    : 'You are all caught up for now.'}
+                    ? t('notifications.unreadCount', { count: unreadCount })
+                    : t('notifications.allCaughtUp')}
                 </CardDescription>
               </div>
               <Badge variant={unreadCount > 0 ? 'default' : 'secondary'} className="rounded-md">
-                {unreadCount > 0 ? `${unreadCount} new` : '0 new'}
+                {unreadCount > 0 ? t('notifications.new', { count: unreadCount }) : t('notifications.zeroNew')}
               </Badge>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <Badge variant="secondary" className="rounded-md px-3 py-1">
-                Comments
+                {t('notifications.categories.comments')}
               </Badge>
               <Badge variant="secondary" className="rounded-md px-3 py-1">
-                Reactions
+                {t('notifications.categories.reactions')}
               </Badge>
               <Badge variant="secondary" className="rounded-md px-3 py-1">
-                Editorial
+                {t('notifications.categories.editorial')}
               </Badge>
               <Badge variant="secondary" className="rounded-md px-3 py-1">
-                Followers
+                {t('notifications.categories.followers')}
               </Badge>
             </CardContent>
           </Card>
@@ -176,12 +178,12 @@ export default function NotificationsPage() {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <Bell className="mb-4 h-10 w-10 text-muted-foreground" />
-                <CardTitle className="text-lg">No notifications yet</CardTitle>
+                <CardTitle className="text-lg">{t('notifications.noNotifications')}</CardTitle>
                 <CardDescription className="mt-2 max-w-sm">
-                  Once notifications are enabled, you&apos;ll receive updates from the community and editorial team.
+                  {t('notifications.noNotificationsDescription')}
                 </CardDescription>
                 <Button className="mt-6" onClick={() => navigate('/')}>
-                  Browse articles
+                  {t('notifications.browseArticles')}
                 </Button>
               </CardContent>
             </Card>
@@ -198,6 +200,7 @@ interface NotificationRowProps {
 }
 
 function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
+  const { t } = useTranslation()
   const Icon = getNotificationIcon(notification.type)
   const navigate = useNavigate()
   const handleMarkRead = useCallback(() => {
@@ -248,7 +251,7 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
               navigate('/')
             }}
           >
-            View
+            {t('notifications.view')}
           </Button>
           <Button
             variant={notification.isUnread ? 'default' : 'outline'}
@@ -256,7 +259,7 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
             className="h-8 w-8"
             onClick={handleMarkRead}
             disabled={!notification.isUnread}
-            aria-label={notification.isUnread ? 'Mark notification as read' : 'Notification already read'}
+            aria-label={notification.isUnread ? t('notifications.markAsRead') : t('notifications.alreadyRead')}
           >
             <Check className="h-3.5 w-3.5" />
           </Button>

@@ -23,7 +23,7 @@
  * См. PROFILE_INTEGRATION_GUIDE.md в корне проекта или комментарии в mockProfileData.tsx
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -54,6 +54,11 @@ import {
   Activity,
   CheckCircle2,
   ChevronRight,
+  MoreVertical,
+  Share2,
+  Flag,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { getUserProfile } from '@/api/profile'
@@ -70,6 +75,15 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { shallow } from 'zustand/shallow'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useToast } from '@/components/ui/use-toast'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   mockProfileComments,
   mockProfileBookmarks,
@@ -130,32 +144,34 @@ function LevelCard({
   xpRequired: number
   streak: number
 }) {
+  const { t } = useTranslation()
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Award className="h-4 w-4 text-primary" />
-          Уровень {level}
+          {t('profile.level', { level })}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Прогресс</span>
+            <span className="text-muted-foreground">{t('profile.progress')}</span>
             <span className="font-medium">{xpProgress}%</span>
           </div>
           <Progress value={xpProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground">
-            {xpCurrent} / {xpRequired} XP
-          </p>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{xpCurrent} / {xpRequired} {t('profile.xp')}</span>
+            <span>{t('profile.xpRemaining', { xp: Math.max(xpRequired - xpCurrent, 0) })}</span>
+          </div>
         </div>
 
         {streak > 0 && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
             <Flame className="h-4 w-4 text-orange-500" />
             <div className="flex-1">
-              <p className="text-xs text-muted-foreground">Серия активности</p>
-              <p className="text-sm font-semibold">{streak} {streak === 1 ? 'день' : 'дней'}</p>
+              <p className="text-xs text-muted-foreground">{t('profile.activityStreak')}</p>
+              <p className="text-sm font-semibold">{t('profile.streakDays', { count: streak })}</p>
           </div>
           </div>
         )}
@@ -166,6 +182,7 @@ function LevelCard({
 
 // Упрощенные достижения (только 3 последних)
 function AchievementsCard({ achievements }: { achievements: Array<{ id: string; title: string; unlocked: boolean }> }) {
+  const { t } = useTranslation()
   const unlocked = achievements.filter((a) => a.unlocked).slice(0, 3)
 
   if (unlocked.length === 0) return null
@@ -175,7 +192,7 @@ function AchievementsCard({ achievements }: { achievements: Array<{ id: string; 
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Trophy className="h-4 w-4 text-primary" />
-          Достижения
+          {t('profile.achievements')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -190,7 +207,7 @@ function AchievementsCard({ achievements }: { achievements: Array<{ id: string; 
         ))}
         {achievements.filter((a) => a.unlocked).length > 3 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
-            +{achievements.filter((a) => a.unlocked).length - 3} ещё
+            {t('profile.moreAchievements', { count: achievements.filter((a) => a.unlocked).length - 3 })}
           </p>
         )}
       </CardContent>
@@ -200,12 +217,13 @@ function AchievementsCard({ achievements }: { achievements: Array<{ id: string; 
 
 // Компонент комментариев
 function CommentsTab({ comments, onArticleClick }: { comments: MockProfileComment[]; onArticleClick: (id: string) => void }) {
+  const { t } = useTranslation()
   if (comments.length === 0) {
   return (
       <Card className="border-dashed">
         <CardContent className="py-12 text-center">
           <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Пока нет комментариев</p>
+          <p className="text-sm text-muted-foreground">{t('profile.noComments')}</p>
       </CardContent>
     </Card>
   )
@@ -237,7 +255,7 @@ function CommentsTab({ comments, onArticleClick }: { comments: MockProfileCommen
               {comment.likes !== undefined && comment.likes > 0 && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Heart className="h-3.5 w-3.5" />
-                  <span>{comment.likes} лайков</span>
+                  <span>{t('profile.likes', { count: comment.likes })}</span>
               </div>
                   )}
                   </div>
@@ -256,12 +274,13 @@ function BookmarksTab({
   bookmarks: MockProfileBookmark[]
   onArticleClick: (id: string) => void
 }) {
+  const { t } = useTranslation()
   if (bookmarks.length === 0) {
   return (
       <Card className="border-dashed">
         <CardContent className="py-12 text-center">
           <Bookmark className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Пока нет закладок</p>
+          <p className="text-sm text-muted-foreground">{t('profile.noBookmarks')}</p>
       </CardContent>
     </Card>
   )
@@ -289,6 +308,7 @@ function BookmarksTab({
 
 // Компонент аналитики аудитории
 function AudienceInsightsCard({ insights }: { insights: MockAudienceInsight[] }) {
+  const { t } = useTranslation()
   if (insights.length === 0) return null
 
   return (
@@ -296,7 +316,7 @@ function AudienceInsightsCard({ insights }: { insights: MockAudienceInsight[] })
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <BarChart3 className="h-4 w-4 text-primary" />
-          Аналитика аудитории
+          {t('profile.audienceInsights')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -334,6 +354,7 @@ function AudienceInsightsCard({ insights }: { insights: MockAudienceInsight[] })
 
 // Компонент распределения контента
 function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
+  const { t } = useTranslation()
   if (mix.length === 0) return null
 
   return (
@@ -341,7 +362,7 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Layers className="h-4 w-4 text-primary" />
-          Распределение контента
+          {t('profile.contentMix')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -352,7 +373,7 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
                 #{item.tag}
               </Badge>
               <span className="text-muted-foreground text-xs">
-                {item.count} статей ({item.percentage}%)
+                {t('profile.articlesCount', { count: item.count, percentage: item.percentage })}
               </span>
                   </div>
             <Progress value={item.percentage} className="h-2" />
@@ -365,6 +386,7 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
 
 // Компонент ленты активности
 function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
+  const { t } = useTranslation()
   if (activities.length === 0) return null
 
   const getIcon = (iconName: string) => {
@@ -383,7 +405,7 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Activity className="h-4 w-4 text-primary" />
-          Последняя активность
+          {t('profile.recentActivity')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -410,6 +432,7 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
 
 // Компонент целей создателя
 function CreatorGoalsCard({ goals }: { goals: MockCreatorGoal[] }) {
+  const { t } = useTranslation()
   if (goals.length === 0) return null
 
   return (
@@ -417,7 +440,7 @@ function CreatorGoalsCard({ goals }: { goals: MockCreatorGoal[] }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Target className="h-4 w-4 text-primary" />
-          Цели создателя
+          {t('profile.creatorGoals')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -454,6 +477,7 @@ function QuickActionsCard({
   actions: MockQuickAction[]
   onNavigate: (href: string) => void
 }) {
+  const { t } = useTranslation()
   if (actions.length === 0) return null
 
   const getIcon = (iconName: string) => {
@@ -471,7 +495,7 @@ function QuickActionsCard({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Zap className="h-4 w-4 text-primary" />
-          Быстрые действия
+          {t('profile.quickActions')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -499,6 +523,7 @@ function PinnedCollectionsCard({
   collections: MockPinnedCollection[]
   onNavigate: (href: string) => void
 }) {
+  const { t } = useTranslation()
   if (collections.length === 0) return null
 
   return (
@@ -506,7 +531,7 @@ function PinnedCollectionsCard({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Layers className="h-4 w-4 text-primary" />
-          Закрепленные коллекции
+          {t('profile.pinnedCollections')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -522,7 +547,7 @@ function PinnedCollectionsCard({
                   <p className="text-sm font-semibold">{collection.title}</p>
                   <p className="text-xs text-muted-foreground">{collection.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {collection.articleCount} {collection.articleCount === 1 ? 'статья' : 'статей'}
+                    {t('profile.articlesCountShort', { count: collection.articleCount })}
                   </p>
             </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
@@ -540,6 +565,9 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user: currentUser } = useAuthStore()
+  const { toast } = useToast()
+  const { t } = useTranslation()
+  const [copied, setCopied] = useState(false)
 
   const routeProfileId = id ? Number(id) : undefined
   const profileId = !Number.isNaN(routeProfileId ?? NaN) ? routeProfileId : currentUser?.id
@@ -573,6 +601,59 @@ export default function ProfilePage() {
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
   const isOwnProfile = profile?.user.id === currentUser?.id
+
+  // Функция для копирования ссылки на профиль
+  const handleCopyProfileLink = async () => {
+    const profileUrl = `${window.location.origin}/profile/${profileId}`
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      setCopied(true)
+      toast({
+        title: t('profile.linkCopied'),
+        description: t('profile.linkCopiedDescription'),
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      toast({
+        title: t('common.error'),
+        description: t('profile.copyError'),
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Функция для поделиться профилем
+  const handleShareProfile = async () => {
+    const profileUrl = `${window.location.origin}/profile/${profileId}`
+    const shareData = {
+      title: t('profile.shareTitle', { username: profile?.user.username || '' }),
+      text: t('profile.shareText', { username: profile?.user.username || '' }),
+      url: profileUrl,
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+      } else {
+        // Fallback: копируем ссылку
+        await handleCopyProfileLink()
+      }
+    } catch (err) {
+      // Пользователь отменил или произошла ошибка
+      if ((err as Error).name !== 'AbortError') {
+        await handleCopyProfileLink()
+      }
+    }
+  }
+
+  // Функция для жалобы
+  const handleReport = () => {
+    // TODO: Реализовать форму жалобы
+    toast({
+      title: t('profile.report'),
+      description: t('profile.reportDescription'),
+    })
+  }
 
   // Используем мок-данные для комментариев и закладок
   const comments = mockProfileComments
@@ -707,15 +788,15 @@ export default function ProfilePage() {
                 <img
                   src={profile.user.coverImageUrl}
                   alt={`${profile.user.username} cover`}
-                  className="h-full w-full object-cover"
-                />
+                    className="h-full w-full object-cover"
+                  />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
-              </div>
-            ) : (
+                </div>
+              ) : (
               <div className="relative aspect-[3/1] w-full sm:aspect-[4/1] bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/15" />
-              </div>
-            )}
+                </div>
+              )}
           </div>
         </Card>
 
@@ -723,76 +804,108 @@ export default function ProfilePage() {
         <Card className="mb-4 sm:mb-6 border-border/60 bg-card shadow-sm">
           <CardContent className="p-4 sm:p-6">
             {/* Мобильный лайаут: аватар сверху по центру */}
-            <div className="flex flex-col items-center gap-4 sm:hidden">
+            <div className="flex flex-col items-center gap-5 sm:hidden">
               {/* Аватар */}
               {profile.user.avatarUrl ? (
                 <img
                   src={profile.user.avatarUrl}
                   alt={profile.user.username}
-                  className="h-20 w-20 rounded-full border-2 object-cover shadow-lg"
+                  className="h-24 w-24 rounded-full border-2 object-cover shadow-lg"
                   style={{ borderColor: 'hsl(var(--border))' }}
                 />
               ) : (
                 <div
-                  className="flex h-20 w-20 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-lg"
+                  className="flex h-24 w-24 items-center justify-center rounded-full border-2 bg-primary/15 text-3xl font-semibold text-primary shadow-lg"
                   style={{ borderColor: 'hsl(var(--border))' }}
                 >
                   {profile.user.username.charAt(0).toUpperCase()}
                 </div>
               )}
 
-              {/* Имя и бейджи */}
-              <div className="flex flex-col items-center gap-2 w-full">
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <h1 className="text-xl font-bold tracking-tight">{profile.user.username}</h1>
-                  <Badge variant="default" className="gap-1">
-                    <Trophy className="h-3 w-3" />
-                    Уровень {level}
-                  </Badge>
+              {/* Имя и бейджи с дропдауном */}
+              <div className="flex flex-col items-center gap-3 w-full px-2">
+                <div className="flex items-center justify-between gap-2 w-full relative">
+                  <div className="flex flex-wrap items-center justify-center gap-2 flex-1 min-w-0">
+                    <h1 className="text-2xl font-bold tracking-tight">{profile.user.username}</h1>
+                    <Badge variant="default" className="gap-1 shrink-0">
+                      <Trophy className="h-3 w-3" />
+                      Уровень {level}
+                    </Badge>
+                  </div>
+                  {/* Дропдаун меню */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 absolute right-0">
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Дополнительные действия</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={handleShareProfile}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Поделиться профилем
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleCopyProfileLink}>
+                        {copied ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Ссылка скопирована
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Копировать ссылку
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      {!isOwnProfile && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
+                            <Flag className="mr-2 h-4 w-4" />
+                            Пожаловаться
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   Участник с {formatDate(profile.user.memberSince)}
                 </Badge>
                 {profile.user.bio && (
-                  <p className="text-sm text-muted-foreground text-center px-4">{profile.user.bio}</p>
+                  <p className="text-sm text-muted-foreground text-center break-words leading-relaxed">
+                    {profile.user.bio}
+                  </p>
                 )}
               </div>
 
-              {/* Статистика - компактная сетка */}
-              <div className="grid grid-cols-2 gap-3 w-full">
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                  <NotebookPen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex flex-col">
-                    <span className="text-lg font-semibold">{profile.stats.publishedArticles}</span>
-                    <span className="text-xs text-muted-foreground">статей</span>
-                  </div>
+              {/* Статистика - горизонтальная строка без подписей */}
+              <div className="flex flex-wrap items-center justify-center gap-3 text-sm w-full px-4 py-2">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <NotebookPen className="h-4 w-4 shrink-0" />
+                  <span className="font-semibold text-foreground">{profile.stats.publishedArticles}</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                  <Heart className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex flex-col">
-                    <span className="text-lg font-semibold">{profile.stats.totalLikes}</span>
-                    <span className="text-xs text-muted-foreground">лайков</span>
-                  </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Heart className="h-4 w-4 shrink-0" />
+                  <span className="font-semibold text-foreground">{profile.stats.totalLikes}</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                  <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex flex-col">
-                    <span className="text-lg font-semibold">{profile.stats.totalComments}</span>
-                    <span className="text-xs text-muted-foreground">комментариев</span>
-                  </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <MessageSquare className="h-4 w-4 shrink-0" />
+                  <span className="font-semibold text-foreground">{profile.stats.totalComments}</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                  <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex flex-col">
-                    <span className="text-lg font-semibold">{profile.stats.draftArticles}</span>
-                    <span className="text-xs text-muted-foreground">черновиков</span>
-                  </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Eye className="h-4 w-4 shrink-0" />
+                  <span className="font-semibold text-foreground">{profile.stats.draftArticles}</span>
                 </div>
               </div>
 
               {/* Теги */}
               {profile.highlights.tags.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 w-full">
+                <div className="flex flex-wrap justify-center gap-2 w-full px-4">
                   {profile.highlights.tags.slice(0, 5).map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       #{tag}
@@ -807,10 +920,10 @@ export default function ProfilePage() {
               )}
 
               {/* Кнопки действий */}
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-2.5 w-full pt-4 border-t mt-2">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="default"
                   onClick={() => navigate('/')}
                   className="gap-2 w-full"
                 >
@@ -819,7 +932,7 @@ export default function ProfilePage() {
                 </Button>
                 {isOwnProfile && (
                   <Button
-                    size="sm"
+                    size="default"
                     variant="default"
                     className="gap-2 w-full"
                     onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
@@ -831,7 +944,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Десктопный лайаут: аватар слева, информация справа */}
+            {/* Десктопный лайаут: аватар слева, информация в центре, кнопки справа */}
             <div className="hidden sm:flex sm:flex-row sm:items-start sm:gap-6 md:gap-8">
               {/* Аватар */}
               <div className="flex-shrink-0">
@@ -854,47 +967,21 @@ export default function ProfilePage() {
 
               {/* Основная информация */}
               <div className="flex flex-1 flex-col gap-4 min-w-0">
-                {/* Верхняя строка: имя, бейджи и кнопки */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="flex flex-col gap-2 flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{profile.user.username}</h1>
-                      <Badge variant="default" className="gap-1 shrink-0">
-                        <Trophy className="h-3 w-3" />
-                        Уровень {level}
-                      </Badge>
-                    </div>
-                    <Badge variant="secondary" className="text-xs w-fit">
-                      Участник с {formatDate(profile.user.memberSince)}
+                {/* Верхняя строка: имя и бейджи */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <h1 className="text-2xl font-bold tracking-tight md:text-3xl truncate">{profile.user.username}</h1>
+                    <Badge variant="default" className="gap-1 shrink-0">
+                      <Trophy className="h-3 w-3" />
+                      Уровень {level}
                     </Badge>
-                    {profile.user.bio && (
-                      <p className="text-sm text-muted-foreground max-w-2xl mt-1">{profile.user.bio}</p>
-                    )}
                   </div>
-
-                  {/* Кнопки действий */}
-                  <div className="flex flex-col gap-2 md:flex-row shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/')}
-                      className="gap-2"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Открыть статьи
-                    </Button>
-                    {isOwnProfile && (
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="gap-2"
-                        onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
-                      >
-                        <Settings className="h-4 w-4" />
-                        Настройки
-                      </Button>
-                    )}
-                  </div>
+                  <Badge variant="secondary" className="text-xs w-fit">
+                    Участник с {formatDate(profile.user.memberSince)}
+                  </Badge>
+                  {profile.user.bio && (
+                    <p className="text-sm text-muted-foreground max-w-2xl">{profile.user.bio}</p>
+                  )}
                 </div>
 
                 {/* Статистика */}
@@ -926,19 +1013,84 @@ export default function ProfilePage() {
 
                 {/* Теги */}
                 {profile.highlights.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2">
                     {profile.highlights.tags.slice(0, 5).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
+                              #{tag}
+                            </Badge>
+                          ))}
                     {profile.highlights.tags.length > 5 && (
                       <Badge variant="outline" className="text-xs">
                         +{profile.highlights.tags.length - 5}
                       </Badge>
                     )}
-                  </div>
-                )}
+                        </div>
+                      )}
+                    </div>
+
+              {/* Правая колонка: дропдаун сверху, кнопки внизу */}
+              <div className="flex flex-col items-end justify-between gap-4 shrink-0 self-stretch">
+                {/* Дропдаун меню - справа сверху */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">Дополнительные действия</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleShareProfile}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Поделиться профилем
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyProfileLink}>
+                      {copied ? (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Ссылка скопирована
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Копировать ссылку
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    {!isOwnProfile && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
+                          <Flag className="mr-2 h-4 w-4" />
+                          Пожаловаться
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Кнопки действий - справа внизу */}
+                <div className="flex flex-row gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/')}
+                    className="gap-2 whitespace-nowrap"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Открыть статьи
+                  </Button>
+                  {isOwnProfile && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="gap-2 whitespace-nowrap"
+                      onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Настройки
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -971,7 +1123,7 @@ export default function ProfilePage() {
                 onNavigate={(href) => navigate(href)}
               />
             )}
-          </aside>
+              </aside>
 
           {/* Вкладки с контентом */}
           <section className="min-w-0 space-y-6">
@@ -991,41 +1143,41 @@ export default function ProfilePage() {
 
             <Tabs defaultValue="articles" className="w-full">
               <TabsList className="grid w-full grid-cols-3 overflow-x-auto">
-                <TabsTrigger value="articles" className="gap-2">
-                  <NotebookPen className="h-4 w-4" />
+                    <TabsTrigger value="articles" className="gap-2">
+                      <NotebookPen className="h-4 w-4" />
                   <span className="hidden sm:inline">Статьи</span>
                   <span className="sm:hidden">Посты</span>
                   {publishedArticles.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
-                      {publishedArticles.length}
-                    </Badge>
+                        {publishedArticles.length}
+                      </Badge>
                   )}
-                </TabsTrigger>
-                <TabsTrigger value="comments" className="gap-2">
-                  <MessageSquare className="h-4 w-4" />
+                    </TabsTrigger>
+                    <TabsTrigger value="comments" className="gap-2">
+                      <MessageSquare className="h-4 w-4" />
                   <span className="hidden sm:inline">Комментарии</span>
                   <span className="sm:hidden">Комм.</span>
                   {comments.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
                       {comments.length}
-                    </Badge>
+                      </Badge>
                   )}
-                </TabsTrigger>
-                <TabsTrigger value="bookmarks" className="gap-2">
-                  <Bookmark className="h-4 w-4" />
+                    </TabsTrigger>
+                    <TabsTrigger value="bookmarks" className="gap-2">
+                      <Bookmark className="h-4 w-4" />
                   <span className="hidden sm:inline">Закладки</span>
                   <span className="sm:hidden">Закл.</span>
                   {bookmarks.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
-                      {bookmarks.length}
-                    </Badge>
+                        {bookmarks.length}
+                      </Badge>
                   )}
-                </TabsTrigger>
-              </TabsList>
+                    </TabsTrigger>
+                  </TabsList>
 
               <TabsContent value="articles" className="mt-6">
-                {publishedArticles.length === 0 ? (
-                  <Card className="border-dashed">
+                    {publishedArticles.length === 0 ? (
+                      <Card className="border-dashed">
                     <CardContent className="py-12 text-center">
                       <NotebookPen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground">
@@ -1040,35 +1192,35 @@ export default function ProfilePage() {
                           Создать статью
                         </Button>
                       )}
-                    </CardContent>
-                  </Card>
-                ) : (
+                        </CardContent>
+                      </Card>
+                    ) : (
                   <div className="space-y-4">
                     {publishedArticles.map((article) => (
-                      <ArticleCard
-                        key={article.id}
-                        article={article}
-                        onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
-                        onTagClick={(tag) => navigate(`/?tag=${encodeURIComponent(tag)}`)}
-                      />
+                        <ArticleCard
+                          key={article.id}
+                          article={article}
+                          onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
+                          onTagClick={(tag) => navigate(`/?tag=${encodeURIComponent(tag)}`)}
+                        />
                     ))}
                   </div>
-                )}
-              </TabsContent>
+                    )}
+                  </TabsContent>
 
-              <TabsContent value="comments" className="mt-6">
+                  <TabsContent value="comments" className="mt-6">
                 <CommentsTab
                   comments={comments}
                   onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
                 />
-              </TabsContent>
+                  </TabsContent>
 
-              <TabsContent value="bookmarks" className="mt-6">
+                  <TabsContent value="bookmarks" className="mt-6">
                 <BookmarksTab
                   bookmarks={bookmarks}
                   onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
                 />
-              </TabsContent>
+                  </TabsContent>
             </Tabs>
 
             {/* Мобильная боковая панель - показывается после вкладок на маленьких экранах */}
@@ -1104,8 +1256,8 @@ export default function ProfilePage() {
                 />
               )}
             </div>
-          </section>
-        </div>
+              </section>
+            </div>
       </div>
     </div>
   )

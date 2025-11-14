@@ -20,6 +20,7 @@ import { Extension, type Range, type Editor } from '@tiptap/core'
 import Suggestion, { type SuggestionOptions, type SuggestionProps } from '@tiptap/suggestion'
 import { createLowlight, common } from 'lowlight'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import Highlight from '@tiptap/extension-highlight'
 import tippy, { type Instance as TippyInstance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
@@ -53,8 +54,6 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogContent,
@@ -412,11 +411,11 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
   }
 
   return (
-    <aside className="sticky top-[5.5rem] hidden max-h-[420px] w-64 shrink-0 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-3 text-sm lg:block">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        Оглавление
+    <aside className="sticky top-[5.5rem] hidden max-h-[420px] w-56 shrink-0 overflow-y-auto text-sm lg:block">
+      <div className="mb-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+        Outline
       </div>
-      <nav className="space-y-1">
+      <nav className="space-y-0.5">
         {items.map((item) => {
           const isActive = activePos === item.pos
           return (
@@ -432,10 +431,12 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
                   .run()
               }}
               className={cn(
-                'flex w-full items-center rounded-md px-2 py-1.5 text-left transition-colors',
-                isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+                'flex w-full items-center rounded px-2 py-1.5 text-left text-xs transition-colors',
+                isActive 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
               )}
-              style={{ paddingLeft: `${(item.level - 1) * 12 + 8}px` }}
+              style={{ paddingLeft: `${(item.level - 1) * 10 + 8}px` }}
             >
               <span className="truncate">{item.text}</span>
             </button>
@@ -561,9 +562,7 @@ export function RichTextEditor({
           ],
         },
       }),
-      CodeBlockLowlight.configure({
-        lowlight,
-      }),
+      CodeBlockWithCopy,
       Highlight.configure({
         multicolor: true,
       }),
@@ -587,7 +586,7 @@ export function RichTextEditor({
       attributes: {
         class: cn(
           'tiptap focus:outline-none',
-          'min-h-[320px] whitespace-pre-wrap break-words text-base leading-relaxed text-foreground'
+          'min-h-[400px] whitespace-pre-wrap break-words text-[15px] leading-[1.7] text-foreground'
         ),
       },
     },
@@ -876,34 +875,50 @@ export function RichTextEditor({
 
   return (
     <>
-      <Card
+      <div
         className={cn(
-          'overflow-hidden border border-border/70 bg-card/95 shadow-lg backdrop-blur-sm transition-all',
+          'relative flex flex-col overflow-hidden border border-border/50 bg-background transition-all',
           disabled && 'opacity-80',
           className
         )}
+        style={{
+          borderRadius: 'var(--radius-md)',
+        }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-4 py-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="border-primary/30 text-primary">
-              Draft
-            </Badge>
-            <Separator orientation="vertical" className="h-4 bg-border/60" />
-            <span className="flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Use “/” for quick commands
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+        {/* Minimal top bar - only essential controls */}
+        <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              disabled={!editor?.can().chain().focus().undo().run()}
+              onClick={() => editor?.chain().focus().undo().run()}
+              title="Undo"
+            >
+              <Undo className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              disabled={!editor?.can().chain().focus().redo().run()}
+              onClick={() => editor?.chain().focus().redo().run()}
+              title="Redo"
+            >
+              <Redo className="h-3.5 w-3.5" />
+            </Button>
             {editor && activeColumnsLayout && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 gap-2 px-3">
-                    <Columns3 className="h-4 w-4" />
-                    {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Колонки'}
+                  <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
+                    <Columns3 className="h-3.5 w-3.5" />
+                    {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Columns'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="start" className="w-48">
                   {(Object.entries(COLUMN_LAYOUTS) as [ColumnPresetKey, typeof COLUMN_LAYOUTS[keyof typeof COLUMN_LAYOUTS]][]).map(
                     ([key, config]) => (
                       <DropdownMenuItem
@@ -925,176 +940,150 @@ export function RichTextEditor({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              disabled={!editor?.can().chain().focus().undo().run()}
-              onClick={() => editor?.chain().focus().undo().run()}
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              disabled={!editor?.can().chain().focus().redo().run()}
-              onClick={() => editor?.chain().focus().redo().run()}
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
+            <span className="flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              Type "/" for commands
+            </span>
           </div>
         </div>
 
-        <CardContent className="px-0 pb-0">
-          <div className="relative border-b border-border/70 bg-background/70">
-            {editor && (
-              <BubbleMenu
-                editor={editor}
-                shouldShow={({ editor, view, state }) => {
-                  const { selection } = state
-                  
-                  // Не показываем если нет выделения
-                  if (selection.empty) {
-                    return false
-                  }
-                  
-                  // Не показываем если это NodeSelection (выбран весь блок через drag-handle)
-                  const isNodeSelection = selection.constructor.name === 'NodeSelection' || 
-                                          ('node' in selection && selection.node !== undefined)
-                  if (isNodeSelection) {
-                    return false
-                  }
-                  
-                  // Показываем только если выделен текст (TextSelection)
-                  // Проверяем что есть выделенный текст между from и to
-                  const { from, to } = selection
-                  if (from === to) {
-                    return false
-                  }
-                  
-                  // Проверяем что выделен именно текст, а не пустые блоки
-                  const text = state.doc.textBetween(from, to, ' ')
-                  return text.trim().length > 0
-                }}
-                tippyOptions={{
-                  duration: 120,
-                  placement: 'top',
-                  appendTo: () => document.body,
-                }}
-              >
-                <div className="flex items-center gap-1 rounded-full border border-border/70 bg-card/95 px-2 py-1 shadow-xl backdrop-blur">
-                {[
-                  {
-                    label: 'Bold',
-                    icon: Bold,
-                    action: () => editor.chain().focus().toggleBold().run(),
-                    isActive: editor.isActive('bold'),
-                    disabled: !editor.can().chain().focus().toggleBold().run(),
-                  },
-                  {
-                    label: 'Strikethrough',
-                    icon: Strikethrough,
-                    action: () => editor.chain().focus().toggleStrike().run(),
-                    isActive: editor.isActive('strike'),
-                    disabled: !editor.can().chain().focus().toggleStrike().run(),
-                  },
-                  {
-                    label: 'Italic',
-                    icon: Italic,
-                    action: () => editor.chain().focus().toggleItalic().run(),
-                    isActive: editor.isActive('italic'),
-                    disabled: !editor.can().chain().focus().toggleItalic().run(),
-                  },
-                  {
-                    label: 'Inline code',
-                    icon: Code,
-                    action: () => editor.chain().focus().toggleCode().run(),
-                    isActive: editor.isActive('code'),
-                    disabled: !editor.can().chain().focus().toggleCode().run(),
-                  },
-                  {
-                    label: 'Highlight',
-                    icon: Highlighter,
-                    action: () => editor.chain().focus().toggleHighlight().run(),
-                    isActive: editor.isActive('highlight'),
-                    disabled: !editor.can().chain().focus().toggleHighlight().run(),
-                  },
-                  {
-                    label: editor.isActive('link') ? 'Edit link' : 'Add link',
-                    icon: LinkIcon,
-                    action: handleOpenLinkDialog,
-                    isActive: editor.isActive('link'),
-                    disabled: false,
-                  },
-                  {
-                    label: 'Clear formatting',
-                    icon: RemoveFormatting,
-                    action: handleRemoveFormatting,
-                    isActive: false,
-                    disabled: false,
-                  },
-                ].map(({ icon: Icon, label, action, isActive, disabled }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground',
-                      isActive && 'bg-primary/90 text-primary-foreground shadow-sm'
-                    )}
-                    disabled={disabled}
-                    onClick={(event) => {
-                      event.preventDefault()
-                      action()
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
-                </div>
-              </BubbleMenu>
-            )}
-
-            <div className="px-4 pb-8 pt-6 lg:flex lg:items-start lg:gap-10">
-              <div className="group/editor relative flex-1 min-w-0 transition-[box-shadow] focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.04)]">
-                <EditorContent
-                  editor={editor}
-                  id={id}
-                  aria-label={ariaLabel}
-                  aria-labelledby={ariaLabelledBy}
-                  aria-describedby={ariaDescribedBy}
-                  className="text-base break-words"
-                />
-                <span className="pointer-events-none absolute bottom-2 left-4 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40 opacity-0 transition-opacity duration-200 group-focus-within/editor:opacity-100">
-                  Writing mode
-                </span>
+        {/* Main editor area - clean and focused */}
+        <div className="relative flex-1">
+          {editor && (
+            <BubbleMenu
+              editor={editor}
+              shouldShow={({ editor, view, state }) => {
+                const { selection } = state
+                
+                if (selection.empty) {
+                  return false
+                }
+                
+                const isNodeSelection = selection.constructor.name === 'NodeSelection' || 
+                                        ('node' in selection && selection.node !== undefined)
+                if (isNodeSelection) {
+                  return false
+                }
+                
+                const { from, to } = selection
+                if (from === to) {
+                  return false
+                }
+                
+                const text = state.doc.textBetween(from, to, ' ')
+                return text.trim().length > 0
+              }}
+              tippyOptions={{
+                duration: 100,
+                placement: 'top',
+                appendTo: () => document.body,
+              }}
+            >
+              <div className="flex items-center gap-0.5 rounded-lg border border-border/60 bg-background/95 px-1.5 py-1 shadow-lg backdrop-blur-sm ring-1 ring-border/20">
+              {[
+                {
+                  label: 'Bold',
+                  icon: Bold,
+                  action: () => editor.chain().focus().toggleBold().run(),
+                  isActive: editor.isActive('bold'),
+                  disabled: !editor.can().chain().focus().toggleBold().run(),
+                },
+                {
+                  label: 'Italic',
+                  icon: Italic,
+                  action: () => editor.chain().focus().toggleItalic().run(),
+                  isActive: editor.isActive('italic'),
+                  disabled: !editor.can().chain().focus().toggleItalic().run(),
+                },
+                {
+                  label: 'Strikethrough',
+                  icon: Strikethrough,
+                  action: () => editor.chain().focus().toggleStrike().run(),
+                  isActive: editor.isActive('strike'),
+                  disabled: !editor.can().chain().focus().toggleStrike().run(),
+                },
+                {
+                  label: 'Inline code',
+                  icon: Code,
+                  action: () => editor.chain().focus().toggleCode().run(),
+                  isActive: editor.isActive('code'),
+                  disabled: !editor.can().chain().focus().toggleCode().run(),
+                },
+                {
+                  label: 'Highlight',
+                  icon: Highlighter,
+                  action: () => editor.chain().focus().toggleHighlight().run(),
+                  isActive: editor.isActive('highlight'),
+                  disabled: !editor.can().chain().focus().toggleHighlight().run(),
+                },
+                {
+                  label: editor.isActive('link') ? 'Edit link' : 'Add link',
+                  icon: LinkIcon,
+                  action: handleOpenLinkDialog,
+                  isActive: editor.isActive('link'),
+                  disabled: false,
+                },
+                {
+                  label: 'Clear formatting',
+                  icon: RemoveFormatting,
+                  action: handleRemoveFormatting,
+                  isActive: false,
+                  disabled: false,
+                },
+              ].map(({ icon: Icon, label, action, isActive, disabled }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                    isActive && 'bg-primary/10 text-primary'
+                  )}
+                  disabled={disabled}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    action()
+                  }}
+                  title={label}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
               </div>
-              <EditorOutline editor={editor} />
-            </div>
-          </div>
+            </BubbleMenu>
+          )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-2.5 text-[12px] text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Markdown ready</span>
-            <Separator orientation="vertical" className="h-3.5 bg-border/60" />
-            <span>⌘/Ctrl + B for bold</span>
-          </span>
-          <div className="flex items-center gap-3">
-            <span>{wordCount} words</span>
-            <Separator orientation="vertical" className="h-3.5 bg-border/60" />
-            {characterLimit ? (
-              <span>
-                {characterCount}/{characterLimit} characters
-              </span>
-            ) : (
-              <span>{characterCount} characters</span>
-            )}
+          <div className="flex items-start gap-6 px-6 py-8">
+            <div className="group/editor relative flex-1 min-w-0">
+              <EditorContent
+                editor={editor}
+                id={id}
+                aria-label={ariaLabel}
+                aria-labelledby={ariaLabelledBy}
+                aria-describedby={ariaDescribedBy}
+                className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none"
+              />
+            </div>
+            <EditorOutline editor={editor} />
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Minimal bottom bar - only stats */}
+        <div className="flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
+          <span>{wordCount} words</span>
+          {characterLimit ? (
+            <span className={cn(
+              characterCount > characterLimit * 0.9 && 'text-amber-600 dark:text-amber-400',
+              characterCount >= characterLimit && 'text-destructive font-medium'
+            )}>
+              {characterCount}/{characterLimit}
+            </span>
+          ) : (
+            <span>{characterCount} chars</span>
+          )}
+        </div>
+      </div>
 
     <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
       <DialogContent>

@@ -29,6 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import type { CompanyJobListing, ClientRequest, FreelancerOffer } from '@/types/networking'
 import { 
   mockCompanyJobs, 
@@ -47,17 +48,17 @@ import {
  * Все предложения можно фильтровать и бустить за деньги.
  */
 
-// Константы для фильтров
+// Константы для фильтров - будут переведены внутри компонента
 const keywordModes = [
-  { id: 'title' as const, label: 'Title' },
-  { id: 'description' as const, label: 'Description' },
-  { id: 'company' as const, label: 'Company' },
+  { id: 'title' as const, labelKey: 'networking.search.title' },
+  { id: 'description' as const, labelKey: 'networking.search.description' },
+  { id: 'company' as const, labelKey: 'networking.search.company' },
 ]
 
 const educationOptions = [
-  { id: 'none', label: 'Not required' },
-  { id: 'secondary-vocational', label: 'Secondary vocational' },
-  { id: 'higher', label: 'Higher' },
+  { id: 'none', labelKey: 'networking.filters.notRequired' },
+  { id: 'secondary-vocational', labelKey: 'networking.filters.secondaryVocational' },
+  { id: 'higher', labelKey: 'networking.filters.higher' },
 ]
 
 const scheduleOptions = [
@@ -71,45 +72,46 @@ const workingHourOptions = [
 ]
 
 const workFormats = [
-  { id: 'onsite', label: "Employer's site" },
-  { id: 'remote', label: 'Remote' },
-  { id: 'hybrid', label: 'Hybrid' },
-  { id: 'travel', label: 'Travel-required' },
+  { id: 'onsite', labelKey: 'networking.filters.employerSite' },
+  { id: 'remote', labelKey: 'networking.filters.remote' },
+  { id: 'hybrid', labelKey: 'networking.filters.hybrid' },
+  { id: 'travel', labelKey: 'networking.filters.travelRequired' },
 ]
 
 const otherFilters = [
-  { id: 'withAddress', label: 'With address' },
-  { id: 'accessible', label: 'Accessible' },
-  { id: 'withoutAgencies', label: 'No staffing agencies' },
-  { id: 'teenFriendly', label: 'Available for 14+' },
-  { id: 'accreditedIt', label: 'Accredited IT company' },
-  { id: 'lowResponses', label: '< 10 applications' },
+  { id: 'withAddress', labelKey: 'networking.filters.withAddress' },
+  { id: 'accessible', labelKey: 'networking.filters.accessible' },
+  { id: 'withoutAgencies', labelKey: 'networking.filters.withoutAgencies' },
+  { id: 'teenFriendly', labelKey: 'networking.filters.teenFriendly' },
+  { id: 'accreditedIt', labelKey: 'networking.filters.accreditedIt' },
+  { id: 'lowResponses', labelKey: 'networking.filters.lowResponses' },
 ]
 
 const paymentFrequencies = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'biweekly', label: 'Twice a month' },
-  { id: 'monthly', label: 'Monthly' },
-  { id: 'project', label: 'Per project' },
+  { id: 'daily', labelKey: 'networking.filters.daily' },
+  { id: 'weekly', labelKey: 'networking.filters.weekly' },
+  { id: 'biweekly', labelKey: 'networking.filters.biweekly' },
+  { id: 'monthly', labelKey: 'networking.filters.monthly' },
+  { id: 'project', labelKey: 'networking.filters.project' },
 ]
 
 const timeframeOptions = [
-  { id: 'all', label: 'All time' },
-  { id: 'month', label: 'Past month' },
-  { id: 'week', label: 'Past week' },
-  { id: 'three-days', label: 'Past 3 days' },
-  { id: 'day', label: 'Past day' },
+  { id: 'all', labelKey: 'networking.filters.allTime' },
+  { id: 'month', labelKey: 'networking.filters.pastMonth' },
+  { id: 'week', labelKey: 'networking.filters.pastWeek' },
+  { id: 'three-days', labelKey: 'networking.filters.past3Days' },
+  { id: 'day', labelKey: 'networking.filters.pastDay' },
 ]
 
 const pageSizeOptions = [
-  { id: '20', label: '20 listings' },
-  { id: '50', label: '50 listings' },
-  { id: '100', label: '100 listings' },
+  { id: '20', labelKey: 'networking.filters.listings20' },
+  { id: '50', labelKey: 'networking.filters.listings50' },
+  { id: '100', labelKey: 'networking.filters.listings100' },
 ]
 
 export default function NetworkingPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   
   // Hero section state
   const [isHeroExpanded, setIsHeroExpanded] = useState(false)
@@ -343,7 +345,7 @@ export default function NetworkingPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      
+
       <main className="container space-y-8 pb-12 pt-6">
         {/* Hero Section */}
         <HeroSection
@@ -355,29 +357,29 @@ export default function NetworkingPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={Briefcase}
-            label="Active Jobs"
+            label={t('networking.stats.activeJobs')}
             value={mockCompanyJobs.filter(j => j.status === 'active').length}
-            trend="+12% this week"
+            trend={t('networking.stats.trend.week')}
           />
           <StatCard
             icon={Users}
-            label="Freelancers"
+            label={t('networking.stats.freelancers')}
             value={mockFreelancerOffers.length}
-            trend="Top rated available"
+            trend={t('networking.stats.trend.topRated')}
           />
           <StatCard
             icon={MessageSquare}
-            label="Client Requests"
+            label={t('networking.stats.clientRequests')}
             value={mockClientRequests.filter(r => r.status === 'open').length}
-            trend="New today"
+            trend={t('networking.stats.trend.newToday')}
           />
           <StatCard
             icon={Zap}
-            label="Boosted Listings"
+            label={t('networking.stats.boostedListings')}
             value={[...mockCompanyJobs, ...mockClientRequests, ...mockFreelancerOffers].filter((item: any) => item.boosted).length}
-            trend="Premium visibility"
+            trend={t('networking.stats.trend.premiumVisibility')}
           />
-        </div>
+          </div>
         
         {/* Main Content */}
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -386,11 +388,11 @@ export default function NetworkingPage() {
             <Card>
               <CardContent className="space-y-4 pt-6">
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
+            <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder="Search opportunities..."
+                        placeholder={t('networking.search.placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9"
@@ -407,7 +409,7 @@ export default function NetworkingPage() {
                             className={cn('text-xs', isActive && 'shadow-sm')}
                             onClick={() => setKeywordMode(mode.id)}
                           >
-                            {mode.label}
+                            {t(mode.labelKey)}
                           </Button>
                         )
                       })}
@@ -419,10 +421,10 @@ export default function NetworkingPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="boosted">Boosted first</SelectItem>
-                        <SelectItem value="newest">Newest first</SelectItem>
-                        <SelectItem value="rating">Highest rated</SelectItem>
-                        <SelectItem value="relevance">Most relevant</SelectItem>
+                        <SelectItem value="boosted">{t('networking.sort.boosted')}</SelectItem>
+                        <SelectItem value="newest">{t('networking.sort.newest')}</SelectItem>
+                        <SelectItem value="rating">{t('networking.sort.rating')}</SelectItem>
+                        <SelectItem value="relevance">{t('networking.sort.relevance')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button
@@ -433,17 +435,17 @@ export default function NetworkingPage() {
                     >
                       <SlidersHorizontal className="h-4 w-4" />
                     </Button>
-                  </div>
-                </div>
+              </div>
+            </div>
 
                 {/* Active Filters */}
                 {(selectedTags.length > 0 || showBoostedOnly || employmentTypes.length > 0) && (
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Filters:</span>
+                    <span className="text-sm text-muted-foreground">{t('networking.filters.label')}</span>
                     {showBoostedOnly && (
                       <Badge variant="secondary" className="gap-1">
                         <Zap className="h-3 w-3" />
-                        Boosted only
+                        {t('networking.filters.boostedOnly')}
                         <button onClick={() => setShowBoostedOnly(false)} className="ml-1">
                           <X className="h-3 w-3" />
                         </button>
@@ -466,7 +468,7 @@ export default function NetworkingPage() {
                       </Badge>
                     ))}
                     <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs">
-                      Clear all
+                      {t('networking.filters.clearAll')}
                     </Button>
                   </div>
                 )}
@@ -476,94 +478,94 @@ export default function NetworkingPage() {
                   <div className="space-y-4 rounded-lg border border-border/60 bg-muted/20 p-4">
                     {/* Quick Filters */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Quick filters</Label>
+                      <Label className="text-sm font-medium">{t('networking.filters.quickFilters')}</Label>
                       <div className="flex flex-wrap gap-2">
-                        <Button
+              <Button
                           variant={showBoostedOnly ? 'default' : 'outline'}
-                          size="sm"
+                size="sm"
                           onClick={() => setShowBoostedOnly(!showBoostedOnly)}
-                          className="gap-2"
-                        >
+                className="gap-2"
+              >
                           <Zap className="h-3 w-3" />
-                          Boosted only
-                        </Button>
+                          {t('networking.filters.boostedOnly')}
+              </Button>
                         <Button
                           variant={remoteOnly ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setRemoteOnly(!remoteOnly)}
                         >
-                          Remote only
+                          {t('networking.filters.remoteOnly')}
                         </Button>
                         <Button
                           variant={compensationSpecifiedOnly ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setCompensationSpecifiedOnly(!compensationSpecifiedOnly)}
                         >
-                          With salary
-                        </Button>
-                      </div>
-                    </div>
+                          {t('networking.filters.withSalary')}
+              </Button>
+            </div>
+          </div>
                     
                     <Separator />
                     
                     {/* Compensation */}
                     <Card className="border-border/60 bg-background/50">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Compensation</CardTitle>
-                      </CardHeader>
+                  <CardTitle className="text-sm font-semibold">{t('networking.filters.compensation')}</CardTitle>
+                </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Salary range (in thousands)</Label>
-                          <Slider
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.salaryRange')}</Label>
+                    <Slider
                             value={[compensationMin, compensationMax]}
                             onValueChange={(value) => {
                               setCompensationMin(value[0])
                               setCompensationMax(value[1])
                             }}
-                            min={0}
+                      min={0}
                             max={300}
                             step={10}
                             className="py-4"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>from {compensationMin}k</span>
-                            <span>to {compensationMax}k</span>
-                          </div>
-                        </div>
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{t('networking.filters.from', { min: compensationMin })}</span>
+                            <span>{t('networking.filters.to', { max: compensationMax })}</span>
+                    </div>
+                  </div>
                         
-                        <div className="space-y-2">
-                          <Label className="text-xs">Payment period</Label>
-                          <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.paymentPeriod')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {(['all', 'hourly', 'monthly', 'yearly', 'project'] as const).map(period => (
-                              <Button
-                                key={period}
+                          <Button
+                            key={period}
                                 variant={compensationPeriod === period ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setCompensationPeriod(period)}
+                            size="sm"
+                            onClick={() => setCompensationPeriod(period)}
                                 className="text-xs capitalize"
-                              >
-                                {period === 'all' ? 'Any' : period}
-                              </Button>
+                          >
+                            {period === 'all' ? t('networking.filters.any') : t(`networking.filters.${period}`)}
+                          </Button>
                             ))}
-                          </div>
+                    </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label className="text-xs">Payment frequency</Label>
-                          <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.paymentFrequency')}</Label>
+                      <div className="flex flex-wrap gap-2">
                             {paymentFrequencies.map(freq => (
-                              <Button
+                          <Button
                                 key={freq.id}
                                 variant={selectedPaymentFrequencies.includes(freq.id) ? 'default' : 'outline'}
-                                size="sm"
+                            size="sm"
                                 onClick={() => toggleValue(selectedPaymentFrequencies, setSelectedPaymentFrequencies, freq.id)}
                                 className="text-xs"
-                              >
-                                {freq.label}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
+                          >
+                                {t(`networking.filters.${freq.id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                       </CardContent>
                     </Card>
                     
@@ -572,126 +574,126 @@ export default function NetworkingPage() {
                     {/* Employment & Experience */}
                     <Card className="border-border/60 bg-background/50">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Employment & Experience</CardTitle>
+                        <CardTitle className="text-sm font-semibold">{t('networking.filters.employmentExperience')}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-2">
-                          <Label className="text-xs">Employment type</Label>
+                          <Label className="text-xs">{t('networking.filters.employmentType')}</Label>
                           <div className="flex flex-wrap gap-2">
                             {['full-time', 'part-time', 'contract', 'internship'].map(type => (
-                              <Button
+                    <Button
                                 key={type}
                                 variant={employmentTypes.includes(type) ? 'default' : 'outline'}
-                                size="sm"
+                      size="sm"
                                 onClick={() => toggleValue(employmentTypes, setEmploymentTypes, type)}
                                 className="text-xs capitalize"
-                              >
+                    >
                                 {type.replace('-', ' ')}
-                              </Button>
+                    </Button>
                             ))}
-                          </div>
+                  </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <Label className="text-xs">Experience level</Label>
-                          <div className="flex flex-wrap gap-2">
+
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.experienceLevel')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {['junior', 'middle', 'senior', 'lead'].map(level => (
-                              <Button
+                        <Button
                                 key={level}
                                 variant={experienceLevels.includes(level) ? 'default' : 'outline'}
-                                size="sm"
+                          size="sm"
                                 onClick={() => toggleValue(experienceLevels, setExperienceLevels, level)}
                                 className="text-xs capitalize"
-                              >
+                        >
                                 {level}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                         
-                        <div className="space-y-2">
-                          <Label className="text-xs">Education</Label>
-                          <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.education')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {educationOptions.map(option => (
-                              <Button
-                                key={option.id}
+                        <Button
+                          key={option.id}
                                 variant={selectedEducation.includes(option.id) ? 'default' : 'outline'}
-                                size="sm"
+                          size="sm"
                                 onClick={() => toggleValue(selectedEducation, setSelectedEducation, option.id)}
                                 className="text-xs"
-                              >
-                                {option.label}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
+                        >
+                          {t(option.labelKey)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
                     <Separator />
                     
                     {/* Working Model */}
                     <Card className="border-border/60 bg-background/50">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Working Model</CardTitle>
-                      </CardHeader>
+                        <CardTitle className="text-sm font-semibold">{t('networking.filters.workingModel')}</CardTitle>
+                </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Work format</Label>
-                          <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.workFormat')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {workFormats.map(format => (
-                              <Button
+                        <Button
                                 key={format.id}
                                 variant={selectedWorkFormats.includes(format.id) ? 'default' : 'outline'}
-                                size="sm"
+                          size="sm"
                                 onClick={() => toggleValue(selectedWorkFormats, setSelectedWorkFormats, format.id)}
                                 className="text-xs"
-                              >
-                                {format.label}
-                              </Button>
-                            ))}
-                          </div>
+                        >
+                                {t(format.labelKey)}
+                        </Button>
+                      ))}
+                    </div>
                         </div>
                         
                         <div className="space-y-2">
-                          <Label className="text-xs">Schedule</Label>
+                          <Label className="text-xs">{t('networking.filters.schedule')}</Label>
                           <div className="flex flex-wrap gap-2">
                             {scheduleOptions.slice(0, 8).map(schedule => (
-                              <Button
+                    <Button
                                 key={schedule}
                                 variant={selectedSchedules.includes(schedule) ? 'default' : 'outline'}
-                                size="sm"
+                      size="sm"
                                 onClick={() => toggleValue(selectedSchedules, setSelectedSchedules, schedule)}
                                 className="text-xs"
-                              >
+                    >
                                 {schedule}
-                              </Button>
+                    </Button>
                             ))}
-                          </div>
+                  </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label className="text-xs">Working hours per day</Label>
-                          <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                          <Label className="text-xs">{t('networking.filters.workingHours')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {workingHourOptions.slice(0, 8).map(hours => (
-                              <Button
+                        <Button
                                 key={hours}
                                 variant={selectedWorkingHours.includes(hours) ? 'default' : 'outline'}
-                                size="sm"
+                          size="sm"
                                 onClick={() => toggleValue(selectedWorkingHours, setSelectedWorkingHours, hours)}
                                 className="text-xs"
-                              >
+                        >
                                 {hours}
-                              </Button>
-                            ))}
-                          </div>
+                        </Button>
+                      ))}
+                    </div>
                           <Button
                             variant={eveningOrNightShifts ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => setEveningOrNightShifts(!eveningOrNightShifts)}
                             className="text-xs"
                           >
-                            Evening or night shifts
+                            {t('networking.filters.eveningNightShifts')}
                           </Button>
                         </div>
                       </CardContent>
@@ -702,10 +704,10 @@ export default function NetworkingPage() {
                     {/* Other Parameters */}
                     <Card className="border-border/60 bg-background/50">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Other Parameters</CardTitle>
+                        <CardTitle className="text-sm font-semibold">{t('networking.filters.otherParameters')}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                           {otherFilters.map(filter => (
                             <Button
                               key={filter.id}
@@ -714,7 +716,7 @@ export default function NetworkingPage() {
                               onClick={() => toggleValue(selectedOtherFlags, setSelectedOtherFlags, filter.id)}
                               className="text-xs"
                             >
-                              {filter.label}
+                              {t(filter.labelKey)}
                             </Button>
                           ))}
                         </div>
@@ -722,50 +724,50 @@ export default function NetworkingPage() {
                         <Separator />
                         
                         <div className="space-y-2">
-                          <Label className="text-xs">Timeframe</Label>
+                          <Label className="text-xs">{t('networking.filters.timeframe')}</Label>
                           <div className="flex flex-wrap gap-2">
                             {timeframeOptions.map(option => (
-                              <Button
-                                key={option.id}
+                        <Button
+                          key={option.id}
                                 variant={timeframe === option.id ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setTimeframe(option.id)}
+                          size="sm"
+                          onClick={() => setTimeframe(option.id)}
                                 className="text-xs"
-                              >
-                                {option.label}
-                              </Button>
-                            ))}
-                          </div>
+                        >
+                          {t(option.labelKey)}
+                        </Button>
+                      ))}
+                    </div>
                         </div>
                         
                         <Separator />
                         
                         <div className="space-y-2">
-                          <Label className="text-xs">Results per page</Label>
-                          <div className="flex flex-wrap gap-2">
+                          <Label className="text-xs">{t('networking.filters.resultsPerPage')}</Label>
+                    <div className="flex flex-wrap gap-2">
                             {pageSizeOptions.map(option => (
-                              <Button
-                                key={option.id}
+                        <Button
+                          key={option.id}
                                 variant={pageSize === option.id ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setPageSize(option.id)}
+                          size="sm"
+                          onClick={() => setPageSize(option.id)}
                                 className="text-xs"
-                              >
-                                {option.label}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        >
+                          {t(option.labelKey)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
                 
                 {/* Freelance Filters */}
                 {showFilters && mainTab === 'freelance' && (
                   <div className="space-y-4 rounded-lg border border-border/60 bg-muted/20 p-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Quick filters</Label>
+                      <Label className="text-sm font-medium">{t('networking.filters.quickFilters')}</Label>
                       <div className="flex flex-wrap gap-2">
                         <Button
                           variant={showBoostedOnly ? 'default' : 'outline'}
@@ -774,16 +776,16 @@ export default function NetworkingPage() {
                           className="gap-2"
                         >
                           <Zap className="h-3 w-3" />
-                          Boosted only
+                          {t('networking.filters.boostedOnly')}
                         </Button>
                       </div>
-                    </div>
-                    
+          </div>
+
                     {freelanceTab === 'offers' && (
                       <>
                         <Separator />
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">Availability</Label>
+                          <Label className="text-sm font-medium">{t('networking.filters.availability')}</Label>
                           <div className="flex flex-wrap gap-2">
                             {['available', 'busy', 'unavailable'].map(status => (
                               <Button
@@ -793,7 +795,7 @@ export default function NetworkingPage() {
                                 onClick={() => toggleValue(availability, setAvailability, status)}
                                 className="capitalize"
                               >
-                                {status}
+                                {t(`networking.filters.${status}`)}
                               </Button>
                             ))}
                           </div>
@@ -804,23 +806,23 @@ export default function NetworkingPage() {
                     <Separator />
                     
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Budget range</Label>
+                      <Label className="text-sm font-medium">{t('networking.filters.budgetRange')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Min</Label>
+                          <Label className="text-xs text-muted-foreground">{t('networking.filters.min')}</Label>
                           <Input
                             type="number"
-                            placeholder="Min budget"
+                            placeholder={t('networking.filters.minBudget')}
                             value={budgetMin ?? ''}
                             onChange={(e) => setBudgetMin(e.target.value ? Number(e.target.value) : undefined)}
                             className="h-9"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Max</Label>
+                          <Label className="text-xs text-muted-foreground">{t('networking.filters.max')}</Label>
                           <Input
                             type="number"
-                            placeholder="Max budget"
+                            placeholder={t('networking.filters.maxBudget')}
                             value={budgetMax ?? ''}
                             onChange={(e) => setBudgetMax(e.target.value ? Number(e.target.value) : undefined)}
                             className="h-9"
@@ -838,11 +840,11 @@ export default function NetworkingPage() {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="companies" className="gap-2">
                   <Briefcase className="h-4 w-4" />
-                  Companies ({filteredCompanies.length})
+                  {t('networking.tabs.companies')} ({filteredCompanies.length})
                 </TabsTrigger>
                 <TabsTrigger value="freelance" className="gap-2">
                   <Users className="h-4 w-4" />
-                  Freelance ({freelanceTab === 'requests' ? filteredClientRequests.length : filteredFreelancerOffers.length})
+                  {t('networking.tabs.freelance')} ({freelanceTab === 'requests' ? filteredClientRequests.length : filteredFreelancerOffers.length})
                 </TabsTrigger>
               </TabsList>
               
@@ -851,15 +853,15 @@ export default function NetworkingPage() {
                   <Card className="border-dashed">
                     <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                       <Briefcase className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                      <p className="text-lg font-medium">No companies found</p>
+                      <p className="text-lg font-medium">{t('networking.noResults.companies')}</p>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Try adjusting your filters or search query
+                        {t('networking.noResults.companiesDescription')}
                       </p>
                       <Button variant="outline" onClick={handleClearFilters} className="mt-4">
-                        Clear filters
-                      </Button>
-                    </CardContent>
-                  </Card>
+                        {t('networking.filters.clearAll')}
+                  </Button>
+                </CardContent>
+              </Card>
                 ) : (
                   filteredCompanies.map(job => (
                     <CompanyJobCard key={job.id} job={job} />
@@ -871,10 +873,10 @@ export default function NetworkingPage() {
                 <Tabs value={freelanceTab} onValueChange={(value: any) => setFreelanceTab(value)}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="requests">
-                      Client Requests ({filteredClientRequests.length})
+                      {t('networking.tabs.requests')} ({filteredClientRequests.length})
                     </TabsTrigger>
                     <TabsTrigger value="offers">
-                      Freelancer Offers ({filteredFreelancerOffers.length})
+                      {t('networking.tabs.offers')} ({filteredFreelancerOffers.length})
                     </TabsTrigger>
                   </TabsList>
                   
@@ -883,15 +885,15 @@ export default function NetworkingPage() {
                       <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                           <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-lg font-medium">No client requests found</p>
+                          <p className="text-lg font-medium">{t('networking.noResults.clientRequests')}</p>
                           <p className="mt-2 text-sm text-muted-foreground">
-                            Try adjusting your filters or search query
+                            {t('networking.noResults.clientRequestsDescription')}
                           </p>
                           <Button variant="outline" onClick={handleClearFilters} className="mt-4">
-                            Clear filters
-                          </Button>
-                        </CardContent>
-                      </Card>
+                            {t('networking.filters.clearAll')}
+                    </Button>
+                  </CardContent>
+                </Card>
                     ) : (
                       filteredClientRequests.map(request => (
                         <ClientRequestCard key={request.id} request={request} />
@@ -904,15 +906,15 @@ export default function NetworkingPage() {
                       <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                           <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-lg font-medium">No freelancer offers found</p>
+                          <p className="text-lg font-medium">{t('networking.noResults.freelancerOffers')}</p>
                           <p className="mt-2 text-sm text-muted-foreground">
-                            Try adjusting your filters or search query
+                            {t('networking.noResults.freelancerOffersDescription')}
                           </p>
                           <Button variant="outline" onClick={handleClearFilters} className="mt-4">
-                            Clear filters
+                            {t('networking.filters.clearAll')}
                           </Button>
-                        </CardContent>
-                      </Card>
+            </CardContent>
+          </Card>
                     ) : (
                       filteredFreelancerOffers.map(offer => (
                         <FreelancerOfferCard key={offer.id} offer={offer} />
@@ -928,12 +930,12 @@ export default function NetworkingPage() {
           <aside className="space-y-6">
             {/* Popular Tags */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Popular Skills</CardTitle>
+            <CardHeader>
+                <CardTitle className="text-base">{t('networking.sidebar.popularSkills')}</CardTitle>
                 <CardDescription className="text-xs">
-                  Filter by trending technologies
+                  {t('networking.sidebar.popularSkillsDescription')}
                 </CardDescription>
-              </CardHeader>
+            </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {popularTags.map(tag => (
@@ -949,38 +951,38 @@ export default function NetworkingPage() {
                     </Badge>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
             
             {/* Boost Info */}
             <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Zap className="h-4 w-4 text-primary" />
-                  Boost Your Listing
+                  {t('networking.sidebar.boostListing')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Get 10x more visibility
+                  {t('networking.sidebar.boostDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>Appear at the top of search results</span>
+                    <span>{t('networking.sidebar.boostBenefits.top')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>Highlighted with premium badge</span>
+                    <span>{t('networking.sidebar.boostBenefits.badge')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>30-day boost duration</span>
+                    <span>{t('networking.sidebar.boostBenefits.duration')}</span>
                   </li>
                 </ul>
                 <Button className="w-full gap-2">
                   <Zap className="h-4 w-4" />
-                  Boost Listing
+                  {t('networking.sidebar.boostButton')}
                 </Button>
               </CardContent>
             </Card>
@@ -988,17 +990,17 @@ export default function NetworkingPage() {
             {/* Help */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Need Help?</CardTitle>
+                <CardTitle className="text-base">{t('networking.sidebar.needHelp')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  How to post a job
+                  {t('networking.sidebar.howToPost')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  Pricing & payments
+                  {t('networking.sidebar.pricing')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  Safety guidelines
+                  {t('networking.sidebar.safety')}
                 </Button>
               </CardContent>
             </Card>
@@ -1012,10 +1014,10 @@ export default function NetworkingPage() {
 // Component: Stat Card
 function StatCard({ 
   icon: Icon, 
-  label, 
-  value, 
+  label,
+  value,
   trend 
-}: { 
+}: {
   icon: any
   label: string
   value: number
@@ -1026,12 +1028,12 @@ function StatCard({
       <CardContent className="flex items-center gap-4 pt-6">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
           <Icon className="h-6 w-6 text-primary" />
-        </div>
+      </div>
         <div className="flex-1">
           <p className="text-2xl font-bold">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="text-xs text-primary">{trend}</p>
-        </div>
+    </div>
       </CardContent>
     </Card>
   )
@@ -1039,6 +1041,8 @@ function StatCard({
 
 // Component: Company Job Card
 function CompanyJobCard({ job }: { job: CompanyJobListing }) {
+  const { t } = useTranslation()
+  
   const formatSalary = () => {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -1047,15 +1051,15 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
     })
     
     if (job.salary.min && job.salary.max) {
-      return `${formatter.format(job.salary.min)} - ${formatter.format(job.salary.max)}`
+      return t('networking.jobCard.range', { min: formatter.format(job.salary.min), max: formatter.format(job.salary.max) })
     }
     if (job.salary.min) {
-      return `From ${formatter.format(job.salary.min)}`
+      return t('networking.jobCard.from', { amount: formatter.format(job.salary.min) })
     }
     if (job.salary.max) {
-      return `Up to ${formatter.format(job.salary.max)}`
+      return t('networking.jobCard.upTo', { amount: formatter.format(job.salary.max) })
     }
-    return 'Competitive salary'
+    return t('networking.jobCard.competitiveSalary')
   }
   
   return (
@@ -1079,13 +1083,13 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
                 {job.companyVerified && (
                   <Badge variant="secondary" className="gap-1 text-xs">
                     <CheckCircle2 className="h-3 w-3" />
-                    Verified
+                    {t('networking.jobCard.verified')}
                   </Badge>
                 )}
                 {job.boosted && (
                   <Badge className="gap-1 bg-primary text-xs">
                     <Zap className="h-3 w-3 fill-current" />
-                    Boosted
+                    {t('networking.jobCard.boosted')}
                   </Badge>
                 )}
               </div>
@@ -1126,7 +1130,7 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
           {job.tags.slice(0, 5).map(tag => (
             <Badge key={tag} variant="outline" className="text-xs">
               {tag}
@@ -1137,7 +1141,7 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
               +{job.tags.length - 5} more
             </Badge>
           )}
-        </div>
+      </div>
         
         <Separator />
         
@@ -1145,14 +1149,14 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
-              <span>{job.viewsCount} views</span>
-            </div>
+              <span>{job.viewsCount} {t('networking.jobCard.views')}</span>
+    </div>
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
-              <span>{job.applicationsCount} applicants</span>
+              <span>{job.applicationsCount} {t('networking.jobCard.applicants')}</span>
             </div>
           </div>
-          <Button size="sm">View Details</Button>
+          <Button size="sm">{t('networking.jobCard.viewDetails')}</Button>
         </div>
       </CardContent>
     </Card>
@@ -1161,6 +1165,7 @@ function CompanyJobCard({ job }: { job: CompanyJobListing }) {
 
 // Component: Client Request Card
 function ClientRequestCard({ request }: { request: ClientRequest }) {
+  const { t } = useTranslation()
   const formatBudget = () => {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -1180,7 +1185,7 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
     }
     return formatter.format(request.budget.min ?? request.budget.max ?? 0)
   }
-  
+
   return (
     <Card className={cn(
       'transition-all hover:shadow-md',
@@ -1196,19 +1201,19 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
                 className="h-10 w-10 rounded-full border bg-background"
               />
             )}
-            <div className="space-y-1">
+          <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-lg">{request.title}</CardTitle>
                 {request.boosted && (
                   <Badge className="gap-1 bg-primary text-xs">
                     <Zap className="h-3 w-3 fill-current" />
-                    Boosted
+                    {t('networking.requestCard.boosted')}
                   </Badge>
                 )}
-              </div>
+        </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{request.clientName}</span>
-                <span>•</span>
+          <span>•</span>
                 <div className="flex items-center gap-1">
                   <Star className="h-3 w-3 fill-primary text-primary" />
                   <span>{request.clientRating.average.toFixed(1)}</span>
@@ -1229,30 +1234,30 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <DollarSign className="h-4 w-4" />
             <span className="font-medium">{formatBudget()}</span>
-          </div>
+        </div>
           {request.duration && (
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{request.duration}</span>
-            </div>
+          </div>
           )}
           <Badge variant="secondary" className="text-xs">
             {request.category}
-          </Badge>
-        </div>
+            </Badge>
+          </div>
         
-        <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
           {request.tags.slice(0, 5).map(tag => (
             <Badge key={tag} variant="outline" className="text-xs">
               {tag}
-            </Badge>
-          ))}
+              </Badge>
+            ))}
           {request.tags.length > 5 && (
             <Badge variant="outline" className="text-xs">
               +{request.tags.length - 5} more
             </Badge>
           )}
-        </div>
+          </div>
         
         <Separator />
         
@@ -1260,14 +1265,14 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
-              <span>{request.viewsCount} views</span>
+              <span>{request.viewsCount} {t('networking.requestCard.views')}</span>
             </div>
             <div className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
-              <span>{request.proposalsCount} proposals</span>
+              <span>{request.proposalsCount} {t('networking.requestCard.proposals')}</span>
             </div>
           </div>
-          <Button size="sm">Submit Proposal</Button>
+          <Button size="sm">{t('networking.requestCard.submitProposal')}</Button>
         </div>
       </CardContent>
     </Card>
@@ -1276,6 +1281,8 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
 
 // Component: Freelancer Offer Card
 function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
+  const { t } = useTranslation()
+  
   const formatPricing = () => {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -1291,7 +1298,7 @@ function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
       return `${formatter.format(offer.pricing.projectRate.min)} - ${formatter.format(offer.pricing.projectRate.max)}/project`
     }
     
-    return 'Contact for pricing'
+    return t('networking.offerCard.contactForPricing')
   }
   
   const availabilityColors = {
@@ -1321,13 +1328,13 @@ function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
                 {offer.freelancerVerified && (
                   <Badge variant="secondary" className="gap-1 text-xs">
                     <CheckCircle2 className="h-3 w-3" />
-                    Verified
+                    {t('networking.offerCard.verified')}
                   </Badge>
                 )}
                 {offer.boosted && (
                   <Badge className="gap-1 bg-primary text-xs">
                     <Zap className="h-3 w-3 fill-current" />
-                    Boosted
+                    {t('networking.offerCard.boosted')}
                   </Badge>
                 )}
               </div>
@@ -1338,7 +1345,7 @@ function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
                   <span className="text-xs">({offer.freelancerRating.count})</span>
                 </div>
                 <span>•</span>
-                <span>{offer.experience.projectsCompleted} projects</span>
+                <span>{offer.experience.projectsCompleted} {t('networking.offerCard.projects')}</span>
               </div>
             </div>
           </div>
@@ -1363,7 +1370,7 @@ function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>Responds {offer.responseTime}</span>
+            <span>{t('networking.offerCard.responds', { time: offer.responseTime })}</span>
           </div>
         </div>
         
@@ -1406,14 +1413,14 @@ function FreelancerOfferCard({ offer }: { offer: FreelancerOffer }) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
-              <span>{offer.viewsCount} views</span>
+              <span>{offer.viewsCount} {t('networking.offerCard.views')}</span>
             </div>
             <div className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
-              <span>{offer.contactsCount} contacts</span>
+              <span>{offer.contactsCount} {t('networking.offerCard.contacts')}</span>
             </div>
           </div>
-          <Button size="sm">View Profile</Button>
+          <Button size="sm">{t('networking.offerCard.viewProfile')}</Button>
         </div>
       </CardContent>
     </Card>
@@ -1426,6 +1433,8 @@ interface HeroSectionProps {
 }
 
 function HeroSection({ isExpanded, onToggle }: HeroSectionProps) {
+  const { t } = useTranslation()
+  
   return (
     <section
       className={cn(
@@ -1440,27 +1449,25 @@ function HeroSection({ isExpanded, onToggle }: HeroSectionProps) {
             size="icon"
             className="absolute right-0 top-0 h-8 w-8 rounded-full"
             onClick={onToggle}
-            aria-label="Collapse hero section"
+            aria-label={t('networking.hero.collapse')}
           >
             <ChevronUp className="h-4 w-4" />
           </Button>
           <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs uppercase tracking-wider">
             <Briefcase className="mr-2 h-3 w-3" />
-            Professional Networking
+            {t('networking.hero.badge')}
           </Badge>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Find opportunities.<br />Build connections.
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" dangerouslySetInnerHTML={{ __html: t('networking.hero.title') }} />
           <p className="text-lg text-muted-foreground">
-            Connect with companies, clients, and freelancers. Discover your next project or hire top talent.
+            {t('networking.hero.description')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Button size="lg" className="gap-2">
               <TrendingUp className="h-4 w-4" />
-              Post an opportunity
+              {t('networking.hero.postOpportunity')}
             </Button>
             <Button size="lg" variant="outline">
-              Browse all listings
+              {t('networking.hero.browseListings')}
             </Button>
           </div>
         </div>
@@ -1468,14 +1475,14 @@ function HeroSection({ isExpanded, onToggle }: HeroSectionProps) {
         <div className="flex items-center gap-3 w-full">
           <Briefcase className="h-4 w-4 shrink-0 text-primary" />
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm font-semibold text-foreground">Find opportunities. Build connections.</span>
+            <span className="text-sm font-semibold text-foreground">{t('networking.hero.collapsedTitle')}</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7 shrink-0 rounded-full -mr-1 ml-auto"
             onClick={onToggle}
-            aria-label="Expand hero section"
+            aria-label={t('networking.hero.expand')}
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </Button>

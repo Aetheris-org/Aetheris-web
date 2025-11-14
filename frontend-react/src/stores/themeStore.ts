@@ -1833,6 +1833,11 @@ function applyThemePreferences(state: ThemeState) {
   root.style.setProperty('--accent-foreground', accentValues.accentForeground)
   root.style.setProperty('--ring', accentValues.ring)
   root.style.setProperty('--radius', `${state.radius}rem`)
+  // Update adaptive radius variables
+  root.style.setProperty('--radius-xs', `min(${state.radius}rem, 0.375rem)`)
+  root.style.setProperty('--radius-sm', `min(${state.radius}rem, 0.5rem)`)
+  root.style.setProperty('--radius-md', `min(${state.radius}rem, 0.75rem)`)
+  root.style.setProperty('--radius-lg', `${state.radius}rem`)
   const typographyScale = TYPOGRAPHY_SCALES[state.typography]?.scale ?? 1
   root.style.setProperty('--aetheris-font-scale', typographyScale.toString())
   root.style.setProperty('--aetheris-density', state.density.toString())

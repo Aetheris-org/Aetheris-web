@@ -23,95 +23,98 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-
-const categories = [
-  {
-    id: 'getting-started',
-    title: 'Getting started',
-    description: 'Set up your account and publish your first story.',
-    icon: Sparkles,
-    articles: [
-      {
-        title: 'Invite teammates to collaborate',
-        summary: 'Tips for running shared workspaces with unified permissions.',
-      },
-      {
-        title: 'Create your first story',
-        summary: 'A walkthrough of the editor, markdown shortcuts, and preview.',
-      },
-      {
-        title: 'Personalize your profile',
-        summary: 'Customize bio, cover image, and external profiles.',
-      },
-    ],
-  },
-  {
-    id: 'writing',
-    title: 'Writing & Publishing',
-    description: 'Draft, review, and ship stories your readers love.',
-    icon: BookOpen,
-    articles: [
-      {
-        title: 'Structuring long-form articles',
-        summary: 'Use sections, call-outs, and embeds to keep readers engaged.',
-      },
-      {
-        title: 'Collaborative editing flow',
-        summary: 'Assign reviewers, leave inline comments, and resolve feedback.',
-      },
-      {
-        title: 'Scheduling releases',
-        summary: 'Set publish windows, configure RSS, and notify subscribers.',
-      },
-    ],
-  },
-  {
-    id: 'account',
-    title: 'Account & billing',
-    description: 'Manage seats, invoices, and security options.',
-    icon: Shield,
-    articles: [
-      {
-        title: 'Upgrade to Creator Pro',
-        summary: 'Unlock advanced analytics, custom domains, and priority support.',
-      },
-      {
-        title: 'Two-factor authentication',
-        summary: 'Secure your workspace with OTP apps and backup codes.',
-      },
-      {
-        title: 'View invoices and receipts',
-        summary: 'Download receipts and update billing contacts.',
-      },
-    ],
-  },
-]
-
-const contactOptions = [
-  {
-    label: 'Chat with support',
-    description: 'Average response under 5 minutes during business hours.',
-    icon: MessageCircle,
-    action: 'Open chat',
-  },
-  {
-    label: 'Email hello@aetheris.dev',
-    description: 'Detailed requests, billing questions, or roadmap feedback.',
-    icon: Mail,
-    action: 'Send email',
-  },
-  {
-    label: 'Escalate priority incident',
-    description: 'Critical outages affecting your publication.',
-    icon: LifeBuoy,
-    action: 'Escalate',
-    badge: 'Pro',
-  },
-]
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function HelpCenterPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const defaultTab = useMemo(() => categories[0]?.id ?? 'getting-started', [])
+
+  const categories = [
+    {
+      id: 'getting-started',
+      title: t('help.categories.gettingStarted'),
+      description: t('help.categories.gettingStartedDescription'),
+      icon: Sparkles,
+      articles: [
+        {
+          title: t('help.articles.inviteTeammates'),
+          summary: t('help.articles.inviteTeammatesSummary'),
+        },
+        {
+          title: t('help.articles.createFirstStory'),
+          summary: t('help.articles.createFirstStorySummary'),
+        },
+        {
+          title: t('help.articles.personalizeProfile'),
+          summary: t('help.articles.personalizeProfileSummary'),
+        },
+      ],
+    },
+    {
+      id: 'writing',
+      title: t('help.categories.writing'),
+      description: t('help.categories.writingDescription'),
+      icon: BookOpen,
+      articles: [
+        {
+          title: t('help.articles.structuringArticles'),
+          summary: t('help.articles.structuringArticlesSummary'),
+        },
+        {
+          title: t('help.articles.collaborativeEditing'),
+          summary: t('help.articles.collaborativeEditingSummary'),
+        },
+        {
+          title: t('help.articles.schedulingReleases'),
+          summary: t('help.articles.schedulingReleasesSummary'),
+        },
+      ],
+    },
+    {
+      id: 'account',
+      title: t('help.categories.account'),
+      description: t('help.categories.accountDescription'),
+      icon: Shield,
+      articles: [
+        {
+          title: t('help.articles.upgradePro'),
+          summary: t('help.articles.upgradeProSummary'),
+        },
+        {
+          title: t('help.articles.twoFactor'),
+          summary: t('help.articles.twoFactorSummary'),
+        },
+        {
+          title: t('help.articles.viewInvoices'),
+          summary: t('help.articles.viewInvoicesSummary'),
+        },
+      ],
+    },
+  ]
+
+  const contactOptions = [
+    {
+      label: t('help.contactOptions.chat'),
+      description: t('help.contactOptions.chatDescription'),
+      icon: MessageCircle,
+      action: t('help.contactOptions.chatAction'),
+    },
+    {
+      label: t('help.contactOptions.email'),
+      description: t('help.contactOptions.emailDescription'),
+      icon: Mail,
+      action: t('help.contactOptions.emailAction'),
+    },
+    {
+      label: t('help.contactOptions.escalate'),
+      description: t('help.contactOptions.escalateDescription'),
+      icon: LifeBuoy,
+      action: t('help.contactOptions.escalateAction'),
+      badge: t('help.contactOptions.proBadge'),
+    },
+  ]
+
+  const defaultTab = useMemo(() => categories[0]?.id ?? 'getting-started', [categories])
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,10 +128,10 @@ export default function HelpCenterPage() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('help.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Help Center</h1>
+            <h1 className="text-lg font-semibold">{t('help.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -143,12 +146,11 @@ export default function HelpCenterPage() {
             <CardHeader className="space-y-2">
               <Badge variant="secondary" className="w-fit gap-1 text-[11px] uppercase tracking-wide">
                 <Sparkles className="h-3 w-3 text-primary" />
-                Knowledge base
+                {t('help.knowledgeBase')}
               </Badge>
-              <CardTitle className="text-2xl">How can we help?</CardTitle>
+              <CardTitle className="text-2xl">{t('help.howCanWeHelp')}</CardTitle>
               <CardDescription className="text-sm">
-                Browse guides, best practices, and release notes. Our support team is one click away if you
-                get stuck.
+                {t('help.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -183,7 +185,7 @@ export default function HelpCenterPage() {
                               <p className="text-xs text-muted-foreground">{article.summary}</p>
                             </div>
                             <Button variant="ghost" size="sm" className="gap-1">
-                              Read guide
+                              {t('help.readGuide')}
                             </Button>
                           </CardContent>
                         </Card>
@@ -198,9 +200,9 @@ export default function HelpCenterPage() {
           <div className="space-y-6">
             <Card className="border-border/60 bg-muted/20">
               <CardHeader>
-                <CardTitle className="text-lg">Contact us</CardTitle>
+                <CardTitle className="text-lg">{t('help.contactUs')}</CardTitle>
                 <CardDescription>
-                  Prefer a human? Our team is on-call 7 days a week with escalations for production incidents.
+                  {t('help.contactDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -233,24 +235,24 @@ export default function HelpCenterPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Wand2 className="h-4 w-4 text-primary" />
-                  Release highlights
+                  {t('help.releaseHighlights')}
                 </CardTitle>
                 <CardDescription>
-                  Recent improvements that may answer your question before contacting support.
+                  {t('help.releaseDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <div className="rounded-lg border border-border/50 bg-background/70 p-3">
-                  <p className="font-medium text-foreground">Reading list sync</p>
-                  <p>Saved articles now sync across web and mobile, with offline mode shipping next.</p>
+                  <p className="font-medium text-foreground">{t('help.releases.readingList.title')}</p>
+                  <p>{t('help.releases.readingList.description')}</p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/70 p-3">
-                  <p className="font-medium text-foreground">Appearance presets</p>
-                  <p>Create and share workspace visual presets across editorial teams.</p>
+                  <p className="font-medium text-foreground">{t('help.releases.appearancePresets.title')}</p>
+                  <p>{t('help.releases.appearancePresets.description')}</p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/70 p-3">
-                  <p className="font-medium text-foreground">OAuth updates</p>
-                  <p>Additional providers are in beta. Follow the release notes for Discord and Slack support.</p>
+                  <p className="font-medium text-foreground">{t('help.releases.oauthUpdates.title')}</p>
+                  <p>{t('help.releases.oauthUpdates.description')}</p>
                 </div>
               </CardContent>
             </Card>

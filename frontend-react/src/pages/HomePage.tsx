@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getAllArticles, getTrendingArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
+import { getAllArticles, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -49,10 +49,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useLocalStorage } from 'usehooks-ts'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function HomePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
@@ -63,17 +66,17 @@ export default function HomePage() {
   }> = [
     {
       id: 'default',
-      label: 'Standard cards',
+      label: t('home.viewModes.standardCards'),
       icon: Rows,
     },
     {
       id: 'line',
-      label: 'Compact list',
+      label: t('home.viewModes.compactList'),
       icon: List,
     },
     {
       id: 'square',
-      label: 'Grid view',
+      label: t('home.viewModes.gridView'),
       icon: LayoutGrid,
     },
   ]
@@ -85,31 +88,40 @@ export default function HomePage() {
   const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
   const [page, setPage] = useState(1)
+  const pageRef = useRef(page)
   const [isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [searchInputFocused, setSearchInputFocused] = useState(false)
+  const searchContainerRef = useRef<HTMLDivElement>(null)
+
+  // Синхронизируем ref с состоянием
+  useEffect(() => {
+    pageRef.current = page
+  }, [page])
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
   const quickDestinations = useMemo(
     () => [
       {
-        label: 'Networking',
-        description: 'Find collaborators & clients',
+        label: t('home.quickDestinations.networking'),
+        description: t('home.quickDestinations.networkingDescription'),
         icon: Compass,
         action: () => navigate('/networking'),
       },
       {
-        label: 'Courses',
-        description: 'Grow your craft with guided paths',
+        label: t('home.quickDestinations.courses'),
+        description: t('home.quickDestinations.coursesDescription'),
         icon: GraduationCap,
         action: () => navigate('/courses'),
       },
       {
-        label: 'Developers',
-        description: 'Tooling, changelog, and resources',
+        label: t('home.quickDestinations.developers'),
+        description: t('home.quickDestinations.developersDescription'),
         icon: Terminal,
         action: () => navigate('/developers'),
       },
     ],
-    [navigate]
+    [navigate, t]
   )
   const openNetworking = useMemo(
     () => networkingOpportunities.filter((item) => item.status === 'open').length,
@@ -121,13 +133,11 @@ export default function HomePage() {
   const { data: articlesData, isLoading } = useQuery({
     queryKey: [
       'articles',
-      {
         page,
         pageSize,
-        tags: selectedTags.slice().sort(),
-        difficulty: difficultyFilter,
-        sort: sortOption,
-      },
+      selectedTags.slice().sort().join(','),
+      difficultyFilter,
+      sortOption,
     ],
     queryFn: () =>
       getAllArticles({
@@ -142,6 +152,27 @@ export default function HomePage() {
   const { data: trendingArticles = [], isLoading: loadingTrending } = useQuery({
     queryKey: ['trending-articles', user?.id],
     queryFn: () => getTrendingArticles(user?.id, 5),
+  })
+
+  // Debounced search query
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        setDebouncedSearchQuery(searchQuery.trim())
+      } else {
+        setDebouncedSearchQuery('')
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const { data: searchResults = [], isLoading: isSearching } = useQuery({
+    queryKey: ['search-articles', debouncedSearchQuery, user?.id],
+    queryFn: () => searchArticles(debouncedSearchQuery, user?.id, 0, 10),
+    enabled: debouncedSearchQuery.length >= 2,
   })
 
   const trendingSummary = useMemo(() => {
@@ -159,12 +190,17 @@ export default function HomePage() {
   const hasMultiplePages = totalRecords > pageSize
 
   useEffect(() => {
-    if (totalRecords === 0 && page !== 1) {
+    // Не сбрасываем страницу во время загрузки или если данные еще не загружены
+    if (isLoading) {
+      return
+    }
+    // Сбрасываем только если данных действительно нет (не из-за загрузки)
+    if (totalRecords === 0 && page !== 1 && !isLoading) {
       setPage(1)
-    } else if (page > totalPages) {
+    } else if (page > totalPages && totalPages > 0) {
       setPage(totalPages)
     }
-  }, [page, totalPages, totalRecords])
+  }, [page, totalPages, totalRecords, isLoading])
 
   useEffect(() => {
     const storedValue = typeof window !== 'undefined' ? localStorage.getItem('home-spotlight-dismissed') : null
@@ -197,10 +233,64 @@ export default function HomePage() {
     return pages
   }, [page, totalPages])
 
+  // Show search results panel when focused and has query
+  useEffect(() => {
+    if (searchInputFocused && searchQuery.trim().length > 0) {
+      setShowSearchResults(true)
+    } else if (!searchInputFocused) {
+      // Delay hiding to allow click on results
+      const timer = setTimeout(() => {
+        setShowSearchResults(false)
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [searchInputFocused, searchQuery])
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      // Игнорируем клики на пагинацию и кнопки
+      if (
+        target.closest('nav[aria-label="pagination"]') ||
+        target.closest('button') ||
+        target.tagName === 'BUTTON'
+      ) {
+        return
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
+        setShowSearchResults(false)
+        setSearchInputFocused(false)
+      }
+    }
+
+    if (showSearchResults) {
+      // Используем capture: false чтобы обработчик срабатывал после обработчиков на кнопках
+      document.addEventListener('mousedown', handleClickOutside, { capture: false })
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [showSearchResults])
+
   // Handlers
   const handleSearch = useCallback(() => {
     console.log('Search:', searchQuery)
   }, [searchQuery])
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const handleSearchInputFocus = () => {
+    setSearchInputFocused(true)
+  }
+
+  const handleSearchResultClick = (articleId: string) => {
+    setShowSearchResults(false)
+    setSearchInputFocused(false)
+    navigate(`/article/${articleId}`)
+  }
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
@@ -217,17 +307,27 @@ export default function HomePage() {
     setPage(1)
   }
 
+
   // Close view mode expander when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
+      // Игнорируем клики на пагинацию и кнопки
+      if (
+        target.closest('nav[aria-label="pagination"]') ||
+        target.closest('button') ||
+        target.tagName === 'BUTTON'
+      ) {
+        return
+      }
       if (isViewModeExpanded && !target.closest('[data-view-mode-expander]')) {
         setIsViewModeExpanded(false)
       }
     }
 
     if (isViewModeExpanded) {
-      document.addEventListener('mousedown', handleClickOutside)
+      // Используем capture: false чтобы обработчик срабатывал после обработчиков на кнопках
+      document.addEventListener('mousedown', handleClickOutside, { capture: false })
       return () => {
         document.removeEventListener('mousedown', handleClickOutside)
       }
@@ -245,62 +345,62 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="container space-y-10 pb-6 pt-6">
+      <main className="container space-y-8 sm:space-y-8 lg:space-y-10 pb-6 sm:pb-6 pt-6 sm:pt-6 px-4 sm:px-6">
         {!isSpotlightDismissed && (
-        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/15 p-6 shadow-sm">
-            <Button
-              variant="ghost"
-              size="icon"
-            className="absolute right-3 top-3 h-8 w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+        <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/15 p-6 sm:p-6 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-3 top-3 h-8 w-8 sm:h-8 sm:w-8 rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
             onClick={handleDismissSpotlight}
-            aria-label="Dismiss spotlight"
+            aria-label={t('home.spotlight.dismiss')}
           >
-            <X className="h-3.5 w-3.5" />
-            </Button>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-6 lg:max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
-                <Sparkles className="h-3 w-3" />
-                Forum spotlight
+            <X className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+          </Button>
+          <div className="flex flex-col gap-6 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-6 sm:space-y-6 lg:max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background px-3 sm:px-3 py-1 text-xs sm:text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                <Sparkles className="h-3 w-3 sm:h-3 sm:w-3" />
+                {t('home.spotlight.title')}
               </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Join the conversation shaping modern publishing.
+              <div className="space-y-3 sm:space-y-3">
+                <h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+                  {t('home.spotlight.heading')}
                 </h1>
-                <p className="max-w-2xl text-sm text-muted-foreground">
-                  Two threads worth your time today—jump in, trade notes, or save for later.
+                <p className="text-sm sm:text-sm text-muted-foreground">
+                  {t('home.spotlight.description')}
                 </p>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-4 sm:gap-4">
                 {forumSpotlights.slice(0, 2).map((spotlight) => (
                   <button
                     key={spotlight.id}
                     type="button"
-                    className="flex flex-col gap-2 rounded-2xl border border-transparent bg-background/70 px-4 py-4 text-left transition hover:border-border hover:bg-muted/30"
+                    className="flex flex-col gap-2 rounded-2xl sm:rounded-2xl border border-transparent bg-background/70 px-4 sm:px-4 py-4 sm:py-4 text-left transition hover:border-border hover:bg-muted/30"
                     onClick={() => navigate(`/article/${spotlight.id}`)}
                         >
-                    <span className="text-sm font-semibold text-foreground leading-tight">{spotlight.title}</span>
-                    <span className="text-xs text-muted-foreground line-clamp-2">{spotlight.summary}</span>
-                    <span className="text-xs text-muted-foreground">{spotlight.author} · {spotlight.reads.toLocaleString()} reads</span>
+                    <span className="text-sm sm:text-sm font-semibold text-foreground leading-tight">{spotlight.title}</span>
+                    <span className="text-xs sm:text-xs text-muted-foreground line-clamp-2">{spotlight.summary}</span>
+                    <span className="text-xs sm:text-xs text-muted-foreground">{spotlight.author} · {spotlight.reads.toLocaleString()} reads</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex w-full max-w-xs flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Quick destinations</p>
+            <div className="flex w-full lg:max-w-xs flex-col gap-3 sm:gap-3 rounded-2xl sm:rounded-2xl border border-border/70 bg-background/80 p-4 sm:p-4 shadow-sm">
+              <p className="text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">{t('home.quickDestinations.title')}</p>
               {quickDestinations.map((destination) => (
                 <button
                   key={destination.label}
                   type="button"
-                  className="flex items-center gap-3 rounded-xl border border-transparent px-4 py-3 text-left transition hover:border-border hover:bg-muted/40"
+                  className="flex items-center gap-3 sm:gap-3 rounded-xl sm:rounded-xl border border-transparent px-4 sm:px-4 py-3 sm:py-3 text-left transition hover:border-border hover:bg-muted/40"
                   onClick={destination.action}
                 >
-                  <destination.icon className="h-5 w-5 text-primary" />
-                  <span className="flex flex-col items-start gap-1">
-                    <span className="text-sm font-semibold text-foreground">{destination.label}</span>
-                    <span className="text-xs text-muted-foreground">{destination.description}</span>
+                  <destination.icon className="h-5 w-5 sm:h-5 sm:w-5 text-primary shrink-0" />
+                  <span className="flex flex-col items-start gap-1 sm:gap-1 min-w-0">
+                    <span className="text-sm sm:text-sm font-semibold text-foreground truncate w-full">{destination.label}</span>
+                    <span className="text-xs sm:text-xs text-muted-foreground line-clamp-1">{destination.description}</span>
                   </span>
                 </button>
               ))}
@@ -309,34 +409,124 @@ export default function HomePage() {
         </section>
         )}
 
-        <section className="grid gap-8 lg:grid-cols-[1fr_300px]">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <section className="flex flex-col gap-6 sm:gap-8 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
+          <div className="space-y-6 sm:space-y-6 order-2 lg:order-1">
+            <div className="space-y-4 sm:space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1 w-full" ref={searchContainerRef}>
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground z-10" />
                   <Input
                     type="text"
-                    placeholder="Search articles..."
+                    placeholder={t('home.search.placeholder')}
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-9"
+                    onChange={handleSearchInputChange}
+                    onFocus={handleSearchInputFocus}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch()
+                        setShowSearchResults(false)
+                        setSearchInputFocused(false)
+                      } else if (e.key === 'Escape') {
+                        setShowSearchResults(false)
+                        setSearchInputFocused(false)
+                      }
+                    }}
+                    className="pl-11 sm:pl-9 h-11 sm:h-10 text-base sm:text-sm"
                   />
+                  {showSearchResults && (
+                    <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+                      {isSearching ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative" data-view-mode-expander style={{ height: '40px', width: '40px' }}>
+                      ) : debouncedSearchQuery.length < 2 && searchQuery.trim().length > 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                          {t('home.search.typeToSearch')}
+                        </div>
+                      ) : searchResults.length === 0 && debouncedSearchQuery.length >= 2 ? (
+                        <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                          {t('home.search.noResults', { query: debouncedSearchQuery })}
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="py-2">
+                          <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border">
+                            {t('home.search.results')}
+                          </div>
+                          {searchResults.map((article) => (
+                            <button
+                              key={article.id}
+                              type="button"
+                              onClick={() => handleSearchResultClick(article.id)}
+                              className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0"
+                            >
+                              <div className="flex items-start gap-3">
+                                {article.previewImage && (
+                                  <img
+                                    src={article.previewImage}
+                                    alt={article.title}
+                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <p className="text-sm sm:text-base font-semibold text-foreground line-clamp-2">
+                                    {article.title}
+                                  </p>
+                                  {article.excerpt && (
+                                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                                      {article.excerpt}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span>{article.author.username}</span>
+                                    {article.tags.length > 0 && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="truncate">{article.tags.slice(0, 2).join(', ')}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                          {searchResults.length >= 10 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleSearch()
+                                setShowSearchResults(false)
+                                setSearchInputFocused(false)
+                              }}
+                              className="w-full px-4 py-3 text-sm font-medium text-primary hover:bg-muted/50 transition-colors border-t border-border"
+                            >
+                              {t('home.search.viewAll', { query: debouncedSearchQuery })}
+                            </button>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="relative w-10 h-10 shrink-0" data-view-mode-expander>
                     <div
                       className={cn(
-                        'absolute top-0 left-0 flex flex-col rounded-lg border border-border bg-background transition-all duration-200',
+                        'absolute top-0 left-0 flex flex-col bg-background transition-all duration-200 overflow-hidden',
                         isViewModeExpanded && 'z-50 shadow-lg'
                       )}
                       style={{
-                        height: isViewModeExpanded ? `${40 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 40)}px` : '40px',
+                        borderRadius: isViewModeExpanded ? '0' : 'var(--radius-sm)',
                         width: '40px',
+                        height: isViewModeExpanded 
+                          ? `${40 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 40)}px` 
+                          : '40px',
+                        border: '1px solid hsl(var(--border))',
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <button
+                      <Button
+                        variant="outline"
+                        size="icon"
                         type="button"
                         onClick={() => setIsViewModeExpanded(!isViewModeExpanded)}
                         onKeyDown={(e) => {
@@ -348,35 +538,61 @@ export default function HomePage() {
                             setIsViewModeExpanded(true)
                           }
                         }}
-                        aria-label="Select view mode"
+                        aria-label={t('home.viewModes.selectViewMode')}
                         aria-expanded={isViewModeExpanded}
-                        className={cn(
-                          'flex h-10 w-10 shrink-0 items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:z-10',
-                          isViewModeExpanded ? 'rounded-t-lg rounded-b-none' : 'rounded-lg'
-                        )}
+                        className="h-10 w-10 shrink-0 border-0 overflow-hidden"
+                        style={{
+                          borderRadius: isViewModeExpanded 
+                            ? 'var(--radius-sm) var(--radius-sm) 0 0' 
+                            : 'var(--radius-sm)',
+                          borderBottom: isViewModeExpanded ? '1px solid hsl(var(--border) / 0.5)' : 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          const target = e.currentTarget
+                          target.style.backgroundColor = 'hsl(var(--muted))'
+                        }}
+                        onMouseLeave={(e) => {
+                          const target = e.currentTarget
+                          target.style.backgroundColor = ''
+                        }}
                       >
                         {(() => {
                           const currentOption = viewModeOptions.find((option) => option.id === viewMode)
                           const Icon = currentOption?.icon
                           return Icon ? <Icon className="h-4 w-4" /> : null
                         })()}
-                      </button>
+                      </Button>
                       <div
                         className={cn(
                           'flex flex-col transition-all duration-200',
-                          isViewModeExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                          isViewModeExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'
                         )}
                       >
                         {viewModeOptions
                           .filter((option) => option.id !== viewMode)
                           .map((option, index) => {
                             const Icon = option.icon
+                            const isLast = index === viewModeOptions.filter((o) => o.id !== viewMode).length - 1
                             return (
-                              <button
+                              <Button
                                 key={option.id}
+                                variant="outline"
+                                size="icon"
                                 type="button"
                                 tabIndex={isViewModeExpanded ? 0 : -1}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center transition-colors hover:bg-muted last:rounded-b-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:z-10"
+                                className="h-10 w-10 shrink-0 border-0 overflow-hidden"
+                                style={{
+                                  borderRadius: isLast ? '0 0 var(--radius-sm) var(--radius-sm)' : '0',
+                                  borderBottom: isLast ? 'none' : '1px solid hsl(var(--border) / 0.5)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  const target = e.currentTarget
+                                  target.style.backgroundColor = 'hsl(var(--muted))'
+                                }}
+                                onMouseLeave={(e) => {
+                                  const target = e.currentTarget
+                                  target.style.backgroundColor = ''
+                                }}
                                 onClick={() => {
                                   setViewMode(option.id)
                                   setIsViewModeExpanded(false)
@@ -404,66 +620,74 @@ export default function HomePage() {
                                 aria-label={option.label}
                               >
                                 <Icon className="h-4 w-4" />
-                              </button>
+                              </Button>
                             )
                           })}
                       </div>
                     </div>
                   </div>
                   <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
               {selectedTags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Filters:</span>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2">
+                  <span className="text-sm sm:text-sm text-muted-foreground">{t('home.filters.label')}</span>
                   {selectedTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs"
+                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs sm:text-xs"
                       onClick={() => handleTagClick(tag)}
                     >
                       {tag} ×
                     </Badge>
                   ))}
-                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs">
-                    Clear all
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 sm:h-7 text-xs sm:text-xs px-3">
+                    {t('home.filters.clearAll')}
                   </Button>
                 </div>
               )}
               {difficultyFilter !== 'all' && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-muted-foreground">Difficulty:</span>
-                  <Badge variant="outline" className="capitalize">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2 text-sm sm:text-sm text-muted-foreground">
+                  <span className="text-muted-foreground">{t('home.filters.difficulty')}</span>
+                  <Badge variant="outline" className="capitalize text-xs sm:text-xs">
                     {difficultyFilter}
                   </Badge>
-                  <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-7 px-2 text-xs">
-                    reset
+                  <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-8 sm:h-7 px-3 text-xs sm:text-xs">
+                    {t('home.filters.reset')}
                   </Button>
                 </div>
               )}
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <div className={viewMode === 'square' ? 'grid gap-4 sm:gap-4 sm:grid-cols-2' : 'space-y-4 sm:space-y-4'}>
+                {Array.from({ length: pageSize }).map((_, i) => {
+                  if (viewMode === 'line') {
+                    return <ArticleCardLineSkeleton key={i} />
+                  }
+                  if (viewMode === 'square') {
+                    return <ArticleCardSquareSkeleton key={i} />
+                  }
+                  return <ArticleCardSkeleton key={i} />
+                })}
               </div>
             ) : articles.length === 0 ? (
               <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <p className="text-lg font-medium">No articles found</p>
-                  <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filters</p>
-                  <Button variant="outline" onClick={handleClearFilters} className="mt-4">
-                    Clear filters
+                <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12 text-center px-4">
+                  <p className="text-lg sm:text-lg font-medium">{t('home.articles.notFound')}</p>
+                  <p className="mt-2 text-sm sm:text-sm text-muted-foreground">{t('home.articles.notFoundDescription')}</p>
+                  <Button variant="outline" onClick={handleClearFilters} className="mt-4 h-10 sm:h-10 text-sm sm:text-sm">
+                    {t('home.articles.clearFilters')}
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <>
-                <div className={viewMode === 'square' ? 'grid gap-4 sm:grid-cols-2' : 'space-y-4'}>
+                <div className={viewMode === 'square' ? 'grid gap-4 sm:gap-4 sm:grid-cols-2' : 'space-y-4 sm:space-y-4'}>
                   {articles.map((article) => {
                     if (viewMode === 'line') {
                       return (
@@ -497,116 +721,131 @@ export default function HomePage() {
                 </div>
 
                 {hasMultiplePages && (
-                  <Pagination className="pt-6">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          href="#"
-                          aria-disabled={page === 1}
-                          className={page === 1 ? 'pointer-events-none opacity-50' : undefined}
-                          onClick={(event) => {
-                            event.preventDefault()
-                            if (page > 1) {
-                              setPage((prev) => Math.max(1, prev - 1))
-                            }
-                          }}
-                        >
-                          Prev
-                        </PaginationPrevious>
-                      </PaginationItem>
-                      {paginationPages.map((item, idx) =>
-                        item === 'ellipsis' ? (
-                          <PaginationItem key={`ellipsis-${idx}`}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        ) : (
-                          <PaginationItem key={item}>
-                            <PaginationLink
-                              href="#"
-                              isActive={page === item}
-                              onClick={(event) => {
-                                event.preventDefault()
-                                setPage(item)
-                              }}
-                            >
-                              {item}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )
-                      )}
-                      <PaginationItem>
-                        <PaginationNext
-                          href="#"
-                          aria-disabled={page === totalPages}
-                          className={page === totalPages ? 'pointer-events-none opacity-50' : undefined}
-                          onClick={(event) => {
-                            event.preventDefault()
-                            if (page < totalPages) {
-                              setPage((prev) => Math.min(totalPages, prev + 1))
-                            }
-                          }}
-                        >
-                          Next
-                        </PaginationNext>
-                      </PaginationItem>
+                  <div className="pt-6 sm:pt-6" onClick={(e) => e.stopPropagation()}>
+                    <Pagination>
+                      <PaginationContent className="flex-wrap gap-2 sm:gap-2">
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              const newPage = Math.max(1, page - 1)
+                              setPage(newPage)
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                            }}
+                            disabled={page === 1}
+                          >
+                            <span className="hidden sm:inline">{t('home.pagination.prev')}</span>
+                          </PaginationPrevious>
+                        </PaginationItem>
+                        {paginationPages.map((item, idx) =>
+                          item === 'ellipsis' ? (
+                            <PaginationItem key={`ellipsis-${idx}`} className="hidden sm:flex">
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={item}>
+                              <PaginationLink
+                                isActive={page === item}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  const pageNum = item as number
+                                  if (pageNum !== page) {
+                                    setPage(pageNum)
+                                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                                  }
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation()
+                                }}
+                              >
+                                {item}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              const newPage = Math.min(totalPages, page + 1)
+                              setPage(newPage)
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                            }}
+                            disabled={page === totalPages}
+                          >
+                            <span className="hidden sm:inline">{t('home.pagination.next')}</span>
+                          </PaginationNext>
+                        </PaginationItem>
                     </PaginationContent>
                   </Pagination>
+                  </div>
                 )}
               </>
             )}
           </div>
 
-          <aside className="space-y-6">
+          <aside className="space-y-6 sm:space-y-6 order-1 lg:order-2">
             <Card>
-              <CardHeader className="flex items-start justify-between">
+              <CardHeader className="space-y-3">
                 <div className="space-y-1">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <Flame className="h-5 w-5 text-primary" />
-                    Trending now
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-lg">
+                    <Flame className="h-5 w-5 sm:h-5 sm:w-5 text-primary" />
+                    {t('home.trending.title')}
                 </CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground">
-                    Quick hits from the guild—updated every few hours.
+                  <CardDescription className="text-xs sm:text-xs text-muted-foreground">
+                    {t('home.trending.description')}
                   </CardDescription>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1 text-xs"
+                  className="gap-1 text-xs sm:text-xs h-9 sm:h-8 w-full sm:w-auto"
                   onClick={() => navigate('/trending')}
                 >
-                  View leaderboard
+                  {t('home.trending.viewLeaderboard')}
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 sm:space-y-3">
                 {loadingTrending ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className="space-y-3 sm:space-y-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TrendingArticleSkeleton key={i} />
+                    ))}
                   </div>
                 ) : trendingArticles.length === 0 ? (
-                  <div className="rounded-xl border border-dashed bg-muted/20 py-6 text-center text-xs text-muted-foreground">
-                    Nothing trending yet.
+                  <div className="rounded-xl sm:rounded-xl border border-dashed bg-muted/20 py-6 sm:py-6 text-center text-xs sm:text-xs text-muted-foreground">
+                    {t('home.trending.nothingYet')}
                   </div>
                 ) : (
                   trendingArticles.map((article, index) => (
                     <button
                       key={article.id}
                       type="button"
-                      className="w-full rounded-xl border border-border/40 bg-background/70 px-3 py-3 text-left transition hover:border-primary/50 hover:bg-muted/40"
+                      className="w-full rounded-xl sm:rounded-xl border border-border/40 bg-background/70 px-3 sm:px-3 py-3 sm:py-3 text-left transition hover:border-primary/50 hover:bg-muted/40"
                       onClick={() => navigate(`/article/${article.id}`)}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+                      <div className="flex items-start gap-3 sm:gap-3">
+                        <span className="flex h-8 w-8 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 text-sm sm:text-sm font-semibold text-primary shrink-0">
                           #{index + 1}
                         </span>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-semibold text-foreground line-clamp-2">{article.title}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
+                        <div className="flex-1 space-y-1 sm:space-y-1 min-w-0">
+                          <p className="text-sm sm:text-sm font-semibold text-foreground line-clamp-2">{article.title}</p>
+                          <p className="text-xs sm:text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
                         </div>
                       </div>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{article.views?.toLocaleString?.() ?? '—'} views</span>
+                      <div className="mt-2 sm:mt-2 flex items-center gap-3 sm:gap-3 text-xs sm:text-xs text-muted-foreground">
+                        <span>{article.views?.toLocaleString?.() ?? '—'} {t('home.trending.views')}</span>
                         <span>•</span>
-                        <span>{article.reactions ?? '—'} reactions</span>
+                        <span>{article.reactions ?? '—'} {t('home.trending.reactions')}</span>
                     </div>
                     </button>
                   ))
@@ -616,14 +855,14 @@ export default function HomePage() {
 
             <Card className="border-border/70">
               <CardHeader className="space-y-1">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Hash className="h-4 w-4" />
-                  Popular Tags
+                <CardTitle className="flex items-center gap-2 text-base sm:text-base font-semibold">
+                  <Hash className="h-4 w-4 sm:h-4 sm:w-4" />
+                  {t('home.tags.title')}
                 </CardTitle>
-                <CardDescription className="text-xs">Select a tag to filter your feed.</CardDescription>
+                <CardDescription className="text-xs sm:text-xs">{t('home.tags.description')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 sm:gap-2">
                   {popularTags.map((tag) => {
                     const isActive = selectedTags.includes(tag)
 
@@ -632,7 +871,7 @@ export default function HomePage() {
                       key={tag}
                         variant="secondary"
                         className={cn(
-                          'cursor-pointer rounded-md text-xs transition-colors bg-primary/10 text-primary',
+                          'cursor-pointer rounded-md text-xs sm:text-xs transition-colors bg-primary/10 text-primary',
                           isActive ? 'shadow-sm bg-primary/15' : 'hover:bg-primary/15'
                         )}
                       onClick={() => handleTagClick(tag)}
@@ -720,6 +959,7 @@ function FiltersDrawer({
   onApply,
   onClear,
 }: FiltersDrawerProps) {
+  const { t } = useTranslation()
   const [localTags, setLocalTags] = useState<string[]>(selectedTags)
   const [localDifficulty, setLocalDifficulty] = useState<ArticleDifficulty | 'all'>(difficulty)
   const [localSort, setLocalSort] = useState<ArticleSortOption>(sortOption)
@@ -776,38 +1016,37 @@ function FiltersDrawer({
   }
 
   const difficultyOptions: Array<{ label: string; value: ArticleDifficulty | 'all' }> = [
-    { label: 'All', value: 'all' },
-    { label: 'Beginner', value: 'easy' },
-    { label: 'Intermediate', value: 'medium' },
-    { label: 'Advanced', value: 'hard' },
+    { label: t('home.filtersDrawer.all'), value: 'all' },
+    { label: t('home.filtersDrawer.beginner'), value: 'easy' },
+    { label: t('home.filtersDrawer.intermediate'), value: 'medium' },
+    { label: t('home.filtersDrawer.advanced'), value: 'hard' },
   ]
 
   const sortOptions: Array<{ label: string; value: ArticleSortOption; description: string }> = [
-    { label: 'Newest first', value: 'newest', description: 'Latest publications appear first' },
-    { label: 'Oldest first', value: 'oldest', description: 'Chronological order from oldest to newest' },
-    { label: 'Most popular', value: 'popular', description: 'Articles with most reactions first' },
+    { label: t('home.filtersDrawer.newestFirst'), value: 'newest', description: t('home.filtersDrawer.newestFirstDescription') },
+    { label: t('home.filtersDrawer.oldestFirst'), value: 'oldest', description: t('home.filtersDrawer.oldestFirstDescription') },
+    { label: t('home.filtersDrawer.mostPopular'), value: 'popular', description: t('home.filtersDrawer.mostPopularDescription') },
   ]
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent side="right" className="w-full max-w-lg space-y-6">
+      <SheetContent side="right" className="w-full max-w-lg space-y-6 sm:space-y-6 overflow-y-auto">
         <SheetHeader className="items-start text-left">
-          <SheetTitle>Refine results</SheetTitle>
-          <SheetDescription>
-            Narrow down the article feed by difficulty, popularity, or topic tags. Updated results will load
-            instantly.
+          <SheetTitle className="text-xl sm:text-xl">{t('home.filtersDrawer.title')}</SheetTitle>
+          <SheetDescription className="text-sm sm:text-sm">
+            {t('home.filtersDrawer.description')}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          <section className="space-y-3">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Difficulty</Label>
+        <div className="space-y-6 sm:space-y-6">
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.difficulty')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {difficultyOptions.map((option) => (
                 <Button
                   key={option.value}
                   variant={localDifficulty === option.value ? 'default' : 'outline'}
-                  className="justify-start"
+                  className="justify-start text-sm sm:text-sm h-10 sm:h-10"
                   onClick={() => setLocalDifficulty(option.value)}
                 >
                   {option.label}
@@ -818,19 +1057,19 @@ function FiltersDrawer({
 
           <Separator />
 
-          <section className="space-y-3">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Sort by</Label>
-            <div className="space-y-2">
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.sortBy')}</Label>
+            <div className="space-y-2 sm:space-y-2">
               {sortOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setLocalSort(option.value)}
-                  className={`w-full rounded-lg border p-3 text-left transition ${
+                  className={`w-full rounded-lg border p-3 sm:p-3 text-left transition ${
                     localSort === option.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                   }`}
                 >
-                  <p className="font-medium">{option.label}</p>
-                  <p className="text-xs text-muted-foreground">{option.description}</p>
+                  <p className="text-base sm:text-base font-medium">{option.label}</p>
+                  <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">{option.description}</p>
                 </button>
               ))}
             </div>
@@ -838,8 +1077,8 @@ function FiltersDrawer({
 
           <Separator />
 
-          <section className="space-y-3">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tags</Label>
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.tags')}</Label>
             <div className="flex gap-2">
               <Input
                 value={tagInput}
@@ -850,19 +1089,20 @@ function FiltersDrawer({
                     handleAddTag()
                   }
                 }}
-                placeholder="Add custom tag"
+                placeholder={t('home.filtersDrawer.addCustomTag')}
+                className="h-10 sm:h-10 text-sm sm:text-sm"
               />
-              <Button variant="outline" onClick={handleAddTag}>
-                Add
+              <Button variant="outline" onClick={handleAddTag} className="h-10 sm:h-10 text-sm sm:text-sm px-4 sm:px-4">
+                {t('home.filtersDrawer.add')}
               </Button>
             </div>
             {localTags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 sm:gap-2">
                 {localTags.map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="cursor-pointer"
+                    className="cursor-pointer text-xs sm:text-xs"
                     onClick={() => handleRemoveTag(tag)}
                   >
                     {tag} ×
@@ -870,17 +1110,17 @@ function FiltersDrawer({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No tags selected yet.</p>
+              <p className="text-sm sm:text-sm text-muted-foreground">{t('home.filtersDrawer.noTagsSelected')}</p>
             )}
 
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Quick pick</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-2 sm:space-y-2">
+              <p className="text-xs sm:text-xs font-medium text-muted-foreground">{t('home.filtersDrawer.quickPick')}</p>
+              <div className="flex flex-wrap gap-2 sm:gap-2">
                 {allTags.map((tag) => (
                   <Badge
                     key={tag}
                     variant={localTags.includes(tag) ? 'default' : 'outline'}
-                    className="cursor-pointer"
+                    className="cursor-pointer text-xs sm:text-xs"
                     onClick={() =>
                       setLocalTags((prev) =>
                         prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -895,17 +1135,121 @@ function FiltersDrawer({
           </section>
         </div>
 
-        <SheetFooter className="space-x-0 sm:space-x-0 sm:space-y-0">
+        <SheetFooter className="space-x-0 sm:space-x-0 sm:space-y-0 pt-4 border-t">
           <div className="flex w-full flex-col gap-2 sm:flex-row">
-            <Button variant="ghost" className="sm:flex-1" onClick={handleClearAll}>
-              Reset filters
+            <Button variant="ghost" className="sm:flex-1 h-10 sm:h-10 text-sm sm:text-sm" onClick={handleClearAll}>
+              {t('home.filtersDrawer.resetFilters')}
             </Button>
-            <Button className="sm:flex-1" onClick={handleApply}>
-              Apply filters
+            <Button className="sm:flex-1 h-10 sm:h-10 text-sm sm:text-sm" onClick={handleApply}>
+              {t('home.filtersDrawer.applyFilters')}
             </Button>
           </div>
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  )
+}
+
+// Skeleton Components
+function ArticleCardSkeleton() {
+  return (
+    <Card className="border-border/40 bg-card">
+      <Skeleton className="aspect-video w-full rounded-none" />
+      <div className="p-6 space-y-4">
+        <div className="space-y-3">
+          <Skeleton className="h-7 w-3/4" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-16 rounded-md" />
+          <Skeleton className="h-6 w-20 rounded-md" />
+          <Skeleton className="h-6 w-14 rounded-md" />
+        </div>
+        <div className="flex items-center justify-between pt-4 border-t border-border/40">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-5 w-20 rounded-md" />
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function ArticleCardLineSkeleton() {
+  return (
+    <Card className="border-border/40 bg-card">
+      <div className="p-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="w-32 h-20 rounded-lg shrink-0" />
+          <div className="flex-1 min-w-0 space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-5/6" />
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="h-5 w-14 rounded-md" />
+              <Skeleton className="h-5 w-16 rounded-md" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-12 shrink-0" />
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function ArticleCardSquareSkeleton() {
+  return (
+    <Card className="border-border/40 bg-card h-full flex flex-col">
+      <Skeleton className="aspect-video w-full rounded-none" />
+      <div className="p-5 space-y-3 flex-1 flex flex-col">
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-5/6" />
+          <Skeleton className="h-4 w-full mt-2" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-5 w-16 rounded-md" />
+          <Skeleton className="h-5 w-20 rounded-md" />
+        </div>
+        <div className="flex items-center justify-between pt-3 border-t border-border/40">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-12" />
+          </div>
+          <Skeleton className="h-3 w-10" />
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function TrendingArticleSkeleton() {
+  return (
+    <div className="w-full rounded-xl border border-border/40 bg-background/70 px-3 sm:px-3 py-3 sm:py-3">
+      <div className="flex items-start gap-3 sm:gap-3">
+        <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+        <div className="flex-1 space-y-1 sm:space-y-1 min-w-0">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-20 mt-2" />
+        </div>
+      </div>
+      <div className="mt-2 sm:mt-2 flex items-center gap-3 sm:gap-3">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-1" />
+        <Skeleton className="h-3 w-14" />
+      </div>
+    </div>
   )
 }

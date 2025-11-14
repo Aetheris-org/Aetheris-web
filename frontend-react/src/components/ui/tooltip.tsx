@@ -219,9 +219,13 @@ export const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentPro
         ...style,
       }}
       className={cn(
-        'rounded-md border border-border/60 bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md',
+        'border border-border/60 bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md rounded-sm',
         className,
       )}
+      style={{
+        borderRadius: 'var(--radius-sm)',
+        ...style,
+      }}
       {...props}
     >
       {children}

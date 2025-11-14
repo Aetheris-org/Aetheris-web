@@ -110,27 +110,27 @@ export default function PricingPage() {
       {/* Pricing Cards */}
       <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6">
         <div className="container max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+          <div className="grid md:grid-cols-3 gap-10 sm:gap-8 lg:gap-10">
             {pricingPlans.map((plan) => {
               const Icon = plan.icon
               return (
                 <Card
                   key={plan.name}
-                  className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 ${
+                  className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 mb-4 md:mb-0 ${
                     plan.popular
                       ? 'border-primary/50 bg-gradient-to-br from-primary/10 via-background to-background shadow-lg shadow-primary/5 scale-105 md:scale-110'
                       : 'border-border/40 bg-card/50 backdrop-blur-sm hover:border-primary/30'
                   }`}
                 >
                   {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                      <Badge className="bg-primary text-primary-foreground border-primary/50 px-4 py-1 text-xs font-semibold">
+                    <div className="absolute -top-3 left-0 right-0 flex justify-center z-10">
+                      <Badge className="bg-primary text-primary-foreground border-primary/50 px-4 py-1 text-xs font-semibold whitespace-nowrap">
                         {plan.badge}
                       </Badge>
                     </div>
                   )}
                   
-                  <CardHeader className="space-y-4 pb-6">
+                  <CardHeader className="space-y-4 pb-6 p-6 sm:p-6">
                     <div className="flex items-center justify-between">
                       <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center ${
                         plan.popular ? 'border-primary/40 bg-primary/20' : ''
@@ -163,7 +163,7 @@ export default function PricingPage() {
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 p-6 sm:p-6 pt-0">
                     <Button
                       className={`w-full ${
                         plan.popular

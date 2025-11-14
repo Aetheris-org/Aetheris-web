@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SiteHeader } from '@/components/SiteHeader'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,6 +47,7 @@ import type { DuelStatus, EventStatus, LeaderboardPeriod } from '@/types/explore
 
 export default function ExplorePage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [mainTab, setMainTab] = useState<'duels' | 'leaderboards' | 'events'>('duels')
   const [duelTab, setDuelTab] = useState<'active' | 'pending' | 'clan-wars'>('active')
   const [leaderboardType, setLeaderboardType] = useState<'users' | 'clans'>('users')
@@ -120,10 +122,10 @@ export default function ExplorePage() {
         {/* Заголовок */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Explore
+            {t('explore.title')}
           </h1>
           <p className="text-muted-foreground">
-            Competitive challenges, rankings, and community events
+            {t('explore.description')}
           </p>
         </div>
 
@@ -149,15 +151,15 @@ export default function ExplorePage() {
                   <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Star className="h-3.5 w-3.5" />
-                      Level {mockUserStats.level}
+                      {t('explore.level')} {mockUserStats.level}
                     </span>
                     <span className="flex items-center gap-1">
                       <Trophy className="h-3.5 w-3.5" />
-                      Rank #{mockUserStats.rank}
+                      {t('explore.rank')} #{mockUserStats.rank}
                     </span>
                     <span className="flex items-center gap-1">
                       <Target className="h-3.5 w-3.5" />
-                      {mockUserStats.rating} Rating
+                      {mockUserStats.rating} {t('explore.rating')}
                     </span>
                   </div>
                 </div>
@@ -165,7 +167,7 @@ export default function ExplorePage() {
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <div className="text-2xl font-bold">{mockUserStats.totalPoints.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">Total Points</div>
+                  <div className="text-xs text-muted-foreground">{t('explore.totalPoints')}</div>
                 </div>
                 <Button
                   variant="outline"
@@ -183,22 +185,22 @@ export default function ExplorePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="text-center p-3 rounded-lg border bg-card">
                 <div className="text-xl font-bold">{mockUserStats.duels.wins}</div>
-                <div className="text-xs text-muted-foreground">Wins</div>
+                <div className="text-xs text-muted-foreground">{t('explore.wins')}</div>
               </div>
               <div className="text-center p-3 rounded-lg border bg-card">
                 <div className="text-xl font-bold">{mockUserStats.duels.losses}</div>
-                <div className="text-xs text-muted-foreground">Losses</div>
+                <div className="text-xs text-muted-foreground">{t('explore.losses')}</div>
               </div>
               <div className="text-center p-3 rounded-lg border bg-card">
                 <div className="text-xl font-bold">{mockUserStats.duels.winRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground">Win Rate</div>
+                <div className="text-xs text-muted-foreground">{t('explore.winRate')}</div>
               </div>
               <div className="text-center p-3 rounded-lg border bg-card">
                 <div className="text-xl font-bold flex items-center justify-center gap-1">
                   <Flame className="h-4 w-4" />
                   {mockUserStats.duels.currentStreak}
                 </div>
-                <div className="text-xs text-muted-foreground">Streak</div>
+                <div className="text-xs text-muted-foreground">{t('explore.streak')}</div>
               </div>
             </div>
           </CardContent>
@@ -209,15 +211,15 @@ export default function ExplorePage() {
           <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
             <TabsTrigger value="duels" className="gap-2">
               <Swords className="h-4 w-4" />
-              Duels & Wars
+              {t('explore.duelsWars')}
             </TabsTrigger>
             <TabsTrigger value="leaderboards" className="gap-2">
               <Trophy className="h-4 w-4" />
-              Leaderboards
+              {t('explore.leaderboards')}
             </TabsTrigger>
             <TabsTrigger value="events" className="gap-2">
               <Calendar className="h-4 w-4" />
-              Events
+              {t('explore.events')}
             </TabsTrigger>
           </TabsList>
 
@@ -228,7 +230,7 @@ export default function ExplorePage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search duels, players, clans..."
+                placeholder={t('common.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -236,7 +238,7 @@ export default function ExplorePage() {
             </div>
             <Button className="gap-2">
               <Swords className="h-4 w-4" />
-              Create Duel
+              {t('explore.createDuel')}
             </Button>
           </div>
 
@@ -245,17 +247,17 @@ export default function ExplorePage() {
             <TabsList>
               <TabsTrigger value="active" className="gap-2">
                 <Play className="h-4 w-4" />
-                Active Duels
+                {t('explore.activeDuels')}
                 <Badge variant="secondary" className="ml-1">{mockDuels.filter(d => d.status === 'active').length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="pending" className="gap-2">
                 <Clock className="h-4 w-4" />
-                Pending
+                {t('explore.pending')}
                 <Badge variant="secondary" className="ml-1">{mockDuels.filter(d => d.status === 'pending').length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="clan-wars" className="gap-2">
                 <Shield className="h-4 w-4" />
-                Clan Wars
+                {t('explore.clanWars')}
                 <Badge variant="secondary" className="ml-1">{mockClanWars.length}</Badge>
               </TabsTrigger>
             </TabsList>
@@ -265,9 +267,9 @@ export default function ExplorePage() {
               {filteredDuels.length === 0 ? (
                 <Card className="p-12 text-center">
                   <Swords className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No active duels</h3>
-                  <p className="text-muted-foreground mb-4">Create a duel or wait for someone to challenge you!</p>
-                  <Button>Create Duel</Button>
+                  <h3 className="text-lg font-semibold mb-2">{t('explore.noActiveDuels')}</h3>
+                  <p className="text-muted-foreground mb-4">{t('explore.noActiveDuelsDescription')}</p>
+                  <Button>{t('explore.createDuel')}</Button>
                 </Card>
               ) : (
                 filteredDuels.map((duel) => (
@@ -350,7 +352,7 @@ export default function ExplorePage() {
                     <CardFooter>
                       <Button variant="outline" className="w-full gap-2">
                         <Play className="h-4 w-4" />
-                        Watch Live
+                        {t('explore.watchLive')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -363,8 +365,8 @@ export default function ExplorePage() {
               {filteredDuels.length === 0 ? (
                 <Card className="p-12 text-center">
                   <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No pending challenges</h3>
-                  <p className="text-muted-foreground">All challenges have been accepted!</p>
+                  <h3 className="text-lg font-semibold mb-2">{t('explore.noPendingChallenges')}</h3>
+                  <p className="text-muted-foreground">{t('explore.noPendingChallengesDescription')}</p>
                 </Card>
               ) : (
                 filteredDuels.map((duel) => (
@@ -412,11 +414,11 @@ export default function ExplorePage() {
                     <CardFooter className="gap-2">
                       <Button className="flex-1 gap-2">
                         <CheckCircle2 className="h-4 w-4" />
-                        Accept Challenge
+                        {t('explore.acceptChallenge')}
                       </Button>
                       <Button variant="outline" className="flex-1 gap-2">
                         <XCircle className="h-4 w-4" />
-                        Decline
+                        {t('explore.decline')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -429,9 +431,9 @@ export default function ExplorePage() {
               {filteredClanWars.length === 0 ? (
                 <Card className="p-12 text-center">
                   <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No clan wars</h3>
-                  <p className="text-muted-foreground mb-4">Start a war with another clan!</p>
-                  <Button>Declare War</Button>
+                  <h3 className="text-lg font-semibold mb-2">{t('explore.noClanWars')}</h3>
+                  <p className="text-muted-foreground mb-4">{t('explore.noClanWarsDescription')}</p>
+                  <Button>{t('explore.declareWar')}</Button>
                 </Card>
               ) : (
                 filteredClanWars.map((war) => (
@@ -520,7 +522,7 @@ export default function ExplorePage() {
                     <CardFooter>
                       <Button variant="outline" className="w-full gap-2">
                         <Play className="h-4 w-4" />
-                        View War Details
+                        {t('explore.viewWarDetails')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -539,8 +541,8 @@ export default function ExplorePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="users">Top Players</SelectItem>
-                <SelectItem value="clans">Top Clans</SelectItem>
+                <SelectItem value="users">{t('explore.topPlayers')}</SelectItem>
+                <SelectItem value="clans">{t('explore.topClans')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={leaderboardPeriod} onValueChange={(v) => setLeaderboardPeriod(v as any)}>
@@ -548,10 +550,10 @@ export default function ExplorePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-time">All Time</SelectItem>
-                <SelectItem value="monthly">This Month</SelectItem>
-                <SelectItem value="weekly">This Week</SelectItem>
-                <SelectItem value="daily">Today</SelectItem>
+                <SelectItem value="all-time">{t('explore.allTime')}</SelectItem>
+                <SelectItem value="monthly">{t('explore.monthly')}</SelectItem>
+                <SelectItem value="weekly">{t('explore.weekly')}</SelectItem>
+                <SelectItem value="daily">{t('explore.daily')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -628,19 +630,19 @@ export default function ExplorePage() {
                       </>
                     )}
 
-                    {/* Stats */}
+                      {/* Stats */}
                     <div className="hidden md:flex items-center gap-6 text-sm">
                       <div className="text-center">
                         <div className="font-bold text-primary">{entry.rating}</div>
-                        <div className="text-xs text-muted-foreground">Rating</div>
+                        <div className="text-xs text-muted-foreground">{t('explore.rating')}</div>
                       </div>
                       <div className="text-center">
                         <div className="font-bold text-green-500">{entry.wins}</div>
-                        <div className="text-xs text-muted-foreground">Wins</div>
+                        <div className="text-xs text-muted-foreground">{t('explore.wins')}</div>
                       </div>
                       <div className="text-center">
                         <div className="font-bold">{entry.winRate.toFixed(1)}%</div>
-                        <div className="text-xs text-muted-foreground">Win Rate</div>
+                        <div className="text-xs text-muted-foreground">{t('explore.winRate')}</div>
                       </div>
                     </div>
 
@@ -685,10 +687,10 @@ export default function ExplorePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Events</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="all">{t('explore.allEvents')}</SelectItem>
+                <SelectItem value="active">{t('explore.active')}</SelectItem>
+                <SelectItem value="upcoming">{t('explore.upcoming')}</SelectItem>
+                <SelectItem value="completed">{t('explore.completed')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -716,7 +718,7 @@ export default function ExplorePage() {
                       <CardTitle className="line-clamp-2">{event.title}</CardTitle>
                       <CardDescription className="mt-2 flex items-center gap-2 flex-wrap">
                         <Badge variant={event.status === 'active' ? 'default' : event.status === 'upcoming' ? 'secondary' : 'outline'}>
-                          {event.status}
+                          {event.status === 'active' ? t('explore.active') : event.status === 'upcoming' ? t('explore.upcoming') : t('explore.completed')}
                         </Badge>
                         <Badge variant="outline">{event.type}</Badge>
                         {event.tags.slice(0, 2).map((tag) => (
@@ -793,17 +795,17 @@ export default function ExplorePage() {
                     {event.status === 'active' ? (
                       <>
                         <Play className="h-4 w-4" />
-                        Join Now
+                        {t('explore.joinNow')}
                       </>
                     ) : event.status === 'upcoming' ? (
                       <>
                         <CheckCircle2 className="h-4 w-4" />
-                        Register
+                        {t('explore.register')}
                       </>
                     ) : (
                       <>
                         <Award className="h-4 w-4" />
-                        View Results
+                        {t('explore.viewResults')}
                       </>
                     )}
                   </Button>
@@ -815,8 +817,8 @@ export default function ExplorePage() {
           {filteredEvents.length === 0 && (
             <Card className="p-12 text-center">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No events found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or check back later!</p>
+              <h3 className="text-lg font-semibold mb-2">{t('explore.noEventsFound')}</h3>
+              <p className="text-muted-foreground">{t('explore.noEventsFoundDescription')}</p>
             </Card>
           )}
         </TabsContent>

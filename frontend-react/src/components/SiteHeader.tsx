@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
 import { useAuthStore } from '@/stores/authStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,37 +14,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const destinations = [
-  {
-    label: 'Forum',
-    description: 'Community debates, retrospectives, and shipping notes.',
-    icon: MessageSquare,
-    path: '/forum',
-  },
-  {
-    label: 'Explore',
-    description: 'Duels, clan wars, leaderboards, and epic events.',
-    icon: Swords,
-    path: '/explore',
-  },
-  {
-    label: 'Networking',
-    description: 'Opportunities, mentors, and verified partner teams.',
-    icon: UsersRound,
-    path: '/networking',
-  },
-  {
-    label: 'Courses',
-    description: 'Guided tracks, workshops, and cohort-based learning.',
-    icon: GraduationCap,
-    path: '/courses',
-  },
-  {
-    label: 'Developers',
-    description: 'Toolkits, changelog, and integration playbooks.',
-    icon: Code2,
-    path: '/developers',
-  },
+// destinations будут динамическими через useTranslation
+const destinationKeys = [
+  { key: 'forum', icon: MessageSquare, path: '/forum' },
+  { key: 'explore', icon: Swords, path: '/explore' },
+  { key: 'networking', icon: UsersRound, path: '/networking' },
+  { key: 'courses', icon: GraduationCap, path: '/courses' },
+  { key: 'developers', icon: Code2, path: '/developers' },
 ]
 
 interface SiteHeaderProps {
@@ -54,9 +31,16 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
+  const { t } = useTranslation()
 
   // На лендинге (/) не показываем навигацию
   const isLandingPage = location.pathname === '/'
+
+  const destinations = destinationKeys.map(item => ({
+    ...item,
+    label: t(`header.${item.key}`),
+    description: t(`header.${item.key}Description`),
+  }))
 
   const activeDestination = destinations.find((item) => {
     return location.pathname.startsWith(item.path)
@@ -93,12 +77,12 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                 aria-label="Select section"
               >
                 <ActiveIcon className="h-4 w-4" />
-                {activeDestination?.label ?? 'Explore'}
+                {activeDestination?.label ?? t('header.explore')}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-72" align="start">
               <DropdownMenuLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-                Navigate to a section
+                {t('header.navigateToSection')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {destinations
@@ -119,7 +103,9 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                     <Icon className="mt-0.5 h-4 w-4 text-foreground" />
                     <span className="flex flex-col gap-1">
                       <span className="text-sm font-semibold leading-tight text-foreground">{item.label}</span>
-                      <span className="text-xs text-muted-foreground">{item.description}</span>
+                      {item.description && (
+                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                      )}
                     </span>
                   </DropdownMenuItem>
                 )
@@ -147,7 +133,7 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
               className="gap-2"
             >
               <PenSquare className="h-4 w-4" />
-              Create
+              {t('header.create')}
             </Button>
           )}
           <ThemeToggle />

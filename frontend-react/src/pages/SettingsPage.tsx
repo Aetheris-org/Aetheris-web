@@ -57,6 +57,7 @@ import {
   Share2,
   ChevronUp,
   ChevronDown,
+  Languages,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -97,6 +98,8 @@ import {
   type AccentColor,
 } from '@/stores/themeStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
+import { useI18nStore, type Language } from '@/stores/i18nStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/lib/utils'
 import {
   Accordion,
@@ -106,13 +109,15 @@ import {
 } from '@/components/ui/accordion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const settingsNav = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'privacy', label: 'Privacy', icon: Shield },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'sessions', label: 'Sessions', icon: Monitor },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
+// settingsNav будет динамическим через useTranslation
+const settingsNavItems = [
+  { id: 'profile', icon: User },
+  { id: 'appearance', icon: Palette },
+  { id: 'language', icon: Languages },
+  { id: 'privacy', icon: Shield },
+  { id: 'notifications', icon: Bell },
+  { id: 'sessions', icon: Monitor },
+  { id: 'billing', icon: CreditCard },
 ]
 
 const themeModeOptions: Array<{
@@ -263,14 +268,22 @@ function AppearanceOptionCard({
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
       className={cn(
-        'group relative flex h-full cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0 focus-visible:ring-0',
+        'group relative flex h-full cursor-pointer flex-col gap-3 border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0 focus-visible:ring-0',
         disabled && 'pointer-events-none opacity-60',
         active && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
       )}
+      style={{
+        borderRadius: 'var(--radius-md)',
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background shadow-sm">
+          <div 
+            className="flex size-11 shrink-0 items-center justify-center border border-border/60 bg-background shadow-sm"
+            style={{
+              borderRadius: 'var(--radius-sm)',
+            }}
+          >
             {leading}
           </div>
           <div>
@@ -281,7 +294,12 @@ function AppearanceOptionCard({
         {active && <Check className="h-4 w-4 text-primary" />}
       </div>
       {preview ? (
-        <div className="mt-auto rounded-md border border-dashed bg-background/60 p-3 text-xs text-muted-foreground">
+        <div 
+          className="mt-auto border border-dashed bg-background/60 p-3 text-xs text-muted-foreground"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
           {preview}
         </div>
       ) : null}
@@ -294,8 +312,14 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const entryPathRef = useRef<string | null>(null)
+  const { t } = useTranslation()
   
   const currentSection = location.pathname.split('/').pop() || 'profile'
+  
+  const settingsNav = settingsNavItems.map(item => ({
+    ...item,
+    label: t(`settings.${item.id}.title`) || item.id.charAt(0).toUpperCase() + item.id.slice(1),
+  }))
 
   useEffect(() => {
     if (!entryPathRef.current) {
@@ -332,10 +356,10 @@ export default function SettingsPage() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('common.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Settings</h1>
+            <h1 className="text-lg font-semibold">{t('settings.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -370,6 +394,7 @@ export default function SettingsPage() {
           <div className="space-y-6">
             {currentSection === 'profile' && <ProfileSettings />}
             {currentSection === 'appearance' && <AppearanceSettings />}
+            {currentSection === 'language' && <LanguageSettings />}
             {currentSection === 'privacy' && <PrivacySettings />}
             {currentSection === 'notifications' && <NotificationsSettings />}
             {currentSection === 'sessions' && <SessionsSettings />}
@@ -386,6 +411,7 @@ const BIO_LIMIT = 280
 function ProfileSettings() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
   const { user, setUser } = useAuthStore((state) => ({
     user: state.user,
     setUser: state.setUser,
@@ -979,9 +1005,8 @@ function ProfileSettings() {
     })
     setContactSaving(false)
     toast({
-      title: 'Contact details saved',
-      description:
-        'Contact information will sync with Strapi once corresponding fields are implemented.',
+      title: t('settings.profile.contactDetailsSaved'),
+      description: t('settings.profile.description'),
     })
   }
 
@@ -1003,8 +1028,8 @@ function ProfileSettings() {
     }
     setSocialSaving(false)
     toast({
-      title: 'Social links saved',
-      description: 'TODO: connect social profiles with backend once it supports them.',
+      title: t('settings.profile.socialLinksSaved'),
+      description: t('settings.profile.description'),
     })
   }
 
@@ -1041,8 +1066,8 @@ function ProfileSettings() {
     })
     setProfessionalSaving(false)
     toast({
-      title: 'Professional profile saved',
-      description: 'These details appear across your public profile header and author cards.',
+      title: t('settings.profile.professionalProfileSaved'),
+      description: t('settings.profile.description'),
     })
   }
 
@@ -1091,8 +1116,8 @@ function ProfileSettings() {
     })
     setInsightsSaving(false)
     toast({
-      title: 'Focus & visibility saved',
-      description: 'Your availability preferences will now show on the profile page.',
+      title: t('settings.profile.focusVisibilitySaved'),
+      description: t('settings.profile.description'),
     })
   }
 
@@ -1173,16 +1198,16 @@ function ProfileSettings() {
       await queryClient.invalidateQueries({ queryKey: ['profile', user.id] })
 
       toast({
-        title: 'Profile updated',
-        description: 'Your profile information was saved successfully.',
+        title: t('settings.profile.profileUpdated'),
+        description: t('settings.profile.description'),
       })
     } catch (error: unknown) {
       console.error('Failed to update profile', error)
       toast({
-        title: 'Update failed',
+        title: t('settings.profile.profileUpdateFailed'),
         description:
           (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
-          'Something went wrong while saving your profile.',
+          t('settings.profile.profileUpdateFailed'),
         variant: 'destructive',
       })
     } finally {
@@ -1193,9 +1218,9 @@ function ProfileSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile Settings</CardTitle>
+        <CardTitle>{t('settings.profile.title')}</CardTitle>
         <CardDescription>
-          Update how your profile appears to other readers.
+          {t('settings.profile.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -1203,19 +1228,19 @@ function ProfileSettings() {
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
             <TabsTrigger value="basics" className="text-xs sm:text-sm py-2">
               <User className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Basics</span>
+              <span className="hidden sm:inline">{t('settings.profile.basics')}</span>
             </TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm py-2">
               <Mail className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Contact</span>
+              <span className="hidden sm:inline">{t('settings.profile.contact')}</span>
             </TabsTrigger>
             <TabsTrigger value="professional" className="text-xs sm:text-sm py-2">
               <Briefcase className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Professional</span>
+              <span className="hidden sm:inline">{t('settings.profile.professional')}</span>
             </TabsTrigger>
             <TabsTrigger value="social" className="text-xs sm:text-sm py-2">
               <Users className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Social</span>
+              <span className="hidden sm:inline">{t('settings.profile.social')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1223,9 +1248,9 @@ function ProfileSettings() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-semibold tracking-wide text-muted-foreground">
-              Profile cover
+              {t('settings.profile.cover')}
             </Label>
-            <span className="text-xs text-muted-foreground">Recommended 1600 × 400px (4:1 ratio)</span>
+            <span className="text-xs text-muted-foreground">{t('settings.profile.coverRecommended')}</span>
           </div>
           <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50">
             <div className="aspect-[4/1] w-full">
@@ -1240,9 +1265,9 @@ function ProfileSettings() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/60">
                     <ImagePlus className="h-8 w-8" />
                   </div>
-                  <p className="text-sm font-medium">No cover image yet</p>
+                  <p className="text-sm font-medium">{t('settings.profile.noCover')}</p>
                   <p className="text-xs text-muted-foreground">
-                    Add a banner to personalize your profile.
+                    {t('settings.profile.addCover')}
                   </p>
                 </div>
               )}
@@ -1256,7 +1281,7 @@ function ProfileSettings() {
                 disabled={isSaving || isCoverProcessing}
               >
                 <Camera className="h-4 w-4" />
-                {coverPreview ? 'Change cover' : 'Upload cover'}
+                {coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}
               </Button>
               {coverPreview?.startsWith('blob:') && (
                 <Button
@@ -1267,7 +1292,7 @@ function ProfileSettings() {
                   disabled={isSaving || isCoverProcessing}
                 >
                   <Crop className="h-4 w-4" />
-                  Adjust crop
+                  {t('settings.profile.adjustCrop')}
                 </Button>
               )}
               {coverPreview && (
@@ -1279,7 +1304,7 @@ function ProfileSettings() {
                   disabled={isSaving || isCoverProcessing}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Remove
+                  {t('settings.profile.remove')}
                 </Button>
               )}
             </div>
@@ -1288,7 +1313,7 @@ function ProfileSettings() {
 
         <section className="space-y-3">
           <Label className="text-sm font-semibold tracking-wide text-muted-foreground">
-            Avatar
+            {t('settings.profile.avatar')}
           </Label>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-border/70 bg-muted/60">
@@ -1309,7 +1334,7 @@ function ProfileSettings() {
                 disabled={isSaving || isAvatarProcessing}
               >
                 <Camera className="h-4 w-4" />
-                {avatarPreview ? 'Change avatar' : 'Upload avatar'}
+                {avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}
               </Button>
               {avatarPreview?.startsWith('blob:') && (
                 <Button
@@ -1320,7 +1345,7 @@ function ProfileSettings() {
                   disabled={isSaving || isAvatarProcessing}
                 >
                   <Crop className="h-4 w-4" />
-                  Adjust crop
+                  {t('settings.profile.adjustCrop')}
                 </Button>
               )}
               {avatarPreview && (
@@ -1332,7 +1357,7 @@ function ProfileSettings() {
                   disabled={isSaving || isAvatarProcessing}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Remove
+                  {t('settings.profile.remove')}
                 </Button>
               )}
             </div>
@@ -1341,7 +1366,7 @@ function ProfileSettings() {
 
         <section className="space-y-4">
         <div className="space-y-2">
-            <Label htmlFor="settings-nickname">Nickname</Label>
+            <Label htmlFor="settings-nickname">{t('settings.profile.nickname')}</Label>
             <Input
               id="settings-nickname"
               value={nickname}
@@ -1353,16 +1378,16 @@ function ProfileSettings() {
         </div>
         <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="settings-bio">Bio</Label>
+              <Label htmlFor="settings-bio">{t('settings.profile.bio')}</Label>
               <span className="text-xs text-muted-foreground">
-                {bioRemaining} characters left
+                {bioRemaining} {t('settings.profile.charactersLeft')}
               </span>
         </div>
             <textarea
               id="settings-bio"
               value={bio}
               onChange={(event) => setBio(event.target.value)}
-              placeholder="Share a short introduction to let readers know who you are."
+              placeholder={t('settings.profile.bioPlaceholder')}
               className="min-h-[140px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               maxLength={BIO_LIMIT + 10}
               disabled={isSaving}
@@ -1370,40 +1395,9 @@ function ProfileSettings() {
           </div>
         </section>
 
-        <section className="space-y-4">
-        <div className="space-y-2">
-            <Label htmlFor="settings-nickname">Nickname</Label>
-            <Input
-              id="settings-nickname"
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              placeholder="fluy1337"
-              maxLength={60}
-              disabled={isSaving}
-            />
-        </div>
-        <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="settings-bio">Bio</Label>
-              <span className="text-xs text-muted-foreground">
-                {bioRemaining} characters left
-              </span>
-            </div>
-          <textarea
-              id="settings-bio"
-              value={bio}
-              onChange={(event) => setBio(event.target.value)}
-              placeholder="Share a short introduction to let readers know who you are."
-              className="min-h-[140px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              maxLength={BIO_LIMIT + 10}
-              disabled={isSaving}
-          />
-        </div>
-        </section>
-
         <div className="flex flex-col gap-2 border-t border-dashed pt-6 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={handleCancel} disabled={isSaving || !hasChanges}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSave}
@@ -1413,10 +1407,10 @@ function ProfileSettings() {
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
+                {t('settings.profile.saving')}
               </>
             ) : (
-              'Save changes'
+              t('settings.profile.saveChanges')
             )}
           </Button>
         </div>
@@ -1935,7 +1929,7 @@ function ProfileSettings() {
                       Waiting for image...
                     </div>
                   )}
-                      <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
+                  <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
                     <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
                       4:1
                     </Badge>
@@ -2089,6 +2083,7 @@ function ProfileSettings() {
 
 function AppearanceSettings() {
   const { toast } = useToast()
+  const { t } = useTranslation()
   const {
     theme,
     resolvedTheme,
@@ -2283,26 +2278,26 @@ function AppearanceSettings() {
   const [themeName, setThemeName] = useState('')
   const [importValue, setImportValue] = useState('')
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [openAccentGroup, setOpenAccentGroup] = useState<string | null>(null)
-  const [openSurfaceGroup, setOpenSurfaceGroup] = useState<string | null>(null)
-  const accentContainerRef = useRef<HTMLDivElement>(null)
-  const surfaceContainerRef = useRef<HTMLDivElement>(null)
+  const [isAccentDropdownOpen, setIsAccentDropdownOpen] = useState(false)
+  const [isSurfaceDropdownOpen, setIsSurfaceDropdownOpen] = useState(false)
+  const accentDropdownRef = useRef<HTMLDivElement>(null)
+  const surfaceDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (accentContainerRef.current && !accentContainerRef.current.contains(event.target as Node)) {
-        setOpenAccentGroup(null)
+      if (accentDropdownRef.current && !accentDropdownRef.current.contains(event.target as Node)) {
+        setIsAccentDropdownOpen(false)
       }
-      if (surfaceContainerRef.current && !surfaceContainerRef.current.contains(event.target as Node)) {
-        setOpenSurfaceGroup(null)
+      if (surfaceDropdownRef.current && !surfaceDropdownRef.current.contains(event.target as Node)) {
+        setIsSurfaceDropdownOpen(false)
       }
     }
 
-    if (openAccentGroup || openSurfaceGroup) {
+    if (isAccentDropdownOpen || isSurfaceDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [openAccentGroup, openSurfaceGroup])
+  }, [isAccentDropdownOpen, isSurfaceDropdownOpen])
 
   const presetList = useMemo<AppearancePreset[]>(
     () => [...presets].sort((a, b) => b.createdAt - a.createdAt),
@@ -2312,6 +2307,20 @@ function AppearanceSettings() {
   // Official themes
   const officialThemes = useMemo(
     () => [
+      {
+        id: 'default-theme',
+        name: 'Default Theme',
+        description: 'Pure accent with obsidian black surface and comfortable typography',
+        accent: 'pure' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 15 / 16, // 15px
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
       {
         id: 'midnight-blue',
         name: 'Midnight Blue',
@@ -2575,6 +2584,21 @@ function AppearanceSettings() {
     })
   }
 
+  const handleResetToDefault = () => {
+    setAccent('pure')
+    setSurface('obsidian')
+    setTypography('comfortable')
+    setRadius(15 / 16) // 15px = 0.9375
+    setContrast('standard')
+    setDensity(1)
+    setDepth('soft')
+    setMotion('default')
+    toast({
+      title: 'Theme reset',
+      description: 'Theme has been reset to default settings.',
+    })
+  }
+
   const feedPreviewItems = [
     {
       title: 'Collaborative editing spaces',
@@ -2612,43 +2636,43 @@ function AppearanceSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
+        <CardTitle>{t('settings.appearance.title')}</CardTitle>
         <CardDescription>
-          Fine-tune theme, accent colors, backgrounds, and layout preferences.
+          {t('settings.appearance.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs defaultValue="theme" className="w-full">
+        <Tabs defaultValue="colors" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
-            <TabsTrigger value="theme" className="text-xs sm:text-sm py-2">
-              <Sun className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Theme</span>
-            </TabsTrigger>
-            <TabsTrigger value="layout" className="text-xs sm:text-sm py-2">
-              <LayoutGrid className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Layout</span>
-            </TabsTrigger>
-            <TabsTrigger value="style" className="text-xs sm:text-sm py-2">
-              <Settings className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Style</span>
+            <TabsTrigger value="colors" className="text-xs sm:text-sm py-2">
+              <Palette className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('settings.appearance.general')}</span>
             </TabsTrigger>
             <TabsTrigger value="themes" className="text-xs sm:text-sm py-2">
               <Sparkles className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Themes</span>
+              <span className="hidden sm:inline">{t('settings.appearance.themes')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="style" className="text-xs sm:text-sm py-2">
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('settings.appearance.style')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="layout" className="text-xs sm:text-sm py-2">
+              <LayoutGrid className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('settings.appearance.layout')}</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="theme" className="space-y-6 mt-6">
+          <TabsContent value="colors" className="space-y-6 mt-6">
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                  <Label className="text-sm font-semibold">Theme mode</Label>
+                  <Label className="text-sm font-semibold">{t('settings.appearance.themeMode')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Decide how the interface adapts to bright or low-light environments.
+                    {t('settings.appearance.themeModeDescription')}
                   </p>
                 </div>
                 <Badge variant="outline" className="self-start">
-                  {theme === 'system' ? `System (${resolvedTheme})` : `${theme} mode`}
+                  {theme === 'system' ? `${t('settings.appearance.system')} (${resolvedTheme})` : `${t(`settings.appearance.${theme}`)} ${t('settings.appearance.theme')}`}
                 </Badge>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -2657,8 +2681,8 @@ function AppearanceSettings() {
                     key={option.value}
                     active={theme === option.value}
                     leading={<option.icon className="h-5 w-5" />}
-                    label={option.label}
-                    description={option.description}
+                    label={t(`settings.appearance.${option.value}`)}
+                    description={t(`settings.appearance.${option.value}Description`)}
                     onSelect={() => setTheme(option.value)}
                   />
                 ))}
@@ -3026,6 +3050,27 @@ function AppearanceSettings() {
           </TabsContent>
 
           <TabsContent value="themes" className="space-y-6 mt-6">
+            <Card className="border-2 border-dashed border-primary/20 bg-muted/5">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-semibold">Theme Builder</CardTitle>
+                    <CardDescription className="text-xs">
+                      Customize accent, surface, typography, and interface shape to create your perfect theme.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetToDefault}
+                    className="gap-2 shrink-0"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset to default
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
             <section className="space-y-4">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">Accent color</Label>
@@ -3033,109 +3078,139 @@ function AppearanceSettings() {
                   Set the brand hue used for primary actions and highlights.
                 </p>
               </div>
-              <div ref={accentContainerRef} className="space-y-2">
-                {ACCENT_GROUPS.map((group) => {
-                  const groupAccents = group.accents
-                    .map((value) => accentOptionsByValue[value])
-                    .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
+              <div ref={accentDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
+                      style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold">{activeAccent?.label ?? 'Custom'}</span>
+                      <span className="text-xs text-muted-foreground">Click to change accent color</span>
+                    </div>
+                  </div>
+                  {isAccentDropdownOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  )}
+                </button>
+                {isAccentDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    <div className="space-y-6">
+                      {ACCENT_GROUPS.map((group) => {
+                        const groupAccents = group.accents
+                          .map((value) => accentOptionsByValue[value])
+                          .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
 
-                  if (groupAccents.length === 0) return null
+                        if (groupAccents.length === 0) return null
 
-                  const isOpen = openAccentGroup === group.id
-
-                  return (
-                    <div key={group.id} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setOpenAccentGroup(isOpen ? null : group.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{group.label}</span>
-                          <span className="text-xs text-muted-foreground">{group.description}</span>
-                        </div>
-                        {isOpen ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                        )}
-                      </button>
-                      {isOpen && (
-                        <div className="mt-2 p-4 rounded-lg border border-border/60 bg-background shadow-lg animate-in fade-in-0 zoom-in-95 duration-200">
-                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                            {groupAccents.map((option) => (
-                              <AppearanceOptionCard
-                                key={option.value}
-                                active={accent === option.value}
-                                leading={
-                                  <span
-                                    className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                                    style={{ background: `hsl(${option.tone})` }}
-                                  />
-                                }
-                                label={option.label}
-                                description={option.description}
-                                onSelect={() => setAccent(option.value)}
-                                preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
-                              />
-                            ))}
+                        return (
+                          <div key={group.id} className="space-y-3">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold">{group.label}</p>
+                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                              {groupAccents.map((option) => (
+                                <AppearanceOptionCard
+                                  key={option.value}
+                                  active={accent === option.value}
+                                  leading={
+                                    <span
+                                      className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
+                                      style={{ background: `hsl(${option.tone})` }}
+                                    />
+                                  }
+                                  label={option.label}
+                                  description={option.description}
+                                  onSelect={() => {
+                                    setAccent(option.value)
+                                    setIsAccentDropdownOpen(false)
+                                  }}
+                                  preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {customAccentOption && (
+                        <div className="space-y-3 pt-2 border-t border-border/60">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold">Custom</p>
+                            <p className="text-xs text-muted-foreground">Create your own accent color</p>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            <AppearanceOptionCard
+                              key={customAccentOption.value}
+                              active={accent === customAccentOption.value}
+                              leading={
+                                <span
+                                  className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
+                                  style={{ background: `hsl(${customAccentOption.tone})` }}
+                                />
+                              }
+                              label={customAccentOption.label}
+                              description={customAccentOption.description}
+                              onSelect={() => {
+                                setAccent('custom')
+                                setIsAccentDropdownOpen(false)
+                              }}
+                              preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
+                              footer={
+                                <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <span className="uppercase tracking-wide">Light</span>
+                                      <input
+                                        type="color"
+                                        value={customAccent.light}
+                                        onChange={(event) => {
+                                          setAccent('custom')
+                                          setCustomAccentColor('light', event.target.value)
+                                        }}
+                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                        aria-label="Pick accent color for light theme"
+                                      />
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <span className="uppercase tracking-wide">Dark</span>
+                                      <input
+                                        type="color"
+                                        value={customAccent.dark}
+                                        onChange={(event) => {
+                                          setAccent('custom')
+                                          setCustomAccentColor('dark', event.target.value)
+                                        }}
+                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                        aria-label="Pick accent color for dark theme"
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+                              }
+                            />
                           </div>
                         </div>
                       )}
                     </div>
-                  )
-                })}
+                  </div>
+                )}
               </div>
-              {customAccentOption ? (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  <AppearanceOptionCard
-                    key={customAccentOption.value}
-                    active={accent === customAccentOption.value}
-                    leading={
-                      <span
-                        className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                        style={{ background: `hsl(${customAccentOption.tone})` }}
-                      />
-                    }
-                    label={customAccentOption.label}
-                    description={customAccentOption.description}
-                    onSelect={() => setAccent('custom')}
-                    preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
-                    footer={
-                      <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex items-center justify-between gap-3">
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="uppercase tracking-wide">Light</span>
-                            <input
-                              type="color"
-                              value={customAccent.light}
-                              onChange={(event) => {
-                                setAccent('custom')
-                                setCustomAccentColor('light', event.target.value)
-                              }}
-                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                              aria-label="Pick accent color for light theme"
-                            />
-                          </label>
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="uppercase tracking-wide">Dark</span>
-                            <input
-                              type="color"
-                              value={customAccent.dark}
-                              onChange={(event) => {
-                                setAccent('custom')
-                                setCustomAccentColor('dark', event.target.value)
-                              }}
-                              className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                              aria-label="Pick accent color for dark theme"
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    }
-                  />
-                </div>
-              ) : null}
             </section>
 
             <Separator />
@@ -3147,69 +3222,88 @@ function AppearanceSettings() {
                   Pick the background system for cards, popovers, and muted states.
                 </p>
               </div>
-              <div ref={surfaceContainerRef} className="space-y-2">
-                {SURFACE_GROUPS.map((group) => {
-                  const palettes = group.palettes
-                    .map((value) => surfaceOptionsByValue[value])
-                    .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
-
-                  if (palettes.length === 0) return null
-
-                  const isOpen = openSurfaceGroup === group.id
-
-                  return (
-                    <div key={group.id} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setOpenSurfaceGroup(isOpen ? null : group.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{group.label}</span>
-                          <span className="text-xs text-muted-foreground">{group.description}</span>
-                        </div>
-                        {isOpen ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                        )}
-                      </button>
-                      {isOpen && (
-                        <div className="mt-2 p-4 rounded-lg border border-border/60 bg-background shadow-lg animate-in fade-in-0 zoom-in-95 duration-200">
-                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                            {palettes.map((option) => (
-                              <AppearanceOptionCard
-                                key={option.value}
-                                active={surface === option.value}
-                                leading={
-                                  <span
-                                    className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
-                                    style={{ backgroundColor: `hsl(${option.tone.background})` }}
-                                  />
-                                }
-                                label={option.label}
-                                description={option.description}
-                                onSelect={() => setSurface(option.value)}
-                                preview={
-                                  <div className="grid grid-cols-4 gap-1">
-                                    <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
-                                    <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
-                                    <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
-                                    <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
-                                  </div>
-                                }
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
+              <div ref={surfaceDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
+                      style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold">{activeSurface?.label ?? 'Custom'}</span>
+                      <span className="text-xs text-muted-foreground">Click to change surface palette</span>
                     </div>
-                  )
-                })}
+                  </div>
+                  {isSurfaceDropdownOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  )}
+                </button>
+                {isSurfaceDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    <div className="space-y-6">
+                      {SURFACE_GROUPS.map((group) => {
+                        const palettes = group.palettes
+                          .map((value) => surfaceOptionsByValue[value])
+                          .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
+
+                        if (palettes.length === 0) return null
+
+                        return (
+                          <div key={group.id} className="space-y-3">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold">{group.label}</p>
+                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                              {palettes.map((option) => (
+                                <AppearanceOptionCard
+                                  key={option.value}
+                                  active={surface === option.value}
+                                  leading={
+                                    <span
+                                      className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
+                                      style={{ backgroundColor: `hsl(${option.tone.background})` }}
+                                    />
+                                  }
+                                  label={option.label}
+                                  description={option.description}
+                                  onSelect={() => {
+                                    setSurface(option.value)
+                                    setIsSurfaceDropdownOpen(false)
+                                  }}
+                                  preview={
+                                    <div className="grid grid-cols-4 gap-1">
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
+                                    </div>
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
-
-            <Separator />
 
             <section className="space-y-4">
               <div className="flex items-start justify-between gap-2">
@@ -3246,8 +3340,6 @@ function AppearanceSettings() {
               </div>
             </section>
 
-            <Separator />
-
             <section className="space-y-4">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">Typography scale</Label>
@@ -3275,8 +3367,6 @@ function AppearanceSettings() {
               </div>
             </section>
 
-            <Separator />
-
             <section className="space-y-4">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">Theme Constructor</Label>
@@ -3294,18 +3384,25 @@ function AppearanceSettings() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Input
-                        value={themeName}
-                        onChange={(event) => setThemeName(event.target.value)}
-                        placeholder="My Custom Theme"
-                        maxLength={40}
-                        className="sm:flex-1"
-                      />
-                      <Button onClick={handleCreateTheme} className="sm:w-auto">
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Create
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex-1 relative">
+                          <Input
+                            value={themeName}
+                            onChange={(event) => setThemeName(event.target.value)}
+                            placeholder="My Custom Theme"
+                            maxLength={40}
+                            className="sm:flex-1 pr-12"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                            {themeName.length}/40
+                          </div>
+                        </div>
+                        <Button onClick={handleCreateTheme} className="sm:w-auto">
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Create
+                        </Button>
+                      </div>
                     </div>
                     <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
                       <p className="font-medium text-foreground mb-1">Current settings:</p>
@@ -3386,130 +3483,262 @@ function AppearanceSettings() {
                   </CardContent>
                 </Card>
               </div>
+            </section>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold">Saved Themes</Label>
-                    <p className="text-xs text-muted-foreground">
-                      {allThemes.length} {allThemes.length === 1 ? 'theme' : 'themes'} available
-                    </p>
-                  </div>
+            <Separator />
+
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-semibold">Saved Themes</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {allThemes.length} {allThemes.length === 1 ? 'theme' : 'themes'} available
+                  </p>
                 </div>
+              </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {allThemes.map((theme) => {
-                    const themeAccent = accentOptionsByValue[theme.accent]
-                    const themeSurface = surfaceOptionsByValue[theme.surface]
-                    const isActive =
-                      accent === theme.accent &&
-                      surface === theme.surface &&
-                      Math.abs(radius - theme.radius) < 0.01 &&
-                      typography === theme.typography &&
-                      contrast === theme.contrast &&
-                      Math.abs(density - theme.density) < 0.01 &&
-                      depth === theme.depth &&
-                      motion === theme.motion
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {allThemes.map((theme) => {
+                  const themeAccent = accentOptionsByValue[theme.accent]
+                  const themeSurface = surfaceOptionsByValue[theme.surface]
+                  const isActive =
+                    accent === theme.accent &&
+                    surface === theme.surface &&
+                    Math.abs(radius - theme.radius) < 0.01 &&
+                    typography === theme.typography &&
+                    contrast === theme.contrast &&
+                    Math.abs(density - theme.density) < 0.01 &&
+                    depth === theme.depth &&
+                    motion === theme.motion
 
-                    return (
-                      <Card
-                        key={theme.id}
-                        className={cn(
-                          'relative border transition-all hover:border-primary/60',
-                          isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                        )}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                {theme.name}
+                  return (
+                    <Card
+                      key={theme.id}
+                      className={cn(
+                        'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                        isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                      )}
+                    >
+                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                        <div className="flex items-start justify-between gap-2 h-full">
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <CardTitle className="text-sm font-semibold">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
                                 {theme.official && (
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
                                     Official
                                   </Badge>
                                 )}
-                              </CardTitle>
-                              {theme.description && (
-                                <CardDescription className="text-xs mt-1">
-                                  {theme.description}
-                                </CardDescription>
-                              )}
-                            </div>
-                            {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
+                              </div>
+                            </CardTitle>
                           </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="rounded-lg border border-border/60 bg-muted/10 p-3 aspect-video flex items-center justify-center relative overflow-hidden" style={{ borderRadius: `${theme.radius * 16}px` }}>
-                            <div className="absolute inset-0" style={{ backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))' }} />
-                            <div className="relative z-10 flex flex-col items-center gap-2">
+                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <div className="flex flex-col space-y-3 mt-auto">
+                        <div 
+                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                          style={{ 
+                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                          }}
+                        >
+                          {/* Background gradient overlay */}
+                          <div 
+                            className="absolute inset-0 opacity-5"
+                            style={{
+                              background: themeAccent 
+                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                : 'transparent'
+                            }}
+                          />
+                          
+                          <div className="relative z-10 h-full flex flex-col gap-2.5">
+                            {/* Header section */}
+                            <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
-                                <span
-                                  className="block size-8 rounded-full shadow-sm ring-1 ring-border/40"
+                                <div 
+                                  className="size-6 rounded-full shrink-0"
                                   style={{
                                     backgroundColor: themeAccent
                                       ? `hsl(${themeAccent.tone})`
                                       : 'hsl(var(--primary))',
                                   }}
                                 />
-                                <span
-                                  className="block size-8 rounded-md shadow-sm ring-1 ring-border/40"
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <div 
+                                    className="text-xs font-semibold truncate"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                        : 'hsl(var(--foreground))'
+                                    }}
+                                  >
+                                    Theme Preview
+                                  </div>
+                                  <div 
+                                    className="text-[10px] truncate opacity-70"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                        : 'hsl(var(--muted-foreground))'
+                                    }}
+                                  >
+                                    {themeAccent?.label ?? theme.accent}
+                                  </div>
+                                </div>
+                              </div>
+                              <div 
+                                className="size-1.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                }}
+                              />
+                            </div>
+
+                            {/* Card preview */}
+                            <div 
+                              className="flex-1 p-2.5 border"
+                              style={{
+                                backgroundColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.card})`
+                                  : 'hsl(var(--card))',
+                                borderColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                  : 'hsl(var(--border))',
+                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                              }}
+                            >
+                              <div className="flex flex-col gap-1.5 h-full">
+                                <div className="flex items-center gap-1.5">
+                                  <div 
+                                    className="h-1.5 rounded-sm flex-1"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.3,
+                                    }}
+                                  />
+                                  <div 
+                                    className="h-1.5 w-4 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.5,
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex gap-1.5 flex-1">
+                                  <div 
+                                    className="flex-1 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.muted})`
+                                        : 'hsl(var(--muted))',
+                                      opacity: 0.4,
+                                    }}
+                                  />
+                                  <div 
+                                    className="w-3 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.2,
+                                    }}
+                                  />
+                                </div>
+                                <div 
+                                  className="h-1.5 rounded-full"
                                   style={{
-                                    backgroundColor: themeSurface
-                                      ? `hsl(${themeSurface.tone.card})`
-                                      : 'hsl(var(--card))',
-                                    borderRadius: `${theme.radius * 8}px`,
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
+                                    opacity: 0.6,
                                   }}
                                 />
                               </div>
-                              <div className="text-xs font-medium" style={{ color: themeAccent ? `hsl(${themeAccent.tone})` : 'hsl(var(--primary))' }}>
-                                {themeAccent?.label ?? theme.accent}
+                            </div>
+
+                            {/* Bottom accent indicators */}
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="size-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                        : 'hsl(var(--secondary))',
+                                      opacity: 0.3 + (i * 0.1),
+                                    }}
+                                  />
+                                ))}
                               </div>
+                              <div 
+                                className="h-2 w-8 rounded-sm"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                  opacity: 0.4,
+                                }}
+                              />
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              {Math.round(theme.radius * 16)}px radius
-                            </Badge>
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                            <Button
-                              variant={isActive ? 'default' : 'outline'}
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleApplyTheme(theme)}
-                            >
-                              {isActive ? (
-                                <>
-                                  <Check className="mr-2 h-3 w-3" />
-                                  Active
-                                </>
-                              ) : (
-                                <>
-                                  <Download className="mr-2 h-3 w-3" />
-                                  Apply
-                                </>
-                              )}
-                            </Button>
-                            {!theme.official && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleDeleteTheme(theme.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {Math.round(theme.radius * 16)}px radius
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleApplyTheme(theme)}
+                          >
+                            {isActive ? (
+                              <>
+                                <Check className="mr-2 h-3 w-3" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-3 w-3" />
+                                Apply
+                              </>
                             )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
+                          </Button>
+                          {!theme.official && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDeleteTheme(theme.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             </section>
 
@@ -3633,6 +3862,7 @@ type PrivacyState = {
 }
 
 function PrivacySettings() {
+  const { t } = useTranslation()
   const { user } = useAuthStore((state) => ({ user: state.user }))
   const { toast } = useToast()
 
@@ -3680,79 +3910,79 @@ function PrivacySettings() {
     initialRef.current = privacy
     setSaving(false)
     toast({
-      title: 'Privacy preferences saved',
-      description: 'TODO: wire these toggles into Strapi privacy settings.',
+      title: t('settings.privacy.preferencesSaved'),
+      description: t('settings.privacy.preferencesSavedDescription'),
     })
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Privacy</CardTitle>
+        <CardTitle>{t('settings.privacy.title')}</CardTitle>
         <CardDescription>
-          Decide how visible your profile is and what information you share with the community.
+          {t('settings.privacy.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <ToggleRow
-            label="Public profile"
-            description="Allow readers who are not signed in to view your profile."
+            label={t('settings.privacy.publicProfile')}
+            description={t('settings.privacy.publicProfileDescription')}
             icon={Shield}
             value={privacy.profilePublic}
             onChange={handleToggle('profilePublic')}
           />
           <ToggleRow
-            label="Show contact email"
-            description="Display your contact email on your profile page."
+            label={t('settings.privacy.showContactEmail')}
+            description={t('settings.privacy.showContactEmailDescription')}
             icon={Mail}
             value={privacy.showEmail}
             onChange={handleToggle('showEmail')}
           />
           <ToggleRow
-            label="Show last seen"
-            description="Display the last time you were active to other members."
+            label={t('settings.privacy.showLastSeen')}
+            description={t('settings.privacy.showLastSeenDescription')}
             icon={CalendarClock}
             value={privacy.showLastSeen}
             onChange={handleToggle('showLastSeen')}
           />
           <ToggleRow
-            label="Allow direct messages"
-            description="Let other authors reach out to you through the built-in messenger."
+            label={t('settings.privacy.allowDirectMessages')}
+            description={t('settings.privacy.allowDirectMessagesDescription')}
             icon={MessageCircle}
             value={privacy.allowMessages}
             onChange={handleToggle('allowMessages')}
           />
           <ToggleRow
-            label="Allow search indexing"
-            description="Permit search engines to index your profile for discoverability."
+            label={t('settings.privacy.allowSearchIndexing')}
+            description={t('settings.privacy.allowSearchIndexingDescription')}
             icon={Search}
             value={privacy.allowSearch}
             onChange={handleToggle('allowSearch')}
             meta={
               privacy.allowSearch ? (
                 <Badge variant="secondary" className="mt-1 w-fit">
-                  Recommended
+                  {t('settings.privacy.recommended')}
                 </Badge>
               ) : undefined
             }
           />
           <ToggleRow
-            label="Show reading activity"
-            description="Let followers know which articles you read and bookmark."
+            label={t('settings.privacy.showReadingActivity')}
+            description={t('settings.privacy.showReadingActivityDescription')}
             icon={Eye}
             value={privacy.shareActivity}
             onChange={handleToggle('shareActivity')}
           />
           <ToggleRow
-            label="Two-factor authentication"
-            description="Protect your account with a secondary verification step at sign in."
+            label={t('settings.privacy.twoFactorAuthentication')}
+            description={t('settings.privacy.twoFactorAuthenticationDescription')}
             icon={ShieldCheck}
             value={privacy.enableTwoFactor}
             onChange={handleToggle('enableTwoFactor')}
             meta={
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                Coming soon
+                {t('settings.privacy.comingSoon')}
               </span>
             }
           />
@@ -3762,10 +3992,9 @@ function PrivacySettings() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div className="space-y-1">
-              <p className="font-medium text-foreground">Data export & account deletion</p>
+              <p className="font-medium text-foreground">{t('settings.privacy.dataExportTitle')}</p>
               <p>
-                Need a copy of your data or want to schedule account deletion? Request it and the editorial
-                team will reach out within 48 hours.
+                {t('settings.privacy.dataExportDescription')}
               </p>
               <Button
                 variant="outline"
@@ -3773,13 +4002,13 @@ function PrivacySettings() {
                 className="mt-2 w-fit gap-2"
                 onClick={() =>
                   toast({
-                    title: 'Request submitted',
-                    description: 'TODO: connect export/deletion requests to support workflow.',
+                    title: t('settings.privacy.requestSubmitted'),
+                    description: t('settings.privacy.requestSubmittedDescription'),
                   })
                 }
               >
                 <Download className="h-4 w-4" />
-                Request export
+                {t('settings.privacy.requestExport')}
               </Button>
             </div>
           </div>
@@ -3787,16 +4016,16 @@ function PrivacySettings() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
-            Reset
+            {t('common.reset')}
           </Button>
           <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
+                {t('settings.profile.saving')}
               </>
             ) : (
-              'Save privacy settings'
+              t('settings.privacy.saveSettings')
             )}
           </Button>
         </div>
@@ -3817,6 +4046,7 @@ type NotificationState = {
 }
 
 function NotificationsSettings() {
+  const { t } = useTranslation()
   const { toast } = useToast()
   const baseState = useMemo<NotificationState>(
     () => ({
@@ -3864,41 +4094,41 @@ function NotificationsSettings() {
     initialRef.current = preferences
     setSaving(false)
     toast({
-      title: 'Notification preferences saved',
-      description: 'TODO: sync notification toggles with user preferences in Strapi.',
+      title: t('settings.notifications.preferencesSaved'),
+      description: t('settings.notifications.preferencesSavedDescription'),
     })
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
+        <CardTitle>{t('settings.notifications.title')}</CardTitle>
         <CardDescription>
-          Choose how and when you hear about new activity.
+          {t('settings.notifications.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Email updates
+            {t('settings.notifications.emailUpdates')}
           </h3>
           <ToggleRow
-            label="Mentions & replies"
-            description="Get an email when someone mentions you or replies to your article."
+            label={t('settings.notifications.mentionsReplies')}
+            description={t('settings.notifications.mentionsRepliesDescription')}
             icon={Mail}
             value={preferences.emailMentions}
             onChange={handleToggle('emailMentions')}
           />
           <ToggleRow
-            label="New followers"
-            description="Receive a short note when someone follows your profile."
+            label={t('settings.notifications.newFollowers')}
+            description={t('settings.notifications.newFollowersDescription')}
             icon={BellRing}
             value={preferences.emailFollows}
             onChange={handleToggle('emailFollows')}
           />
           <ToggleRow
-            label="Digest summary"
-            description="A curated summary of comments, reactions, and saved articles."
+            label={t('settings.notifications.digestSummary')}
+            description={t('settings.notifications.digestSummaryDescription')}
             icon={CalendarClock}
             value={preferences.emailDigest}
             onChange={handleToggle('emailDigest')}
@@ -3914,7 +4144,7 @@ function NotificationsSettings() {
                       className="h-7 px-3 text-xs capitalize"
                       onClick={() => handleDigestChange(option)}
                     >
-                      {option}
+                      {t(`settings.notifications.frequency.${option}`)}
                     </Button>
                   )
                 )}
@@ -3927,48 +4157,47 @@ function NotificationsSettings() {
 
         <div className="space-y-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Push notifications
+            {t('settings.notifications.pushNotifications')}
           </h3>
           <ToggleRow
-            label="Comments on my articles"
-            description="Instant alerts when readers leave feedback on your stories."
+            label={t('settings.notifications.commentsOnArticles')}
+            description={t('settings.notifications.commentsOnArticlesDescription')}
             icon={MessageCircle}
             value={preferences.pushComments}
             onChange={handleToggle('pushComments')}
           />
           <ToggleRow
-            label="Reactions & bookmarks"
-            description="Know when your stories resonate with the community."
+            label={t('settings.notifications.reactionsBookmarks')}
+            description={t('settings.notifications.reactionsBookmarksDescription')}
             icon={BellRing}
             value={preferences.pushReactions}
             onChange={handleToggle('pushReactions')}
           />
           <ToggleRow
-            label="Product announcements"
-            description="Hear about new features and beta programs before anyone else."
+            label={t('settings.notifications.productAnnouncements')}
+            description={t('settings.notifications.productAnnouncementsDescription')}
             icon={Laptop}
             value={preferences.productAnnouncements}
             onChange={handleToggle('productAnnouncements')}
           />
           <ToggleRow
-            label="Security alerts"
-            description="Critical alerts if someone signs in from a new device or location."
+            label={t('settings.notifications.securityAlerts')}
+            description={t('settings.notifications.securityAlertsDescription')}
             icon={AlertTriangle}
             value={preferences.securityAlerts}
             onChange={handleToggle('securityAlerts')}
             meta={
               <Badge variant="destructive" className="mt-1 w-fit px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                Recommended
+                {t('settings.privacy.recommended')}
               </Badge>
             }
           />
         </div>
 
         <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Quiet hours</p>
+          <p className="font-medium text-foreground">{t('settings.notifications.quietHours')}</p>
           <p className="mt-1">
-            Notifications are paused between <span className="font-semibold">22:00</span> and{' '}
-            <span className="font-semibold">08:00</span> in your local timezone.
+            {t('settings.notifications.quietHoursDescription')}
           </p>
           <Button
             variant="ghost"
@@ -3976,28 +4205,28 @@ function NotificationsSettings() {
             className="mt-2 w-fit gap-2"
             onClick={() =>
               toast({
-                title: 'Quiet hours updated',
-                description: 'TODO: expose a time range picker for quiet hours.',
+                title: t('settings.notifications.quietHoursUpdated'),
+                description: t('settings.notifications.quietHoursUpdatedDescription'),
               })
             }
           >
             <Clock className="h-4 w-4" />
-            Adjust quiet hours
+            {t('settings.notifications.adjustQuietHours')}
           </Button>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
-            Reset
+            {t('common.reset')}
           </Button>
           <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
+                {t('settings.profile.saving')}
               </>
             ) : (
-              'Save notification settings'
+              t('settings.notifications.saveSettings')
             )}
           </Button>
         </div>
@@ -4051,6 +4280,7 @@ const DEFAULT_SESSIONS: SessionItem[] = [
 ]
 
 function SessionsSettings() {
+  const { t } = useTranslation()
   const { toast } = useToast()
   const [sessions, setSessions] = useState<SessionItem[]>(DEFAULT_SESSIONS)
   const [signingOutId, setSigningOutId] = useState<string | null>(null)
@@ -4061,8 +4291,8 @@ function SessionsSettings() {
     setSessions((prev) => prev.filter((session) => session.id !== sessionId))
     setSigningOutId(null)
     toast({
-      title: 'Session revoked',
-      description: 'TODO: connect session revocation with the authentication service.',
+      title: t('settings.sessions.sessionRevoked'),
+      description: t('settings.sessions.sessionRevokedDescription'),
     })
   }
 
@@ -4072,17 +4302,17 @@ function SessionsSettings() {
     setSessions((prev) => prev.filter((session) => session.current))
     setSigningOutId(null)
     toast({
-      title: 'Other sessions signed out',
-      description: 'TODO: revoke sessions server-side and notify connected devices.',
+      title: t('settings.sessions.otherSessionsSignedOut'),
+      description: t('settings.sessions.otherSessionsSignedOutDescription'),
     })
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Active sessions</CardTitle>
+        <CardTitle>{t('settings.sessions.title')}</CardTitle>
         <CardDescription>
-          Keep an eye on where you&apos;re signed in and revoke access you don&apos;t recognise.
+          {t('settings.sessions.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -4101,7 +4331,7 @@ function SessionsSettings() {
                     {session.current ? (
                       <Badge variant="secondary" className="flex items-center gap-1">
                         <ShieldCheck className="h-3 w-3" />
-                        Current session
+                        {t('settings.sessions.currentSession')}
                       </Badge>
                     ) : null}
                   </div>
@@ -4136,12 +4366,12 @@ function SessionsSettings() {
                     {signingOutId === session.id ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Signing out...
+                        {t('settings.sessions.signingOut')}
                       </>
                     ) : (
                       <>
                         <LogOut className="h-4 w-4" />
-                        Sign out
+                        {t('accountSheet.signOut')}
                       </>
                     )}
                   </Button>
@@ -4155,10 +4385,9 @@ function SessionsSettings() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="text-sm font-medium text-foreground">Secure your account</p>
+            <p className="text-sm font-medium text-foreground">{t('settings.sessions.secureAccount')}</p>
             <p>
-              Remove sessions you don&apos;t recognise and enable two-factor authentication in the
-              privacy tab.
+              {t('settings.sessions.secureAccountDescription')}
             </p>
           </div>
           <Button
@@ -4171,12 +4400,12 @@ function SessionsSettings() {
             {signingOutId === 'all' ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Signing out...
+                {t('settings.sessions.signingOut')}
               </>
             ) : (
               <>
                 <Shield className="h-4 w-4" />
-                Sign out of other sessions
+                {t('settings.sessions.signOutOtherSessions')}
               </>
             )}
           </Button>
@@ -4194,7 +4423,97 @@ type Invoice = {
   downloadUrl: string
 }
 
+function LanguageSettings() {
+  const { toast } = useToast()
+  const { t, language } = useTranslation()
+  const { setLanguage } = useI18nStore()
+  const [saving, setSaving] = useState(false)
+  
+  const languageOptions: Array<{ value: Language; label: string; description: string }> = [
+    {
+      value: 'en',
+      label: t('settings.language.english'),
+      description: 'English interface',
+    },
+    {
+      value: 'ru',
+      label: t('settings.language.russian'),
+      description: 'Русский интерфейс',
+    },
+  ]
+  
+  const handleLanguageChange = async (newLanguage: Language) => {
+    if (newLanguage === language) return
+    
+    setSaving(true)
+    setLanguage(newLanguage)
+    
+    // Небольшая задержка для UX
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    
+    setSaving(false)
+    toast({
+      title: t('settings.language.languageSaved'),
+      description: t('settings.language.languageDescription'),
+    })
+    
+    // Обновляем страницу для применения изменений
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
+  }
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('settings.language.title')}</CardTitle>
+        <CardDescription>{t('settings.language.description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold">{t('settings.language.title')}</Label>
+        <p className="text-sm text-muted-foreground">
+              {t('settings.language.description')}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {languageOptions.map((option) => {
+              const isActive = language === option.value
+              
+              return (
+                <AppearanceOptionCard
+                  key={option.value}
+                  active={isActive}
+                  leading={<Languages className="h-5 w-5" />}
+                  label={option.label}
+                  description={option.description}
+                  onSelect={() => handleLanguageChange(option.value)}
+                  disabled={saving}
+                />
+              )
+            })}
+          </div>
+        </section>
+        
+        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
+          <div className="flex items-start gap-3">
+            <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">{t('settings.language.title')}</p>
+              <p>
+                {t('settings.language.languageDescription')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 function BillingSettings() {
+  const { t } = useTranslation()
   const { toast } = useToast()
   const [processingAction, setProcessingAction] = useState<'manage' | 'payment' | null>(null)
   const invoices: Invoice[] = useMemo(

@@ -72,6 +72,7 @@ import {
   useLocalCommentsStore,
 } from '@/stores/localCommentsStore'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
 function DiscordIcon(props: LucideProps) {
   return (
@@ -157,6 +158,7 @@ export default function ArticlePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { toast } = useToast()
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   const [commentText, setCommentText] = useState('')
@@ -300,8 +302,8 @@ export default function ArticlePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['article', id] })
       toast({
-        title: 'Success',
-        description: 'Your reaction has been recorded',
+        title: t('common.success'),
+        description: t('article.reactionRecorded'),
       })
     },
   })
@@ -310,16 +312,16 @@ export default function ArticlePage() {
   const handleReaction = (reaction: 'like' | 'dislike') => {
     if (!user) {
       toast({
-        title: 'Authentication required',
-        description: 'Please sign in to react to articles',
+        title: t('article.authRequired'),
+        description: t('article.authRequiredToReact'),
         variant: 'destructive',
       })
       return
     }
     if (!article) {
       toast({
-        title: 'Подождите',
-        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        title: t('article.wait'),
+        description: t('article.waitDescription'),
         variant: 'destructive',
       })
       return
@@ -351,8 +353,8 @@ export default function ArticlePage() {
   const handleBookmark = () => {
     if (!user) {
       toast({
-        title: 'Authentication required',
-        description: 'Please sign in to bookmark articles',
+        title: t('article.authRequired'),
+        description: t('article.authRequiredToBookmark'),
         variant: 'destructive',
       })
       return
@@ -360,8 +362,8 @@ export default function ArticlePage() {
 
     if (!article) {
     toast({
-        title: 'Подождите',
-        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        title: t('article.wait'),
+        description: t('article.waitDescription'),
         variant: 'destructive',
       })
       return
@@ -370,18 +372,18 @@ export default function ArticlePage() {
     const wasSaved = isSaved
     readingListToggle(article)
     toast({
-      title: wasSaved ? 'Removed from Reading List' : 'Saved for later',
+      title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
       description: wasSaved
-        ? 'Эта статья удалена из списка “Читать позже”.'
-        : 'Статья добавлена в список “Читать позже”.',
+        ? t('article.removedFromReadingListDescription')
+        : t('article.savedForLaterDescription'),
     })
   }
 
   const ensureCommentAuth = () => {
     if (!user) {
       toast({
-        title: 'Authentication required',
-        description: 'Please sign in to leave a comment',
+        title: t('article.authRequired'),
+        description: t('article.authRequiredToComment'),
         variant: 'destructive',
       })
       navigate('/auth')
@@ -403,8 +405,8 @@ export default function ArticlePage() {
     const trimmed = content.trim()
     if (!trimmed) {
       toast({
-        title: 'Пустой комментарий',
-        description: 'Введите текст комментария прежде чем отправлять',
+        title: t('article.emptyComment'),
+        description: t('article.emptyCommentDescription'),
         variant: 'destructive',
       })
       return false
@@ -434,8 +436,8 @@ export default function ArticlePage() {
     if (commitLocalComment(commentText, null)) {
       setCommentText('')
       toast({
-        title: 'Комментарий сохранён',
-        description: 'Пока что комментарии хранятся локально на этом устройстве.',
+        title: t('article.commentSaved'),
+        description: t('article.commentSavedDescription'),
       })
     }
   }
@@ -458,8 +460,8 @@ export default function ArticlePage() {
       setReplyText('')
       setActiveReply(null)
       toast({
-        title: 'Ответ сохранён',
-        description: 'Ответ пока что хранится локально и виден только вам.',
+        title: t('article.replySaved'),
+        description: t('article.replySavedDescription'),
       })
     }
   }
@@ -479,16 +481,16 @@ export default function ArticlePage() {
       })
       setIsShareOpen(false)
       toast({
-        title: 'Shared',
-        description: 'Thanks for spreading the word!',
+        title: t('article.shared'),
+        description: t('article.sharedDescription'),
       })
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         return
       }
       toast({
-        title: 'Share failed',
-        description: 'Unable to share the article right now.',
+        title: t('article.shareFailed'),
+        description: t('article.shareFailedDescription'),
         variant: 'destructive',
       })
     }
@@ -507,13 +509,13 @@ export default function ArticlePage() {
       }
       copyTimeoutRef.current = setTimeout(() => setCopySuccess(false), 2000)
       toast({
-        title: 'Link copied',
-        description: 'Article link copied to clipboard',
+        title: t('article.linkCopied'),
+        description: t('article.linkCopiedDescription'),
       })
     } catch (error) {
       toast({
-        title: 'Copy failed',
-        description: 'Unable to copy the link. Please try again.',
+        title: t('article.copyError'),
+        description: t('article.copyErrorDescription'),
         variant: 'destructive',
       })
     }
@@ -712,8 +714,8 @@ export default function ArticlePage() {
   const handleCommentReaction = (commentId: string, reaction: 'up' | 'down') => {
     if (!user) {
       toast({
-        title: 'Authentication required',
-        description: 'Войдите, чтобы реагировать на комментарии.',
+        title: t('article.authRequired'),
+        description: t('article.authRequiredToReactToComments'),
         variant: 'destructive',
       })
       navigate('/auth')
@@ -781,20 +783,20 @@ export default function ArticlePage() {
     switch (action) {
       case 'report':
         toast({
-          title: 'Жалоба отправлена',
-          description: `Мы рассмотрим комментарий пользователя @${comment.author.username}.`,
+          title: t('article.reportSubmitted'),
+          description: t('article.reportSubmittedDescription', { username: comment.author.username }),
         })
         break
       case 'edit':
         toast({
-          title: 'Редактирование',
-          description: 'Редактирование комментариев пока не реализовано.',
+          title: t('article.editing'),
+          description: t('article.editingNotImplemented'),
         })
         break
       case 'delete':
         toast({
-          title: 'Удаление',
-          description: 'Удаление комментариев пока не реализовано.',
+          title: t('article.deleting'),
+          description: t('article.deletingNotImplemented'),
         })
         break
       case 'info':
@@ -920,7 +922,7 @@ export default function ArticlePage() {
                     </span>
                     {matchesHighlightDepth && (
                       <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                        depth {commentDepth}
+                        {t('article.depth')} {commentDepth}
                       </Badge>
                     )}
                   </div>
@@ -946,7 +948,7 @@ export default function ArticlePage() {
                       className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/60 px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted hover:text-foreground"
                     >
                       <CornerUpLeft className="h-3 w-3" />
-                      В ответ @{parentNode.author.username}
+                      {t('article.inReplyTo', { username: parentNode.author.username })}
                     </button>
                   )}
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
@@ -962,7 +964,7 @@ export default function ArticlePage() {
                     className="gap-1 text-xs"
                     onClick={() => handleReplyClick(node.id, node.author.username)}
                   >
-                    Ответить
+                    {t('article.reply')}
                   </Button>
                   {node.replies.length > 0 && (
                     <Button
@@ -979,12 +981,12 @@ export default function ArticlePage() {
                       {isCollapsed ? (
                         <>
                           <ChevronRight className="h-3 w-3" />
-                          Показать ответы ({replyDescendants})
+                          {t('article.showReplies', { count: replyDescendants })}
                         </>
                       ) : (
                         <>
                           <ChevronDown className="h-3 w-3" />
-                          Свернуть ({replyDescendants})
+                          {t('article.collapse', { count: replyDescendants })}
                         </>
                       )}
                     </Button>
@@ -997,7 +999,7 @@ export default function ArticlePage() {
                       onClick={() => setThreadRootId(node.id)}
                     >
                       <CornerDownRight className="h-3 w-3" />
-                      Открыть ветку
+                      {t('article.openThread')}
                     </Button>
                   )}
                   {threadMode && threadRootId === node.id && (
@@ -1008,7 +1010,7 @@ export default function ArticlePage() {
                       onClick={() => setThreadRootId(null)}
                     >
                       <Minimize2 className="h-3 w-3" />
-                      Выход
+                      {t('article.exit')}
                     </Button>
                   )}
                 </div>
@@ -1026,7 +1028,7 @@ export default function ArticlePage() {
                           )}
                           onClick={() => handleCommentReaction(node.id, 'up')}
                           disabled={!user}
-                          aria-label="Поддержать"
+                          aria-label={t('article.support')}
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -1050,7 +1052,7 @@ export default function ArticlePage() {
                           )}
                           onClick={() => handleCommentReaction(node.id, 'down')}
                           disabled={!user}
-                          aria-label="Против"
+                          aria-label={t('article.against')}
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </Button>
@@ -1072,7 +1074,7 @@ export default function ArticlePage() {
                   </Tooltip>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Действия">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('article.actions')}>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -1100,7 +1102,7 @@ export default function ArticlePage() {
                           className="flex items-center gap-2 px-2 py-2 text-sm"
                         >
                           <Flag className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>Пожаловаться</span>
+                          <span>{t('article.report')}</span>
                         </DropdownMenuItem>
                       )}
                       {isOwnComment && (
@@ -1110,14 +1112,14 @@ export default function ArticlePage() {
                             className="flex items-center gap-2 px-2 py-2 text-sm"
                           >
                             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>Изменить</span>
+                            <span>{t('common.edit')}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleCommentAction(node, 'delete')}
                             className="flex items-center gap-2 px-2 py-2 text-sm text-destructive focus:text-destructive"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                            <span>Удалить</span>
+                            <span>{t('common.delete')}</span>
                           </DropdownMenuItem>
                         </>
                       )}
@@ -1127,7 +1129,7 @@ export default function ArticlePage() {
                         className="flex items-center gap-2 px-2 py-2 text-sm"
                       >
                         <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>Информация</span>
+                        <span>{t('article.info')}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1136,7 +1138,7 @@ export default function ArticlePage() {
               {activeReply?.parentId === node.id && (
                 <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-3">
                   <textarea
-                    placeholder={`Ответить ${node.author.username}`}
+                    placeholder={t('article.writeReply', { username: node.author.username })}
                     className="w-full min-h-[100px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                     value={replyText}
                     onChange={(event) => setReplyText(event.target.value)}
@@ -1156,14 +1158,14 @@ export default function ArticlePage() {
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={handleCancelReply}>
-                      Отмена
+                      {t('common.cancel')}
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleSubmitReply}
                       disabled={!replyText.trim()}
                     >
-                      Отправить
+                      {t('article.send')}
                     </Button>
                   </div>
                 </div>
@@ -1181,7 +1183,7 @@ export default function ArticlePage() {
               key={`collapsed-${node.id}`}
               className="ml-4 text-xs text-muted-foreground"
             >
-              Ответы скрыты
+              {t('article.repliesHidden')}
             </div>,
           ]
         }
@@ -1209,7 +1211,7 @@ export default function ArticlePage() {
     return Math.ceil(words / wordsPerMinute)
   }
 
-  const shareTitle = article ? `“${article.title}” on Aetheris` : 'Check out this article on Aetheris'
+  const shareTitle = article ? t('article.shareTitle', { title: article.title }) : t('article.shareTitleDefault')
 
   const shareTargets = useMemo<Array<{ label: string; description: string; icon: LucideIcon | React.ComponentType<{ className?: string }>; href: string }>>(() => {
     if (!shareUrl) return []
@@ -1217,79 +1219,79 @@ export default function ArticlePage() {
     const encodedTitle = encodeURIComponent(shareTitle)
     return [
       {
-        label: 'Share on X',
-        description: 'Post to X (Twitter)',
+        label: t('article.shareOnX'),
+        description: t('article.shareOnXDescription'),
         icon: Twitter,
         href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
       },
       {
-        label: 'Share on Facebook',
-        description: 'Share with your friends',
+        label: t('article.shareOnFacebook'),
+        description: t('article.shareOnFacebookDescription'),
         icon: Facebook,
         href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
       },
       {
-        label: 'Share on LinkedIn',
-        description: 'Reach your professional network',
+        label: t('article.shareOnLinkedIn'),
+        description: t('article.shareOnLinkedInDescription'),
         icon: Linkedin,
         href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       },
       {
-        label: 'Send via Telegram',
-        description: 'Share instantly in Telegram',
+        label: t('article.sendViaTelegram'),
+        description: t('article.sendViaTelegramDescription'),
         icon: Send,
         href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
       },
       {
-        label: 'Share via WhatsApp',
-        description: 'Send to WhatsApp contacts',
+        label: t('article.shareViaWhatsApp'),
+        description: t('article.shareViaWhatsAppDescription'),
         icon: MessageCircle,
         href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
       },
       {
-        label: 'Share via Email',
-        description: 'Send via email',
+        label: t('article.shareViaEmail'),
+        description: t('article.shareViaEmailDescription'),
         icon: Mail,
         href: `mailto:?subject=${encodedTitle}&body=${encodedTitle}%20${encodedUrl}`,
       },
       {
-        label: 'Share on Reddit',
-        description: 'Post to Reddit',
+        label: t('article.shareOnReddit'),
+        description: t('article.shareOnRedditDescription'),
         icon: RedditIcon,
         href: `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
       },
       {
-        label: 'Share on Discord',
-        description: 'Share on Discord',
+        label: t('article.shareOnDiscord'),
+        description: t('article.shareOnDiscordDescription'),
         icon: DiscordIcon,
         href: `https://discord.com/`,
       },
       {
-        label: 'Share on Instagram',
-        description: 'Share on Instagram',
+        label: t('article.shareOnInstagram'),
+        description: t('article.shareOnInstagramDescription'),
         icon: InstagramIcon,
         href: `https://www.instagram.com/`,
       },
       {
-        label: 'Share on YouTube',
-        description: 'Share on YouTube',
+        label: t('article.shareOnYouTube'),
+        description: t('article.shareOnYouTubeDescription'),
         icon: YoutubeIcon,
         href: `https://www.youtube.com/`,
       },
       {
-        label: 'Share on GitHub',
-        description: 'Share on GitHub',
+        label: t('article.shareOnGitHub'),
+        description: t('article.shareOnGitHubDescription'),
         icon: GithubIcon,
         href: `https://github.com/`,
       },
       {
-        label: 'Copy link',
-        description: 'Copy article link',
+        label: t('article.copyLink'),
+        description: t('article.copyLinkDescription'),
         icon: Link2,
         href: shareUrl,
       },
     ]
-  }, [shareUrl, shareTitle])
+  }, [shareUrl, shareTitle, t])
 
   const SHARE_ITEMS_PER_PAGE = 6
   const totalPages = Math.ceil(shareTargets.length / SHARE_ITEMS_PER_PAGE)
@@ -1311,13 +1313,13 @@ export default function ArticlePage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-2xl font-bold">Article not found</h2>
+            <h2 className="text-2xl font-bold">{t('article.notFound')}</h2>
             <p className="text-muted-foreground">
-              The article you're looking for doesn't exist or has been removed.
+              {t('article.notFoundDescription')}
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              {t('article.backToHome')}
             </Button>
           </CardContent>
         </Card>
@@ -1344,7 +1346,7 @@ export default function ArticlePage() {
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -1384,7 +1386,7 @@ export default function ArticlePage() {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>{estimateReadTime(article.content)} min read</span>
+                <span>{estimateReadTime(article.content)} {t('article.readTime')}</span>
               </div>
             </div>
 
@@ -1423,7 +1425,7 @@ export default function ArticlePage() {
               >
                 <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
                 <span className="hidden sm:inline">
-                  {isSaved ? 'Saved' : 'Read later'}
+                  {isSaved ? t('article.saved') : t('article.readLater')}
                 </span>
               </Button>
               <Button
@@ -1433,7 +1435,7 @@ export default function ArticlePage() {
                 className="gap-2"
               >
                 <Share2 className="h-4 w-4" />
-                Share
+                {t('article.share')}
               </Button>
             </div>
           </div>
@@ -1453,13 +1455,13 @@ export default function ArticlePage() {
           {/* Comments Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold tracking-tight">
-                Комментарии ({combinedComments.length})
+                {t('article.comments', { count: combinedComments.length })}
             </h2>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
               {threadRootId && nodeLookup.has(threadRootId) && (
                 <div className="flex flex-1 flex-wrap items-center justify-end gap-2 text-xs">
-                  <span className="text-muted-foreground">Фокус ветки:</span>
+                  <span className="text-muted-foreground">{t('article.threadFocus')}:</span>
                   <div className="flex flex-wrap items-center gap-1">
                     {(() => {
                       const chain: CommentNode[] = []
@@ -1495,7 +1497,7 @@ export default function ArticlePage() {
                     className="h-7 rounded-full px-2 text-xs"
                     onClick={() => setThreadRootId(null)}
                   >
-                    Выйти из фокуса
+                    {t('article.exitFocus')}
                   </Button>
                 </div>
               )}
@@ -1505,7 +1507,7 @@ export default function ArticlePage() {
                 {/* Comment Input Form */}
                 <div className="space-y-3">
                 <textarea
-                  placeholder={user ? 'Напишите комментарий…' : 'Войдите, чтобы оставить комментарий'}
+                  placeholder={user ? t('article.writeComment') : t('article.signInToComment')}
                   className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
@@ -1521,14 +1523,14 @@ export default function ArticlePage() {
                 <div className="flex justify-end gap-2">
                   {!user && (
                     <Button variant="outline" onClick={() => navigate('/auth')}>
-                      Войти
+                      {t('auth.signIn')}
                     </Button>
                   )}
                   <Button
                     onClick={handleSubmitComment}
                     disabled={!user || !commentText.trim()}
                   >
-                    Отправить комментарий
+                    {t('article.sendComment')}
                   </Button>
                 </div>
                 </div>
@@ -1561,7 +1563,7 @@ export default function ArticlePage() {
                   </div>
               ) : combinedComments.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">
-                  Пока нет комментариев. Будьте первым!
+                  {t('article.noComments')} {t('article.beFirst')}
                   </div>
             ) : (
               <div className="space-y-4">
@@ -1593,9 +1595,9 @@ export default function ArticlePage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader className="space-y-1.5">
-            <DialogTitle>Информация о комментарии</DialogTitle>
+            <DialogTitle>{t('article.commentInfo')}</DialogTitle>
             <DialogDescription>
-              Сводка для модерации и будущей интеграции со Strapi.
+              {t('article.commentInfoDescription')}
             </DialogDescription>
           </DialogHeader>
           {infoComment && (
@@ -1631,7 +1633,7 @@ export default function ArticlePage() {
 
               <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Текст комментария
+                  {t('article.commentText')}
                 </p>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-background/70 p-3 text-sm leading-relaxed">
                   {infoComment.text}
@@ -1640,17 +1642,17 @@ export default function ArticlePage() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
-                  <p className="text-xs text-muted-foreground">Источник</p>
+                  <p className="text-xs text-muted-foreground">{t('article.source')}</p>
                   <p className="text-sm font-medium text-foreground">
-                    {infoComment.source === 'local' ? 'Локальное хранилище (только у текущего пользователя)' : 'Strapi (общедоступно)'}
+                    {infoComment.source === 'local' ? t('article.localStorage') : t('article.strapi')}
                   </p>
                 </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
-                  <p className="text-xs text-muted-foreground">Ответов</p>
+                  <p className="text-xs text-muted-foreground">{t('article.replies')}</p>
                   <p className="text-sm font-medium text-foreground">{infoComment.replies.length}</p>
                 </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
-                  <p className="text-xs text-muted-foreground">Реакции (рейтинг)</p>
+                  <p className="text-xs text-muted-foreground">{t('article.reactions')}</p>
                   <p
                     className={cn(
                       'text-sm font-medium',
@@ -1665,25 +1667,24 @@ export default function ArticlePage() {
                   </p>
                 </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
-                  <p className="text-xs text-muted-foreground">Статус синхронизации</p>
+                  <p className="text-xs text-muted-foreground">{t('article.syncStatus')}</p>
                   <p className="text-sm font-medium text-foreground">
                     {infoComment.source === 'local'
-                      ? 'Ожидает отправки в Strapi'
-                      : 'Получен из Strapi'}
+                      ? t('article.pendingSync')
+                      : t('article.syncedFromStrapi')}
                   </p>
                 </div>
               </div>
 
               <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
-                TODO: заменить локальное хранение на запросы к Strapi (`/api/comments`) и
-                синхронизировать реакции через `/api/comment-reactions`.
+                {t('article.todoSync')}
               </div>
             </div>
           )}
 
           <DialogFooter className="sm:justify-end">
             <Button variant="ghost" onClick={() => setIsInfoOpen(false)}>
-              Закрыть
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1705,16 +1706,16 @@ export default function ArticlePage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl">Share this article</DialogTitle>
+            <DialogTitle className="text-xl">{t('article.shareArticle')}</DialogTitle>
             <DialogDescription className="text-base">
-              Spread the word about {article ? `"${article.title}"` : 'this article'} across your favorite channels.
+              {t('article.shareArticleDescription', { title: article ? article.title : t('article.thisArticle') })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
             {/* Share link section */}
             <div className="space-y-2.5">
-              <label className="text-sm font-semibold text-foreground">Share link</label>
+              <label className="text-sm font-semibold text-foreground">{t('article.shareLink')}</label>
               <div className="relative flex items-center gap-2">
                 <Input
                   value={shareUrl}
@@ -1731,12 +1732,12 @@ export default function ArticlePage() {
                   {copySuccess ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
-                      <span className="text-xs">Copied</span>
+                      <span className="text-xs">{t('article.copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-3.5 w-3.5" />
-                      <span className="text-xs">Copy</span>
+                      <span className="text-xs">{t('article.copyLink')}</span>
                     </>
                   )}
                 </Button>
@@ -1747,7 +1748,7 @@ export default function ArticlePage() {
             {shareTargets.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-foreground">Share on social</label>
+                  <label className="text-sm font-semibold text-foreground">{t('article.shareOnSocial')}</label>
                   {totalPages > 1 && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">
@@ -1807,7 +1808,7 @@ export default function ArticlePage() {
             {/* Native share button */}
             {canUseNativeShare && (
               <div className="space-y-2.5">
-                <label className="text-sm font-semibold text-foreground">Device sharing</label>
+                <label className="text-sm font-semibold text-foreground">{t('article.deviceSharing')}</label>
                 <Button
                   variant="outline"
                   className="w-full h-auto justify-start gap-3 p-3.5 hover:bg-accent/50 transition-colors overflow-hidden"
@@ -1817,9 +1818,9 @@ export default function ArticlePage() {
                 <Share2 className="h-4 w-4" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left overflow-hidden">
-                    <span className="text-sm font-medium leading-tight truncate w-full">Share via device</span>
+                    <span className="text-sm font-medium leading-tight truncate w-full">{t('article.shareViaDevice')}</span>
                     <span className="text-xs text-muted-foreground leading-tight truncate w-full">
-                      Use your device's sharing options
+                      {t('article.useDeviceSharing')}
                     </span>
                   </div>
               </Button>

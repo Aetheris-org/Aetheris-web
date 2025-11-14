@@ -17,6 +17,7 @@ import {
 } from '@/stores/gamificationStore'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   Award,
   CheckCircle2,
@@ -549,6 +550,8 @@ export default function AchievementsPage() {
     }
   }, [allAchievements, unlockedCount, totalCount, completionRate])
 
+  const { t } = useTranslation()
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -556,8 +559,8 @@ export default function AchievementsPage() {
         <main className="container flex min-h-[60vh] items-center justify-center pb-16 pt-6">
           <Card className="w-full max-w-md border-border/60">
             <CardHeader>
-              <CardTitle>Sign in required</CardTitle>
-              <CardDescription>Please sign in to view your achievements.</CardDescription>
+              <CardTitle>{t('auth.title')}</CardTitle>
+              <CardDescription>{t('achievements.title')}</CardDescription>
             </CardHeader>
           </Card>
         </main>
@@ -573,6 +576,7 @@ export default function AchievementsPage() {
           stats={stats}
           isExpanded={isHeroExpanded}
           onToggle={() => setIsHeroExpanded(!isHeroExpanded)}
+          t={t}
         />
 
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
@@ -581,16 +585,17 @@ export default function AchievementsPage() {
               activeCategory={activeCategory}
               onCategoryChange={setActiveCategory}
               achievementsByCategory={achievementsByCategory}
+              t={t}
             />
 
-            <RarityBreakdown stats={stats} />
+            <RarityBreakdown stats={stats} t={t} />
 
             {stats.recentUnlocks.length > 0 && (
               <Card className="border-border/60 bg-background/90 shadow-sm">
                 <CardHeader className="space-y-3">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     <Award className="h-4 w-4 text-primary" />
-                    Recent unlocks
+                    {t('achievements.stats.recentUnlocks')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -618,28 +623,28 @@ export default function AchievementsPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold tracking-tight">Achievement catalog</h2>
+                <h2 className="text-xl font-semibold tracking-tight">{t('achievements.title')}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {filteredAchievements.length} {filteredAchievements.length === 1 ? 'achievement' : 'achievements'}
-                  {activeCategory !== 'all' && ` in ${activeCategory}`}
+                  {filteredAchievements.length} {filteredAchievements.length === 1 ? t('achievements.title').toLowerCase() : t('achievements.title').toLowerCase()}
+                  {activeCategory !== 'all' && ` ${t('common.in')} ${activeCategory}`}
                 </p>
               </div>
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
                 <SelectTrigger className="w-[180px] border-border/60 bg-muted/20 hover:bg-muted/30">
                   <ArrowUpDown className="mr-2 h-4 w-4 shrink-0" />
-                  <SelectValue placeholder="Sort" />
+                  <SelectValue placeholder={t('achievements.filters.sortBy')} />
                 </SelectTrigger>
                 <SelectContent className="!bg-card border-border/60">
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="rarity-asc">Rarity: Low to High</SelectItem>
-                  <SelectItem value="rarity-desc">Rarity: High to Low</SelectItem>
-                  <SelectItem value="name">Name (A-Z)</SelectItem>
-                  <SelectItem value="unlocked">Unlocked First</SelectItem>
+                  <SelectItem value="default">{t('achievements.filters.default')}</SelectItem>
+                  <SelectItem value="rarity-asc">{t('achievements.filters.rarity')}: {t('common.lowToHigh')}</SelectItem>
+                  <SelectItem value="rarity-desc">{t('achievements.filters.rarity')}: {t('common.highToLow')}</SelectItem>
+                  <SelectItem value="name">{t('common.name')} (A-Z)</SelectItem>
+                  <SelectItem value="unlocked">{t('achievements.unlocked')} {t('common.first')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <AchievementsGrid achievements={filteredAchievements} />
+            <AchievementsGrid achievements={filteredAchievements} t={t} />
           </div>
         </div>
       </main>
@@ -661,9 +666,10 @@ interface HeroSectionProps {
   }
   isExpanded: boolean
   onToggle: () => void
+  t: (key: string) => string
 }
 
-function HeroSection({ stats, isExpanded, onToggle }: HeroSectionProps) {
+function HeroSection({ stats, isExpanded, onToggle, t }: HeroSectionProps) {
   return (
     <section
       className={cn(
@@ -678,32 +684,31 @@ function HeroSection({ stats, isExpanded, onToggle }: HeroSectionProps) {
             size="icon"
             className="absolute right-0 top-0 h-8 w-8 rounded-full"
             onClick={onToggle}
-            aria-label="Collapse hero section"
+            aria-label={t('achievements.hero.collapse')}
           >
             <ChevronUp className="h-4 w-4" />
           </Button>
           <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
-            Achievements & Progress
+            {t('achievements.hero.badge')}
           </Badge>
           <div className="space-y-3">
             <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              Your journey through Aetheris
+              {t('achievements.hero.title')}
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground">
-              Unlock badges, track milestones, and showcase your growth as a creator. Every achievement tells a story of
-              your impact on the community.
+              {t('achievements.hero.description')}
             </p>
           </div>
 
           <Card className="border-border/60 bg-background/90 shadow-sm">
             <CardHeader className="space-y-2 pb-3">
-              <CardDescription className="text-xs uppercase tracking-wide">Completion rate</CardDescription>
+              <CardDescription className="text-xs uppercase tracking-wide">{t('achievements.stats.completionRate')}</CardDescription>
               <CardTitle className="text-3xl font-semibold">{stats.completionRate}%</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <Progress value={stats.completionRate} className="h-2" />
               <p className="mt-2 text-xs text-muted-foreground">
-                {stats.totalUnlocked} of {stats.totalAvailable} achievements unlocked
+                {stats.totalUnlocked} {t('common.of')} {stats.totalAvailable} {t('achievements.title').toLowerCase()} {t('achievements.unlocked')}
               </p>
             </CardContent>
           </Card>
@@ -713,7 +718,7 @@ function HeroSection({ stats, isExpanded, onToggle }: HeroSectionProps) {
           <Trophy className="h-4 w-4 shrink-0 text-primary" />
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-sm font-semibold text-foreground">{stats.completionRate}%</span>
-            <span className="text-xs text-muted-foreground">complete</span>
+            <span className="text-xs text-muted-foreground">{t('common.complete')}</span>
           </div>
           <Progress value={stats.completionRate} className="h-2 flex-1 min-w-0" />
           <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
@@ -724,7 +729,7 @@ function HeroSection({ stats, isExpanded, onToggle }: HeroSectionProps) {
             size="icon"
             className="h-7 w-7 shrink-0 rounded-full -mr-1"
             onClick={onToggle}
-            aria-label="Expand hero section"
+            aria-label={t('achievements.hero.expand')}
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </Button>
@@ -738,22 +743,23 @@ interface CategoryFiltersProps {
   activeCategory: AchievementCategory
   onCategoryChange: (category: AchievementCategory) => void
   achievementsByCategory: Record<string, Array<{ id: string; unlocked: boolean }>>
+  t: (key: string) => string
 }
 
-function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCategory }: CategoryFiltersProps) {
+function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCategory, t }: CategoryFiltersProps) {
   const categories: Array<{ id: AchievementCategory; label: string; icon: typeof Target }> = [
-    { id: 'all', label: 'All', icon: Trophy },
-    { id: 'level', label: 'Level', icon: Target },
-    { id: 'streak', label: 'Streak', icon: Flame },
-    { id: 'activity', label: 'Activity', icon: PenSquare },
-    { id: 'milestone', label: 'Milestone', icon: Award },
-    { id: 'social', label: 'Social', icon: Users },
+    { id: 'all', label: t('achievements.filters.all'), icon: Trophy },
+    { id: 'level', label: t('achievements.filters.level'), icon: Target },
+    { id: 'streak', label: t('achievements.filters.streak'), icon: Flame },
+    { id: 'activity', label: t('achievements.filters.activity'), icon: PenSquare },
+    { id: 'milestone', label: t('achievements.filters.milestone'), icon: Award },
+    { id: 'social', label: t('achievements.filters.social'), icon: Users },
   ]
 
   return (
     <Card className="border-border/60 bg-muted/20 shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Categories</CardTitle>
+        <CardTitle className="text-base font-semibold">{t('common.categories')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-1 pt-0">
         {categories.map((category) => {
@@ -804,20 +810,21 @@ interface RarityBreakdownProps {
   stats: {
     byRarity: Record<string, number>
   }
+  t: (key: string) => string
 }
 
-function RarityBreakdown({ stats }: RarityBreakdownProps) {
+function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
   const rarities: Array<{ id: AchievementRarity; label: string; style: typeof rarityStyles.common }> = [
-    { id: 'common', label: 'Common', style: rarityStyles.common },
-    { id: 'rare', label: 'Rare', style: rarityStyles.rare },
-    { id: 'epic', label: 'Epic', style: rarityStyles.epic },
-    { id: 'legendary', label: 'Legendary', style: rarityStyles.legendary },
+    { id: 'common', label: t('achievements.rarity.common'), style: rarityStyles.common },
+    { id: 'rare', label: t('achievements.rarity.rare'), style: rarityStyles.rare },
+    { id: 'epic', label: t('achievements.rarity.epic'), style: rarityStyles.epic },
+    { id: 'legendary', label: t('achievements.rarity.legendary'), style: rarityStyles.legendary },
   ]
 
   return (
     <Card className="border-border/60 bg-muted/20 shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">By rarity</CardTitle>
+        <CardTitle className="text-base font-semibold">{t('achievements.breakdown.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 pt-0">
         {rarities.map((rarity) => {
@@ -839,9 +846,9 @@ function RarityBreakdown({ stats }: RarityBreakdownProps) {
                       />
                     ))}
                   </div>
-                  <span className="font-medium text-foreground">{rarity.label}</span>
-                </div>
-                <span className="text-muted-foreground">{count} unlocked</span>
+                <span className="font-medium text-foreground">{rarity.label}</span>
+              </div>
+              <span className="text-muted-foreground">{count} {t('achievements.unlocked')}</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
                 <div
@@ -868,17 +875,18 @@ interface AchievementsGridProps {
     unlocked: boolean
     unlockedAt?: string
   }>
+  t: (key: string) => string
 }
 
-function AchievementsGrid({ achievements }: AchievementsGridProps) {
+function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
   if (achievements.length === 0) {
     return (
       <Card className="border-dashed border-border/60">
         <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
           <Trophy className="h-12 w-12 text-muted-foreground/50" />
           <div>
-            <p className="font-medium text-foreground">No achievements found</p>
-            <p className="text-sm text-muted-foreground">Try selecting a different category.</p>
+            <p className="font-medium text-foreground">{t('achievements.noAchievements')}</p>
+            <p className="text-sm text-muted-foreground">{t('achievements.noAchievementsDescription')}</p>
           </div>
         </CardContent>
       </Card>
@@ -930,11 +938,11 @@ function AchievementsGrid({ achievements }: AchievementsGridProps) {
                     )}
                   >
                     <CheckCircle2 className="h-3 w-3" />
-                    Unlocked
+                    {t('achievements.unlocked')}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="rounded-full text-[10px] uppercase tracking-wide">
-                    Locked
+                    {t('achievements.locked')}
                   </Badge>
                 )}
               </div>
@@ -986,7 +994,7 @@ function AchievementsGrid({ achievements }: AchievementsGridProps) {
               {achievement.unlocked && achievement.unlockedAt && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 px-2.5 py-1.5 text-xs text-muted-foreground">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}</span>
+                  <span>{t('achievements.unlocked')} {new Date(achievement.unlockedAt).toLocaleDateString()}</span>
                 </div>
               )}
             </CardContent>
