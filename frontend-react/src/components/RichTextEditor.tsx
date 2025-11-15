@@ -22,6 +22,8 @@ import { createLowlight, common } from 'lowlight'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import Highlight from '@tiptap/extension-highlight'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
 import tippy, { type Instance as TippyInstance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import {
@@ -50,6 +52,8 @@ import {
   Columns3,
   Link2,
   Hash,
+  Palette,
+  Type,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -563,6 +567,8 @@ export function RichTextEditor({
         },
       }),
       CodeBlockWithCopy,
+      TextStyle,
+      Color,
       Highlight.configure({
         multicolor: true,
       }),
@@ -633,7 +639,7 @@ export function RichTextEditor({
   }, [editor, linkValue])
 
   const handleRemoveFormatting = useCallback(() => {
-    editor?.chain().focus().unsetAllMarks().clearNodes().run()
+    editor?.chain().focus().unsetAllMarks().unsetColor().unsetHighlight().clearNodes().run()
   }, [editor])
 
   const openImageDialog = useCallback(() => {
@@ -1011,13 +1017,155 @@ export function RichTextEditor({
                   isActive: editor.isActive('code'),
                   disabled: !editor.can().chain().focus().toggleCode().run(),
                 },
-                {
-                  label: 'Highlight',
-                  icon: Highlighter,
-                  action: () => editor.chain().focus().toggleHighlight().run(),
-                  isActive: editor.isActive('highlight'),
-                  disabled: !editor.can().chain().focus().toggleHighlight().run(),
-                },
+              ].map(({ icon: Icon, label, action, isActive, disabled }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                    isActive && 'bg-primary/10 text-primary'
+                  )}
+                  disabled={disabled}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    action()
+                  }}
+                  title={label}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
+              
+              {/* Text Color Picker */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                      editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary'
+                    )}
+                    title="Text color"
+                  >
+                    <Type className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 p-2">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[
+                      { name: 'Default', value: null },
+                      { name: 'Black', value: '#000000' },
+                      { name: 'Dark Gray', value: '#404040' },
+                      { name: 'Gray', value: '#808080' },
+                      { name: 'Light Gray', value: '#C0C0C0' },
+                      { name: 'White', value: '#FFFFFF' },
+                      { name: 'Red', value: '#EF4444' },
+                      { name: 'Orange', value: '#F97316' },
+                      { name: 'Amber', value: '#F59E0B' },
+                      { name: 'Yellow', value: '#EAB308' },
+                      { name: 'Lime', value: '#84CC16' },
+                      { name: 'Green', value: '#22C55E' },
+                      { name: 'Emerald', value: '#10B981' },
+                      { name: 'Teal', value: '#14B8A6' },
+                      { name: 'Cyan', value: '#06B6D4' },
+                      { name: 'Sky', value: '#0EA5E9' },
+                      { name: 'Blue', value: '#3B82F6' },
+                      { name: 'Indigo', value: '#6366F1' },
+                      { name: 'Violet', value: '#8B5CF6' },
+                      { name: 'Purple', value: '#A855F7' },
+                      { name: 'Fuchsia', value: '#D946EF' },
+                      { name: 'Pink', value: '#EC4899' },
+                      { name: 'Rose', value: '#F43F5E' },
+                    ].map((color) => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => {
+                          if (color.value === null) {
+                            editor.chain().focus().unsetColor().run()
+                          } else {
+                            editor.chain().focus().setColor(color.value).run()
+                          }
+                        }}
+                        className={cn(
+                          'h-6 w-6 rounded border-2 transition-all hover:scale-110',
+                          color.value === null
+                            ? 'border-border bg-muted flex items-center justify-center'
+                            : 'border-transparent',
+                          editor.getAttributes('textStyle').color === color.value && 'ring-2 ring-primary ring-offset-1'
+                        )}
+                        style={color.value ? { backgroundColor: color.value } : undefined}
+                        title={color.name}
+                      >
+                        {color.value === null && (
+                          <span className="text-[10px] text-muted-foreground">A</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Highlight Color Picker */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                      editor.isActive('highlight') && 'bg-primary/10 text-primary'
+                    )}
+                    title="Highlight color"
+                  >
+                    <Highlighter className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 p-2">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[
+                      { name: 'None', value: null },
+                      { name: 'Yellow', value: '#FEF08A' },
+                      { name: 'Green', value: '#BBF7D0' },
+                      { name: 'Blue', value: '#BFDBFE' },
+                      { name: 'Pink', value: '#FBCFE8' },
+                      { name: 'Purple', value: '#E9D5FF' },
+                      { name: 'Orange', value: '#FED7AA' },
+                      { name: 'Red', value: '#FECACA' },
+                      { name: 'Gray', value: '#E5E7EB' },
+                      { name: 'Cyan', value: '#A5F3FC' },
+                      { name: 'Lime', value: '#D9F99D' },
+                      { name: 'Amber', value: '#FDE68A' },
+                    ].map((color) => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => {
+                          if (color.value === null) {
+                            editor.chain().focus().unsetHighlight().run()
+                          } else {
+                            editor.chain().focus().setHighlight({ color: color.value }).run()
+                          }
+                        }}
+                        className={cn(
+                          'h-6 w-6 rounded border-2 transition-all hover:scale-110',
+                          color.value === null
+                            ? 'border-border bg-muted flex items-center justify-center'
+                            : 'border-transparent',
+                          editor.getAttributes('highlight')?.color === color.value && 'ring-2 ring-primary ring-offset-1'
+                        )}
+                        style={color.value ? { backgroundColor: color.value } : undefined}
+                        title={color.name}
+                      >
+                        {color.value === null && (
+                          <span className="text-[10px] text-muted-foreground">×</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {[
                 {
                   label: editor.isActive('link') ? 'Edit link' : 'Add link',
                   icon: LinkIcon,

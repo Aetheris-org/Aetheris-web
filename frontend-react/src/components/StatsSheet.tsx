@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
-import { Flame, Award, Bell, TrendingUp, Sparkles } from 'lucide-react'
+import { Flame, Award, Bell, TrendingUp } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
 
 interface StatsSheetProps {
@@ -160,17 +160,6 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
             </CardContent>
           </Card>
 
-          {/* Achievements Preview */}
-          <SheetClose asChild>
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => navigate('/achievements')}
-            >
-              <Sparkles className="h-4 w-4" />
-              {t('accountSheet.viewAchievements')}
-            </Button>
-          </SheetClose>
         </div>
       </SheetContent>
     </Sheet>

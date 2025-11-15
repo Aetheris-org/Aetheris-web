@@ -1,7 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
-import { SiteHeader } from '@/components/SiteHeader'
-import { Badge } from '@/components/ui/badge'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -446,6 +450,7 @@ const rarityStyles = {
 }
 
 export default function AchievementsPage() {
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const {
     achievements: storeAchievements,
@@ -532,10 +537,22 @@ export default function AchievementsPage() {
 
   const stats = useMemo(() => {
     const byRarity = {
-      common: allAchievements.filter((a) => a.rarity === 'common' && a.unlocked).length,
-      rare: allAchievements.filter((a) => a.rarity === 'rare' && a.unlocked).length,
-      epic: allAchievements.filter((a) => a.rarity === 'epic' && a.unlocked).length,
-      legendary: allAchievements.filter((a) => a.rarity === 'legendary' && a.unlocked).length,
+      common: {
+        unlocked: allAchievements.filter((a) => a.rarity === 'common' && a.unlocked).length,
+        total: allAchievements.filter((a) => a.rarity === 'common').length,
+      },
+      rare: {
+        unlocked: allAchievements.filter((a) => a.rarity === 'rare' && a.unlocked).length,
+        total: allAchievements.filter((a) => a.rarity === 'rare').length,
+      },
+      epic: {
+        unlocked: allAchievements.filter((a) => a.rarity === 'epic' && a.unlocked).length,
+        total: allAchievements.filter((a) => a.rarity === 'epic').length,
+      },
+      legendary: {
+        unlocked: allAchievements.filter((a) => a.rarity === 'legendary' && a.unlocked).length,
+        total: allAchievements.filter((a) => a.rarity === 'legendary').length,
+      },
     }
 
     return {
@@ -555,7 +572,27 @@ export default function AchievementsPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <SiteHeader />
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between px-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <h1 className="text-lg font-semibold">{t('achievements.pageTitle')}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <AccountSheet />
+            </div>
+          </div>
+        </header>
         <main className="container flex min-h-[60vh] items-center justify-center pb-16 pt-6">
           <Card className="w-full max-w-md border-border/60">
             <CardHeader>
@@ -570,7 +607,27 @@ export default function AchievementsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('common.back')}
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <h1 className="text-lg font-semibold">{t('achievements.pageTitle')}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountSheet />
+          </div>
+        </div>
+      </header>
       <main className="container space-y-8 pb-16 pt-6">
         <HeroSection
           stats={stats}
@@ -657,7 +714,7 @@ interface HeroSectionProps {
     totalUnlocked: number
     totalAvailable: number
     completionRate: number
-    byRarity: Record<string, number>
+    byRarity: Record<string, { unlocked: number; total: number }>
     recentUnlocks: Array<{
       id: string
       title: string
@@ -808,7 +865,7 @@ function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCateg
 
 interface RarityBreakdownProps {
   stats: {
-    byRarity: Record<string, number>
+    byRarity: Record<string, { unlocked: number; total: number }>
   }
   t: (key: string) => string
 }
@@ -828,7 +885,10 @@ function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
       </CardHeader>
       <CardContent className="space-y-3 pt-0">
         {rarities.map((rarity) => {
-          const count = stats.byRarity[rarity.id] ?? 0
+          const rarityStats = stats.byRarity[rarity.id] ?? { unlocked: 0, total: 0 }
+          const unlocked = rarityStats.unlocked
+          const total = rarityStats.total
+          const percentage = total > 0 ? (unlocked / total) * 100 : 0
           return (
             <div key={rarity.id} className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
@@ -848,12 +908,12 @@ function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
                   </div>
                   <span className="font-medium text-foreground">{rarity.label}</span>
                 </div>
-              <span className="text-muted-foreground">{count} {t('achievements.unlocked')}</span>
+                <span className="text-muted-foreground">{unlocked}/{total}</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
                 <div
                   className={cn('h-full transition-all', rarity.style.badge.split(' ')[0])}
-                  style={{ width: `${Math.min(100, (count / 5) * 100)}%` }}
+                  style={{ width: `${Math.min(100, percentage)}%` }}
                 />
               </div>
             </div>

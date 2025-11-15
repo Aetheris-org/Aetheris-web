@@ -14,6 +14,7 @@ import {
   Users,
   MessageSquare,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react'
 import {
   Sheet,
@@ -150,27 +151,27 @@ export function AccountSheet() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
             >
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">{xpProgress}%</span>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">{xpProgress}%</span>
               <span className="text-[10px] text-muted-foreground">XP</span>
             </button>
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
             >
-              <Flame className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">{streakDays}</span>
+              <Flame className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">{streakDays}</span>
               <span className="text-[10px] text-muted-foreground">{t('accountSheet.days', { count: streakDays })}</span>
             </button>
             <SheetClose asChild>
               <button
                 onClick={() => navigate('/notifications')}
-                className="relative flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+                className="relative flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
               >
-                <Bell className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold text-foreground">{unreadNotifications}</span>
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">{unreadNotifications}</span>
                 <span className="text-[10px] text-muted-foreground">{t('accountSheet.notifications')}</span>
                 {unreadNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
@@ -241,6 +242,16 @@ export function AccountSheet() {
                 </Button>
               </SheetClose>
             </div>
+            <SheetClose asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2"
+                onClick={() => navigate('/achievements')}
+              >
+                <Sparkles className="h-4 w-4" />
+                {t('accountSheet.viewAchievements')}
+              </Button>
+            </SheetClose>
           </section>
 
           <Separator />

@@ -142,7 +142,7 @@ export default function DraftsPage() {
               {t('common.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{t('drafts.title')}</h1>
+            <h1 className="text-lg font-semibold">{t('drafts.pageTitle')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleCreateDraft} className="gap-2">

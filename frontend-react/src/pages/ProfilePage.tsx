@@ -115,18 +115,18 @@ function ProfileSkeleton() {
             <div className="flex-1 space-y-2">
               <div className="h-6 w-48 bg-muted rounded" />
               <div className="h-4 w-32 bg-muted rounded" />
-            </div>
-          </div>
+        </div>
+              </div>
         </CardContent>
       </Card>
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <div className="space-y-4">
           <Card className="h-64 bg-muted" />
           <Card className="h-48 bg-muted" />
-        </div>
+            </div>
         <Card className="h-96 bg-muted" />
-      </div>
-    </div>
+            </div>
+          </div>
   )
 }
 
@@ -175,8 +175,8 @@ function LevelCard({
           </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
   )
 }
 
@@ -250,13 +250,13 @@ function CommentsTab({ comments, onArticleClick }: { comments: MockProfileCommen
                     day: 'numeric',
                   })}
                 </span>
-                    </div>
+        </div>
               <p className="text-sm text-foreground leading-relaxed">{comment.excerpt}</p>
               {comment.likes !== undefined && comment.likes > 0 && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Heart className="h-3.5 w-3.5" />
                   <span>{t('profile.likes', { count: comment.likes })}</span>
-              </div>
+      </div>
                   )}
                   </div>
       </CardContent>
@@ -678,10 +678,14 @@ export default function ProfilePage() {
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container flex h-16 items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              {t('common.back')}
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <h1 className="text-lg font-semibold">{t('profile.pageTitle')}</h1>
+            </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <AccountSheet />
@@ -709,17 +713,21 @@ export default function ProfilePage() {
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-              Назад
+                {t('common.back')}
           </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <h1 className="text-lg font-semibold">{t('profile.pageTitle')}</h1>
+            </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <AccountSheet />
           </div>
         </div>
       </header>
-        <div className="container py-10">
+      <div className="container py-10">
           <ProfileSkeleton />
         </div>
       </div>
@@ -768,10 +776,14 @@ export default function ProfilePage() {
     <div className="min-h-screen app-surface">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Назад
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t('common.back')}
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <h1 className="text-lg font-semibold">{t('profile.pageTitle')}</h1>
+          </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <AccountSheet />
@@ -787,7 +799,7 @@ export default function ProfilePage() {
               <div className="relative aspect-[4/1] w-full sm:aspect-[4/1]">
                 <img
                   src={profile.user.coverImageUrl}
-                  alt={`${profile.user.username} cover`}
+                    alt={`${profile.user.username} cover`}
                     className="h-full w-full object-cover"
                   />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
@@ -806,21 +818,21 @@ export default function ProfilePage() {
             {/* Мобильный лайаут: аватар сверху по центру */}
             <div className="flex flex-col items-center gap-5 sm:hidden">
               {/* Аватар */}
-              {profile.user.avatarUrl ? (
-                <img
-                  src={profile.user.avatarUrl}
-                  alt={profile.user.username}
+                      {profile.user.avatarUrl ? (
+                        <img
+                          src={profile.user.avatarUrl}
+                          alt={profile.user.username}
                   className="h-24 w-24 rounded-full border-2 object-cover shadow-lg"
                   style={{ borderColor: 'hsl(var(--border))' }}
-                />
-              ) : (
+                        />
+                      ) : (
                 <div
                   className="flex h-24 w-24 items-center justify-center rounded-full border-2 bg-primary/15 text-3xl font-semibold text-primary shadow-lg"
                   style={{ borderColor: 'hsl(var(--border))' }}
                 >
-                  {profile.user.username.charAt(0).toUpperCase()}
-                </div>
-              )}
+                          {profile.user.username.charAt(0).toUpperCase()}
+                        </div>
+                      )}
 
               {/* Имя и бейджи с дропдауном */}
               <div className="flex flex-col items-center gap-3 w-full px-2">
@@ -830,8 +842,8 @@ export default function ProfilePage() {
                     <Badge variant="default" className="gap-1 shrink-0">
                       <Trophy className="h-3 w-3" />
                       {t('profile.levelBadge', { level })}
-                    </Badge>
-                  </div>
+                        </Badge>
+                      </div>
                   {/* Дропдаун меню */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -875,10 +887,10 @@ export default function ProfilePage() {
                 </Badge>
                 {profile.user.bio && (
                   <p className="text-sm text-muted-foreground text-center break-words leading-relaxed">
-                    {profile.user.bio}
-                  </p>
+                          {profile.user.bio}
+                        </p>
                 )}
-              </div>
+                      </div>
 
               {/* Статистика - горизонтальная строка без подписей */}
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm w-full px-4 py-2">
@@ -900,8 +912,8 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Eye className="h-4 w-4 shrink-0" />
                   <span className="font-semibold text-foreground">{profile.stats.draftArticles}</span>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               {/* Теги */}
               {profile.highlights.tags.length > 0 && (
@@ -921,23 +933,23 @@ export default function ProfilePage() {
 
               {/* Кнопки действий */}
               <div className="flex flex-col gap-2.5 w-full pt-4 border-t mt-2">
-                  <Button
-                  variant="outline"
+                    <Button
+                      variant="outline"
                   size="default"
-                  onClick={() => navigate('/')}
+                      onClick={() => navigate('/')}
                   className="gap-2 w-full"
-                >
-                  <ArrowLeft className="h-4 w-4" />
+                    >
+                      <ArrowLeft className="h-4 w-4" />
                   {t('profile.openArticles')}
-                </Button>
+                    </Button>
                 {isOwnProfile && (
-                  <Button
+                    <Button
                     size="default"
                     variant="default"
                     className="gap-2 w-full"
                     onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
                   >
-                    <Settings className="h-4 w-4" />
+                          <Settings className="h-4 w-4" />
                     {t('profile.settings')}
                   </Button>
                 )}
@@ -963,7 +975,7 @@ export default function ProfilePage() {
                     {profile.user.username.charAt(0).toUpperCase()}
                   </div>
                 )}
-              </div>
+                  </div>
 
               {/* Основная информация */}
               <div className="flex flex-1 flex-col gap-4 min-w-0">
@@ -990,7 +1002,7 @@ export default function ProfilePage() {
                     <NotebookPen className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.publishedArticles}</span>
                     <span className="text-muted-foreground/70">{t('profile.articlesCount')}</span>
-                  </div>
+                </div>
                   <Separator orientation="vertical" className="h-4" />
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Heart className="h-4 w-4 shrink-0" />
@@ -1089,12 +1101,12 @@ export default function ProfilePage() {
                       <Settings className="h-4 w-4" />
                       {t('profile.settings')}
                     </Button>
-                  )}
-                </div>
+                      )}
+                    </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+                    </div>
+                  </CardContent>
+                </Card>
 
         {/* Основной контент с вкладками */}
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -1141,7 +1153,7 @@ export default function ProfilePage() {
               <ActivityFeedCard activities={activityFeed} />
             )}
 
-            <Tabs defaultValue="articles" className="w-full">
+                <Tabs defaultValue="articles" className="w-full">
               <TabsList className="grid w-full grid-cols-3 overflow-x-auto">
                     <TabsTrigger value="articles" className="gap-2">
                       <NotebookPen className="h-4 w-4" />
@@ -1221,7 +1233,7 @@ export default function ProfilePage() {
                   onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
                 />
                   </TabsContent>
-            </Tabs>
+                </Tabs>
 
             {/* Мобильная боковая панель - показывается после вкладок на маленьких экранах */}
             <div className="lg:hidden space-y-4">

@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, Sparkles, Rocket, Crown, Zap, Shield, Globe, Users, BookOpen, TrendingUp, Coins, Star } from 'lucide-react'
-import { SiteHeader } from '@/components/SiteHeader'
+import { Check, Sparkles, Rocket, Crown, Zap, Shield, Globe, Users, BookOpen, TrendingUp, Coins, Star, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 
 const pricingPlans = [
   {
@@ -73,10 +75,31 @@ const pricingPlans = [
 
 export default function PricingPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('common.back')}
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <h1 className="text-lg font-semibold">{t('pricing.pageTitle')}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountSheet />
+          </div>
+        </div>
+      </header>
       
       {/* Hero Section */}
       <section className="relative py-20 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">

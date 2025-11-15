@@ -145,8 +145,8 @@
       "customize": "Customize",
       "general": "General",
       "layout": "Layout",
-      "style": "Style",
-      "themes": "Themes",
+      "style": "Builder",
+      "themesTab": "Themes",
       "themeMode": "Theme mode",
       "themeModeDescription": "Decide how the interface adapts to bright or low-light environments.",
       "light": "Light",
@@ -165,13 +165,40 @@
       "compactListDescription": "Dense list optimized for scanning",
       "gridView": "Grid view",
       "gridViewDescription": "Visual tiles for inspiration",
-      "contentDensity": "Content density",
+      "typographyAdaptsResponsively": "Typography adapts responsively.",
+      "standardSpacing": "Standard spacing",
+      "expandedBy": "Expanded by",
+      "condensedBy": "Condensed by",
+      "typographyScales": {
+        "default": {
+          "label": "Default",
+          "description": "Balanced reading size"
+        },
+        "comfortable": {
+          "label": "Comfortable",
+          "description": "Slightly larger type for relaxing reading"
+        },
+        "compact": {
+          "label": "Compact",
+          "description": "A tighter, more data-dense layout"
+        }
+      },
+      "contentDensity": {
+        "title": "Content density",
+        "description": "Control vertical rhythm for lists, cards, and navigation.",
+        "resetLabel": "Reset density to default",
+        "adjustLabel": "Adjust interface density",
+        "baseline": "Baseline"
+      },
       "contentDensityDescription": "Control vertical rhythm for lists, cards, and navigation.",
       "standardSpacing": "Standard spacing",
       "expandedBy": "Expanded by",
       "condensedBy": "Condensed by",
-      "contrast": "Contrast",
+      "contrastTitle": "Contrast",
       "contrastDescription": "Tune clarity for different environments and accessibility preferences.",
+      "resetRadiusToDefault": "Reset radius to default",
+      "adjustGlobalBorderRadius": "Adjust global border radius",
+      "customThemeDescription": "Custom theme with {accent} accent and {surface} surface",
       "standardContrast": "Standard contrast",
       "standardContrastDescription": "Balanced tone for everyday reading.",
       "boldContrast": "Bold contrast",
@@ -184,7 +211,7 @@
       "softDescription": "Gentle ambient shadows for subtle depth.",
       "elevated": "Elevated",
       "elevatedDescription": "Pronounced shadows suited for hero moments.",
-      "motion": "Motion",
+      "motionTitle": "Motion",
       "motionDescription": "Control animations and transitions for accessibility.",
       "animated": "Animated",
       "animatedDescription": "Retain smooth transitions and micro-interactions.",
@@ -192,8 +219,36 @@
       "reducedMotionDescription": "Minimize motion for people sensitive to animation.",
       "accentColor": "Accent color",
       "accentColorDescription": "Set the brand hue used for primary actions and highlights.",
+      "clickToChangeAccent": "Click to change accent color",
       "surfacePalette": "Surface palette",
       "surfacePaletteDescription": "Pick the background system for cards, popovers, and muted states.",
+      "clickToChangeSurface": "Click to change surface palette",
+      "custom": "Custom",
+      "createYourOwnAccent": "Create your own accent color",
+      "pickAccentColorLight": "Pick accent color for light theme",
+      "pickAccentColorDark": "Pick accent color for dark theme",
+      "livePreviewTitle": "Live preview",
+      "livePreviewSubtitle": "Review how your appearance choices influence the interface.",
+      "aetherisCommunity": "Aetheris community",
+      "headerChromeAdapts": "Header chrome adapts to your accent ({accent}).",
+      "newPost": "New post",
+      "surface": "surface",
+      "heroSpotlight": "Hero spotlight",
+      "calmerSurfaces": "Calmer surfaces, confident content.",
+      "heroMirrors": "The hero mirrors the forum layout—accent, density, depth, and contrast applied instantly.",
+      "continueReading": "Continue reading",
+      "articleFeed": "Article feed",
+      "live": "Live",
+      "new": "New",
+      "trendingPreview": "Trending preview",
+      "leaderboardWidgets": "Leaderboard widgets follow the accent tone.",
+      "yourAdjustments": "Your adjustments",
+      "snapshotOfSettings": "Snapshot of the settings reflected in this preview.",
+      "accent": "accent",
+      "surfacePaletteLabel": "Surface palette:",
+      "typographyScaleLabel": "Typography scale:",
+      "densityLabel": "Density:",
+      "motionLabel": "Motion:",
       "interfaceShape": "Interface shape",
       "interfaceShapeDescription": "Adjust corner rounding for cards, dialogs, and buttons.",
       "sharper": "Sharper",
@@ -201,6 +256,8 @@
       "radius": "radius",
       "typographyScale": "Typography scale",
       "typographyScaleDescription": "Adjust reading size to fit your preferred density and display.",
+      "typography": "Typography",
+      "depth": "Depth",
       "themeBuilder": "Theme Builder",
       "themeBuilderDescription": "Customize accent, surface, typography, and interface shape to create your perfect theme.",
       "resetToDefault": "Reset to default",
@@ -226,8 +283,450 @@
       "themeExportedDescription": "Theme configuration copied to clipboard.",
       "cssCopied": "CSS copied",
       "cssCopiedDescription": "CSS variables copied to clipboard.",
-      "exportJson": "Export JSON",
-      "copyCssVariables": "Copy CSS Variables",
+      "sample": "Sample",
+      "typographyAdapts": "Typography adapts responsively.",
+      "create": "Create",
+      "createThemeDescription": "Save your current color and surface settings as a named theme.",
+      "myCustomTheme": "My Custom Theme",
+      "importExportDescription": "Import themes from JSON or export your current configuration.",
+      "importTheme": "Import Theme",
+      "importThemeDescription": "Paste your theme JSON configuration below. It should include accent, surface, radius, typography, contrast, density, depth, and motion settings.",
+      "themeDescription": "Theme Description",
+      "noDescriptionAvailable": "No description available.",
+      "themeNameRequired": "Theme name required",
+      "themeNameRequiredDescription": "Give your theme a name before saving it.",
+      "themeImported": "Theme imported",
+      "themeImportedDescription": "Theme configuration has been applied.",
+      "importFailed": "Import failed",
+      "importFailedDescription": "Invalid JSON format. Please check your theme configuration.",
+      "accentGroups": {
+        "vivid": {
+          "label": "Vivid energy",
+          "description": "High-contrast tones that stand out in busy layouts."
+        },
+        "botanical": {
+          "label": "Fresh & botanical",
+          "description": "Nature-inspired greens and blues suited to calm products."
+        },
+        "warm": {
+          "label": "Warm & welcoming",
+          "description": "Sunset oranges and blush tones for storytelling moments."
+        },
+        "cool": {
+          "label": "Cool & calm",
+          "description": "Serene blues and purples for peaceful interfaces."
+        },
+        "muted": {
+          "label": "Sophisticated neutrals",
+          "description": "Soft plums and greys that stay out of the way."
+        },
+        "playful": {
+          "label": "Playful & vibrant",
+          "description": "Bright, fun colors for energetic and creative spaces."
+        }
+      },
+      "surfaceGroups": {
+        "luminous": {
+          "label": "Bright & airy",
+          "description": "High-key canvases for daylight dashboards and editorial homes."
+        },
+        "earthy": {
+          "label": "Warm & grounded",
+          "description": "Organic neutrals that pair well with writing-led experiences."
+        },
+        "expressive": {
+          "label": "Soft & expressive",
+          "description": "Gradient-ready palettes with gentle colour cast for calm products."
+        },
+        "neutral": {
+          "label": "Neutral greys",
+          "description": "Versatile grey tones for balanced, professional interfaces."
+        },
+        "deep": {
+          "label": "Deep focus",
+          "description": "Immersive dark surfaces for reading in low light."
+        }
+      },
+      "accents": {
+        "indigo": {
+          "name": "Indigo",
+          "description": "Balanced contrast for focus work"
+        },
+        "violet": {
+          "name": "Violet",
+          "description": "Creative vibe with soft gradients"
+        },
+        "emerald": {
+          "name": "Emerald",
+          "description": "Calm and grounded feeling"
+        },
+        "amber": {
+          "name": "Amber",
+          "description": "Warm accent for optimistic tone"
+        },
+        "rose": {
+          "name": "Rose",
+          "description": "Vibrant highlight for storytelling"
+        },
+        "cyan": {
+          "name": "Cyan",
+          "description": "Clean and modern appearance"
+        },
+        "mono": {
+          "name": "Monochrome",
+          "description": "Minimal grayscale focus"
+        },
+        "peach": {
+          "name": "Peach",
+          "description": "Warm accent inspired by sunset hues"
+        },
+        "azure": {
+          "name": "Azure",
+          "description": "Sky blue for energetic navigation"
+        },
+        "cobalt": {
+          "name": "Cobalt",
+          "description": "Deep blue for confident actions"
+        },
+        "magenta": {
+          "name": "Magenta",
+          "description": "Electric magenta for standout CTAs"
+        },
+        "crimson": {
+          "name": "Crimson",
+          "description": "Rich red for editorial highlights"
+        },
+        "plum": {
+          "name": "Plum",
+          "description": "Sophisticated purple with depth"
+        },
+        "orchid": {
+          "name": "Orchid",
+          "description": "Soft lavender for calm interfaces"
+        },
+        "teal": {
+          "name": "Teal",
+          "description": "Balanced green-blue for product UIs"
+        },
+        "seafoam": {
+          "name": "Seafoam",
+          "description": "Pastel mint for relaxing experiences"
+        },
+        "sage": {
+          "name": "Sage",
+          "description": "Muted botanical green for quiet UI"
+        },
+        "coral": {
+          "name": "Coral",
+          "description": "Friendly coral for community spaces"
+        },
+        "saffron": {
+          "name": "Saffron",
+          "description": "Golden saffron for celebratory moments"
+        },
+        "sunset": {
+          "name": "Sunset",
+          "description": "Burnished orange with blush undertones"
+        },
+        "graphite": {
+          "name": "Graphite",
+          "description": "Modern graphite neutral"
+        },
+        "pure": {
+          "name": "Pure",
+          "description": "Black on light theme, white on dark theme"
+        },
+        "lime": {
+          "name": "Lime",
+          "description": "Vibrant lime for energetic interfaces"
+        },
+        "mint": {
+          "name": "Mint",
+          "description": "Fresh mint for calm, refreshing vibes"
+        },
+        "orange": {
+          "name": "Orange",
+          "description": "Vibrant orange for energetic interfaces"
+        },
+        "yellow": {
+          "name": "Yellow",
+          "description": "Bright yellow for optimistic highlights"
+        },
+        "green": {
+          "name": "Green",
+          "description": "Classic green for natural, balanced feel"
+        },
+        "blue": {
+          "name": "Blue",
+          "description": "Trustworthy blue for professional interfaces"
+        },
+        "purple": {
+          "name": "Purple",
+          "description": "Royal purple for creative and premium feel"
+        },
+        "pink": {
+          "name": "Pink",
+          "description": "Soft pink for friendly, approachable designs"
+        },
+        "red": {
+          "name": "Red",
+          "description": "Bold red for attention-grabbing actions"
+        },
+        "brown": {
+          "name": "Brown",
+          "description": "Earthy brown for warm, grounded aesthetics"
+        },
+        "gold": {
+          "name": "Gold",
+          "description": "Luxurious gold for premium experiences"
+        },
+        "silver": {
+          "name": "Silver",
+          "description": "Metallic silver for modern, sleek designs"
+        },
+        "bronze": {
+          "name": "Bronze",
+          "description": "Warm bronze for vintage, classic feel"
+        },
+        "turquoise": {
+          "name": "Turquoise",
+          "description": "Vibrant turquoise for tropical, fresh vibes"
+        },
+        "lavender": {
+          "name": "Lavender",
+          "description": "Gentle lavender for calm, peaceful interfaces"
+        },
+        "fuchsia": {
+          "name": "Fuchsia",
+          "description": "Electric fuchsia for bold, energetic designs"
+        },
+        "salmon": {
+          "name": "Salmon",
+          "description": "Soft salmon for warm, inviting tones"
+        },
+        "olive": {
+          "name": "Olive",
+          "description": "Muted olive for natural, earthy aesthetics"
+        },
+        "navy": {
+          "name": "Navy",
+          "description": "Deep navy for professional, trustworthy feel"
+        },
+        "sky": {
+          "name": "Sky",
+          "description": "Bright sky blue for open, airy interfaces"
+        },
+        "forest": {
+          "name": "Forest",
+          "description": "Deep forest green for natural, grounded feel"
+        },
+        "ocean": {
+          "name": "Ocean",
+          "description": "Deep ocean blue for calm, immersive experiences"
+        }
+      },
+      "surfaces": {
+        "daylight": {
+          "name": "Daylight",
+          "description": "Bright, editorial-friendly canvas"
+        },
+        "lumen": {
+          "name": "Lumen frost",
+          "description": "Ultralight silvers with frosted glass depth"
+        },
+        "glacier": {
+          "name": "Glacier blue",
+          "description": "Cool teal whites for focused calm"
+        },
+        "harbor": {
+          "name": "Harbor dawn",
+          "description": "Soft coastal blues for calm workspaces"
+        },
+        "zenith": {
+          "name": "Zenith glow",
+          "description": "Crisp daylight whites with airy contrast"
+        },
+        "sunset": {
+          "name": "Sunset ember",
+          "description": "Warm neutrals with golden undertones"
+        },
+        "moss": {
+          "name": "Moss canopy",
+          "description": "Earthy greens with publishing warmth"
+        },
+        "canyon": {
+          "name": "Canyon clay",
+          "description": "Rust orange base for storytelling hubs"
+        },
+        "terracotta": {
+          "name": "Terracotta",
+          "description": "Clay neutrals with editorial warmth"
+        },
+        "mist": {
+          "name": "Studio mist",
+          "description": "Balanced greys for versatile layouts"
+        },
+        "nebula": {
+          "name": "Nebula haze",
+          "description": "Softer violet gradients for relaxed reading"
+        },
+        "twilight": {
+          "name": "Twilight bloom",
+          "description": "Dusk purples with editorial softness"
+        },
+        "aurora": {
+          "name": "Aurora drift",
+          "description": "Teal-meets-violet gradient inspired palette"
+        },
+        "solstice": {
+          "name": "Solstice bloom",
+          "description": "Warm dusk gradients with optimistic accents"
+        },
+        "midnight": {
+          "name": "Midnight navy",
+          "description": "Balanced dark blues for focused reading"
+        },
+        "nightfall": {
+          "name": "Nightfall",
+          "description": "Moody blue hour for focused sessions"
+        },
+        "noir": {
+          "name": "Graphite noir",
+          "description": "Neutral grayscale with subtle blue undertone"
+        },
+        "obsidian": {
+          "name": "Obsidian black",
+          "description": "Ultra-dark surfaces with crisp contrast"
+        },
+        "ember": {
+          "name": "Ember glow",
+          "description": "Dramatic warm darks for storytelling"
+        },
+        "eclipse": {
+          "name": "Eclipse",
+          "description": "Deep space blacks for ultimate focus"
+        },
+        "void": {
+          "name": "Void mono",
+          "description": "Nearly-black interface for cinematic reading sessions"
+        },
+        "inkwell": {
+          "name": "Inkwell",
+          "description": "Indigo-tinted dark theme with subtle chroma"
+        },
+        "cosmos": {
+          "name": "Cosmos night",
+          "description": "Midnight violets with star-lit accents"
+        },
+        "onyx": {
+          "name": "Onyx",
+          "description": "Pure graphite blacks with editorial contrast"
+        },
+        "snow": {
+          "name": "Snow",
+          "description": "Pure white with crisp clarity"
+        },
+        "cream": {
+          "name": "Cream",
+          "description": "Warm off-white with subtle yellow undertones"
+        },
+        "pearl": {
+          "name": "Pearl",
+          "description": "Iridescent white with soft blue-grey hints"
+        },
+        "ivory": {
+          "name": "Ivory",
+          "description": "Soft white with warm beige undertones"
+        },
+        "sand": {
+          "name": "Sand",
+          "description": "Warm beige with desert-inspired tones"
+        },
+        "stone": {
+          "name": "Stone",
+          "description": "Neutral grey with natural stone texture feel"
+        },
+        "slate": {
+          "name": "Slate",
+          "description": "Cool blue-grey with slate stone character"
+        },
+        "charcoal": {
+          "name": "Charcoal",
+          "description": "Deep grey with warm undertones"
+        },
+        "ash": {
+          "name": "Ash",
+          "description": "Cool grey with ashy, muted tones"
+        },
+        "smoke": {
+          "name": "Smoke",
+          "description": "Light grey with smoky, diffused feel"
+        },
+        "fog": {
+          "name": "Fog",
+          "description": "Misty grey with soft, blurred edges"
+        },
+        "cloud": {
+          "name": "Cloud",
+          "description": "Soft white-grey with cloud-like lightness"
+        },
+        "storm": {
+          "name": "Storm",
+          "description": "Dark grey with stormy, dramatic atmosphere"
+        },
+        "shadow": {
+          "name": "Shadow",
+          "description": "Deep grey with shadowy, mysterious depth"
+        },
+        "abyss": {
+          "name": "Abyss",
+          "description": "Ultra-dark with abyssal depth"
+        },
+        "deep": {
+          "name": "Deep",
+          "description": "Profound darkness with deep ocean feel"
+        },
+        "pitch": {
+          "name": "Pitch",
+          "description": "Pitch black with maximum contrast"
+        },
+        "coal": {
+          "name": "Coal",
+          "description": "Rich black with coal-like texture"
+        },
+        "jet": {
+          "name": "Jet",
+          "description": "Deep black with jet stone intensity"
+        },
+        "carbon": {
+          "name": "Carbon",
+          "description": "Pure carbon black with matte finish"
+        },
+        "cyberpunk": {
+          "name": "Cyberpunk",
+          "description": "Neon-lit dark surfaces with electric purple-pink glow"
+        },
+        "minecraft": {
+          "name": "Minecraft",
+          "description": "Blocky earth tones with natural green-brown palette"
+        },
+        "csgo": {
+          "name": "CS:GO",
+          "description": "Competitive orange-dark theme inspired by Counter-Strike"
+        },
+        "dota": {
+          "name": "Dota 2",
+          "description": "Mystical blue-red palette from the world of Dota"
+        },
+        "terraria": {
+          "name": "Terraria",
+          "description": "Adventure-ready earth tones with warm brown-orange base"
+        },
+        "geometrydash": {
+          "name": "Geometry Dash",
+          "description": "Vibrant neon colors with high-energy bright surfaces"
+        }
+      },
       "themeGroups": {
         "basic": "Basic",
         "games": "Games",
@@ -249,7 +748,7 @@
         "reduced": "Reduced motion",
         "reducedDescription": "Minimize motion for people sensitive to animation."
       },
-      "depth": {
+      "depthOptions": {
         "flat": "Flat",
         "flatDescription": "Minimal outlines with no drop shadows.",
         "soft": "Soft",
@@ -469,13 +968,6 @@
           "name": "Made in Abyss",
           "description": "Descend into the unknown. Deep violet mysteries that echo the abyss's call — beautiful, terrifying, and unforgettable."
         }
-      },
-      "contentDensity": {
-        "title": "Content density",
-        "description": "Control vertical rhythm for lists, cards, and navigation.",
-        "resetLabel": "Reset density to default",
-        "adjustLabel": "Adjust interface density",
-        "baseline": "Baseline"
       },
       "styleSettingsMoved": "Style settings have been moved to the Themes tab."
     },
@@ -1110,6 +1602,7 @@
   },
   "drafts": {
     "title": "Drafts",
+    "pageTitle": "Drafts",
     "description": "Your unpublished articles",
     "noDrafts": "No drafts yet",
     "noDraftsDescription": "Start writing to see your drafts here",
@@ -1140,6 +1633,7 @@
   },
   "auth": {
     "title": "Sign In",
+    "pageTitle": "Authorization",
     "description": "Sign in to sync your reading list, publish stories, and keep track of your stats.",
     "accountTitle": "Aetheris Account",
     "secureOAuth": "Secure OAuth",
@@ -1230,6 +1724,7 @@
     "notifications": "Notifications",
     "readingList": "Reading list",
     "friends": "Friends",
+    "pageTitle": "Profile",
     "signOut": "Sign out",
     "profileNotFound": "Profile not found",
     "profileNotFoundDescription": "Could not determine which profile to show. Try selecting an author from the article list.",
@@ -1275,6 +1770,7 @@
   },
   "trending": {
     "title": "Trending",
+    "pageTitle": "Trending",
     "leaderboard": "Leaderboard",
     "heading": "Hot reads across the Aetheris guild.",
     "description": "Discover what the community canʼt stop discussing. Rankings refresh every few hours based on views, reactions, and meaningful replies.",
@@ -1470,6 +1966,7 @@
   },
   "achievements": {
     "title": "Achievements",
+    "pageTitle": "Achievements",
     "description": "Track your progress and unlock rewards",
     "hero": {
       "badge": "Gamification",
@@ -1657,6 +2154,7 @@
   },
   "feedback": {
     "title": "Feedback",
+    "pageTitle": "Feedback",
     "description": "Report bugs, share ideas, and help improve the platform",
     "bugs": "Bugs",
     "features": "Features",
@@ -1810,6 +2308,14 @@
       },
       "contact": "For privacy-related questions, please contact us at hello@aetheris.dev"
     }
+  },
+  "friends": {
+    "pageTitle": "Friends"
+  },
+  "dashboard": {
+    "pageTitle": "Dashboard"
+  },
+  "pricing": {
+    "pageTitle": "Pricing"
   }
 }
-

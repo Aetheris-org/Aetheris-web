@@ -866,24 +866,13 @@ export default function CreateArticlePage() {
             {/* Step 1: Content */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <Label id="content-editor-label" htmlFor="content-editor" className="text-base font-medium">
-                      {t('createArticle.content')}
-                    </Label>
-                    <span className="text-xs text-muted-foreground">
-                      {t('createArticle.contentHint')}
-                    </span>
-                  </div>
-                  <RichTextEditor
-                    id="content-editor"
-                    ariaLabelledBy="content-editor-label"
-              value={content}
-                    onChange={setContent}
-                    placeholder={t('createArticle.contentPlaceholder')}
-                    characterLimit={20000}
-            />
-          </div>
+                <RichTextEditor
+                  id="content-editor"
+                  value={content}
+                  onChange={setContent}
+                  placeholder={t('createArticle.contentPlaceholder')}
+                  characterLimit={20000}
+                />
               </div>
             )}
 

@@ -58,6 +58,7 @@ import {
   ChevronDown,
   Languages,
   Info,
+  Sliders,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -156,96 +157,96 @@ const viewModeOptions: Array<{
   label: string
   description: string
   icon: typeof Rows
-}> = [
+}> = (t: (key: string) => string) => [
   {
     value: 'default',
-    label: 'Standard cards',
-    description: 'Balanced layout with imagery',
+    label: t('settings.appearance.standardCards') || 'Standard cards',
+    description: t('settings.appearance.standardCardsDescription') || 'Balanced layout with imagery',
     icon: Rows,
   },
   {
     value: 'line',
-    label: 'Compact list',
-    description: 'Dense list optimized for scanning',
+    label: t('settings.appearance.compactList') || 'Compact list',
+    description: t('settings.appearance.compactListDescription') || 'Dense list optimized for scanning',
     icon: List,
   },
   {
     value: 'square',
-    label: 'Grid view',
-    description: 'Visual tiles for inspiration',
+    label: t('settings.appearance.gridView') || 'Grid view',
+    description: t('settings.appearance.gridViewDescription') || 'Visual tiles for inspiration',
     icon: LayoutGrid,
   },
 ]
 
-const SURFACE_GROUPS: Array<{ id: string; label: string; description: string; palettes: SurfaceStyle[] }> = [
-  {
-    id: 'luminous',
-    label: 'Bright & airy',
-    description: 'High-key canvases for daylight dashboards and editorial homes.',
-    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud'],
-  },
-  {
-    id: 'earthy',
-    label: 'Warm & grounded',
-    description: 'Organic neutrals that pair well with writing-led experiences.',
-    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss'],
-  },
-  {
-    id: 'expressive',
-    label: 'Soft & expressive',
-    description: 'Gradient-ready palettes with gentle colour cast for calm products.',
-    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice'],
-  },
-  {
-    id: 'neutral',
-    label: 'Neutral greys',
-    description: 'Versatile grey tones for balanced, professional interfaces.',
-    palettes: ['ash', 'slate', 'charcoal', 'stone'],
-  },
-  {
-    id: 'deep',
-    label: 'Deep focus',
-    description: 'Immersive dark surfaces for reading in low light.',
-    palettes: ['midnight', 'obsidian', 'noir', 'dota', 'onyx', 'shadow', 'storm', 'abyss', 'deep', 'pitch', 'coal', 'jet', 'carbon', 'void', 'nightfall', 'inkwell', 'eclipse', 'cosmos'],
-  },
-]
-
-const ACCENT_GROUPS: Array<{ id: string; label: string; description: string; accents: AccentColor[] }> = [
+const getAccentGroups = (t: (key: string) => string): Array<{ id: string; label: string; description: string; accents: AccentColor[] }> => [
   {
     id: 'vivid',
-    label: 'Vivid energy',
-    description: 'High-contrast tones that stand out in busy layouts.',
+    label: t('settings.appearance.accentGroups.vivid.label') || 'Vivid energy',
+    description: t('settings.appearance.accentGroups.vivid.description') || 'High-contrast tones that stand out in busy layouts.',
     accents: ['red', 'crimson', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
   },
   {
     id: 'botanical',
-    label: 'Fresh & botanical',
-    description: 'Nature-inspired greens and blues suited to calm products.',
+    label: t('settings.appearance.accentGroups.botanical.label') || 'Fresh & botanical',
+    description: t('settings.appearance.accentGroups.botanical.description') || 'Nature-inspired greens and blues suited to calm products.',
     accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive'],
   },
   {
     id: 'warm',
-    label: 'Warm & welcoming',
-    description: 'Sunset oranges and blush tones for storytelling moments.',
+    label: t('settings.appearance.accentGroups.warm.label') || 'Warm & welcoming',
+    description: t('settings.appearance.accentGroups.warm.description') || 'Sunset oranges and blush tones for storytelling moments.',
     accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon'],
   },
   {
     id: 'cool',
-    label: 'Cool & calm',
-    description: 'Serene blues and purples for peaceful interfaces.',
+    label: t('settings.appearance.accentGroups.cool.label') || 'Cool & calm',
+    description: t('settings.appearance.accentGroups.cool.description') || 'Serene blues and purples for peaceful interfaces.',
     accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky'],
   },
   {
     id: 'muted',
-    label: 'Sophisticated neutrals',
-    description: 'Soft plums and greys that stay out of the way.',
+    label: t('settings.appearance.accentGroups.muted.label') || 'Sophisticated neutrals',
+    description: t('settings.appearance.accentGroups.muted.description') || 'Soft plums and greys that stay out of the way.',
     accents: ['pure', 'silver', 'mono', 'graphite'],
   },
   {
     id: 'playful',
-    label: 'Playful & vibrant',
-    description: 'Bright, fun colors for energetic and creative spaces.',
+    label: t('settings.appearance.accentGroups.playful.label') || 'Playful & vibrant',
+    description: t('settings.appearance.accentGroups.playful.description') || 'Bright, fun colors for energetic and creative spaces.',
     accents: ['pink', 'lime', 'yellow', 'orange'],
+  },
+]
+
+const getSurfaceGroups = (t: (key: string) => string): Array<{ id: string; label: string; description: string; palettes: SurfaceStyle[] }> => [
+  {
+    id: 'luminous',
+    label: t('settings.appearance.surfaceGroups.luminous.label') || 'Bright & airy',
+    description: t('settings.appearance.surfaceGroups.luminous.description') || 'High-key canvases for daylight dashboards and editorial homes.',
+    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud'],
+  },
+  {
+    id: 'earthy',
+    label: t('settings.appearance.surfaceGroups.earthy.label') || 'Warm & grounded',
+    description: t('settings.appearance.surfaceGroups.earthy.description') || 'Organic neutrals that pair well with writing-led experiences.',
+    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss'],
+  },
+  {
+    id: 'expressive',
+    label: t('settings.appearance.surfaceGroups.expressive.label') || 'Soft & expressive',
+    description: t('settings.appearance.surfaceGroups.expressive.description') || 'Gradient-ready palettes with gentle colour cast for calm products.',
+    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice'],
+  },
+  {
+    id: 'neutral',
+    label: t('settings.appearance.surfaceGroups.neutral.label') || 'Neutral greys',
+    description: t('settings.appearance.surfaceGroups.neutral.description') || 'Versatile grey tones for balanced, professional interfaces.',
+    palettes: ['ash', 'slate', 'charcoal', 'stone'],
+  },
+  {
+    id: 'deep',
+    label: t('settings.appearance.surfaceGroups.deep.label') || 'Deep focus',
+    description: t('settings.appearance.surfaceGroups.deep.description') || 'Immersive dark surfaces for reading in low light.',
+    palettes: ['midnight', 'obsidian', 'noir', 'dota', 'onyx', 'shadow', 'storm', 'abyss', 'deep', 'pitch', 'coal', 'jet', 'carbon', 'void', 'nightfall', 'inkwell', 'eclipse', 'cosmos'],
   },
 ]
 
@@ -2186,12 +2187,12 @@ function AppearanceSettings() {
       const tone = config.values[resolvedTheme]
       return {
         value: value as SurfaceStyle,
-        label: config.label,
-        description: config.description,
+        label: t(`settings.appearance.surfaces.${value}.name`) || config.label,
+        description: t(`settings.appearance.surfaces.${value}.description`) || config.description,
         tone,
       }
     })
-  }, [resolvedTheme])
+  }, [resolvedTheme, t])
 
   const surfaceOptionsByValue = useMemo(() => {
     return surfaceOptions.reduce((acc, option) => {
@@ -2203,8 +2204,8 @@ function AppearanceSettings() {
   const accentOptions = useMemo(() => {
     const base = ACCENT_COLOR_PRESETS.map((preset) => ({
       value: preset.value as AccentColor,
-      label: preset.label,
-      description: preset.description,
+      label: t(`settings.appearance.accents.${preset.value}.name`) || preset.label,
+      description: t(`settings.appearance.accents.${preset.value}.description`) || preset.description,
       gradient: `linear-gradient(135deg, hsl(${preset.preview}) 0%, hsl(${preset.values.dark.primary}) 100%)`,
       tone: preset.values[resolvedTheme].primary,
       values: preset.values,
@@ -2212,14 +2213,14 @@ function AppearanceSettings() {
     const custom = buildCustomAccentOption(customAccent)
     base.push({
       value: custom.value,
-      label: custom.label,
+      label: t('settings.appearance.custom') || custom.label,
       description: custom.description,
       gradient: `linear-gradient(135deg, hsl(${custom.values.light.primary}) 0%, hsl(${custom.values.dark.primary}) 100%)`,
       tone: custom.values[resolvedTheme].primary,
       values: custom.values,
     })
     return base
-  }, [customAccent, resolvedTheme])
+  }, [customAccent, resolvedTheme, t])
 
   const accentOptionsByValue = useMemo(() => {
     return accentOptions.reduce<Record<string, (typeof accentOptions)[number]>>((acc, option) => {
@@ -2230,30 +2231,30 @@ function AppearanceSettings() {
 
   const activeAccent = accentOptions.find((option) => option.value === accent)
   const activeSurface = surfaceOptions.find((option) => option.value === surface)
-  const typographyLabel = TYPOGRAPHY_SCALES[typography]?.label ?? 'Default'
+  const typographyLabel = t(`settings.appearance.typographyScales.${typography}.label`) || (TYPOGRAPHY_SCALES[typography]?.label ?? 'Default')
 
   const typographyOptions = useMemo(
     () => [
       {
         value: 'default' as TypographyScale,
-        label: TYPOGRAPHY_SCALES.default.label,
-        description: TYPOGRAPHY_SCALES.default.description,
+        label: t('settings.appearance.typographyScales.default.label') || TYPOGRAPHY_SCALES.default.label,
+        description: t('settings.appearance.typographyScales.default.description') || TYPOGRAPHY_SCALES.default.description,
         icon: Rows,
       },
       {
         value: 'comfortable' as TypographyScale,
-        label: TYPOGRAPHY_SCALES.comfortable.label,
-        description: TYPOGRAPHY_SCALES.comfortable.description,
+        label: t('settings.appearance.typographyScales.comfortable.label') || TYPOGRAPHY_SCALES.comfortable.label,
+        description: t('settings.appearance.typographyScales.comfortable.description') || TYPOGRAPHY_SCALES.comfortable.description,
         icon: Monitor,
       },
       {
         value: 'compact' as TypographyScale,
-        label: TYPOGRAPHY_SCALES.compact.label,
-        description: TYPOGRAPHY_SCALES.compact.description,
+        label: t('settings.appearance.typographyScales.compact.label') || TYPOGRAPHY_SCALES.compact.label,
+        description: t('settings.appearance.typographyScales.compact.description') || TYPOGRAPHY_SCALES.compact.description,
         icon: Smartphone,
       },
     ],
-    []
+    [t]
   )
 
   const contrastOptions = useMemo(
@@ -2296,20 +2297,20 @@ function AppearanceSettings() {
     () => [
       {
         value: 'flat' as DepthStyle,
-        label: t('settings.appearance.depth.flat'),
-        description: t('settings.appearance.depth.flatDescription'),
+        label: t('settings.appearance.depthOptions.flat'),
+        description: t('settings.appearance.depthOptions.flatDescription'),
         icon: Shield,
       },
       {
         value: 'soft' as DepthStyle,
-        label: t('settings.appearance.depth.soft'),
-        description: t('settings.appearance.depth.softDescription'),
+        label: t('settings.appearance.depthOptions.soft'),
+        description: t('settings.appearance.depthOptions.softDescription'),
         icon: ShieldCheck,
       },
       {
         value: 'elevated' as DepthStyle,
-        label: t('settings.appearance.depth.elevated'),
-        description: t('settings.appearance.depth.elevatedDescription'),
+        label: t('settings.appearance.depthOptions.elevated'),
+        description: t('settings.appearance.depthOptions.elevatedDescription'),
         icon: Crown,
       },
     ],
@@ -3309,10 +3310,10 @@ function AppearanceSettings() {
   const densityPercent = Math.round((density - 1) * 100)
   const densityLabel =
     densityPercent === 0
-      ? 'Standard spacing'
+      ? t('settings.appearance.standardSpacing')
       : densityPercent > 0
-        ? `Expanded by ${densityPercent}%`
-        : `Condensed by ${Math.abs(densityPercent)}%`
+        ? `${t('settings.appearance.expandedBy')} ${densityPercent}%`
+        : `${t('settings.appearance.condensedBy')} ${Math.abs(densityPercent)}%`
   const previewScale = TYPOGRAPHY_SCALES[typography]?.scale ?? 1
   const previewShadowMap: Record<DepthStyle, string> = {
     flat: '0 1px 2px rgba(15, 23, 42, 0.05)',
@@ -3328,8 +3329,8 @@ function AppearanceSettings() {
   const handleCreateTheme = () => {
     if (!themeName.trim()) {
       toast({
-        title: 'Theme name required',
-        description: 'Give your theme a name before saving it.',
+        title: t('settings.appearance.themeNameRequired'),
+        description: t('settings.appearance.themeNameRequiredDescription'),
         variant: 'destructive',
       })
       return
@@ -3338,7 +3339,7 @@ function AppearanceSettings() {
     const newTheme = {
       id: `theme-${Date.now()}`,
       name: themeName.trim(),
-      description: `Custom theme with ${activeAccent?.label ?? 'custom'} accent and ${activeSurface?.label ?? 'custom'} surface`,
+      description: t('settings.appearance.customThemeDescription', { accent: activeAccent?.label ?? t('settings.appearance.custom'), surface: activeSurface?.label ?? t('settings.appearance.custom') }),
       accent,
       surface,
       radius,
@@ -3410,16 +3411,16 @@ function AppearanceSettings() {
         setImportValue('')
         setShowImportDialog(false)
         toast({
-          title: 'Theme imported',
-          description: 'Theme configuration has been applied.',
+          title: t('settings.appearance.themeImported'),
+          description: t('settings.appearance.themeImportedDescription'),
         })
       } else {
         throw new Error('Invalid theme format')
       }
     } catch (error) {
       toast({
-        title: 'Import failed',
-        description: 'Invalid JSON format. Please check your theme configuration.',
+        title: t('settings.appearance.importFailed'),
+        description: t('settings.appearance.importFailedDescription'),
         variant: 'destructive',
       })
     }
@@ -3486,12 +3487,12 @@ function AppearanceSettings() {
         <Tabs defaultValue="colors" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
             <TabsTrigger value="colors" className="text-xs sm:text-sm py-2">
-              <Palette className="h-4 w-4 sm:mr-2" />
+              <Sliders className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">{t('settings.appearance.general')}</span>
             </TabsTrigger>
             <TabsTrigger value="themes" className="text-xs sm:text-sm py-2">
-              <Sparkles className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.appearance.themes')}</span>
+              <Palette className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('settings.appearance.themesTab')}</span>
             </TabsTrigger>
             <TabsTrigger value="style" className="text-xs sm:text-sm py-2">
               <Settings className="h-4 w-4 sm:mr-2" />
@@ -3537,9 +3538,9 @@ function AppearanceSettings() {
             <AccordionItem value="live-preview" className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:outline-none">
               <AccordionTrigger className="px-4 py-3 text-left hover:no-underline focus-visible:outline-none">
                 <div className="flex w-full flex-col gap-0.5 pr-6">
-                  <span className="text-sm font-semibold">Live preview</span>
+                  <span className="text-sm font-semibold">{t('settings.appearance.livePreviewTitle')}</span>
                   <span className="text-xs font-normal text-muted-foreground">
-                    Review how your appearance choices influence the interface.
+                    {t('settings.appearance.livePreviewSubtitle')}
                   </span>
                 </div>
               </AccordionTrigger>
@@ -3562,16 +3563,16 @@ function AppearanceSettings() {
                         AE
                       </div>
                       <div>
-                        <p className="text-sm font-semibold leading-none">Aetheris community</p>
+                        <p className="text-sm font-semibold leading-none">{t('settings.appearance.aetherisCommunity')}</p>
                         <p className="text-xs text-muted-foreground">
-                          Header chrome adapts to your accent ({activeAccent?.label ?? 'Accent'}).
+                          {t('settings.appearance.headerChromeAdapts', { accent: activeAccent?.label ?? t('settings.appearance.accent') })}
                         </p>
                       </div>
                     </div>
                     <div className="hidden items-center gap-2 sm:flex">
                       <Button size="sm" className="gap-2">
                         <Sparkles className="h-4 w-4" />
-                        New post
+                        {t('settings.appearance.newPost')}
                       </Button>
                       <Button variant="outline" size="icon">
                         <Bell className="h-4 w-4" />
@@ -3580,7 +3581,7 @@ function AppearanceSettings() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <Badge variant="outline" className="px-2 py-0.5 text-[11px] uppercase tracking-wide">
-                      {activeSurface?.label ?? 'Surface'} surface
+                      {activeSurface?.label ?? t('settings.appearance.surface')} {t('settings.appearance.surface')}
                     </Badge>
                     <span className="inline-flex items-center gap-1">
                       <Rows className="h-3 w-3" />
@@ -3603,14 +3604,14 @@ function AppearanceSettings() {
                   />
                   <div className="relative z-10 space-y-4">
                     <Badge className="w-fit rounded-full bg-primary/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary">
-                      Hero spotlight
+                      {t('settings.appearance.heroSpotlight')}
                     </Badge>
                     <div className="flex flex-col gap-2">
                       <h4 className="text-lg font-semibold leading-snug">
-                        Calmer surfaces, confident content.
+                        {t('settings.appearance.calmerSurfaces')}
                       </h4>
                       <p className="text-sm text-muted-foreground">
-                        The hero mirrors the forum layout—accent, density, depth, and contrast applied instantly.
+                        {t('settings.appearance.heroMirrors')}
                       </p>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="border-primary/40 bg-primary/10 text-xs font-medium text-primary">
@@ -3625,31 +3626,31 @@ function AppearanceSettings() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
                         Nova Rivera
                       </div>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
-                        6 min read
+                        {t('article.minRead', { minutes: 6 })}
                       </span>
                       <span className="inline-flex items-center gap-1 text-primary">
                         <Flame className="h-3.5 w-3.5" />
-                        Trending
+                        {t('trending.title')}
             </span>
-                    </div>
+          </div>
                     <Button variant="outline" size="sm" className="w-full justify-between">
-                      Continue reading
+                      {t('settings.appearance.continueReading')}
                       <CornerDownRight className="h-4 w-4" />
                     </Button>
-                    </div>
+        </div>
                   </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
                   <div className="flex items-center justify-between text-sm font-semibold">
-                    <span>Article feed</span>
+                    <span>{t('settings.appearance.articleFeed')}</span>
                     <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      Live
+                      {t('settings.appearance.live')}
                     </Badge>
                   </div>
                   <ul className="mt-4 flex flex-col" style={{ gap: `${previewGap * 0.6}px` }}>
@@ -3665,7 +3666,7 @@ function AppearanceSettings() {
                             <p className="text-xs text-muted-foreground">{item.meta}</p>
                           </div>
                           <Badge variant="outline" className="border-primary/30 px-2 py-0.5 text-[11px] uppercase tracking-wide text-primary">
-                            {index === 0 ? 'New' : item.status}
+                            {index === 0 ? t('settings.appearance.new') : item.status}
                           </Badge>
                 </button>
                       </li>
@@ -3678,8 +3679,8 @@ function AppearanceSettings() {
             <div className="flex flex-col gap-4">
               <Card className="border-border/70 bg-card/90 shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Trending preview</CardTitle>
-                  <CardDescription>Leaderboard widgets follow the accent tone.</CardDescription>
+                  <CardTitle className="text-base font-semibold">{t('settings.appearance.trendingPreview')}</CardTitle>
+                  <CardDescription>{t('settings.appearance.leaderboardWidgets')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {trendingPreviewItems.map((item, index) => (
@@ -3702,20 +3703,20 @@ function AppearanceSettings() {
 
               <Card className="border-border/70 bg-card/90 shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Your adjustments</CardTitle>
+                  <CardTitle className="text-base font-semibold">{t('settings.appearance.yourAdjustments')}</CardTitle>
                   <CardDescription className="text-xs">
-                    Snapshot of the settings reflected in this preview.
+                    {t('settings.appearance.snapshotOfSettings')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Palette className="h-4 w-4 text-primary" />
-                    {activeAccent?.label ?? 'Accent'} accent
+                    {activeAccent?.label ?? t('settings.appearance.accent')} {t('settings.appearance.accent')}
                   </div>
-                  <p>Surface palette: {activeSurface?.label ?? '—'}</p>
-                  <p>Typography scale: {typographyLabel}</p>
-                  <p>Density: {densityLabel}</p>
-                  <p>Motion: {previewMotionNote}</p>
+                  <p>{t('settings.appearance.surfacePaletteLabel')} {activeSurface?.label ?? '—'}</p>
+                  <p>{t('settings.appearance.typographyScaleLabel')} {typographyLabel}</p>
+                  <p>{t('settings.appearance.densityLabel')} {densityLabel}</p>
+                  <p>{t('settings.appearance.motionLabel')} {previewMotionNote}</p>
                 </CardContent>
               </Card>
             </div>
@@ -3729,13 +3730,13 @@ function AppearanceSettings() {
           <TabsContent value="layout" className="space-y-6 mt-6">
             <section className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Article layout</Label>
+                <Label className="text-sm font-semibold">{t('settings.appearance.articleLayout')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Select the default view for browsing articles on the home feed.
+                  {t('settings.appearance.articleLayoutDescription')}
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-3">
-                {viewModeOptions.map((option) => {
+                {viewModeOptions(t).map((option) => {
                   const Icon = option.icon
                   const isActive = viewMode === option.value
 
@@ -3826,9 +3827,9 @@ function AppearanceSettings() {
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <CardTitle className="text-base font-semibold">Theme Builder</CardTitle>
+                    <CardTitle className="text-base font-semibold">{t('settings.appearance.themeBuilder')}</CardTitle>
                     <CardDescription className="text-xs">
-                      Customize accent, surface, typography, interface shape, contrast, depth, and motion to create your perfect theme.
+                      {t('settings.appearance.themeBuilderDescription')}
                     </CardDescription>
                   </div>
                   <Button
@@ -3838,16 +3839,16 @@ function AppearanceSettings() {
                     className="gap-2 shrink-0"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Reset to default
+                    {t('settings.appearance.resetToDefault')}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Accent color</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.accentColor')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Set the brand hue used for primary actions and highlights.
+                      {t('settings.appearance.accentColorDescription')}
                     </p>
                   </div>
                   <div ref={accentDropdownRef} className="relative">
@@ -3865,8 +3866,8 @@ function AppearanceSettings() {
                           style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
                         />
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{activeAccent?.label ?? 'Custom'}</span>
-                          <span className="text-xs text-muted-foreground">Click to change accent color</span>
+                          <span className="text-sm font-semibold">{activeAccent?.label ?? t('settings.appearance.custom')}</span>
+                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeAccent')}</span>
                         </div>
                       </div>
                       {isAccentDropdownOpen ? (
@@ -3883,7 +3884,7 @@ function AppearanceSettings() {
                         }}
                       >
                         <div className="space-y-6">
-                          {ACCENT_GROUPS.map((group) => {
+                          {getAccentGroups(t).map((group) => {
                             const groupAccents = group.accents
                               .map((value) => accentOptionsByValue[value])
                               .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
@@ -3923,8 +3924,8 @@ function AppearanceSettings() {
                           {customAccentOption && (
                             <div className="space-y-3 pt-2 border-t border-border/60">
                               <div className="space-y-1">
-                                <p className="text-sm font-semibold">Custom</p>
-                                <p className="text-xs text-muted-foreground">Create your own accent color</p>
+                                <p className="text-sm font-semibold">{t('settings.appearance.custom')}</p>
+                                <p className="text-xs text-muted-foreground">{t('settings.appearance.createYourOwnAccent')}</p>
                               </div>
                               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 <AppearanceOptionCard
@@ -3947,7 +3948,7 @@ function AppearanceSettings() {
                                     <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
                                       <div className="flex items-center justify-between gap-3">
                                         <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                          <span className="uppercase tracking-wide">Light</span>
+                                          <span className="uppercase tracking-wide">{t('settings.appearance.light')}</span>
                                           <input
                                             type="color"
                                             value={customAccent.light}
@@ -3956,11 +3957,11 @@ function AppearanceSettings() {
                                               setCustomAccentColor('light', event.target.value)
                                             }}
                                             className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                                            aria-label="Pick accent color for light theme"
+                                            aria-label={t('settings.appearance.pickAccentColorLight')}
                                           />
                                         </label>
                                         <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                          <span className="uppercase tracking-wide">Dark</span>
+                                          <span className="uppercase tracking-wide">{t('settings.appearance.dark')}</span>
                                           <input
                                             type="color"
                                             value={customAccent.dark}
@@ -3969,7 +3970,7 @@ function AppearanceSettings() {
                                               setCustomAccentColor('dark', event.target.value)
                                             }}
                                             className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                                            aria-label="Pick accent color for dark theme"
+                                            aria-label={t('settings.appearance.pickAccentColorDark')}
                                           />
                                         </label>
                                       </div>
@@ -3989,9 +3990,9 @@ function AppearanceSettings() {
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Surface palette</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.surfacePalette')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Pick the background system for cards, popovers, and muted states.
+                      {t('settings.appearance.surfacePaletteDescription')}
                     </p>
                   </div>
                   <div ref={surfaceDropdownRef} className="relative">
@@ -4009,8 +4010,8 @@ function AppearanceSettings() {
                           style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
                         />
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{activeSurface?.label ?? 'Custom'}</span>
-                          <span className="text-xs text-muted-foreground">Click to change surface palette</span>
+                          <span className="text-sm font-semibold">{activeSurface?.label ?? t('settings.appearance.custom')}</span>
+                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeSurface')}</span>
                         </div>
                       </div>
                       {isSurfaceDropdownOpen ? (
@@ -4027,7 +4028,7 @@ function AppearanceSettings() {
                         }}
                       >
                         <div className="space-y-6">
-                          {SURFACE_GROUPS.map((group) => {
+                          {getSurfaceGroups(t).map((group) => {
                             const palettes = group.palettes
                               .map((value) => surfaceOptionsByValue[value])
                               .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
@@ -4080,9 +4081,9 @@ function AppearanceSettings() {
                 <section className="space-y-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
-                      <Label className="text-sm font-semibold">Interface shape</Label>
+                      <Label className="text-sm font-semibold">{t('settings.appearance.interfaceShape')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Adjust corner rounding for cards, dialogs, and buttons.
+                        {t('settings.appearance.interfaceShapeDescription')}
                       </p>
                     </div>
                     <Button
@@ -4090,16 +4091,16 @@ function AppearanceSettings() {
                       size="icon"
                       onClick={() => setRadius(DEFAULT_RADIUS)}
                       disabled={radiusIsDefault}
-                      aria-label="Reset radius to default"
+                      aria-label={t('settings.appearance.resetRadiusToDefault')}
                     >
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                   </div>
                   <div className="space-y-3 rounded-lg border border-dashed p-4">
                     <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
-                      <span>Sharper</span>
-                      <span>{Math.round(radius * 16)}px radius</span>
-                      <span>Softer</span>
+                      <span>{t('settings.appearance.sharper')}</span>
+                      <span>{Math.round(radius * 16)}px {t('settings.appearance.radius')}</span>
+                      <span>{t('settings.appearance.softer')}</span>
                     </div>
                     <Slider
                       value={[radius]}
@@ -4107,16 +4108,16 @@ function AppearanceSettings() {
                       max={2}
                       step={0.05}
                       onValueChange={(value) => setRadius(value[0] ?? radius)}
-                      aria-label="Adjust global border radius"
+                      aria-label={t('settings.appearance.adjustGlobalBorderRadius')}
                     />
                   </div>
                 </section>
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Typography scale</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.typographyScale')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Adjust reading size to fit your preferred density and display.
+                      {t('settings.appearance.typographyScaleDescription')}
                     </p>
                   </div>
                   <div className="grid gap-3 md:grid-cols-3">
@@ -4130,8 +4131,8 @@ function AppearanceSettings() {
                         onSelect={() => setTypography(option.value)}
                         preview={
                           <div className="space-y-2">
-                            <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Sample</div>
-                            <p className="text-sm font-medium">Typography adapts responsively.</p>
+                            <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">{t('settings.appearance.sample')}</div>
+                            <p className="text-sm font-medium">{t('settings.appearance.typographyAdaptsResponsively')}</p>
                           </div>
                         }
                       />
@@ -4143,9 +4144,9 @@ function AppearanceSettings() {
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Contrast</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.contrastTitle')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Tune clarity for different environments and accessibility preferences.
+                      {t('settings.appearance.contrastDescription')}
                     </p>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
@@ -4166,9 +4167,9 @@ function AppearanceSettings() {
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Depth & shadows</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.depthShadows')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Choose how pronounced surface shadows should appear.
+                      {t('settings.appearance.depthShadowsDescription')}
                     </p>
                   </div>
                   <div className="grid gap-3 md:grid-cols-3">
@@ -4189,9 +4190,9 @@ function AppearanceSettings() {
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Motion</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.motionTitle')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Control animations and transitions for accessibility.
+                      {t('settings.appearance.motionDescription')}
                     </p>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
@@ -4212,18 +4213,18 @@ function AppearanceSettings() {
 
                 <section className="space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">Theme Constructor</Label>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.themeBuilder')}</Label>
                     <p className="text-xs text-muted-foreground">
-                      Build, preview, export, and manage your custom themes. Create themes from current settings or import from JSON.
+                      {t('settings.appearance.themeBuilderDescription')}
                     </p>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
                     <Card className="border-dashed">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-semibold">Create Theme</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('settings.appearance.createTheme')}</CardTitle>
                         <CardDescription className="text-xs">
-                          Save your current color and surface settings as a named theme.
+                          {t('settings.appearance.createThemeDescription')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -4233,7 +4234,7 @@ function AppearanceSettings() {
                               <Input
                                 value={themeName}
                                 onChange={(event) => setThemeName(event.target.value)}
-                                placeholder="My Custom Theme"
+                                placeholder={t('settings.appearance.myCustomTheme')}
                                 maxLength={40}
                                 className="sm:flex-1 pr-12"
                               />
@@ -4243,21 +4244,21 @@ function AppearanceSettings() {
                             </div>
                             <Button onClick={handleCreateTheme} className="sm:w-auto">
                               <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Create
+                              {t('settings.appearance.create')}
                             </Button>
                           </div>
                         </div>
                         <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
-                          <p className="font-medium text-foreground mb-1">Current settings:</p>
+                          <p className="font-medium text-foreground mb-1">{t('settings.appearance.currentSettings')}:</p>
                           <div className="space-y-1 text-muted-foreground">
-                            <p>Accent: {activeAccent?.label ?? 'Custom'}</p>
-                            <p>Surface: {activeSurface?.label ?? 'Custom'}</p>
-                            <p>Radius: {Math.round(radius * 16)}px</p>
-                            <p>Typography: {typographyLabel}</p>
-                            <p>Contrast: {contrastOptions.find(o => o.value === contrast)?.label ?? contrast}</p>
-                            <p>Density: {densityLabel}</p>
-                            <p>Depth: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
-                            <p>Motion: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
+                            <p>{t('settings.appearance.accent')}: {activeAccent?.label ?? t('settings.appearance.custom')}</p>
+                            <p>{t('settings.appearance.surface')}: {activeSurface?.label ?? t('settings.appearance.custom')}</p>
+                            <p>{t('settings.appearance.radius')}: {Math.round(radius * 16)}px</p>
+                            <p>{t('settings.appearance.typography')}: {typographyLabel}</p>
+                            <p>{t('settings.appearance.contrastTitle')}: {contrastOptions.find(o => o.value === contrast)?.label ?? contrast}</p>
+                            <p>{t('settings.appearance.density')}: {densityLabel}</p>
+                            <p>{t('settings.appearance.depth')}: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
+                            <p>{t('settings.appearance.motionTitle')}: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -4265,9 +4266,9 @@ function AppearanceSettings() {
 
                     <Card className="border-dashed">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-semibold">Import & Export</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('settings.appearance.importExport')}</CardTitle>
                         <CardDescription className="text-xs">
-                          Import themes from JSON or export your current configuration.
+                          {t('settings.appearance.importExportDescription')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-3">
@@ -4278,7 +4279,7 @@ function AppearanceSettings() {
                             onClick={() => setShowImportDialog(true)}
                           >
                             <Download className="mr-2 h-4 w-4" />
-                            Import JSON
+                            {t('settings.appearance.importJson')}
                           </Button>
                           <Button
                             variant="outline"
@@ -5736,9 +5737,9 @@ function AppearanceSettings() {
         <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Import Theme</DialogTitle>
+              <DialogTitle>{t('settings.appearance.importTheme')}</DialogTitle>
               <DialogDescription>
-                Paste your theme JSON configuration below. It should include accent, surface, radius, typography, contrast, density, depth, and motion settings.
+                {t('settings.appearance.importThemeDescription')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -5767,14 +5768,14 @@ function AppearanceSettings() {
         <Dialog open={themeDescriptionDialog.open} onOpenChange={(open) => setThemeDescriptionDialog({ open, theme: open ? themeDescriptionDialog.theme : null })}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{themeDescriptionDialog.theme?.name || 'Theme Description'}</DialogTitle>
+              <DialogTitle>{themeDescriptionDialog.theme?.name || t('settings.appearance.themeDescription')}</DialogTitle>
               <DialogDescription>
-                {themeDescriptionDialog.theme?.description || 'No description available.'}
+                {themeDescriptionDialog.theme?.description || t('settings.appearance.noDescriptionAvailable')}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button onClick={() => setThemeDescriptionDialog({ open: false, theme: null })}>
-                Close
+                {t('common.close')}
               </Button>
             </DialogFooter>
           </DialogContent>

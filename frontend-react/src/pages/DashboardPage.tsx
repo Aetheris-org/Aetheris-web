@@ -21,7 +21,10 @@ import { useNavigate } from 'react-router-dom'
 import GridLayout, { Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { SiteHeader } from '@/components/SiteHeader'
+import { ArrowLeft } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { AccountSheet } from '@/components/AccountSheet'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -72,7 +75,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 
 // ============================================
-// TYPES
+// TYPES & CONSTANTS
 // ============================================
 
 type WidgetId =
@@ -103,6 +106,9 @@ const WIDGET_SIZES: Record<WidgetSize, { w: number; h: number }> = {
   'extra-large': { w: 3, h: 2 },
 }
 
+const MOBILE_BREAKPOINT = 640
+const DESKTOP_COLS = 4
+const MOBILE_COLS = 2
 
 // ============================================
 // MOCK DATA
@@ -209,14 +215,33 @@ export default function DashboardPage() {
   const { user } = useAuthStore()
   const { level, experience, xpIntoLevel, xpForLevel, achievements } = useGamificationStore()
   const gridContainerRef = useRef<HTMLDivElement>(null)
-  const [gridWidth, setGridWidth] = useState(1200)
+  // Инициализируем с примерной шириной, чтобы виджеты могли отрендериться сразу
+  const [gridWidth, setGridWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= MOBILE_BREAKPOINT ? 1200 : 600
+    }
+    return 1200
+  })
   const [isEditMode, setIsEditMode] = useState(false)
   const [isCustomizing, setIsCustomizing] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
-  // Инициализация layout из localStorage или дефолтные значения
+  // Определяем количество колонок на основе ширины
+  const isMobile = gridWidth > 0 && gridWidth < MOBILE_BREAKPOINT
+  const cols = isMobile ? MOBILE_COLS : DESKTOP_COLS
+
+  // Адаптивные параметры grid
+  const margin = isMobile ? 8 : 12
+  const rowHeight = useMemo(() => {
+    if (gridWidth <= 0) return isMobile ? 80 : 120
+    const cellWidth = (gridWidth - (cols + 1) * margin) / cols
+    const minHeight = isMobile ? 80 : 100
+    return Math.max(minHeight, Math.floor(cellWidth))
+  }, [gridWidth, cols, margin, isMobile])
+
+  // Инициализация layout из localStorage
   const getInitialLayout = useCallback((): Layout[] => {
     if (typeof window === 'undefined') return []
     
@@ -224,19 +249,23 @@ export default function DashboardPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as Layout[]
-        // Валидируем сохраненный layout
-        return parsed.filter((item) => 
-          availableWidgets.some((w) => w.id === item.i) &&
-          item.x >= 0 && item.y >= 0 &&
-          item.w > 0 && item.h > 0
-        )
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validLayout = parsed.filter((item) => 
+            availableWidgets.some((w) => w.id === item.i) &&
+            item.x >= 0 && item.y >= 0 &&
+            item.w > 0 && item.h > 0
+          )
+          if (validLayout.length > 0) {
+            return validLayout
+          }
+        }
       } catch {
         // Если ошибка парсинга, используем дефолт
       }
     }
     
-    // Дефолтный layout - размещаем виджеты последовательно
-    const cols = typeof window !== 'undefined' && window.innerWidth >= 640 ? 4 : 2
+    // Дефолтный layout - используем десктопные колонки по умолчанию
+    const defaultCols = typeof window !== 'undefined' && window.innerWidth >= MOBILE_BREAKPOINT ? DESKTOP_COLS : MOBILE_COLS
     const enabledWidgets = availableWidgets.filter((w) => w.defaultEnabled)
     const layout: Layout[] = []
     let currentX = 0
@@ -245,11 +274,10 @@ export default function DashboardPage() {
 
     enabledWidgets.forEach((widget) => {
       const size = WIDGET_SIZES[widget.defaultSize]
-      const w = Math.min(size.w, cols)
+      const w = Math.min(size.w, defaultCols)
       const h = size.h
 
-      // Если виджет не помещается в текущую строку, переходим на новую
-      if (currentX + w > cols) {
+      if (currentX + w > defaultCols) {
         currentX = 0
         currentY += maxHeightInRow
         maxHeightInRow = 0
@@ -263,7 +291,7 @@ export default function DashboardPage() {
         h,
         minW: 1,
         minH: 1,
-        maxW: cols,
+        maxW: defaultCols,
         maxH: 4,
       })
 
@@ -276,46 +304,80 @@ export default function DashboardPage() {
 
   const [layout, setLayout] = useState<Layout[]>(getInitialLayout)
 
-  // Отслеживаем размер контейнера
+  // Убеждаемся, что layout всегда инициализирован
+  useEffect(() => {
+    if (layout.length === 0) {
+      const defaultLayout = getInitialLayout()
+      if (defaultLayout.length > 0) {
+        setLayout(defaultLayout)
+      }
+    }
+  }, []) // Только при монтировании
+
+  // Отслеживание размера контейнера
   useEffect(() => {
     if (!gridContainerRef.current) return
 
     const updateWidth = () => {
       if (gridContainerRef.current) {
-        // Используем getBoundingClientRect для точного расчета ширины
-        const rect = gridContainerRef.current.getBoundingClientRect()
-        const width = rect.width
-        // Убеждаемся, что ширина больше 0 перед установкой
+        const width = gridContainerRef.current.clientWidth
         if (width > 0) {
           setGridWidth(width)
         }
       }
     }
 
-    // Немедленный расчет при монтировании
+    // Немедленный расчет
     updateWidth()
 
-    // Используем requestAnimationFrame для гарантии, что DOM полностью отрендерен
-    let rafId1: number
-    let rafId2: number
-    
-    rafId1 = requestAnimationFrame(() => {
+    // Дополнительный расчет после следующего кадра для точности
+    const rafId = requestAnimationFrame(() => {
       updateWidth()
-      // Дополнительная проверка после следующего кадра для точности
-      rafId2 = requestAnimationFrame(updateWidth)
+      // Еще один кадр для гарантии
+      requestAnimationFrame(updateWidth)
     })
 
-    const resizeObserver = new ResizeObserver(updateWidth)
+    // Используем ResizeObserver для отслеживания изменений
+    const resizeObserver = new ResizeObserver(() => {
+      requestAnimationFrame(updateWidth)
+    })
     resizeObserver.observe(gridContainerRef.current)
 
+    // Также слушаем изменения размера окна
+    const handleResize = () => {
+      requestAnimationFrame(updateWidth)
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
-      if (rafId1) cancelAnimationFrame(rafId1)
-      if (rafId2) cancelAnimationFrame(rafId2)
+      cancelAnimationFrame(rafId)
       resizeObserver.disconnect()
+      window.removeEventListener('resize', handleResize)
     }
   }, [])
 
-  // Сохраняем layout в localStorage
+  // Обновление layout при изменении количества колонок (например, при изменении размера экрана)
+  useEffect(() => {
+    if (gridWidth > 0 && layout.length > 0) {
+      setLayout((prevLayout) => {
+        // Проверяем, нужно ли обновить maxW для всех виджетов
+        const needsUpdate = prevLayout.some((item) => item.maxW !== cols)
+        if (!needsUpdate) return prevLayout
+
+        return prevLayout.map((item) => {
+          const newW = Math.min(item.w, cols)
+          return {
+            ...item,
+            maxW: cols,
+            w: newW,
+            x: Math.min(item.x, Math.max(0, cols - newW)),
+          }
+        })
+      })
+    }
+  }, [cols, gridWidth])
+
+  // Сохранение layout в localStorage
   useEffect(() => {
     if (typeof window !== 'undefined' && layout.length > 0) {
       localStorage.setItem('dashboard-layout', JSON.stringify(layout))
@@ -337,14 +399,12 @@ export default function DashboardPage() {
   // Обработчики для drag событий
   const handleDragStart = useCallback(() => {
     setIsDragging(true)
-    // Очищаем предыдущий таймаут, если есть
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current)
     }
   }, [])
 
   const handleDragStop = useCallback(() => {
-    // Блокируем клики на 200ms после окончания drag
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current)
     }
@@ -371,7 +431,6 @@ export default function DashboardPage() {
         e.stopPropagation()
         return
       }
-      // Если режим редактирования активен, блокируем действие и показываем toast
       if (isEditMode) {
         e.preventDefault()
         e.stopPropagation()
@@ -397,19 +456,16 @@ export default function DashboardPage() {
   const handleToggleWidget = useCallback((widgetId: WidgetId) => {
     setLayout((prev) => {
       const exists = prev.some((item) => item.i === widgetId)
-      const currentCols = gridWidth >= 640 ? 4 : 2
+      const currentCols = gridWidth >= MOBILE_BREAKPOINT ? DESKTOP_COLS : MOBILE_COLS
       
       if (exists) {
-        // Удаляем виджет
         return prev.filter((item) => item.i !== widgetId)
       } else {
-        // Добавляем виджет в конец
         const widget = availableWidgets.find((w) => w.id === widgetId)!
         const size = WIDGET_SIZES[widget.defaultSize]
         const w = Math.min(size.w, currentCols)
         const h = size.h
         
-        // Находим максимальную Y позицию
         const maxY = prev.length > 0 ? Math.max(...prev.map((item) => item.y + item.h)) : 0
         
         return [
@@ -435,7 +491,7 @@ export default function DashboardPage() {
       return prev.map((item) => {
         if (item.i === widgetId) {
           const size = WIDGET_SIZES[newSize]
-          const currentCols = gridWidth >= 640 ? 4 : 2
+          const currentCols = gridWidth >= MOBILE_BREAKPOINT ? DESKTOP_COLS : MOBILE_COLS
           return {
             ...item,
             w: Math.min(size.w, currentCols),
@@ -448,22 +504,30 @@ export default function DashboardPage() {
     })
   }, [gridWidth])
 
-  const cols = gridWidth >= 640 ? 4 : 2
-  
-  // Рассчитываем rowHeight для квадратных виджетов 1x1
-  // Ширина ячейки = (gridWidth - (cols + 1) * margin) / cols
-  // Для квадратности: rowHeight = ширина ячейки
-  const margin = 12
-  const rowHeight = useMemo(() => {
-    if (gridWidth <= 0) return 120
-    const cellWidth = (gridWidth - (cols + 1) * margin) / cols
-    return Math.max(100, Math.floor(cellWidth)) // Минимум 100px для читаемости
-  }, [gridWidth, cols])
-
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <SiteHeader />
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between px-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <h1 className="text-lg font-semibold">{t('dashboard.pageTitle')}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <AccountSheet />
+            </div>
+          </div>
+        </header>
         <main className="container flex min-h-[60vh] items-center justify-center pb-16 pt-6">
           <Card className="w-full max-w-md border-border/60">
             <CardHeader>
@@ -477,16 +541,36 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="container space-y-6 sm:space-y-8 pb-6 sm:pb-6 pt-6 sm:pt-6 px-4 sm:px-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Домашняя страница</h1>
-            <p className="text-muted-foreground mt-1">Ваш персональный дашборд</p>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('common.back')}
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <h1 className="text-lg font-semibold">{t('dashboard.pageTitle')}</h1>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountSheet />
+          </div>
+        </div>
+      </header>
+      <main className="container space-y-4 sm:space-y-6 pb-6 pt-6 px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Домашняя страница</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Ваш персональный дашборд</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant={isEditMode ? 'default' : 'outline'}
               size="icon"
@@ -518,7 +602,6 @@ export default function DashboardPage() {
                     const currentSize = layout.find((item) => item.i === widget.id) 
                       ? (() => {
                           const item = layout.find((item) => item.i === widget.id)!
-                          // Определяем размер по w и h
                           if (item.w === 1 && item.h === 1) return 'small'
                           if (item.w === 2 && item.h === 1) return 'medium'
                           if (item.w === 2 && item.h === 2) return 'large'
@@ -530,24 +613,24 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={widget.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border rounded-lg"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
                             {widget.icon}
                           </div>
-                          <div>
-                            <p className="font-medium">{widget.name}</p>
-                            <p className="text-sm text-muted-foreground">{widget.description}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{widget.name}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-1">{widget.description}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                           {isEnabled && (
                             <Select
                               value={currentSize}
                               onValueChange={(value) => handleSizeChange(widget.id, value as WidgetSize)}
                             >
-                              <SelectTrigger className="w-[140px]">
+                              <SelectTrigger className="w-full sm:w-[140px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -562,6 +645,7 @@ export default function DashboardPage() {
                             variant={isEnabled ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => handleToggleWidget(widget.id)}
+                            className="shrink-0"
                           >
                             {isEnabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
@@ -576,7 +660,16 @@ export default function DashboardPage() {
         </div>
 
         {/* Widgets Grid */}
-        <div ref={gridContainerRef} className="relative min-h-[200px] w-full overflow-hidden" style={{ margin: 0, padding: 0 }}>
+        <div 
+          ref={gridContainerRef} 
+          className="relative min-h-[200px] w-full"
+          style={{ 
+            margin: 0, 
+            padding: 0,
+            boxSizing: 'border-box',
+            width: '100%',
+          }}
+        >
           <style>{`
             .react-grid-layout {
               position: relative;
@@ -584,6 +677,10 @@ export default function DashboardPage() {
               max-width: 100% !important;
               margin: 0 !important;
               padding: 0 !important;
+              box-sizing: border-box !important;
+            }
+            .react-grid-layout * {
+              box-sizing: border-box !important;
             }
             .react-grid-item {
               transition: all 200ms ease;
@@ -608,35 +705,42 @@ export default function DashboardPage() {
               height: 100%;
               width: 100%;
               overflow: hidden;
+              box-sizing: border-box !important;
             }
           `}</style>
-          <GridLayout
-            className="layout"
-            layout={layout}
-            cols={cols}
-            rowHeight={rowHeight}
-            width={gridWidth}
-            isDraggable={isEditMode}
-            isResizable={false}
-            onLayoutChange={handleLayoutChange}
-            onDragStart={handleDragStart}
-            onDragStop={handleDragStop}
-            margin={[margin, margin]}
-            containerPadding={[0, 0]}
-            compactType="vertical"
-            preventCollision={false}
-            useCSSTransforms={true}
-          >
-            {layout.map((item) => {
-              const widgetId = item.i as WidgetId
-              const size = getWidgetSize(widgetId)
-              return (
-                <div key={item.i} className="h-full w-full overflow-hidden">
-                  {renderWidget(widgetId, size, user, level, achievements, createSafeClickHandler)}
-                </div>
-              )
-            })}
-          </GridLayout>
+          {layout.length > 0 ? (
+            <GridLayout
+              className="layout"
+              layout={layout}
+              cols={cols}
+              rowHeight={rowHeight}
+              width={gridWidth}
+              isDraggable={isEditMode}
+              isResizable={false}
+              onLayoutChange={handleLayoutChange}
+              onDragStart={handleDragStart}
+              onDragStop={handleDragStop}
+              margin={[margin, margin]}
+              containerPadding={[0, 0]}
+              compactType="vertical"
+              preventCollision={false}
+              useCSSTransforms={true}
+            >
+              {layout.map((item) => {
+                const widgetId = item.i as WidgetId
+                const size = getWidgetSize(widgetId)
+                return (
+                  <div key={item.i} className="h-full w-full overflow-hidden">
+                    {renderWidget(widgetId, size, user, level, achievements, createSafeClickHandler)}
+                  </div>
+                )
+              })}
+            </GridLayout>
+          ) : (
+            <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+              Нет виджетов для отображения
+            </div>
+          )}
         </div>
       </main>
     </div>
