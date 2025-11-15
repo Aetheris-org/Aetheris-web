@@ -680,7 +680,7 @@ export default function ProfilePage() {
           <div className="container flex h-16 items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Назад
+              {t('common.back')}
             </Button>
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -692,11 +692,11 @@ export default function ProfilePage() {
           <Card className="mx-auto max-w-md border-dashed">
             <CardContent className="space-y-4 py-10">
               <Users className="mx-auto h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">Профиль не найден</CardTitle>
+              <CardTitle className="text-xl">{t('profile.profileNotFound')}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Не удалось определить, какой профиль показать. Попробуйте выбрать автора из списка статей.
+                {t('profile.profileNotFoundDescription')}
               </p>
-              <Button onClick={() => navigate('/')}>На главную</Button>
+              <Button onClick={() => navigate('/')}>{t('common.back')}</Button>
             </CardContent>
           </Card>
         </div>
@@ -733,7 +733,7 @@ export default function ProfilePage() {
           <div className="container flex h-16 items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Назад
+              {t('common.back')}
             </Button>
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -745,15 +745,15 @@ export default function ProfilePage() {
           <Card className="mx-auto max-w-md border-dashed">
             <CardContent className="space-y-4 py-10">
               <Users className="mx-auto h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">Ошибка загрузки</CardTitle>
+              <CardTitle className="text-xl">{t('profile.loadingError')}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Не удалось загрузить профиль. Обновите страницу или попробуйте позже.
+                {t('profile.loadingErrorDescription')}
               </p>
               <div className="flex justify-center gap-2">
                 <Button variant="outline" onClick={() => navigate(-1)}>
-                  Назад
+                  {t('common.back')}
                 </Button>
-                <Button onClick={() => navigate('/')}>На главную</Button>
+                <Button onClick={() => navigate('/')}>{t('common.back')}</Button>
               </div>
             </CardContent>
           </Card>
@@ -829,7 +829,7 @@ export default function ProfilePage() {
                     <h1 className="text-2xl font-bold tracking-tight">{profile.user.username}</h1>
                     <Badge variant="default" className="gap-1 shrink-0">
                       <Trophy className="h-3 w-3" />
-                      Уровень {level}
+                      {t('profile.levelBadge', { level })}
                     </Badge>
                   </div>
                   {/* Дропдаун меню */}
@@ -837,24 +837,24 @@ export default function ProfilePage() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 absolute right-0">
                         <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Дополнительные действия</span>
+                        <span className="sr-only">{t('profile.additionalActions')}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={handleShareProfile}>
                         <Share2 className="mr-2 h-4 w-4" />
-                        Поделиться профилем
+                        {t('profile.shareProfile')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleCopyProfileLink}>
                         {copied ? (
                           <>
                             <Check className="mr-2 h-4 w-4" />
-                            Ссылка скопирована
+                            {t('profile.linkCopied')}
                           </>
                         ) : (
                           <>
                             <Copy className="mr-2 h-4 w-4" />
-                            Копировать ссылку
+                            {t('profile.copyLink')}
                           </>
                         )}
                       </DropdownMenuItem>
@@ -863,7 +863,7 @@ export default function ProfilePage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
                             <Flag className="mr-2 h-4 w-4" />
-                            Пожаловаться
+                            {t('profile.report')}
                           </DropdownMenuItem>
                         </>
                       )}
@@ -871,7 +871,7 @@ export default function ProfilePage() {
                   </DropdownMenu>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  Участник с {formatDate(profile.user.memberSince)}
+                  {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
                 </Badge>
                 {profile.user.bio && (
                   <p className="text-sm text-muted-foreground text-center break-words leading-relaxed">
@@ -921,14 +921,14 @@ export default function ProfilePage() {
 
               {/* Кнопки действий */}
               <div className="flex flex-col gap-2.5 w-full pt-4 border-t mt-2">
-                <Button
+                  <Button
                   variant="outline"
                   size="default"
                   onClick={() => navigate('/')}
                   className="gap-2 w-full"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Открыть статьи
+                  {t('profile.openArticles')}
                 </Button>
                 {isOwnProfile && (
                   <Button
@@ -938,7 +938,7 @@ export default function ProfilePage() {
                     onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
                   >
                     <Settings className="h-4 w-4" />
-                    Настройки
+                    {t('profile.settings')}
                   </Button>
                 )}
               </div>
@@ -973,7 +973,7 @@ export default function ProfilePage() {
                     <h1 className="text-2xl font-bold tracking-tight md:text-3xl truncate">{profile.user.username}</h1>
                     <Badge variant="default" className="gap-1 shrink-0">
                       <Trophy className="h-3 w-3" />
-                      Уровень {level}
+                      {t('profile.levelBadge', { level })}
                     </Badge>
                   </div>
                   <Badge variant="secondary" className="text-xs w-fit">
@@ -989,25 +989,25 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <NotebookPen className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.publishedArticles}</span>
-                    <span className="text-muted-foreground/70">статей</span>
+                    <span className="text-muted-foreground/70">{t('profile.articlesCount')}</span>
                   </div>
                   <Separator orientation="vertical" className="h-4" />
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Heart className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.totalLikes}</span>
-                    <span className="text-muted-foreground/70">лайков</span>
+                    <span className="text-muted-foreground/70">{t('profile.likesCount')}</span>
                   </div>
                   <Separator orientation="vertical" className="h-4" />
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MessageSquare className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.totalComments}</span>
-                    <span className="text-muted-foreground/70">комментариев</span>
+                    <span className="text-muted-foreground/70">{t('profile.commentsCount')}</span>
                   </div>
                   <Separator orientation="vertical" className="h-4" />
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Eye className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.draftArticles}</span>
-                    <span className="text-muted-foreground/70">черновиков</span>
+                    <span className="text-muted-foreground/70">{t('profile.draftsCount')}</span>
                   </div>
                 </div>
 
@@ -1077,7 +1077,7 @@ export default function ProfilePage() {
                     className="gap-2 whitespace-nowrap"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Открыть статьи
+                    {t('profile.openArticles')}
                   </Button>
                   {isOwnProfile && (
                     <Button
@@ -1087,7 +1087,7 @@ export default function ProfilePage() {
                       onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
                     >
                       <Settings className="h-4 w-4" />
-                      Настройки
+                      {t('profile.settings')}
                     </Button>
                   )}
                 </div>
@@ -1145,8 +1145,8 @@ export default function ProfilePage() {
               <TabsList className="grid w-full grid-cols-3 overflow-x-auto">
                     <TabsTrigger value="articles" className="gap-2">
                       <NotebookPen className="h-4 w-4" />
-                  <span className="hidden sm:inline">Статьи</span>
-                  <span className="sm:hidden">Посты</span>
+                  <span className="hidden sm:inline">{t('profile.articlesTab')}</span>
+                  <span className="sm:hidden">{t('profile.articlesTabShort')}</span>
                   {publishedArticles.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
                         {publishedArticles.length}
@@ -1155,8 +1155,8 @@ export default function ProfilePage() {
                     </TabsTrigger>
                     <TabsTrigger value="comments" className="gap-2">
                       <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Комментарии</span>
-                  <span className="sm:hidden">Комм.</span>
+                  <span className="hidden sm:inline">{t('profile.commentsTab')}</span>
+                  <span className="sm:hidden">{t('profile.commentsTabShort')}</span>
                   {comments.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
                       {comments.length}
@@ -1165,8 +1165,8 @@ export default function ProfilePage() {
                     </TabsTrigger>
                     <TabsTrigger value="bookmarks" className="gap-2">
                       <Bookmark className="h-4 w-4" />
-                  <span className="hidden sm:inline">Закладки</span>
-                  <span className="sm:hidden">Закл.</span>
+                  <span className="hidden sm:inline">{t('profile.bookmarksTab')}</span>
+                  <span className="sm:hidden">{t('profile.bookmarksTabShort')}</span>
                   {bookmarks.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
                         {bookmarks.length}
@@ -1181,7 +1181,7 @@ export default function ProfilePage() {
                     <CardContent className="py-12 text-center">
                       <NotebookPen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground">
-                        {isOwnProfile ? 'Вы ещё не опубликовали статей' : 'Автор ещё не опубликовал статей'}
+                        {isOwnProfile ? t('profile.noArticlesOwn') : t('profile.noArticlesOther')}
                       </p>
                       {isOwnProfile && (
                         <Button
@@ -1189,7 +1189,7 @@ export default function ProfilePage() {
                           onClick={() => navigate('/create')}
                         >
                           <PenSquare className="h-4 w-4" />
-                          Создать статью
+                          {t('profile.createArticle')}
                         </Button>
                       )}
                         </CardContent>

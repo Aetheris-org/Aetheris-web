@@ -34,6 +34,7 @@ export function SiteFooter() {
     { label: t('help.title'), path: '/help' },
     { label: t('trending.title'), path: '/trending' },
     { label: t('achievements.title'), path: '/achievements' },
+    { label: t('feedback.title'), path: '/feedback' },
   ]
 
   const contactItems = [
@@ -43,7 +44,7 @@ export function SiteFooter() {
   ]
 
   return (
-    <footer ref={footerRef} className="w-full border-t border-border bg-background mt-8">
+    <footer ref={footerRef} className="w-full border-t border-border bg-background">
       {/* Свернутое состояние - минимальная полоска */}
       <div
         className={cn(

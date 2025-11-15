@@ -687,7 +687,7 @@ export default function CreateArticlePage() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('common.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
             <h1 className="text-lg font-semibold">{t('createArticle.title')}</h1>
@@ -913,7 +913,7 @@ export default function CreateArticlePage() {
                     }
                   }}
                 />
-                <Button onClick={handleAddTag}>Add</Button>
+                <Button onClick={handleAddTag}>{t('createArticle.addTag')}</Button>
               </div>
 
               {tags.length > 0 && (
@@ -935,9 +935,9 @@ export default function CreateArticlePage() {
 
           <Card>
             <CardHeader>
-                    <CardTitle className="text-lg">Difficulty Level</CardTitle>
+                    <CardTitle className="text-lg">{t('createArticle.difficultyLevel')}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Select the difficulty level that best matches your article content.
+                      {t('createArticle.difficultyLevelDescription')}
                     </p>
             </CardHeader>
             <CardContent>
@@ -966,11 +966,10 @@ export default function CreateArticlePage() {
             <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <ImageIcon className="h-5 w-5" />
-                      Preview Image
+                      {t('createArticle.previewImageTitle')}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Upload a hero image that appears on article cards, homepage, and social shares. Recommended size
-                      1200×630px.
+                      {t('createArticle.previewImageDescription')}
                     </p>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -986,7 +985,7 @@ export default function CreateArticlePage() {
                       <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
                         16:9
                       </Badge>
-                      Perfect for social previews
+                      {t('createArticle.perfectForSocial')}
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -997,7 +996,7 @@ export default function CreateArticlePage() {
                       disabled={!originalImageUrl}
                     >
                       <Crop className="h-4 w-4" />
-                      Adjust crop
+                      {t('createArticle.adjustCrop')}
                     </Button>
                     <Button
                       variant="outline"
@@ -1005,7 +1004,7 @@ export default function CreateArticlePage() {
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <RefreshCw className="h-4 w-4" />
-                      Replace image
+                      {t('createArticle.replaceImage')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -1013,11 +1012,11 @@ export default function CreateArticlePage() {
                       onClick={resetPreviewImage}
                     >
                       <XCircle className="h-4 w-4" />
-                      Remove
+                      {t('createArticle.removeImage')}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.
+                    {t('createArticle.imageUploadHint')}
                   </p>
                 </>
               ) : (
@@ -1025,10 +1024,9 @@ export default function CreateArticlePage() {
                         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/40">
                           <ImagePlus className="h-10 w-10 text-muted-foreground" />
                   </div>
-                        <h4 className="mt-6 text-lg font-semibold">Add a hero image</h4>
+                        <h4 className="mt-6 text-lg font-semibold">{t('createArticle.addHeroImage')}</h4>
                         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                          The preview appears on article cards, the homepage, and social shares. Recommended size
-                          1200×630px.
+                          {t('createArticle.addHeroImageDescription')}
                   </p>
                   <Button
                     className="mt-6 gap-2"
@@ -1036,7 +1034,7 @@ export default function CreateArticlePage() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <ImagePlus className="h-4 w-4" />
-                    Upload image
+                    {t('createArticle.uploadImage')}
                   </Button>
                 </div>
               )}
@@ -1070,7 +1068,7 @@ export default function CreateArticlePage() {
                 <div className="space-y-6">
                   {/* Title */}
                   <h1 className="text-4xl font-bold tracking-tight lg:text-5xl break-words">
-                    {title.trim() || <span className="text-muted-foreground italic">Untitled</span>}
+                    {title.trim() || <span className="text-muted-foreground italic">{t('createArticle.untitled')}</span>}
                   </h1>
 
                   {/* Meta Info */}
@@ -1083,6 +1081,24 @@ export default function CreateArticlePage() {
                       <Clock className="h-4 w-4" />
                       <span>{estimateReadTime(getPlainTextFromHtml(content))} min read</span>
                     </div>
+                  </div>
+
+                  {/* Tags and Difficulty */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    {tags.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{t('createArticle.noTags')}</span>
+                    )}
+                    <Badge variant="outline" className="capitalize text-xs">
+                      {difficulty}
+                    </Badge>
                   </div>
                 </div>
 
@@ -1107,7 +1123,7 @@ export default function CreateArticlePage() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground italic">No content yet</p>
+                      <p className="text-muted-foreground italic">{t('createArticle.noContentYet')}</p>
                     )}
                   </div>
                   {shouldShowExpandButton && (
@@ -1121,12 +1137,12 @@ export default function CreateArticlePage() {
                         {isContentExpanded ? (
                           <>
                             <ChevronRight className="h-4 w-4 rotate-90" />
-                            Show less
+                            {t('createArticle.showLess')}
                           </>
                         ) : (
                           <>
                             <ChevronRight className="h-4 w-4 -rotate-90" />
-                            Show more content
+                            {t('createArticle.showMore')}
                           </>
                         )}
                       </Button>
@@ -1136,82 +1152,51 @@ export default function CreateArticlePage() {
 
                 <Separator className="my-8" />
 
-                {/* Metadata Section - Visually Separated */}
-                <Card className="border-border/60 bg-muted/5">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold">Article Metadata</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Main Info Grid */}
-                    <div className="grid gap-6 sm:grid-cols-2">
-                      {/* Tags */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">Tags</Label>
-                        {tags.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No tags</p>
-                        )}
-                      </div>
-
-                      {/* Difficulty */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">Difficulty</Label>
-                        <div>
-                          <Badge variant="outline" className="capitalize w-fit">
-                            {difficulty}
-                          </Badge>
-                        </div>
-                      </div>
+                {/* Metadata Section - Minimal Design */}
+                <div className="space-y-6">
+                  {/* Excerpt Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        {t('createArticle.excerptLabel')}
+                      </span>
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {excerpt.length} / {EXCERPT_MAX_LENGTH}
+                      </span>
                     </div>
-
-                    {/* Excerpt */}
-                    {excerpt.trim() && (
-                      <>
-                        <Separator />
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Excerpt</Label>
-                          <p className="text-sm text-foreground leading-relaxed break-words">{excerpt}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {excerpt.length} / {EXCERPT_MAX_LENGTH} characters
-                          </p>
-                        </div>
-                      </>
+                    {excerpt.trim() ? (
+                      <p className="text-sm text-foreground leading-relaxed break-words pt-1">
+                        {excerpt}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic pt-1">{t('createArticle.noExcerpt')}</p>
                     )}
+                  </div>
 
-                    {/* Statistics */}
-                    <Separator />
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-muted-foreground">Statistics</Label>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Words</p>
-                          <p className="text-base font-semibold">
-                            {getPlainTextFromHtml(content).split(/\s+/).filter(Boolean).length}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Title</p>
-                          <p className="text-base font-semibold">
-                            {title.length} / {TITLE_MAX_LENGTH}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Content</p>
-                          <p className="text-base font-semibold">
-                            {getPlainTextFromHtml(content).length} / {CONTENT_MAX_LENGTH}
-                          </p>
-                        </div>
-                      </div>
+                  <Separator />
+
+                  {/* Statistics Grid */}
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">{t('createArticle.words')}</p>
+                      <p className="text-base font-semibold text-foreground">
+                        {getPlainTextFromHtml(content).split(/\s+/).filter(Boolean).length}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">{t('createArticle.titleLabel')}</p>
+                      <p className="text-base font-semibold text-foreground">
+                        {title.length} <span className="text-xs font-normal text-muted-foreground">/ {TITLE_MAX_LENGTH}</span>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">{t('createArticle.contentLabel')}</p>
+                      <p className="text-base font-semibold text-foreground">
+                        {getPlainTextFromHtml(content).length.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ {CONTENT_MAX_LENGTH.toLocaleString()}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1219,279 +1204,223 @@ export default function CreateArticlePage() {
             {currentStep === 5 && (
               <div className="space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
                 <div className="space-y-1">
-                  <h2 className="text-3xl font-bold">Publishing Guidelines</h2>
+                  <h2 className="text-3xl font-bold">{t('createArticle.publishingGuidelines')}</h2>
                   <p className="text-muted-foreground">
-                    Review the rules and requirements before publishing your article
+                    {t('createArticle.reviewRulesBeforePublishing')}
                   </p>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  {/* Content Requirements */}
-                  <Card className="border-green-200 dark:border-green-900/30">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-1.5">
-                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        </div>
-                        Requirements
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Title</p>
-                            <p className="text-xs text-muted-foreground">
-                              10-{TITLE_MAX_LENGTH} characters, clear and descriptive
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Content</p>
-                            <p className="text-xs text-muted-foreground">
-                              Min 100 words, max {CONTENT_MAX_LENGTH.toLocaleString()} characters
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Excerpt</p>
-                            <p className="text-xs text-muted-foreground">
-                              Optional, up to {EXCERPT_MAX_LENGTH} characters
-                            </p>
-                          </div>
+                <div className="space-y-8">
+                  {/* Requirements Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">{t('createArticle.requirements')}</h3>
+                    </div>
+                    <div className="space-y-3 pl-7">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.title')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            10-{TITLE_MAX_LENGTH} {t('createArticle.charactersClearDescriptive')}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Content Guidelines */}
-                  <Card className="border-blue-200 dark:border-blue-900/30">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-1.5">
-                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        Guidelines
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Originality</p>
-                            <p className="text-xs text-muted-foreground">
-                              Original content or properly attributed
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Quality</p>
-                            <p className="text-xs text-muted-foreground">
-                              Well-written, informative, valuable content
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Formatting</p>
-                            <p className="text-xs text-muted-foreground">
-                              Proper structure, headings, readability
-                            </p>
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.content')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.minWordsMaxChars', { max: CONTENT_MAX_LENGTH.toLocaleString() })}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Prohibited Content */}
-                  <Card className="border-red-200 dark:border-red-900/30">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
-                        <div className="rounded-full bg-red-100 dark:bg-red-900/30 p-1.5">
-                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        </div>
-                        Prohibited
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Harmful Content</p>
-                            <p className="text-xs text-muted-foreground">
-                              Hateful, discriminatory, or violent content
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Spam & Misinformation</p>
-                            <p className="text-xs text-muted-foreground">
-                              Clickbait, spam, misleading information
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Copyright</p>
-                            <p className="text-xs text-muted-foreground">
-                              No copyright or IP violations
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Inappropriate Media</p>
-                            <p className="text-xs text-muted-foreground">
-                              Explicit, violent, or inappropriate images
-                            </p>
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.excerpt')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.optionalUpToChars', { max: EXCERPT_MAX_LENGTH })}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Publishing Rules */}
-                  <Card className="border-amber-200 dark:border-amber-900/30">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-1.5">
-                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        Publishing
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Review Process</p>
-                            <p className="text-xs text-muted-foreground">
-                              All articles are subject to review
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Edits</p>
-                            <p className="text-xs text-muted-foreground">
-                              Significant changes may require re-review
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Tags & Categories</p>
-                            <p className="text-xs text-muted-foreground">
-                              Use relevant tags and difficulty levels
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium">Hero Image</p>
-                            <p className="text-xs text-muted-foreground">
-                              Optional but recommended for visibility
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Important Notes */}
-                <div className="rounded-lg border-2 border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                    <div className="space-y-1">
-                      <p className="font-semibold text-amber-900 dark:text-amber-100">Important</p>
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        By publishing, you confirm that you have read and agree to follow all guidelines. 
-                        Violations may result in content removal or account restrictions.
-                      </p>
                     </div>
                   </div>
-                </div>
 
-                {/* Agreement Checkbox */}
-                <div className={cn(
-                  "flex items-start space-x-4 rounded-lg border-2 p-5 transition-all",
-                  agreedToTerms 
-                    ? "border-green-500 dark:border-green-400 bg-green-50/50 dark:bg-green-950/20" 
-                    : "border-red-500 dark:border-red-400 bg-red-50/50 dark:bg-red-950/20"
-                )}>
-                  <Checkbox
-                    id="agree-terms"
-                    checked={agreedToTerms}
-                    onCheckedChange={(checked) => {
-                      setAgreedToTerms(checked === true)
-                    }}
-                    className={cn(
-                      "mt-0.5 h-5 w-5",
-                      agreedToTerms 
-                        ? "border-green-500 dark:border-green-400 data-[state=checked]:bg-green-500 dark:data-[state=checked]:bg-green-400" 
-                        : "border-red-500 dark:border-red-400"
-                    )}
-                  />
-                  <div className="space-y-2 flex-1">
-                    <Label
-                      htmlFor="agree-terms"
-                      className={cn(
-                        "text-base font-semibold leading-tight cursor-pointer block flex items-center",
-                        agreedToTerms 
-                          ? "text-green-700 dark:text-green-300" 
-                          : "text-red-700 dark:text-red-300"
-                      )}
-                    >
-                      <div 
-                        className="transition-all duration-500 overflow-visible flex items-center flex-shrink-0 justify-end"
-                        style={{
-                          width: agreedToTerms ? '0' : '32px',
-                          opacity: agreedToTerms ? 0 : 1,
-                          marginRight: agreedToTerms ? '0' : '8px',
-                          paddingLeft: agreedToTerms ? '0' : '4px',
-                          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-                        }}
-                      >
-                        {!agreedToTerms && (
-                          <ChevronLeft className="h-4 w-4 animate-point-to-checkbox text-red-600 dark:text-red-400" />
-                        )}
+                  <Separator />
+
+                  {/* Guidelines Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">{t('createArticle.guidelines')}</h3>
+                    </div>
+                    <div className="space-y-3 pl-7">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.originality')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.originalContentOrAttributed')}
+                          </p>
+                        </div>
                       </div>
-                      <span 
-                        className="transition-all duration-500 inline-block"
-                        style={{
-                          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-                        }}
-                      >
-                        I confirm that I have read and agree to follow all publishing guidelines and rules
-                      </span>
-                    </Label>
-                    <p className={cn(
-                      "text-sm",
-                      agreedToTerms 
-                        ? "text-green-600 dark:text-green-400" 
-                        : "text-red-600 dark:text-red-400"
-                    )}>
-                      You must check this box to proceed with publishing your article.
+                      <div className="flex items-start gap-3">
+                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.quality')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.wellWrittenInformative')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.formatting')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.properStructureHeadings')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Prohibited Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">{t('createArticle.prohibited')}</h3>
+                    </div>
+                    <div className="space-y-3 pl-7">
+                      <div className="flex items-start gap-3">
+                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.harmfulContent')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.hatefulDiscriminatoryViolent')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.spamMisinformation')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.clickbaitSpamMisleading')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.copyright')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.noCopyrightViolations')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.inappropriateMedia')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.explicitViolentInappropriate')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Publishing Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">{t('createArticle.publishing')}</h3>
+                    </div>
+                    <div className="space-y-3 pl-7">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.reviewProcess')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.allArticlesSubjectToReview')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.edits')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.significantChangesMayRequireReview')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.tagsCategories')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.useRelevantTagsDifficulty')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{t('createArticle.heroImage')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('createArticle.optionalButRecommended')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Important Notes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">{t('createArticle.important')}</h3>
+                    </div>
+                    <p className="text-sm text-foreground pl-7">
+                      {t('createArticle.byPublishingYouConfirm')}
                     </p>
+                  </div>
+
+                  <Separator />
+
+                  {/* Agreement Checkbox */}
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="agree-terms"
+                        checked={agreedToTerms}
+                        onCheckedChange={(checked) => {
+                          setAgreedToTerms(checked === true)
+                        }}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-1 flex-1">
+                        <Label
+                          htmlFor="agree-terms"
+                          className="text-sm font-medium leading-tight cursor-pointer"
+                        >
+                          {t('createArticle.agreeToGuidelines')}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t('createArticle.mustAgree')}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1507,12 +1436,12 @@ export default function CreateArticlePage() {
               className="gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              {t('createArticle.previous')}
             </Button>
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                Step {currentStep + 1} of {steps.length}
+                {t('createArticle.stepCounter', { current: currentStep + 1, total: steps.length })}
               </span>
             </div>
 
@@ -1524,7 +1453,7 @@ export default function CreateArticlePage() {
                 disabled={isSavingDraft || isPublishing || isLoadingDraft}
               >
                 <Save className="h-4 w-4" />
-                {isSavingDraft ? 'Saving...' : 'Save Draft'}
+                {isSavingDraft ? t('settings.profile.saving') : t('createArticle.saveDraft')}
               </Button>
               {currentStep === steps.length - 1 ? (
                 <Button
@@ -1533,7 +1462,7 @@ export default function CreateArticlePage() {
                   className="gap-2"
                 >
                   <Eye className="h-4 w-4" />
-                  {isPublishing ? 'Publishing...' : 'Publish'}
+                  {isPublishing ? t('createArticle.publishing') : t('createArticle.publish')}
                 </Button>
               ) : currentStep === steps.length - 2 ? (
                 <Button
@@ -1542,7 +1471,7 @@ export default function CreateArticlePage() {
                   className="gap-2"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Complete
+                  {t('createArticle.complete')}
                 </Button>
               ) : (
                 <Button
@@ -1550,7 +1479,7 @@ export default function CreateArticlePage() {
                   disabled={!canGoNext()}
                   className="gap-2"
                 >
-                  Next
+                  {t('createArticle.next')}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
@@ -1562,10 +1491,9 @@ export default function CreateArticlePage() {
       <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader className="space-y-2 text-left">
-            <DialogTitle>Refine your hero image</DialogTitle>
+            <DialogTitle>{t('createArticle.refineHeroImage')}</DialogTitle>
             <DialogDescription>
-              Drag to reframe the focus area. The preview below keeps a cinematic 16:9 ratio for article cards
-              and social sharing.
+              {t('createArticle.refineHeroImageDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1587,22 +1515,22 @@ export default function CreateArticlePage() {
                     <div className="pointer-events-none absolute inset-0 border border-white/20" />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/10" />
                   </>
-                ) : (
+                  ) : (
                   <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                    Waiting for image...
+                    {t('createArticle.waitingForImage')}
                   </div>
                 )}
                 <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
                   <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
                     16:9
                   </Badge>
-                  Balanced framing
+                  {t('createArticle.balancedFraming')}
                 </div>
               </div>
 
               <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
                 <div className="flex items-center justify-between text-sm font-medium">
-                  <span>Zoom</span>
+                  <span>{t('createArticle.zoom')}</span>
                   <span className="text-muted-foreground">{zoom.toFixed(1)}×</span>
           </div>
             <Slider
@@ -1620,30 +1548,27 @@ export default function CreateArticlePage() {
             <div className="space-y-4">
               <Card className="h-full border-border/60 bg-muted/30">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Cropping tips</CardTitle>
+                  <CardTitle className="text-base font-semibold">{t('createArticle.croppingTips')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm text-muted-foreground">
                   <div className="space-y-2">
-                    <p className="font-medium text-foreground">Aim for clarity</p>
+                    <p className="font-medium text-foreground">{t('createArticle.aimForClarity')}</p>
                     <p>
-                      Keep the subject centered and avoid placing important details near the frame edges. The crop is
-                      responsive and scales across devices.
+                      {t('createArticle.aimForClarityDescription')}
                     </p>
                   </div>
                   <Separator className="bg-border/60" />
                   <div className="space-y-2">
-                    <p className="font-medium text-foreground">Resolution matters</p>
+                    <p className="font-medium text-foreground">{t('createArticle.resolutionMatters')}</p>
                     <p>
-                      Higher resolution assets deliver sharper cards. For best results use images at least{' '}
-                      <span className="font-medium text-foreground">1200×630px</span>.
+                      {t('createArticle.resolutionMattersDescription')}
                     </p>
                   </div>
                   <Separator className="bg-border/60" />
                   <div className="space-y-2">
-                    <p className="font-medium text-foreground">Need adjustments later?</p>
+                    <p className="font-medium text-foreground">{t('createArticle.needAdjustmentsLater')}</p>
                     <p>
-                      You can reopen this editor anytime after uploading. The original image stays intact until you
-                      confirm the crop.
+                      {t('createArticle.needAdjustmentsLaterDescription')}
                     </p>
                   </div>
                 </CardContent>
@@ -1653,7 +1578,7 @@ export default function CreateArticlePage() {
 
           <DialogFooter className="mt-6">
             <Button variant="ghost" onClick={handleCancelCrop} disabled={isProcessingImage}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleConfirmCrop}
@@ -1663,12 +1588,12 @@ export default function CreateArticlePage() {
               {isProcessingImage ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  Processing...
+                  {t('createArticle.processing')}
                 </>
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  Use image
+                  {t('createArticle.useImage')}
                 </>
               )}
             </Button>

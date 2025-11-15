@@ -8,32 +8,29 @@ import {
   LogOut,
   PenSquare,
   Settings,
-  Sparkles,
   User,
   Flame,
   Award,
   Users,
+  MessageSquare,
+  TrendingUp,
 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { selectReadingListCount, useReadingListStore } from '@/stores/readingListStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
-import { Progress } from '@/components/ui/progress'
 import { FriendsSheet } from '@/components/FriendsSheet'
+import { StatsSheet } from '@/components/StatsSheet'
 import { useTranslation } from '@/hooks/useTranslation'
 
 export function AccountSheet() {
@@ -41,22 +38,21 @@ export function AccountSheet() {
   const navigate = useNavigate()
   const location = useLocation()
   const [friendsSheetOpen, setFriendsSheetOpen] = useState(false)
+  const [statsSheetOpen, setStatsSheetOpen] = useState(false)
   const { user, logout } = useAuthStore((state) => ({
     user: state.user,
     logout: state.logout,
   }))
   const unreadNotifications = useNotificationsStore(selectUnreadCount)
   const readingListCount = useReadingListStore(selectReadingListCount)
-  const { level, xpIntoLevel, xpForLevel, streakDays, experience } = useGamificationStore((state) => ({
+  const { level, xpIntoLevel, xpForLevel, streakDays } = useGamificationStore((state) => ({
     level: state.level,
     xpIntoLevel: state.xpIntoLevel,
     xpForLevel: state.xpForLevel,
     streakDays: state.streakDays,
-    experience: state.experience,
   }))
 
   const xpProgress = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
-  const xpRemaining = Math.max(xpForLevel - xpIntoLevel, 0)
 
   const initials = useMemo(() => {
     if (!user?.nickname) return ''
@@ -118,106 +114,89 @@ export function AccountSheet() {
           )}
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[360px] sm:w-[420px] overflow-y-auto">
-        <SheetHeader className="items-start space-y-2">
-          <SheetTitle>{t('accountSheet.workspaceHub')}</SheetTitle>
-          <SheetDescription>
-            {t('accountSheet.workspaceDescription')}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="mt-6 space-y-6">
-          <Card className="border border-border/60 bg-card/90 shadow-md">
-            <CardContent className="space-y-5 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-base font-semibold text-primary">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
-                    ) : (
-                      initials || 'AU'
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
-                    <div className="group relative max-w-full">
-                      <p className="truncate text-xs text-muted-foreground">
-                        {t('accountSheet.signedInAs')} {user.email ? (
-                          <span className="truncate">{user.email}</span>
-                        ) : null}
-                      </p>
-                      {user.email && (
-                        <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 w-max max-w-[280px] rounded-md border border-border/60 bg-card/95 px-2 py-1 text-[11px] font-medium text-foreground shadow-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                          {user.email}
-                        </div>
-                      )}
+      <SheetContent side="right" className="w-[360px] sm:w-[420px] overflow-y-auto [&>button]:hidden">
+        <div className="space-y-6">
+          {/* Compact Profile */}
+          <div className="flex items-center justify-between gap-3 pb-4 border-b border-border/60">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-sm font-semibold text-primary">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
+                ) : (
+                  initials || 'AU'
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
+                {user.email && (
+                  <div className="group relative max-w-full">
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t('accountSheet.signedInAs')} <span className="truncate">{user.email}</span>
+                    </p>
+                    <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 w-max max-w-[280px] rounded-md border border-border/60 bg-card/95 px-2 py-1 text-[11px] font-medium text-foreground shadow-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                      {user.email}
                     </div>
                   </div>
-                </div>
-                <Badge variant="outline" className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-3 py-1 text-xs text-primary">
-                  <Award className="h-3 w-3" />
-                  {t('accountSheet.level', { level })}
-                </Badge>
+                )}
               </div>
+            </div>
+            <Badge variant="outline" className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-2.5 py-1 text-xs text-primary">
+              <Award className="h-3 w-3" />
+              {level}
+            </Badge>
+          </div>
 
-              <div className="space-y-3 rounded-xl border border-border/50 bg-background/70 p-4">
-                <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  <span>{t('accountSheet.progressToNextLevel')}</span>
-                  <span>{xpProgress}%</span>
-                </div>
-                <Progress value={xpProgress} className="h-2" />
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>{t('accountSheet.xpProgress', { current: xpIntoLevel, total: xpForLevel })}</span>
-                  <span>{t('accountSheet.xpRemaining', { xp: xpRemaining })}</span>
-                </div>
-              </div>
+          {/* Quick Stats Preview */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setStatsSheetOpen(true)}
+              className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+            >
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{xpProgress}%</span>
+              <span className="text-[10px] text-muted-foreground">XP</span>
+            </button>
+            <button
+              onClick={() => setStatsSheetOpen(true)}
+              className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+            >
+              <Flame className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{streakDays}</span>
+              <span className="text-[10px] text-muted-foreground">{t('accountSheet.days', { count: streakDays })}</span>
+            </button>
+            <SheetClose asChild>
+              <button
+                onClick={() => navigate('/notifications')}
+                className="relative flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 p-3 hover:bg-muted/20 transition-colors"
+              >
+                <Bell className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{unreadNotifications}</span>
+                <span className="text-[10px] text-muted-foreground">{t('accountSheet.notifications')}</span>
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+            </SheetClose>
+          </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-2 rounded-lg border border-border/50 bg-muted/10 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('accountSheet.dailyStreak')}
-                  </p>
-                  <p className="flex items-center gap-1 text-base font-semibold text-foreground">
-                    <Flame className="h-4 w-4 text-primary" />
-                    {t('accountSheet.days', { count: streakDays })}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {t('accountSheet.streakDescription')}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 rounded-lg border border-border/50 bg-muted/10 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('accountSheet.notifications')}
-                  </p>
-                  <p className="flex items-center gap-2 text-base font-semibold text-foreground">
-                    <Bell className="h-4 w-4 text-primary" />
-                    {unreadNotifications}
-                  </p>
-                  <SheetClose asChild>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="mt-1 h-8 w-full justify-center rounded-md border border-primary/20 bg-muted/10 text-[11px] font-medium text-primary hover:bg-primary/15 focus-visible:ring-1 focus-visible:ring-primary/30"
-                      onClick={() => navigate('/notifications')}
-                    >
-                      {t('accountSheet.reviewInbox')}
-                    </Button>
-                  </SheetClose>
-                </div>
-              </div>
+          {/* View Full Stats Button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => setStatsSheetOpen(true)}
+          >
+            <TrendingUp className="h-4 w-4" />
+            {t('accountSheet.viewStats')}
+          </Button>
 
-              <div className="rounded-lg border border-border/50 bg-muted/10 p-3 text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">{t('accountSheet.lifetimeExperience')}</span>{' '}
-                {t('accountSheet.xpEarned', { xp: experience })}
-              </div>
-            </CardContent>
-          </Card>
-
+          {/* Quick Actions */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t('accountSheet.quickActions')}
             </h3>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               <SheetClose asChild>
                 <Button
                   className="justify-start gap-2"
@@ -251,16 +230,6 @@ export function AccountSheet() {
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => navigate('/achievements')}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t('accountSheet.achievements')}
-                </Button>
-              </SheetClose>
-              <SheetClose asChild>
-                <Button
-                  variant="outline"
-                  className="col-span-1 sm:col-span-2 justify-start gap-2"
                   onClick={() =>
                     navigate('/settings/profile', {
                       state: { from: location.pathname },
@@ -308,14 +277,26 @@ export function AccountSheet() {
                   {t('accountSheet.drafts')}
                 </Button>
               </SheetClose>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2"
-                onClick={() => navigate('/help')}
-              >
-                <HelpCircle className="h-4 w-4" />
-                {t('accountSheet.helpCenter')}
-              </Button>
+              <SheetClose asChild>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2"
+                  onClick={() => navigate('/feedback')}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {t('accountSheet.feedback')}
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2"
+                  onClick={() => navigate('/help')}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  {t('accountSheet.helpCenter')}
+                </Button>
+              </SheetClose>
             </div>
           </section>
         </div>
@@ -332,6 +313,7 @@ export function AccountSheet() {
         </SheetFooter>
       </SheetContent>
       <FriendsSheet open={friendsSheetOpen} onOpenChange={setFriendsSheetOpen} />
+      <StatsSheet open={statsSheetOpen} onOpenChange={setStatsSheetOpen} />
     </Sheet>
   )
 }

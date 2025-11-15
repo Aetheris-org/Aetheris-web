@@ -10,37 +10,42 @@ export type CalloutVariant = 'info' | 'success' | 'warning' | 'idea' | 'note'
 
 const CALLOUT_VARIANTS: Record<
   CalloutVariant,
-  { label: string; icon: ComponentType<{ className?: string }>; tone: string; iconColor: string }
+  { label: string; icon: ComponentType<{ className?: string }>; borderColor: string; iconColor: string; labelColor: string }
 > = {
   info: {
     label: 'Инфо',
     icon: Info,
-    tone: 'border-border/60 bg-muted/30',
+    borderColor: 'border-l-blue-500',
     iconColor: 'text-blue-500 dark:text-blue-400',
+    labelColor: 'text-blue-600 dark:text-blue-400',
   },
   success: {
     label: 'Успех',
     icon: CheckCircle2,
-    tone: 'border-border/60 bg-muted/30',
+    borderColor: 'border-l-emerald-500',
     iconColor: 'text-emerald-500 dark:text-emerald-400',
+    labelColor: 'text-emerald-600 dark:text-emerald-400',
   },
   warning: {
     label: 'Внимание',
     icon: AlertTriangle,
-    tone: 'border-border/60 bg-muted/30',
+    borderColor: 'border-l-amber-500',
     iconColor: 'text-amber-500 dark:text-amber-400',
+    labelColor: 'text-amber-600 dark:text-amber-400',
   },
   idea: {
     label: 'Идея',
     icon: Lightbulb,
-    tone: 'border-border/60 bg-muted/30',
+    borderColor: 'border-l-purple-500',
     iconColor: 'text-purple-500 dark:text-purple-400',
+    labelColor: 'text-purple-600 dark:text-purple-400',
   },
   note: {
     label: 'Заметка',
     icon: StickyNote,
-    tone: 'border-border/60 bg-muted/30',
+    borderColor: 'border-l-pink-500',
     iconColor: 'text-pink-500 dark:text-pink-400',
+    labelColor: 'text-pink-600 dark:text-pink-400',
   },
 }
 
@@ -53,8 +58,9 @@ const CalloutView = ({ node, updateAttributes, children, editor }: NodeViewProps
     <NodeViewWrapper
       as="aside"
       className={cn(
-        'callout-block group relative my-4 flex gap-3 rounded-lg border px-4 py-3 text-sm transition-all',
-        variantConfig.tone,
+        'callout-block group relative my-4 flex gap-3 rounded-lg border border-border/60 bg-muted/30',
+        variantConfig.borderColor,
+        'border-l-4 px-4 py-3 text-sm transition-all',
         editor.isEditable && 'ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-2'
       )}
       data-variant={variant}
@@ -64,7 +70,7 @@ const CalloutView = ({ node, updateAttributes, children, editor }: NodeViewProps
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className={cn('text-xs font-semibold uppercase tracking-wider', variantConfig.labelColor)}>
             {variantConfig.label}
           </span>
           {editor.isEditable && (

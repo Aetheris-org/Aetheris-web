@@ -54,10 +54,10 @@ import {
   Flame,
   Settings,
   Copy,
-  Share2,
   ChevronUp,
   ChevronDown,
   Languages,
+  Info,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -89,7 +89,6 @@ import {
   TYPOGRAPHY_SCALES,
   SURFACE_PRESETS,
   type ThemeMode,
-  type AppearancePreset,
   type TypographyScale,
   type ContrastMode,
   type DepthStyle,
@@ -108,6 +107,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // settingsNav будет динамическим через useTranslation
 const settingsNavItems = [
@@ -177,25 +182,31 @@ const SURFACE_GROUPS: Array<{ id: string; label: string; description: string; pa
     id: 'luminous',
     label: 'Bright & airy',
     description: 'High-key canvases for daylight dashboards and editorial homes.',
-    palettes: ['daylight', 'lumen', 'glacier', 'harbor', 'zenith'],
+    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud'],
   },
   {
     id: 'earthy',
     label: 'Warm & grounded',
     description: 'Organic neutrals that pair well with writing-led experiences.',
-    palettes: ['sunset', 'moss', 'canyon', 'terracotta', 'ember'],
+    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss'],
   },
   {
     id: 'expressive',
     label: 'Soft & expressive',
     description: 'Gradient-ready palettes with gentle colour cast for calm products.',
-    palettes: ['mist', 'nebula', 'twilight', 'aurora', 'solstice'],
+    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice'],
+  },
+  {
+    id: 'neutral',
+    label: 'Neutral greys',
+    description: 'Versatile grey tones for balanced, professional interfaces.',
+    palettes: ['ash', 'slate', 'charcoal', 'stone'],
   },
   {
     id: 'deep',
     label: 'Deep focus',
     description: 'Immersive dark surfaces for reading in low light.',
-    palettes: ['midnight', 'nightfall', 'noir', 'obsidian', 'eclipse', 'void', 'inkwell', 'cosmos', 'onyx'],
+    palettes: ['midnight', 'obsidian', 'noir', 'dota', 'onyx', 'shadow', 'storm', 'abyss', 'deep', 'pitch', 'coal', 'jet', 'carbon', 'void', 'nightfall', 'inkwell', 'eclipse', 'cosmos'],
   },
 ]
 
@@ -204,25 +215,37 @@ const ACCENT_GROUPS: Array<{ id: string; label: string; description: string; acc
     id: 'vivid',
     label: 'Vivid energy',
     description: 'High-contrast tones that stand out in busy layouts.',
-    accents: ['indigo', 'violet', 'magenta', 'crimson', 'cobalt', 'azure', 'lime'],
+    accents: ['red', 'crimson', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
   },
   {
     id: 'botanical',
     label: 'Fresh & botanical',
     description: 'Nature-inspired greens and blues suited to calm products.',
-    accents: ['emerald', 'teal', 'seafoam', 'sage', 'cyan', 'mint'],
+    accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive'],
   },
   {
     id: 'warm',
     label: 'Warm & welcoming',
     description: 'Sunset oranges and blush tones for storytelling moments.',
-    accents: ['amber', 'saffron', 'sunset', 'peach', 'coral', 'rose'],
+    accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon'],
+  },
+  {
+    id: 'cool',
+    label: 'Cool & calm',
+    description: 'Serene blues and purples for peaceful interfaces.',
+    accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky'],
   },
   {
     id: 'muted',
     label: 'Sophisticated neutrals',
     description: 'Soft plums and greys that stay out of the way.',
-    accents: ['plum', 'orchid', 'mono', 'graphite', 'pure'],
+    accents: ['pure', 'silver', 'mono', 'graphite'],
+  },
+  {
+    id: 'playful',
+    label: 'Playful & vibrant',
+    description: 'Bright, fun colors for energetic and creative spaces.',
+    accents: ['pink', 'lime', 'yellow', 'orange'],
   },
 ]
 
@@ -708,8 +731,8 @@ function ProfileSettings() {
 
     if (!file.type.startsWith('image/')) {
       toast({
-        title: 'Unsupported file',
-        description: 'Please choose an image (JPG, PNG, or WEBP).',
+        title: t('settings.profile.unsupportedFile'),
+        description: t('settings.profile.unsupportedFileDescription'),
         variant: 'destructive',
       })
       event.target.value = ''
@@ -732,8 +755,8 @@ function ProfileSettings() {
 
     if (!file.type.startsWith('image/')) {
       toast({
-        title: 'Unsupported file',
-        description: 'Please choose an image (JPG, PNG, or WEBP).',
+        title: t('settings.profile.unsupportedFile'),
+        description: t('settings.profile.unsupportedFileDescription'),
         variant: 'destructive',
       })
       event.target.value = ''
@@ -826,8 +849,8 @@ function ProfileSettings() {
     } catch (error: unknown) {
       console.error('Failed to crop avatar image', error)
       toast({
-        title: 'Image processing failed',
-        description: 'We could not process this avatar. Try another image.',
+        title: t('settings.profile.imageProcessingFailed'),
+        description: t('settings.profile.imageProcessingFailedDescription'),
         variant: 'destructive',
       })
     } finally {
@@ -861,8 +884,8 @@ function ProfileSettings() {
     } catch (error: unknown) {
       console.error('Failed to crop cover image', error)
       toast({
-        title: 'Image processing failed',
-        description: 'We could not process this cover image. Try another one.',
+        title: t('settings.profile.imageProcessingFailed'),
+        description: t('settings.profile.imageProcessingFailedDescription'),
         variant: 'destructive',
       })
     } finally {
@@ -960,13 +983,13 @@ function ProfileSettings() {
     officeHours.trim() !== insightsInitialRef.current.officeHours ||
     collaborationNotes.trim() !== insightsInitialRef.current.collaborationNotes
 
-  const contactMethodOptions: Array<{ value: PreferredContactMethod; label: string; helper: string }> = [
-    { value: 'email', label: 'Email', helper: 'Reply within 1-2 business days' },
-    { value: 'direct-message', label: 'Direct messages', helper: 'Connect via the built-in messenger' },
-    { value: 'schedule', label: 'Scheduling link', helper: 'Share a Calendly or other booking link' },
-    { value: 'social', label: 'Social first', helper: 'Reach out via social handles' },
-    { value: 'not-specified', label: 'No preference', helper: 'Decide together as needed' },
-  ]
+  const contactMethodOptions: Array<{ value: PreferredContactMethod; label: string; helper: string }> = useMemo(() => [
+    { value: 'email', label: t('settings.profile.preferredContactMethodEmail'), helper: t('settings.profile.preferredContactMethodEmailDescription') },
+    { value: 'direct-message', label: t('settings.profile.preferredContactMethodDirectMessage'), helper: t('settings.profile.preferredContactMethodDirectMessageDescription') },
+    { value: 'schedule', label: t('settings.profile.preferredContactMethodSchedule'), helper: t('settings.profile.preferredContactMethodScheduleDescription') },
+    { value: 'social', label: t('settings.profile.preferredContactMethodSocial'), helper: t('settings.profile.preferredContactMethodSocialDescription') },
+    { value: 'not-specified', label: t('settings.profile.preferredContactMethodNotSpecified'), helper: t('settings.profile.preferredContactMethodNotSpecifiedDescription') },
+  ], [t])
 
   const hasTextChanges =
     nickname.trim() !== initialNickname || (bio ?? '').trim() !== (initialBio ?? '')
@@ -1382,7 +1405,7 @@ function ProfileSettings() {
               <span className="text-xs text-muted-foreground">
                 {bioRemaining} {t('settings.profile.charactersLeft')}
               </span>
-        </div>
+            </div>
             <textarea
               id="settings-bio"
               value={bio}
@@ -1419,14 +1442,14 @@ function ProfileSettings() {
           <TabsContent value="contact" className="space-y-6 mt-6">
             <section className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Contact details</Label>
+                <Label className="text-sm font-semibold">{t('settings.profile.contactDetails')}</Label>
             <p className="text-sm text-muted-foreground">
-              Share how editors and collaborators can reach you. These fields will sync with the backend in a future release.
+              {t('settings.profile.contactDetailsDescription')}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-              <Label htmlFor="settings-first-name">First name</Label>
+              <Label htmlFor="settings-first-name">{t('settings.profile.firstName')}</Label>
               <Input
                 id="settings-first-name"
                 value={firstName}
@@ -1435,7 +1458,7 @@ function ProfileSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-last-name">Last name</Label>
+              <Label htmlFor="settings-last-name">{t('settings.profile.lastName')}</Label>
               <Input
                 id="settings-last-name"
                 value={lastName}
@@ -1444,7 +1467,7 @@ function ProfileSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-contact-email">Contact email</Label>
+              <Label htmlFor="settings-contact-email">{t('settings.profile.contactEmail')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1456,11 +1479,11 @@ function ProfileSettings() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Shown to editors only. Account login email remains unchanged.
+                {t('settings.profile.contactEmailDescription')}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-website">Website</Label>
+              <Label htmlFor="settings-website">{t('settings.profile.website')}</Label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1473,7 +1496,7 @@ function ProfileSettings() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-location">Location</Label>
+              <Label htmlFor="settings-location">{t('settings.profile.location')}</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1493,7 +1516,7 @@ function ProfileSettings() {
               onClick={handleContactReset}
               disabled={!contactHasChanges || contactSaving}
             >
-              Reset
+              {t('common.reset')}
             </Button>
             <Button
               size="sm"
@@ -1504,10 +1527,10 @@ function ProfileSettings() {
               {contactSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  {t('settings.profile.saving')}
                 </>
               ) : (
-                'Save contact info'
+                t('settings.profile.saveContactInfo')
               )}
             </Button>
           </div>
@@ -1517,14 +1540,14 @@ function ProfileSettings() {
           <TabsContent value="social" className="space-y-6 mt-6">
             <section className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Social profiles</Label>
+                <Label className="text-sm font-semibold">{t('settings.profile.socialProfiles')}</Label>
             <p className="text-sm text-muted-foreground">
-              Display external profiles on your public page. Add full URLs for best results.
+              {t('settings.profile.socialProfilesDescription')}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="settings-twitter">Twitter / X</Label>
+              <Label htmlFor="settings-twitter">{t('settings.profile.twitter')}</Label>
               <div className="relative">
                 <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1537,7 +1560,7 @@ function ProfileSettings() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-github">GitHub</Label>
+              <Label htmlFor="settings-github">{t('settings.profile.github')}</Label>
               <div className="relative">
                 <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1550,7 +1573,7 @@ function ProfileSettings() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-linkedin">LinkedIn</Label>
+              <Label htmlFor="settings-linkedin">{t('settings.profile.linkedin')}</Label>
               <div className="relative">
                 <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1563,7 +1586,7 @@ function ProfileSettings() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-portfolio">Portfolio</Label>
+              <Label htmlFor="settings-portfolio">{t('settings.profile.portfolio')}</Label>
               <div className="relative">
                 <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1583,7 +1606,7 @@ function ProfileSettings() {
               onClick={handleSocialReset}
               disabled={!socialHasChanges || socialSaving}
             >
-              Reset
+              {t('common.reset')}
             </Button>
             <Button
               size="sm"
@@ -1594,10 +1617,10 @@ function ProfileSettings() {
               {socialSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  {t('settings.profile.saving')}
                 </>
               ) : (
-                'Save social links'
+                t('settings.profile.saveSocialLinks')
               )}
             </Button>
           </div>
@@ -1607,23 +1630,23 @@ function ProfileSettings() {
           <TabsContent value="professional" className="space-y-6 mt-6">
             <section className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Professional profile</Label>
+                <Label className="text-sm font-semibold">{t('settings.profile.professionalProfile')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Curate how Aetheris introduces you in newsletters, listings, and profile summaries.
+                  {t('settings.profile.professionalProfileDescription')}
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="settings-headline">Headline</Label>
+                  <Label htmlFor="settings-headline">{t('settings.profile.headline')}</Label>
                   <Input
                     id="settings-headline"
                     value={headline}
                     onChange={(event) => setHeadline(event.target.value)}
-                    placeholder="Design director crafting calm, accessible publishing tools"
+                    placeholder={t('settings.profile.headlinePlaceholder')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-role">Current role</Label>
+                  <Label htmlFor="settings-role">{t('settings.profile.currentRole')}</Label>
                   <Input
                     id="settings-role"
                     value={currentRole}
@@ -1632,7 +1655,7 @@ function ProfileSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-company">Organisation</Label>
+                  <Label htmlFor="settings-company">{t('settings.profile.currentCompany')}</Label>
                   <Input
                     id="settings-company"
                     value={currentCompany}
@@ -1641,7 +1664,7 @@ function ProfileSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-experience">Experience</Label>
+                  <Label htmlFor="settings-experience">{t('settings.profile.experience')}</Label>
                   <Input
                     id="settings-experience"
                     value={experienceLevel}
@@ -1650,7 +1673,7 @@ function ProfileSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-timezone">Timezone</Label>
+                  <Label htmlFor="settings-timezone">{t('settings.profile.timezone')}</Label>
                   <Input
                     id="settings-timezone"
                     value={timezone}
@@ -1659,7 +1682,7 @@ function ProfileSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-pronouns">Pronouns</Label>
+                  <Label htmlFor="settings-pronouns">{t('settings.profile.pronouns')}</Label>
                   <Input
                     id="settings-pronouns"
                     value={pronouns}
@@ -1668,12 +1691,12 @@ function ProfileSettings() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="settings-availability">Availability note</Label>
+                  <Label htmlFor="settings-availability">{t('settings.profile.availabilityNote')}</Label>
                   <textarea
                     id="settings-availability"
                     value={availability}
                     onChange={(event) => setAvailability(event.target.value)}
-                    placeholder="Open for fractional design leadership, UX critiques, and conference talks."
+                    placeholder={t('settings.profile.availabilityPlaceholder')}
                     className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     maxLength={200}
                   />
@@ -1685,22 +1708,23 @@ function ProfileSettings() {
                   size="sm"
                   onClick={handleProfessionalReset}
                   disabled={!professionalHasChanges || professionalSaving}
+                  className="shrink-0"
                 >
-                  Reset
+                  {t('common.reset')}
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleProfessionalSave}
                   disabled={!professionalHasChanges || professionalSaving}
-                  className="gap-2"
+                  className="gap-2 shrink-0"
                 >
                   {professionalSaving ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                      <span>{t('settings.profile.saving')}</span>
                     </>
                   ) : (
-                    'Save professional info'
+                    <span>{t('settings.profile.saveProfessionalInfo')}</span>
                   )}
                 </Button>
               </div>
@@ -1710,14 +1734,14 @@ function ProfileSettings() {
 
             <section className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Focus & visibility</Label>
+                <Label className="text-sm font-semibold">{t('settings.profile.focusVisibility')}</Label>
             <p className="text-sm text-muted-foreground">
-              Highlight the work you are excited about and how collaborators should reach out.
+              {t('settings.profile.focusVisibilityDescription')}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-languages">Languages & locales</Label>
+              <Label htmlFor="settings-languages">{t('settings.profile.languages')}</Label>
               <Input
                 id="settings-languages"
                 value={languages}
@@ -1726,7 +1750,7 @@ function ProfileSettings() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-focus">Focus areas</Label>
+              <Label htmlFor="settings-focus">{t('settings.profile.focusAreas')}</Label>
           <textarea
                 id="settings-focus"
                 value={focusAreas}
@@ -1737,7 +1761,7 @@ function ProfileSettings() {
           />
         </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-learning">Currently exploring</Label>
+              <Label htmlFor="settings-learning">{t('settings.profile.currentlyLearning')}</Label>
               <textarea
                 id="settings-learning"
                 value={currentlyLearning}
@@ -1748,7 +1772,7 @@ function ProfileSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="settings-office-hours">Office hours / response window</Label>
+              <Label htmlFor="settings-office-hours">{t('settings.profile.officeHours')}</Label>
               <Input
                 id="settings-office-hours"
                 value={officeHours}
@@ -1757,7 +1781,7 @@ function ProfileSettings() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-collaboration">Collaboration notes</Label>
+              <Label htmlFor="settings-collaboration">{t('settings.profile.collaborationNotes')}</Label>
               <textarea
                 id="settings-collaboration"
                 value={collaborationNotes}
@@ -1771,7 +1795,7 @@ function ProfileSettings() {
 
           <div className="space-y-4 rounded-lg border border-dashed bg-muted/20 p-4">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Availability</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.availability')}</p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -1782,7 +1806,7 @@ function ProfileSettings() {
                   aria-pressed={openToMentoring}
                 >
                   <Users className="h-4 w-4" />
-                  Mentoring
+                  {t('settings.profile.openToMentoring')}
                 </Button>
                 <Button
                   type="button"
@@ -1793,7 +1817,7 @@ function ProfileSettings() {
                   aria-pressed={openToConsulting}
                 >
                   <Briefcase className="h-4 w-4" />
-                  Consulting
+                  {t('settings.profile.openToConsulting')}
                 </Button>
                 <Button
                   type="button"
@@ -1804,30 +1828,56 @@ function ProfileSettings() {
                   aria-pressed={openToSpeaking}
                 >
                   <Sparkles className="h-4 w-4" />
-                  Speaking
+                  {t('settings.profile.openToSpeaking')}
                 </Button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preferred contact method</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.preferredContactMethod')}</p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {contactMethodOptions.map((option) => (
+                {contactMethodOptions.map((option) => {
+                  const isSelected = preferredContactMethod === option.value
+                  return (
+                    <TooltipProvider key={option.value}>
+                      <Tooltip>
+                        <TooltipTrigger>
                   <Button
-                    key={option.value}
                     type="button"
-                    variant={preferredContactMethod === option.value ? 'default' : 'outline'}
+                            variant={isSelected ? 'default' : 'outline'}
                     className={cn(
-                      'h-full justify-start gap-1 py-3 text-left',
-                      preferredContactMethod === option.value && 'border-primary'
+                              'h-full justify-start gap-1 py-3 text-left min-w-0 w-full',
+                              isSelected && 'border-primary'
                     )}
                     onClick={() => setPreferredContactMethod(option.value)}
-                    aria-pressed={preferredContactMethod === option.value}
-                  >
-                    <span className="text-sm font-semibold">{option.label}</span>
-                    <span className="text-xs text-muted-foreground">{option.helper}</span>
+                            aria-pressed={isSelected}
+                          >
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1 overflow-hidden">
+                              <span className={cn(
+                                'text-sm font-semibold truncate',
+                                isSelected ? 'text-primary-foreground' : 'text-foreground'
+                              )}>
+                                {option.label}
+                              </span>
+                              <span className={cn(
+                                'text-xs truncate',
+                                isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                              )}>
+                                {option.helper}
+                              </span>
+                            </div>
                   </Button>
-                ))}
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold">{option.label}</span>
+                            <span className="text-muted-foreground">{option.helper}</span>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                })}
               </div>
             </div>
 
@@ -1860,7 +1910,7 @@ function ProfileSettings() {
               onClick={handleInsightsReset}
               disabled={!insightsHasChanges || insightsSaving}
             >
-              Reset
+              {t('common.reset')}
             </Button>
             <Button
               size="sm"
@@ -1871,10 +1921,10 @@ function ProfileSettings() {
               {insightsSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  {t('settings.profile.saving')}
                 </>
               ) : (
-                'Save focus & visibility'
+                t('settings.profile.saveFocusVisibility')
               )}
             </Button>
           </div>
@@ -1900,9 +1950,9 @@ function ProfileSettings() {
         <Dialog open={isCoverCropOpen} onOpenChange={(open) => (open ? setIsCoverCropOpen(true) : handleCancelCoverCrop())}>
           <DialogContent className="max-w-4xl">
             <DialogHeader className="space-y-2 text-left">
-              <DialogTitle>Adjust profile cover</DialogTitle>
+              <DialogTitle>{t('settings.profile.adjustProfileCover')}</DialogTitle>
               <DialogDescription>
-                Drag to frame the banner. The cover displays on your profile and author highlights.
+                {t('settings.profile.adjustProfileCoverDescription')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1926,20 +1976,20 @@ function ProfileSettings() {
                     </>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                      Waiting for image...
+                      {t('settings.profile.waitingForImage')}
                     </div>
                   )}
                   <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
                     <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
                       4:1
                     </Badge>
-                    Wide banner
+                    {t('settings.profile.wideBanner')}
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
                   <div className="flex items-center justify-between text-sm font-medium">
-                    <span>Zoom</span>
+                    <span>{t('settings.profile.zoom')}</span>
                     <span className="text-muted-foreground">{coverZoom.toFixed(1)}×</span>
                   </div>
                   <Slider
@@ -1957,22 +2007,22 @@ function ProfileSettings() {
               <div className="space-y-4">
                 <Card className="h-full border-border/60 bg-muted/30">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold">Cover guidelines</CardTitle>
+                    <CardTitle className="text-base font-semibold">{t('settings.profile.coverGuidelines')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm text-muted-foreground">
                     <div className="space-y-2">
-                      <p className="font-medium text-foreground">Keep focus centered</p>
-                      <p>Important artwork and text should sit comfortably within the central area.</p>
+                      <p className="font-medium text-foreground">{t('settings.profile.keepFocusCentered')}</p>
+                      <p>{t('settings.profile.keepFocusCenteredDescription')}</p>
                     </div>
                     <Separator className="bg-border/60" />
                     <div className="space-y-2">
-                      <p className="font-medium text-foreground">Use large images</p>
-                      <p>For best results pick images at least <span className="font-medium text-foreground">1600×600px</span>.</p>
+                      <p className="font-medium text-foreground">{t('settings.profile.useLargeImages')}</p>
+                      <p>{t('settings.profile.useLargeImagesDescription', { size: '1600×600px' })}</p>
                     </div>
                     <Separator className="bg-border/60" />
         <div className="space-y-2">
-                      <p className="font-medium text-foreground">Re-edit anytime</p>
-                      <p>You can reopen this editor before saving changes to fine-tune the crop.</p>
+                      <p className="font-medium text-foreground">{t('settings.profile.reEditAnytime')}</p>
+                      <p>{t('settings.profile.reEditAnytimeDescription')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1981,18 +2031,18 @@ function ProfileSettings() {
 
             <DialogFooter className="mt-6">
               <Button variant="ghost" onClick={handleCancelCoverCrop} disabled={isCoverProcessing}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleConfirmCoverCrop} disabled={isCoverProcessing || !coverCroppedArea} className="gap-2">
                 {isCoverProcessing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Processing...
+                    {t('settings.profile.processing')}
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4" />
-                    Use image
+                    {t('settings.profile.useImage')}
                   </>
                 )}
               </Button>
@@ -2003,9 +2053,9 @@ function ProfileSettings() {
         <Dialog open={isAvatarCropOpen} onOpenChange={(open) => (open ? setIsAvatarCropOpen(true) : handleCancelAvatarCrop())}>
           <DialogContent className="max-w-2xl">
             <DialogHeader className="space-y-2 text-left">
-              <DialogTitle>Adjust avatar</DialogTitle>
+              <DialogTitle>{t('settings.profile.adjustAvatar')}</DialogTitle>
               <DialogDescription>
-                Make sure your face or logo stays centered. This avatar appears across the platform.
+                {t('settings.profile.adjustAvatarDescription')}
               </DialogDescription>
             </DialogHeader>
 
@@ -2028,20 +2078,20 @@ function ProfileSettings() {
                   </>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                    Waiting for image...
+                      {t('settings.profile.waitingForImage')}
                   </div>
                 )}
                 <div className="pointer-events-none absolute left-1/2 top-4 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
                   <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
                     1:1
                   </Badge>
-                  Square crop
+                  {t('settings.profile.squareCrop')}
                 </div>
               </div>
 
               <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
                 <div className="flex items-center justify-between text-sm font-medium">
-                  <span>Zoom</span>
+                  <span>{t('settings.profile.zoom')}</span>
                   <span className="text-muted-foreground">{avatarZoom.toFixed(1)}×</span>
                 </div>
                 <Slider
@@ -2058,18 +2108,18 @@ function ProfileSettings() {
 
             <DialogFooter className="mt-6">
               <Button variant="ghost" onClick={handleCancelAvatarCrop} disabled={isAvatarProcessing}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleConfirmAvatarCrop} disabled={isAvatarProcessing || !avatarCroppedArea} className="gap-2">
                 {isAvatarProcessing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Processing...
+                    {t('settings.profile.processing')}
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4" />
-                    Use image
+                    {t('settings.profile.useImage')}
                   </>
                 )}
               </Button>
@@ -2106,10 +2156,6 @@ function AppearanceSettings() {
     setDepth,
     motion,
     setMotion,
-    presets,
-    savePreset,
-    deletePreset,
-    applyPreset,
   } = useThemeStore((state) => ({
     theme: state.theme,
     resolvedTheme: state.resolvedTheme,
@@ -2132,10 +2178,6 @@ function AppearanceSettings() {
     setDepth: state.setDepth,
     motion: state.motion,
     setMotion: state.setMotion,
-    presets: state.presets,
-    savePreset: state.savePreset,
-    deletePreset: state.deletePreset,
-    applyPreset: state.applyPreset,
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
 
@@ -2218,68 +2260,68 @@ function AppearanceSettings() {
     () => [
       {
         value: 'standard' as ContrastMode,
-        label: 'Standard contrast',
-        description: 'Balanced tone for everyday reading.',
+        label: t('settings.appearance.contrast.standard'),
+        description: t('settings.appearance.contrast.standardDescription'),
         icon: Eye,
       },
       {
         value: 'bold' as ContrastMode,
-        label: 'Bold contrast',
-        description: 'Higher contrast for more dramatic separation.',
+        label: t('settings.appearance.contrast.bold'),
+        description: t('settings.appearance.contrast.boldDescription'),
         icon: AlertTriangle,
       },
     ],
-    []
+    [t]
   )
 
   const motionOptions = useMemo(
     () => [
       {
         value: 'default' as MotionPreference,
-        label: 'Animated',
-        description: 'Retain smooth transitions and micro-interactions.',
+        label: t('settings.appearance.motion.animated'),
+        description: t('settings.appearance.motion.animatedDescription'),
         icon: RefreshCw,
       },
       {
         value: 'reduced' as MotionPreference,
-        label: 'Reduced motion',
-        description: 'Minimize motion for people sensitive to animation.',
+        label: t('settings.appearance.motion.reduced'),
+        description: t('settings.appearance.motion.reducedDescription'),
         icon: EyeOff,
       },
     ],
-    []
+    [t]
   )
 
   const depthOptions = useMemo(
     () => [
       {
         value: 'flat' as DepthStyle,
-        label: 'Flat',
-        description: 'Minimal outlines with no drop shadows.',
+        label: t('settings.appearance.depth.flat'),
+        description: t('settings.appearance.depth.flatDescription'),
         icon: Shield,
       },
       {
         value: 'soft' as DepthStyle,
-        label: 'Soft',
-        description: 'Gentle ambient shadows for subtle depth.',
+        label: t('settings.appearance.depth.soft'),
+        description: t('settings.appearance.depth.softDescription'),
         icon: ShieldCheck,
       },
       {
         value: 'elevated' as DepthStyle,
-        label: 'Elevated',
-        description: 'Pronounced shadows suited for hero moments.',
+        label: t('settings.appearance.depth.elevated'),
+        description: t('settings.appearance.depth.elevatedDescription'),
         icon: Crown,
       },
     ],
-    []
+    [t]
   )
 
-  const [presetName, setPresetName] = useState('')
   const [themeName, setThemeName] = useState('')
   const [importValue, setImportValue] = useState('')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [isAccentDropdownOpen, setIsAccentDropdownOpen] = useState(false)
   const [isSurfaceDropdownOpen, setIsSurfaceDropdownOpen] = useState(false)
+  const [themeDescriptionDialog, setThemeDescriptionDialog] = useState<{ open: boolean; theme: { name: string; description: string } | null }>({ open: false, theme: null })
   const accentDropdownRef = useRef<HTMLDivElement>(null)
   const surfaceDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -2299,63 +2341,478 @@ function AppearanceSettings() {
     }
   }, [isAccentDropdownOpen, isSurfaceDropdownOpen])
 
-  const presetList = useMemo<AppearancePreset[]>(
-    () => [...presets].sort((a, b) => b.createdAt - a.createdAt),
-    [presets]
-  )
+  // Collapsed groups state
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem('aetheris-theme-groups-collapsed')
+      return stored ? JSON.parse(stored) : {}
+    } catch {
+      return {}
+    }
+  })
 
-  // Official themes
-  const officialThemes = useMemo(
-    () => [
-      {
-        id: 'default-theme',
-        name: 'Default Theme',
-        description: 'Pure accent with obsidian black surface and comfortable typography',
-        accent: 'pure' as AccentColor,
-        surface: 'obsidian' as SurfaceStyle,
-        radius: 15 / 16, // 15px
-        typography: 'comfortable' as TypographyScale,
+  const toggleGroup = (groupKey: string) => {
+    const newState = { ...collapsedGroups, [groupKey]: !collapsedGroups[groupKey] }
+    setCollapsedGroups(newState)
+    localStorage.setItem('aetheris-theme-groups-collapsed', JSON.stringify(newState))
+  }
+
+  const handleShowDescription = (e: React.MouseEvent | undefined, theme: { name: string; description: string }) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    setThemeDescriptionDialog({ open: true, theme })
+  }
+
+  // Optimized 3D hover effect with requestAnimationFrame
+  const cardRefs = useRef<Map<string, { element: HTMLElement; rafId: number | null; isHovering: boolean }>>(new Map())
+
+  const handleCardMouseEnter = (themeId: string, e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget
+    const target = e.target as HTMLElement
+    
+    // Don't apply effect if hovering over any button (same as Apply button logic)
+    if (target.tagName === 'BUTTON' || target.closest('button')) {
+      return
+    }
+    
+    const ref = cardRefs.current.get(themeId)
+    
+    // If not already hovering, add smooth transition for initial hover
+    if (!ref?.isHovering) {
+      card.style.transition = 'transform 0.1s ease-out, z-index 0.1s ease-out'
+      cardRefs.current.set(themeId, { element: card, rafId: null, isHovering: true })
+      
+      // After transition, remove it for instant response
+      setTimeout(() => {
+        card.style.transition = 'none'
+      }, 100)
+    }
+    
+    // Lift card above others on hover
+    card.style.zIndex = '10'
+  }
+
+  const handleCardMouseMove = (themeId: string, e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget
+    const target = e.target as HTMLElement
+    
+    // Don't apply 3D effect if hovering over any button (same as Apply button logic)
+    if (target.tagName === 'BUTTON' || target.closest('button')) {
+      return
+    }
+    
+    const rect = card.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const centerX = rect.width / 2
+    const centerY = rect.height / 2
+    
+    // More responsive: divide by 4 for faster response (like reduced motion)
+    const rotateX = Math.max(-15, Math.min(15, (y - centerY) / 4))
+    const rotateY = Math.max(-15, Math.min(15, (centerX - x) / 4))
+    
+    // Cancel previous animation frame if exists
+    const ref = cardRefs.current.get(themeId)
+    if (ref?.rafId) {
+      cancelAnimationFrame(ref.rafId)
+    }
+    
+    // Use requestAnimationFrame for smooth performance
+    const rafId = requestAnimationFrame(() => {
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`
+    })
+    
+    cardRefs.current.set(themeId, { element: card, rafId, isHovering: true })
+  }
+
+  const handleCardMouseLeave = (themeId: string, e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget
+    
+    // Cancel animation frame
+    const ref = cardRefs.current.get(themeId)
+    if (ref?.rafId) {
+      cancelAnimationFrame(ref.rafId)
+    }
+    
+    // Mark as not hovering
+    cardRefs.current.set(themeId, { element: card, rafId: null, isHovering: false })
+    
+    // Add smooth transition for fade-out effect
+    card.style.transition = 'transform 0.3s ease-out, z-index 0.3s ease-out'
+    // Reset z-index
+    card.style.zIndex = ''
+    
+    // Smooth reset with transition
+    requestAnimationFrame(() => {
+      card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)'
+    })
+  }
+
+  // Official themes grouped
+  const officialThemesGroups = useMemo(
+    () => ({
+      basic: [
+        {
+          id: 'default-theme',
+          name: t('settings.appearance.themes.defaultTheme.name'),
+          description: t('settings.appearance.themes.defaultTheme.description'),
+          accent: 'pure' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 15 / 16, // 15px
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'midnight-blue',
+          name: t('settings.appearance.themes.midnightBlue.name'),
+          description: t('settings.appearance.themes.midnightBlue.description'),
+          accent: 'cobalt' as AccentColor,
+          surface: 'midnight' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'sunset-warm',
+          name: t('settings.appearance.themes.sunsetWarm.name'),
+          description: t('settings.appearance.themes.sunsetWarm.description'),
+          accent: 'amber' as AccentColor,
+          surface: 'sunset' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'forest-green',
+          name: t('settings.appearance.themes.forestGreen.name'),
+          description: t('settings.appearance.themes.forestGreen.description'),
+          accent: 'emerald' as AccentColor,
+          surface: 'moss' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'minimal-light',
+          name: t('settings.appearance.themes.minimalLight.name'),
+          description: t('settings.appearance.themes.minimalLight.description'),
+          accent: 'mono' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 0,
+          typography: 'compact' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 0.95,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'cosmic-dark',
+          name: t('settings.appearance.themes.cosmicDark.name'),
+          description: t('settings.appearance.themes.cosmicDark.description'),
+          accent: 'violet' as AccentColor,
+          surface: 'cosmos' as SurfaceStyle,
+          radius: 1.5,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'ocean-breeze',
+          name: t('settings.appearance.themes.oceanBreeze.name'),
+          description: t('settings.appearance.themes.oceanBreeze.description'),
+          accent: 'azure' as AccentColor,
+          surface: 'harbor' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'autumn-warmth',
+          name: t('settings.appearance.themes.autumnWarmth.name'),
+          description: t('settings.appearance.themes.autumnWarmth.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'ember' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'snow-white',
+          name: t('settings.appearance.themes.snowWhite.name'),
+          description: t('settings.appearance.themes.snowWhite.description'),
+          accent: 'mono' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'deep-purple',
+          name: t('settings.appearance.themes.deepPurple.name'),
+          description: t('settings.appearance.themes.deepPurple.description'),
+          accent: 'violet' as AccentColor,
+          surface: 'midnight' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+      ],
+      games: [
+        {
+          id: 'cyberpunk',
+          name: t('settings.appearance.themes.cyberpunk.name'),
+          description: t('settings.appearance.themes.cyberpunk.description'),
+          accent: 'fuchsia' as AccentColor,
+          surface: 'cyberpunk' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'minecraft',
+        name: t('settings.appearance.themes.minecraft.name'),
+        description: t('settings.appearance.themes.minecraft.description'),
+        accent: 'forest' as AccentColor,
+        surface: 'minecraft' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
         contrast: 'standard' as ContrastMode,
         density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'csgo',
+        name: t('settings.appearance.themes.csgo.name'),
+        description: t('settings.appearance.themes.csgo.description'),
+        accent: 'orange' as AccentColor,
+        surface: 'csgo' as SurfaceStyle,
+        radius: 0.25,
+        typography: 'compact' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 0.95,
         depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
-      },
-      {
-        id: 'midnight-blue',
-        name: 'Midnight Blue',
-        description: 'Deep blue tones for focused work',
-        accent: 'cobalt' as AccentColor,
-        surface: 'midnight' as SurfaceStyle,
-        radius: 0.5,
+        },
+        {
+          id: 'dota',
+        name: t('settings.appearance.themes.dota.name'),
+        description: t('settings.appearance.themes.dota.description'),
+        accent: 'blue' as AccentColor,
+        surface: 'dota' as SurfaceStyle,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'standard' as ContrastMode,
         density: 1,
         depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
-      },
-      {
-        id: 'sunset-warm',
-        name: 'Sunset Warm',
-        description: 'Warm orange and amber for creative spaces',
-        accent: 'amber' as AccentColor,
-        surface: 'sunset' as SurfaceStyle,
+        },
+        {
+          id: 'terraria',
+        name: 'Terraria',
+        description: t('settings.appearance.themes.terraria.description'),
+        accent: 'brown' as AccentColor,
+        surface: 'terraria' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'geometry-dash',
+        name: 'Geometry Dash',
+        description: t('settings.appearance.themes.geometryDash.description'),
+        accent: 'lime' as AccentColor,
+        surface: 'geometrydash' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'valorant',
+        name: 'VALORANT',
+        description: t('settings.appearance.themes.valorant.description'),
+        accent: 'red' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'compact' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 0.95,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'league-of-legends',
+        name: 'League of Legends',
+        description: t('settings.appearance.themes.leagueOfLegends.description'),
+        accent: 'gold' as AccentColor,
+        surface: 'midnight' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'overwatch',
+        name: 'Overwatch',
+        description: t('settings.appearance.themes.overwatch.description'),
+        accent: 'azure' as AccentColor,
+        surface: 'nightfall' as SurfaceStyle,
         radius: 1,
         typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'apex-legends',
+        name: 'Apex Legends',
+        description: t('settings.appearance.themes.apexLegends.description'),
+        accent: 'crimson' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'fortnite',
+        name: 'Fortnite',
+        description: t('settings.appearance.themes.fortnite.description'),
+        accent: 'magenta' as AccentColor,
+        surface: 'twilight' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'default' as TypographyScale,
         contrast: 'standard' as ContrastMode,
         density: 1.05,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
+        },
+        {
+          id: 'among-us',
+        name: 'Among Us',
+          description: t('settings.appearance.themes.amongUs.description'),
+        accent: 'red' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 0.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+        official: true,
+        },
+        {
+          id: 'pokemon',
+        name: 'Pokémon',
+        description: t('settings.appearance.themes.pokemon.description'),
+        accent: 'yellow' as AccentColor,
+        surface: 'daylight' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
       },
       {
-        id: 'forest-green',
-        name: 'Forest Green',
-        description: 'Natural greens for calm productivity',
-        accent: 'emerald' as AccentColor,
+        id: 'zelda',
+        name: 'The Legend of Zelda',
+        description: t('settings.appearance.themes.zelda.description'),
+        accent: 'gold' as AccentColor,
         surface: 'moss' as SurfaceStyle,
         radius: 0.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'portal',
+        name: 'Portal',
+        description: t('settings.appearance.themes.portal.description'),
+        accent: 'orange' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'half-life',
+        name: 'Half-Life',
+        description: t('settings.appearance.themes.halfLife.description'),
+        accent: 'amber' as AccentColor,
+        surface: 'eclipse' as SurfaceStyle,
+        radius: 0.5,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
         density: 1,
@@ -2364,35 +2821,450 @@ function AppearanceSettings() {
         official: true,
       },
       {
-        id: 'minimal-light',
-        name: 'Minimal Light',
-        description: 'Clean and minimal for distraction-free reading',
-        accent: 'mono' as AccentColor,
-        surface: 'daylight' as SurfaceStyle,
+        id: 'undertale',
+        name: 'Undertale',
+        description: t('settings.appearance.themes.undertale.description'),
+        accent: 'rose' as AccentColor,
+        surface: 'sand' as SurfaceStyle,
         radius: 0,
         typography: 'compact' as TypographyScale,
         contrast: 'standard' as ContrastMode,
         density: 0.95,
         depth: 'flat' as DepthStyle,
-        motion: 'reduced' as MotionPreference,
+        motion: 'default' as MotionPreference,
         official: true,
       },
       {
-        id: 'cosmic-dark',
-        name: 'Cosmic Dark',
-        description: 'Deep space vibes for late-night sessions',
-        accent: 'violet' as AccentColor,
-        surface: 'cosmos' as SurfaceStyle,
-        radius: 1.5,
-        typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1.1,
+        id: 'hollow-knight',
+        name: 'Hollow Knight',
+        description: t('settings.appearance.themes.hollowKnight.description'),
+        accent: 'silver' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
-    ],
-    []
+        {
+          id: 'stardew-valley',
+          name: 'Stardew Valley',
+          description: t('settings.appearance.themes.stardewValley.description'),
+          accent: 'emerald' as AccentColor,
+          surface: 'terraria' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'balatro',
+          name: 'Balatro',
+          description: t('settings.appearance.themes.balatro.description'),
+          accent: 'gold' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'metro-last-light',
+          name: 'Metro Last Light',
+          description: t('settings.appearance.themes.metroLastLight.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'eclipse' as SurfaceStyle,
+          radius: 0.25,
+          typography: 'compact' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 0.95,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'metro-exodus',
+          name: 'Metro Exodus',
+          description: t('settings.appearance.themes.metroExodus.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'war-thunder',
+          name: 'War Thunder',
+          description: t('settings.appearance.themes.warThunder.description'),
+          accent: 'blue' as AccentColor,
+          surface: 'slate' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'warhammer',
+          name: 'Warhammer',
+          description: t('settings.appearance.themes.warhammer.description'),
+          accent: 'red' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'clash-royale',
+          name: 'Clash Royale',
+          description: t('settings.appearance.themes.clashRoyale.description'),
+          accent: 'magenta' as AccentColor,
+          surface: 'twilight' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'block-strike',
+          name: 'Block Strike',
+          description: t('settings.appearance.themes.blockStrike.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'minecraft' as SurfaceStyle,
+          radius: 0,
+          typography: 'compact' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 0.95,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+      ],
+      extraordinary: [
+        {
+          id: 'scp',
+          name: 'SCP Foundation',
+          description: t('settings.appearance.themes.scp.description'),
+          accent: 'red' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.25,
+          typography: 'compact' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 0.95,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'backrooms',
+          name: t('settings.appearance.themes.backrooms.name'),
+          description: t('settings.appearance.themes.backrooms.description'),
+          accent: 'yellow' as AccentColor,
+          surface: 'ivory' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'ussr',
+          name: t('settings.appearance.themes.ussr.name'),
+          description: t('settings.appearance.themes.ussr.description'),
+          accent: 'red' as AccentColor,
+          surface: 'charcoal' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'china',
+          name: t('settings.appearance.themes.china.name'),
+          description: t('settings.appearance.themes.china.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'midnight' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'banana',
+          name: t('settings.appearance.themes.banana.name'),
+          description: t('settings.appearance.themes.banana.description'),
+          accent: 'yellow' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'apple-inc',
+          name: 'Apple Inc.',
+          description: t('settings.appearance.themes.appleInc.description'),
+          accent: 'mono' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'arasaka',
+          name: 'Arasaka Inc.',
+          description: t('settings.appearance.themes.arasaka.description'),
+          accent: 'red' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 0.25,
+          typography: 'compact' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 0.95,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'aliexpress',
+          name: 'Aliexpress',
+          description: t('settings.appearance.themes.aliexpress.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'alien',
+          name: t('settings.appearance.themes.alien.name'),
+          description: t('settings.appearance.themes.alien.description'),
+          accent: 'emerald' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'predator',
+          name: t('settings.appearance.themes.predator.name'),
+          description: t('settings.appearance.themes.predator.description'),
+          accent: 'red' as AccentColor,
+          surface: 'moss' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'anime',
+          name: 'Anime',
+          description: t('settings.appearance.themes.anime.description'),
+          accent: 'magenta' as AccentColor,
+          surface: 'twilight' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'demon-slayer',
+          name: 'Demon Slayer',
+          description: t('settings.appearance.themes.demonSlayer.description'),
+          accent: 'azure' as AccentColor,
+          surface: 'nightfall' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'one-piece',
+          name: t('settings.appearance.themes.onePiece.name'),
+          description: t('settings.appearance.themes.onePiece.description'),
+          accent: 'blue' as AccentColor,
+          surface: 'harbor' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'truffle',
+          name: t('settings.appearance.themes.truffle.name'),
+          description: t('settings.appearance.themes.truffle.description'),
+          accent: 'brown' as AccentColor,
+          surface: 'sand' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'calamity',
+          name: 'Calamity',
+          description: t('settings.appearance.themes.calamity.description'),
+          accent: 'violet' as AccentColor,
+          surface: 'cosmos' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'berserk',
+          name: t('settings.appearance.themes.berserk.name'),
+          description: t('settings.appearance.themes.berserk.description'),
+          accent: 'red' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'vagabond',
+          name: t('settings.appearance.themes.vagabond.name'),
+          description: t('settings.appearance.themes.vagabond.description'),
+          accent: 'mono' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'chainsaw-man',
+          name: t('settings.appearance.themes.chainsawMan.name'),
+          description: t('settings.appearance.themes.chainsawMan.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'hunter-x-hunter',
+          name: t('settings.appearance.themes.hunterXHunter.name'),
+          description: t('settings.appearance.themes.hunterXHunter.description'),
+          accent: 'azure' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1.05,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'manga',
+          name: t('settings.appearance.themes.manga.name'),
+          description: t('settings.appearance.themes.manga.description'),
+          accent: 'mono' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'made-in-abyss',
+          name: t('settings.appearance.themes.madeInAbyss.name'),
+          description: t('settings.appearance.themes.madeInAbyss.description'),
+          accent: 'violet' as AccentColor,
+          surface: 'midnight' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+      ],
+    }),
+    [t]
+  )
+
+  // Flatten official themes for compatibility
+  const officialThemes = useMemo(
+    () => [...officialThemesGroups.basic, ...officialThemesGroups.games, ...officialThemesGroups.extraordinary],
+    [officialThemesGroups]
   )
 
   // Custom themes (stored in localStorage)
@@ -2423,7 +3295,10 @@ function AppearanceSettings() {
     () => [...officialThemes, ...customThemes].sort((a, b) => {
       if (a.official && !b.official) return -1
       if (!a.official && b.official) return 1
-      return (b.createdAt || 0) - (a.createdAt || 0)
+      // Для кастомных тем сортируем по дате создания, для официальных - по id
+      const aDate = !a.official && 'createdAt' in a ? ((a as any).createdAt || 0) : 0
+      const bDate = !b.official && 'createdAt' in b ? ((b as any).createdAt || 0) : 0
+      return bDate - aDate
     }),
     [officialThemes, customThemes]
   )
@@ -2448,25 +3323,7 @@ function AppearanceSettings() {
   const previewBackground = 'hsl(var(--background))'
   const previewGap = 18 * density
   const previewPadding = 24 * density
-  const previewBadgeClass = contrast === 'bold' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
   const previewMotionNote = motion === 'reduced' ? 'Motion minimized' : 'Animations enabled'
-
-  const handleSavePreset = () => {
-    const preset = savePreset(presetName)
-    if (!preset) {
-      toast({
-        title: 'Preset name required',
-        description: 'Give your preset a name before saving it.',
-        variant: 'destructive',
-      })
-      return
-    }
-    setPresetName('')
-    toast({
-      title: 'Preset saved',
-      description: `"${preset.name}" is ready to use.`,
-    })
-  }
 
   const handleCreateTheme = () => {
     if (!themeName.trim()) {
@@ -2510,7 +3367,7 @@ function AppearanceSettings() {
     setRadius(theme.radius)
     setTypography(theme.typography)
     setContrast(theme.contrast)
-    setDensity(theme.density)
+    // Don't change density - keep user's current setting
     setDepth(theme.depth)
     setMotion(theme.motion)
     toast({
@@ -2566,22 +3423,6 @@ function AppearanceSettings() {
         variant: 'destructive',
       })
     }
-  }
-
-  const handleApplyPreset = (preset: AppearancePreset) => {
-    applyPreset(preset.id)
-    toast({
-      title: 'Preset applied',
-      description: `Appearance updated to "${preset.name}".`,
-    })
-  }
-
-  const handleDeletePreset = (preset: AppearancePreset) => {
-    deletePreset(preset.id)
-    toast({
-      title: 'Preset removed',
-      description: `Deleted "${preset.name}".`,
-    })
   }
 
   const handleResetToDefault = () => {
@@ -2663,22 +3504,22 @@ function AppearanceSettings() {
           </TabsList>
 
           <TabsContent value="colors" className="space-y-6 mt-6">
-            <section className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
+        <section className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
                   <Label className="text-sm font-semibold">{t('settings.appearance.themeMode')}</Label>
-                  <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                     {t('settings.appearance.themeModeDescription')}
-                  </p>
-                </div>
-                <Badge variant="outline" className="self-start">
+              </p>
+            </div>
+            <Badge variant="outline" className="self-start">
                   {theme === 'system' ? `${t('settings.appearance.system')} (${resolvedTheme})` : `${t(`settings.appearance.${theme}`)} ${t('settings.appearance.theme')}`}
-                </Badge>
-              </div>
+            </Badge>
+          </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {themeModeOptions.map((option) => (
                   <AppearanceOptionCard
-                    key={option.value}
+                  key={option.value}
                     active={theme === option.value}
                     leading={<option.icon className="h-5 w-5" />}
                     label={t(`settings.appearance.${option.value}`)}
@@ -2784,7 +3625,7 @@ function AppearanceSettings() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
                         Nova Rivera
                       </div>
@@ -2796,12 +3637,12 @@ function AppearanceSettings() {
                         <Flame className="h-3.5 w-3.5" />
                         Trending
             </span>
-          </div>
+                    </div>
                     <Button variant="outline" size="sm" className="w-full justify-between">
                       Continue reading
                       <CornerDownRight className="h-4 w-4" />
                     </Button>
-        </div>
+                    </div>
                   </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
@@ -2936,19 +3777,19 @@ function AppearanceSettings() {
                         </div>
                       }
                     />
-                  )
-                })}
-              </div>
-            </section>
+              )
+            })}
+          </div>
+        </section>
 
-            <Separator />
+        <Separator />
 
             <section className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
-                  <Label className="text-sm font-semibold">Content density</Label>
+                  <Label className="text-sm font-semibold">{t('settings.appearance.contentDensity.title')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Control vertical rhythm for lists, cards, and navigation.
+                    {t('settings.appearance.contentDensity.description')}
                   </p>
                 </div>
                 <Button
@@ -2956,7 +3797,7 @@ function AppearanceSettings() {
                   size="icon"
                   onClick={() => setDensity(1)}
                   disabled={densityIsDefault}
-                  aria-label="Reset density to default"
+                  aria-label={t('settings.appearance.contentDensity.resetLabel')}
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -2968,11 +3809,11 @@ function AppearanceSettings() {
                   max={1.15}
                   step={0.05}
                   onValueChange={(value) => setDensity(value[0] ?? density)}
-                  aria-label="Adjust interface density"
+                  aria-label={t('settings.appearance.contentDensity.adjustLabel')}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>-15%</span>
-                  <span>Baseline</span>
+                  <span>{t('settings.appearance.contentDensity.baseline')}</span>
                   <span>+15%</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{densityLabel}</p>
@@ -2981,82 +3822,13 @@ function AppearanceSettings() {
           </TabsContent>
 
           <TabsContent value="style" className="space-y-6 mt-6">
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Contrast</Label>
-                <p className="text-sm text-muted-foreground">
-                  Tune clarity for different environments and accessibility preferences.
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {contrastOptions.map((option) => (
-                  <AppearanceOptionCard
-                    key={option.value}
-                    active={contrast === option.value}
-                    leading={<option.icon className="h-5 w-5" />}
-                    label={option.label}
-                    description={option.description}
-                    onSelect={() => setContrast(option.value)}
-                  />
-                ))}
-              </div>
-            </section>
-
-            <Separator />
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Depth & shadows</Label>
-                <p className="text-sm text-muted-foreground">
-                  Choose how pronounced surface shadows should appear.
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                {depthOptions.map((option) => (
-                  <AppearanceOptionCard
-                    key={option.value}
-                    active={depth === option.value}
-                    leading={<option.icon className="h-5 w-5" />}
-                    label={option.label}
-                    description={option.description}
-                    onSelect={() => setDepth(option.value)}
-                  />
-                ))}
-              </div>
-            </section>
-
-            <Separator />
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Motion</Label>
-                <p className="text-sm text-muted-foreground">
-                  Control animations and transitions for accessibility.
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {motionOptions.map((option) => (
-                  <AppearanceOptionCard
-                    key={option.value}
-                    active={motion === option.value}
-                    leading={<option.icon className="h-5 w-5" />}
-                    label={option.label}
-                    description={option.description}
-                    onSelect={() => setMotion(option.value)}
-                  />
-                ))}
-              </div>
-            </section>
-          </TabsContent>
-
-          <TabsContent value="themes" className="space-y-6 mt-6">
             <Card className="border-2 border-dashed border-primary/20 bg-muted/5">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <CardTitle className="text-base font-semibold">Theme Builder</CardTitle>
                     <CardDescription className="text-xs">
-                      Customize accent, surface, typography, and interface shape to create your perfect theme.
+                      Customize accent, surface, typography, interface shape, contrast, depth, and motion to create your perfect theme.
                     </CardDescription>
                   </div>
                   <Button
@@ -3071,436 +3843,772 @@ function AppearanceSettings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Accent color</Label>
-                <p className="text-sm text-muted-foreground">
-                  Set the brand hue used for primary actions and highlights.
-                </p>
-              </div>
-              <div ref={accentDropdownRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  style={{
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
-                      style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
-                    />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-semibold">{activeAccent?.label ?? 'Custom'}</span>
-                      <span className="text-xs text-muted-foreground">Click to change accent color</span>
-                    </div>
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Accent color</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Set the brand hue used for primary actions and highlights.
+                    </p>
                   </div>
-                  {isAccentDropdownOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                  )}
-                </button>
-                {isAccentDropdownOpen && (
-                  <div 
-                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
-                    style={{
-                      borderRadius: 'var(--radius-md)',
-                    }}
-                  >
-                    <div className="space-y-6">
-                      {ACCENT_GROUPS.map((group) => {
-                        const groupAccents = group.accents
-                          .map((value) => accentOptionsByValue[value])
-                          .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
+                  <div ref={accentDropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      style={{
+                        borderRadius: 'var(--radius-md)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
+                          style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
+                        />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold">{activeAccent?.label ?? 'Custom'}</span>
+                          <span className="text-xs text-muted-foreground">Click to change accent color</span>
+                        </div>
+                      </div>
+                      {isAccentDropdownOpen ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                      )}
+                    </button>
+                    {isAccentDropdownOpen && (
+                      <div 
+                        className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                        }}
+                      >
+                        <div className="space-y-6">
+                          {ACCENT_GROUPS.map((group) => {
+                            const groupAccents = group.accents
+                              .map((value) => accentOptionsByValue[value])
+                              .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
 
-                        if (groupAccents.length === 0) return null
+                            if (groupAccents.length === 0) return null
 
-                        return (
-                          <div key={group.id} className="space-y-3">
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold">{group.label}</p>
-                              <p className="text-xs text-muted-foreground">{group.description}</p>
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                              {groupAccents.map((option) => (
+                            return (
+                              <div key={group.id} className="space-y-3">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">{group.label}</p>
+                                  <p className="text-xs text-muted-foreground">{group.description}</p>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                  {groupAccents.map((option) => (
+                                    <AppearanceOptionCard
+                                      key={option.value}
+                                      active={accent === option.value}
+                                      leading={
+                                        <span
+                                          className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
+                                          style={{ background: `hsl(${option.tone})` }}
+                                        />
+                                      }
+                                      label={option.label}
+                                      description={option.description}
+                                      onSelect={() => {
+                                        setAccent(option.value)
+                                        setIsAccentDropdownOpen(false)
+                                      }}
+                                      preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                          {customAccentOption && (
+                            <div className="space-y-3 pt-2 border-t border-border/60">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold">Custom</p>
+                                <p className="text-xs text-muted-foreground">Create your own accent color</p>
+                              </div>
+                              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 <AppearanceOptionCard
-                                  key={option.value}
-                                  active={accent === option.value}
+                                  key={customAccentOption.value}
+                                  active={accent === customAccentOption.value}
                                   leading={
                                     <span
                                       className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                                      style={{ background: `hsl(${option.tone})` }}
+                                      style={{ background: `hsl(${customAccentOption.tone})` }}
                                     />
                                   }
-                                  label={option.label}
-                                  description={option.description}
+                                  label={customAccentOption.label}
+                                  description={customAccentOption.description}
                                   onSelect={() => {
-                                    setAccent(option.value)
+                                    setAccent('custom')
                                     setIsAccentDropdownOpen(false)
                                   }}
-                                  preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {customAccentOption && (
-                        <div className="space-y-3 pt-2 border-t border-border/60">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold">Custom</p>
-                            <p className="text-xs text-muted-foreground">Create your own accent color</p>
-                          </div>
-                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                            <AppearanceOptionCard
-                              key={customAccentOption.value}
-                              active={accent === customAccentOption.value}
-                              leading={
-                                <span
-                                  className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                                  style={{ background: `hsl(${customAccentOption.tone})` }}
-                                />
-                              }
-                              label={customAccentOption.label}
-                              description={customAccentOption.description}
-                              onSelect={() => {
-                                setAccent('custom')
-                                setIsAccentDropdownOpen(false)
-                              }}
-                              preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
-                              footer={
-                                <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <span className="uppercase tracking-wide">Light</span>
-                                      <input
-                                        type="color"
-                                        value={customAccent.light}
-                                        onChange={(event) => {
-                                          setAccent('custom')
-                                          setCustomAccentColor('light', event.target.value)
-                                        }}
-                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                                        aria-label="Pick accent color for light theme"
-                                      />
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <span className="uppercase tracking-wide">Dark</span>
-                                      <input
-                                        type="color"
-                                        value={customAccent.dark}
-                                        onChange={(event) => {
-                                          setAccent('custom')
-                                          setCustomAccentColor('dark', event.target.value)
-                                        }}
-                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
-                                        aria-label="Pick accent color for dark theme"
-                                      />
-                                    </label>
-                                  </div>
-                                </div>
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <Separator />
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Surface palette</Label>
-                <p className="text-sm text-muted-foreground">
-                  Pick the background system for cards, popovers, and muted states.
-                </p>
-              </div>
-              <div ref={surfaceDropdownRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  style={{
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
-                      style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
-                    />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-semibold">{activeSurface?.label ?? 'Custom'}</span>
-                      <span className="text-xs text-muted-foreground">Click to change surface palette</span>
-                    </div>
-                  </div>
-                  {isSurfaceDropdownOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                  )}
-                </button>
-                {isSurfaceDropdownOpen && (
-                  <div 
-                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
-                    style={{
-                      borderRadius: 'var(--radius-md)',
-                    }}
-                  >
-                    <div className="space-y-6">
-                      {SURFACE_GROUPS.map((group) => {
-                        const palettes = group.palettes
-                          .map((value) => surfaceOptionsByValue[value])
-                          .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
-
-                        if (palettes.length === 0) return null
-
-                        return (
-                          <div key={group.id} className="space-y-3">
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold">{group.label}</p>
-                              <p className="text-xs text-muted-foreground">{group.description}</p>
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                              {palettes.map((option) => (
-                                <AppearanceOptionCard
-                                  key={option.value}
-                                  active={surface === option.value}
-                                  leading={
-                                    <span
-                                      className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
-                                      style={{ backgroundColor: `hsl(${option.tone.background})` }}
-                                    />
-                                  }
-                                  label={option.label}
-                                  description={option.description}
-                                  onSelect={() => {
-                                    setSurface(option.value)
-                                    setIsSurfaceDropdownOpen(false)
-                                  }}
-                                  preview={
-                                    <div className="grid grid-cols-4 gap-1">
-                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
-                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
-                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
-                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
+                                  preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
+                                  footer={
+                                    <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
+                                      <div className="flex items-center justify-between gap-3">
+                                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                          <span className="uppercase tracking-wide">Light</span>
+                                          <input
+                                            type="color"
+                                            value={customAccent.light}
+                                            onChange={(event) => {
+                                              setAccent('custom')
+                                              setCustomAccentColor('light', event.target.value)
+                                            }}
+                                            className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                            aria-label="Pick accent color for light theme"
+                                          />
+                                        </label>
+                                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                          <span className="uppercase tracking-wide">Dark</span>
+                                          <input
+                                            type="color"
+                                            value={customAccent.dark}
+                                            onChange={(event) => {
+                                              setAccent('custom')
+                                              setCustomAccentColor('dark', event.target.value)
+                                            }}
+                                            className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                            aria-label="Pick accent color for dark theme"
+                                          />
+                                        </label>
+                                      </div>
                                     </div>
                                   }
                                 />
-                              ))}
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1">
-                  <Label className="text-sm font-semibold">Interface shape</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Adjust corner rounding for cards, dialogs, and buttons.
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setRadius(DEFAULT_RADIUS)}
-                  disabled={radiusIsDefault}
-                  aria-label="Reset radius to default"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="space-y-3 rounded-lg border border-dashed p-4">
-                <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
-                  <span>Sharper</span>
-                  <span>{Math.round(radius * 16)}px radius</span>
-                  <span>Softer</span>
-                </div>
-                <Slider
-                  value={[radius]}
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  onValueChange={(value) => setRadius(value[0] ?? radius)}
-                  aria-label="Adjust global border radius"
-                />
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Typography scale</Label>
-                <p className="text-sm text-muted-foreground">
-                  Adjust reading size to fit your preferred density and display.
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                {typographyOptions.map((option) => (
-                  <AppearanceOptionCard
-                    key={option.value}
-                    active={typography === option.value}
-                    leading={<option.icon className="h-5 w-5" />}
-                    label={option.label}
-                    description={option.description}
-                    onSelect={() => setTypography(option.value)}
-                    preview={
-                      <div className="space-y-2">
-                        <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Sample</div>
-                        <p className="text-sm font-medium">Typography adapts responsively.</p>
-                      </div>
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Theme Constructor</Label>
-                <p className="text-xs text-muted-foreground">
-                  Build, preview, export, and manage your custom themes. Create themes from current settings or import from JSON.
-                </p>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card className="border-dashed">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold">Create Theme</CardTitle>
-                    <CardDescription className="text-xs">
-                      Save your current color and surface settings as a named theme.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <div className="flex-1 relative">
-                          <Input
-                            value={themeName}
-                            onChange={(event) => setThemeName(event.target.value)}
-                            placeholder="My Custom Theme"
-                            maxLength={40}
-                            className="sm:flex-1 pr-12"
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                            {themeName.length}/40
-                          </div>
+                          )}
                         </div>
-                        <Button onClick={handleCreateTheme} className="sm:w-auto">
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Create
-                        </Button>
                       </div>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
-                      <p className="font-medium text-foreground mb-1">Current settings:</p>
-                      <div className="space-y-1 text-muted-foreground">
-                        <p>Accent: {activeAccent?.label ?? 'Custom'}</p>
-                        <p>Surface: {activeSurface?.label ?? 'Custom'}</p>
-                        <p>Radius: {Math.round(radius * 16)}px</p>
-                        <p>Typography: {typographyLabel}</p>
-                        <p>Contrast: {contrast}</p>
-                        <p>Density: {densityLabel}</p>
-                        <p>Depth: {depth}</p>
-                        <p>Motion: {motion}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </section>
 
-                <Card className="border-dashed">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold">Import & Export</CardTitle>
-                    <CardDescription className="text-xs">
-                      Import themes from JSON or export your current configuration.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setShowImportDialog(true)}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Import JSON
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          const themeConfig = {
-                            accent,
-                            surface,
-                            radius,
-                            typography,
-                            contrast,
-                            density,
-                            depth,
-                            motion,
-                          }
-                          const json = JSON.stringify(themeConfig, null, 2)
-                          navigator.clipboard.writeText(json)
-                          toast({
-                            title: 'Theme exported',
-                            description: 'Theme configuration copied to clipboard.',
-                          })
-                        }}
-                      >
-                        <Copy className="mr-2 h-4 w-4" />
-                        Export JSON
-                      </Button>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        const cssVars = `--radius: ${radius * 16}px;
---accent: ${activeAccent?.tone ?? 'hsl(221.2 83.2% 53.3%)'};
---surface: ${activeSurface?.tone.background ?? 'hsl(0 0% 100%)'};`
-                        navigator.clipboard.writeText(cssVars)
-                        toast({
-                          title: 'CSS copied',
-                          description: 'CSS variables copied to clipboard.',
-                        })
+                <Separator />
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Surface palette</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Pick the background system for cards, popovers, and muted states.
+                    </p>
+                  </div>
+                  <div ref={surfaceDropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      style={{
+                        borderRadius: 'var(--radius-md)',
                       }}
                     >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy CSS Variables
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
+                          style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
+                        />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold">{activeSurface?.label ?? 'Custom'}</span>
+                          <span className="text-xs text-muted-foreground">Click to change surface palette</span>
+                        </div>
+                      </div>
+                      {isSurfaceDropdownOpen ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                      )}
+                    </button>
+                    {isSurfaceDropdownOpen && (
+                      <div 
+                        className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                        style={{
+                          borderRadius: 'var(--radius-md)',
+                        }}
+                      >
+                        <div className="space-y-6">
+                          {SURFACE_GROUPS.map((group) => {
+                            const palettes = group.palettes
+                              .map((value) => surfaceOptionsByValue[value])
+                              .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
+
+                            if (palettes.length === 0) return null
+
+                            return (
+                              <div key={group.id} className="space-y-3">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">{group.label}</p>
+                                  <p className="text-xs text-muted-foreground">{group.description}</p>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                  {palettes.map((option) => (
+                                    <AppearanceOptionCard
+                                      key={option.value}
+                                      active={surface === option.value}
+                                      leading={
+                                        <span
+                                          className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
+                                          style={{ backgroundColor: `hsl(${option.tone.background})` }}
+                                        />
+                                      }
+                                      label={option.label}
+                                      description={option.description}
+                                      onSelect={() => {
+                                        setSurface(option.value)
+                                        setIsSurfaceDropdownOpen(false)
+                                      }}
+                                      preview={
+                                        <div className="grid grid-cols-4 gap-1">
+                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
+                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
+                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
+                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
+                                        </div>
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-sm font-semibold">Interface shape</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Adjust corner rounding for cards, dialogs, and buttons.
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setRadius(DEFAULT_RADIUS)}
+                      disabled={radiusIsDefault}
+                      aria-label="Reset radius to default"
+                    >
+                      <RotateCcw className="h-4 w-4" />
                     </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
+                  </div>
+                  <div className="space-y-3 rounded-lg border border-dashed p-4">
+                    <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
+                      <span>Sharper</span>
+                      <span>{Math.round(radius * 16)}px radius</span>
+                      <span>Softer</span>
+                    </div>
+                    <Slider
+                      value={[radius]}
+                      min={0}
+                      max={2}
+                      step={0.05}
+                      onValueChange={(value) => setRadius(value[0] ?? radius)}
+                      aria-label="Adjust global border radius"
+                    />
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Typography scale</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Adjust reading size to fit your preferred density and display.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {typographyOptions.map((option) => (
+                      <AppearanceOptionCard
+                        key={option.value}
+                        active={typography === option.value}
+                        leading={<option.icon className="h-5 w-5" />}
+                        label={option.label}
+                        description={option.description}
+                        onSelect={() => setTypography(option.value)}
+                        preview={
+                          <div className="space-y-2">
+                            <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Sample</div>
+                            <p className="text-sm font-medium">Typography adapts responsively.</p>
+                          </div>
+                        }
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <Separator />
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Contrast</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Tune clarity for different environments and accessibility preferences.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {contrastOptions.map((option) => (
+                      <AppearanceOptionCard
+                        key={option.value}
+                        active={contrast === option.value}
+                        leading={<option.icon className="h-5 w-5" />}
+                        label={option.label}
+                        description={option.description}
+                        onSelect={() => setContrast(option.value)}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <Separator />
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Depth & shadows</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Choose how pronounced surface shadows should appear.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {depthOptions.map((option) => (
+                      <AppearanceOptionCard
+                        key={option.value}
+                        active={depth === option.value}
+                        leading={<option.icon className="h-5 w-5" />}
+                        label={option.label}
+                        description={option.description}
+                        onSelect={() => setDepth(option.value)}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <Separator />
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Motion</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Control animations and transitions for accessibility.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {motionOptions.map((option) => (
+                      <AppearanceOptionCard
+                        key={option.value}
+                        active={motion === option.value}
+                        leading={<option.icon className="h-5 w-5" />}
+                        label={option.label}
+                        description={option.description}
+                        onSelect={() => setMotion(option.value)}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <Separator />
+
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Theme Constructor</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Build, preview, export, and manage your custom themes. Create themes from current settings or import from JSON.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card className="border-dashed">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">Create Theme</CardTitle>
+                        <CardDescription className="text-xs">
+                          Save your current color and surface settings as a named theme.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <div className="flex-1 relative">
+                              <Input
+                                value={themeName}
+                                onChange={(event) => setThemeName(event.target.value)}
+                                placeholder="My Custom Theme"
+                                maxLength={40}
+                                className="sm:flex-1 pr-12"
+                              />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                                {themeName.length}/40
+                              </div>
+                            </div>
+                            <Button onClick={handleCreateTheme} className="sm:w-auto">
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              Create
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
+                          <p className="font-medium text-foreground mb-1">Current settings:</p>
+                          <div className="space-y-1 text-muted-foreground">
+                            <p>Accent: {activeAccent?.label ?? 'Custom'}</p>
+                            <p>Surface: {activeSurface?.label ?? 'Custom'}</p>
+                            <p>Radius: {Math.round(radius * 16)}px</p>
+                            <p>Typography: {typographyLabel}</p>
+                            <p>Contrast: {contrastOptions.find(o => o.value === contrast)?.label ?? contrast}</p>
+                            <p>Density: {densityLabel}</p>
+                            <p>Depth: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
+                            <p>Motion: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-dashed">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">Import & Export</CardTitle>
+                        <CardDescription className="text-xs">
+                          Import themes from JSON or export your current configuration.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setShowImportDialog(true)}
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Import JSON
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              const themeConfig = {
+                                accent,
+                                surface,
+                                radius,
+                                typography,
+                                contrast,
+                                density,
+                                depth,
+                                motion,
+                              }
+                              const json = JSON.stringify(themeConfig, null, 2)
+                              navigator.clipboard.writeText(json)
+                              toast({
+                                title: t('settings.appearance.themeExported'),
+                                description: t('settings.appearance.themeExportedDescription'),
+                              })
+                            }}
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            {t('settings.appearance.exportJson')}
+                          </Button>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            const cssVars = `--radius: ${radius * 16}px;
+--accent: ${activeAccent?.tone ?? 'hsl(221.2 83.2% 53.3%)'};
+--surface: ${activeSurface?.tone.background ?? 'hsl(0 0% 100%)'};`
+                            navigator.clipboard.writeText(cssVars)
+                            toast({
+                              title: t('settings.appearance.cssCopied'),
+                              description: t('settings.appearance.cssCopiedDescription'),
+                            })
+                          }}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          {t('settings.appearance.copyCssVariables')}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </section>
               </CardContent>
             </Card>
 
-            <Separator />
+            {customThemes.length > 0 && (
+              <>
+                <Separator />
+                <section className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {customThemes.map((theme) => {
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const isActive =
+                        accent === theme.accent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
 
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-semibold">Saved Themes</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {allThemes.length} {allThemes.length === 1 ? 'theme' : 'themes'} available
-                  </p>
-                </div>
-              </div>
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                            'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
+                        >
+                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                            <div className="flex items-start justify-between gap-2 h-full">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <CardTitle className="text-sm font-semibold">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                                  </div>
+                                </CardTitle>
+                              </div>
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
+                                className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                                }}
+                              >
+                                <div 
+                                  className="absolute inset-0 opacity-5"
+                                  style={{
+                                    background: themeAccent 
+                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                      : 'transparent'
+                                  }}
+                                />
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="size-6 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                        }}
+                                      />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+                                        </div>
+                                        <div 
+                                          className="text-[10px] truncate opacity-70"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                              : 'hsl(var(--muted-foreground))'
+                                          }}
+                                        >
+                                          {themeAccent?.label ?? theme.accent}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div 
+                                      className="size-1.5 rounded-full shrink-0"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                      }}
+                                    />
+                                  </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {allThemes.map((theme) => {
+                                  <div 
+                                    className="flex-1 p-2.5 border"
+                                    style={{
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div 
+                                          className="w-3 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.2,
+                                          }}
+                                        />
+                                      </div>
+                                      <div 
+                                        className="h-1.5 rounded-full"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                          opacity: 0.6,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div 
+                                      className="h-2 w-8 rounded-sm"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.4,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {Math.round(theme.radius * 16)}px
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                                <Button
+                                  variant={isActive ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleApplyTheme(theme)}
+                                >
+                                  {isActive ? (
+                                    <>
+                                      <Check className="mr-2 h-3 w-3" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="mr-2 h-3 w-3" />
+                                      Apply
+                                    </>
+                                  )}
+                                </Button>
+                                {!theme.official && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeleteTheme(theme.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </section>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="themes" className="space-y-6 mt-6">
+            <section className="space-y-6">
+              {/* Basic Themes */}
+              {officialThemesGroups.basic.length > 0 && (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => toggleGroup('basic')}
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                  >
+                  <div>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {officialThemesGroups.basic.length} {officialThemesGroups.basic.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+                    </p>
+                  </div>
+                    {collapsedGroups['basic'] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {!collapsedGroups['basic'] && (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {officialThemesGroups.basic.map((theme) => {
                   const themeAccent = accentOptionsByValue[theme.accent]
                   const themeSurface = surfaceOptionsByValue[theme.surface]
                   const isActive =
@@ -3517,9 +4625,18 @@ function AppearanceSettings() {
                     <Card
                       key={theme.id}
                       className={cn(
-                        'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                        'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
                         isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
                       )}
+                      style={{
+                        transformStyle: 'preserve-3d',
+                        perspective: '1000px',
+                        willChange: 'transform',
+                        position: 'relative',
+                      }}
+                      onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
+                      onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
+                      onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
                     >
                       <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
                         <div className="flex items-start justify-between gap-2 h-full">
@@ -3529,22 +4646,25 @@ function AppearanceSettings() {
                                 <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
                                 {theme.official && (
                                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    Official
+                                    {t('settings.appearance.official')}
                                   </Badge>
-                                )}
-                              </div>
+                        )}
+                      </div>
                             </CardTitle>
-                          </div>
+                        </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
                           {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <div className="flex flex-col space-y-3 mt-auto">
                         <div 
-                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                          className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
                           style={{ 
                             borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
+                            transform: 'translateZ(20px)',
                           }}
                         >
                           {/* Background gradient overlay */}
@@ -3696,15 +4816,34 @@ function AppearanceSettings() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {Math.round(theme.radius * 16)}px radius
+                            {Math.round(theme.radius * 16)}px
                           </Badge>
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                             {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
                           </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          {theme.description && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
+                            >
+                              <Info className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button
                             variant={isActive ? 'default' : 'outline'}
                             size="sm"
@@ -3714,12 +4853,12 @@ function AppearanceSettings() {
                             {isActive ? (
                               <>
                                 <Check className="mr-2 h-3 w-3" />
-                                Active
+                                {t('settings.appearance.active')}
                               </>
                             ) : (
                               <>
                                 <Download className="mr-2 h-3 w-3" />
-                                Apply
+                                {t('settings.appearance.apply')}
                               </>
                             )}
                           </Button>
@@ -3732,87 +4871,865 @@ function AppearanceSettings() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
-                          )}
-                        </div>
-                        </div>
+                      )}
+                    </div>
+                  </div>
                       </CardContent>
                     </Card>
-                  )
-                })}
-              </div>
-            </section>
-
-            <Separator />
-
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">Presets</Label>
-                <p className="text-xs text-muted-foreground">
-                  Save and recall appearance combinations for different workflows.
-                </p>
-              </div>
-              <Card className="border-dashed">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base">Save current appearance</CardTitle>
-                  <CardDescription>Capture your current theme mix to reuse later.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      value={presetName}
-                      onChange={(event) => setPresetName(event.target.value)}
-                      placeholder="Focus Mode"
-                      maxLength={40}
-                      className="sm:flex-1"
-                    />
-                    <Button onClick={handleSavePreset} className="sm:w-auto">
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Save preset
-                    </Button>
+                    )
+                  })}
                   </div>
-                  {presetList.length > 0 ? (
-                    <div className="space-y-3">
-                      {presetList.map((preset) => (
-                        <div
-                          key={preset.id}
-                          className="flex flex-col gap-3 rounded-lg border border-border/70 bg-background/40 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  )}
+                </div>
+              )}
+
+              {/* Games Themes */}
+              {officialThemesGroups.games.length > 0 && (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => toggleGroup('games')}
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                  >
+                  <div>
+                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
+                    <p className="text-xs text-muted-foreground">
+                        {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+                    </p>
+                  </div>
+                    {collapsedGroups['games'] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {!collapsedGroups['games'] && (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {officialThemesGroups.games.map((theme) => {
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const isActive =
+                        accent === theme.accent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
+
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              perspective: '1000px',
+                              willChange: 'transform',
+                              position: 'relative',
+                            }}
+                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
+                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
+                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
                         >
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{preset.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Saved {new Date(preset.createdAt).toLocaleString()}
-                            </p>
+                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                            <div className="flex items-start justify-between gap-2 h-full">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <CardTitle className="text-sm font-semibold">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                                    {theme.official && (
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
+                                        Official
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </CardTitle>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
+                                  className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                    backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
+                                    transform: 'translateZ(20px)',
+                                }}
+                              >
+                                {/* Background gradient overlay */}
+                                <div 
+                                  className="absolute inset-0 opacity-5"
+                                  style={{
+                                    background: themeAccent 
+                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                      : 'transparent'
+                                  }}
+                                />
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  {/* Header section */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="size-6 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                        }}
+                                      />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+                                        </div>
+                                        <div 
+                                          className="text-[10px] truncate opacity-70"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                              : 'hsl(var(--muted-foreground))'
+                                          }}
+                                        >
+                                          {themeAccent?.label ?? theme.accent}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div 
+                                      className="size-1.5 rounded-full shrink-0"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Card preview */}
+                                  <div 
+                                    className="flex-1 p-2.5 border"
+                                    style={{
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div 
+                                          className="w-3 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.2,
+                                          }}
+                                        />
+                                      </div>
+                                      <div 
+                                        className="h-1.5 rounded-full"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                          opacity: 0.6,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Bottom accent indicators */}
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div 
+                                      className="h-2 w-8 rounded-sm"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.4,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {Math.round(theme.radius * 16)}px
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                                {theme.description && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
+                                  >
+                                    <Info className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant={isActive ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleApplyTheme(theme)}
+                                >
+                                  {isActive ? (
+                                    <>
+                                      <Check className="mr-2 h-3 w-3" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="mr-2 h-3 w-3" />
+                                      Apply
+                                    </>
+                                  )}
+                                </Button>
+                                {!theme.official && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeleteTheme(theme.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                  )}
+                </div>
+              )}
+
+              {/* Extraordinary Themes */}
+              {officialThemesGroups.extraordinary.length > 0 && (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => toggleGroup('extraordinary')}
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                  >
+                  <div>
+                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
+                    <p className="text-xs text-muted-foreground">
+                        {officialThemesGroups.extraordinary.length} {officialThemesGroups.extraordinary.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+                    </p>
+                  </div>
+                    {collapsedGroups['extraordinary'] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {!collapsedGroups['extraordinary'] && (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {officialThemesGroups.extraordinary.map((theme) => {
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const isActive =
+                        accent === theme.accent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
+
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              perspective: '1000px',
+                              willChange: 'transform',
+                              position: 'relative',
+                            }}
+                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
+                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
+                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
+                        >
+                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                            <div className="flex items-start justify-between gap-2 h-full">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <CardTitle className="text-sm font-semibold">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                                    {theme.official && (
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
+                                        Official
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </CardTitle>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
+                                className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
+                                  transform: 'translateZ(20px)',
+                                }}
+                              >
+                                {/* Background gradient overlay */}
+                                <div 
+                                  className="absolute inset-0 opacity-5"
+                                  style={{
+                                    background: themeAccent 
+                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                      : 'transparent'
+                                  }}
+                                />
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  {/* Header section */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="size-6 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                        }}
+                                      />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+                                        </div>
+                                        <div 
+                                          className="text-[10px] truncate opacity-70"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                              : 'hsl(var(--muted-foreground))'
+                                          }}
+                                        >
+                                          {themeAccent?.label ?? theme.accent}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div 
+                                      className="size-1.5 rounded-full shrink-0"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Card preview */}
+                                  <div 
+                                    className="flex-1 p-2.5 border"
+                                    style={{
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div 
+                                          className="w-3 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.2,
+                                          }}
+                                        />
+                                      </div>
+                                      <div 
+                                        className="h-1.5 rounded-full"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                          opacity: 0.6,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Bottom accent indicators */}
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div 
+                                      className="h-2 w-8 rounded-sm"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.4,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {Math.round(theme.radius * 16)}px
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                                {theme.description && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
+                                  >
+                                    <Info className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant={isActive ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleApplyTheme(theme)}
+                                >
+                                  {isActive ? (
+                                    <>
+                                      <Check className="mr-2 h-3 w-3" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="mr-2 h-3 w-3" />
+                                      Apply
+                                    </>
+                                  )}
+                                </Button>
+                                {!theme.official && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeleteTheme(theme.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                  )}
+                </div>
+              )}
+
+              {/* Your Themes */}
+              {customThemes.length > 0 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
+                <p className="text-xs text-muted-foreground">
+                      {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+              </p>
+            </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {customThemes.map((theme) => {
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const isActive =
+                        accent === theme.accent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
+
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                            'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
+                        >
+                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                            <div className="flex items-start justify-between gap-2 h-full">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <CardTitle className="text-sm font-semibold">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                                  </div>
+                                </CardTitle>
+                              </div>
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                            </div>
+                </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
+                                className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                                }}
+                              >
+                                {/* Background gradient overlay */}
+                                <div 
+                                  className="absolute inset-0 opacity-5"
+                                  style={{
+                                    background: themeAccent 
+                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                      : 'transparent'
+                                  }}
+                                />
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  {/* Header section */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="size-6 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                        }}
+                                      />
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+              </div>
+                                        <div 
+                                          className="text-[10px] truncate opacity-70"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                              : 'hsl(var(--muted-foreground))'
+                                          }}
+                                        >
+                                          {themeAccent?.label ?? theme.accent}
                           </div>
-                          <div className="flex items-center gap-2">
+                                      </div>
+                                    </div>
+                                    <div 
+                                      className="size-1.5 rounded-full shrink-0"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Card preview */}
+                                  <div 
+                                    className="flex-1 p-2.5 border"
+                                    style={{
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div 
+                                          className="w-3 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeAccent
+                                              ? `hsl(${themeAccent.tone})`
+                                              : 'hsl(var(--primary))',
+                                            opacity: 0.2,
+                                          }}
+                                        />
+                                      </div>
+                                      <div 
+                                        className="h-1.5 rounded-full"
+                                        style={{
+                                          backgroundColor: themeAccent
+                                            ? `hsl(${themeAccent.tone})`
+                                            : 'hsl(var(--primary))',
+                                          opacity: 0.6,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Bottom accent indicators */}
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div 
+                                      className="h-2 w-8 rounded-sm"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.4,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {Math.round(theme.radius * 16)}px
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
                             <Button
-                              variant="outline"
+                                  variant={isActive ? 'default' : 'outline'}
                               size="sm"
-                              className="gap-2"
-                              onClick={() => handleApplyPreset(preset)}
-                            >
-                              <Download className="h-4 w-4" />
+                                  className="flex-1"
+                                  onClick={() => handleApplyTheme(theme)}
+                                >
+                                  {isActive ? (
+                                    <>
+                                      <Check className="mr-2 h-3 w-3" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="mr-2 h-3 w-3" />
                               Apply
-                            </Button>
+                                    </>
+                                  )}
+                </Button>
+                                {!theme.official && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDeletePreset(preset)}
-                              aria-label={`Delete preset ${preset.name}`}
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeleteTheme(theme.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      You haven&apos;t saved any appearance presets yet. Tune a look you love, give it a name, and save it for instant switching.
-                    </p>
-                  )}
+                                    <Trash2 className="h-3 w-3" />
+                </Button>
+                                )}
+              </div>
+            </div>
                 </CardContent>
               </Card>
-            </section>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+        </section>
+
           </TabsContent>
         </Tabs>
 
@@ -3842,6 +5759,22 @@ function AppearanceSettings() {
               <Button onClick={handleImportTheme}>
                 <Download className="mr-2 h-4 w-4" />
                 Import
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={themeDescriptionDialog.open} onOpenChange={(open) => setThemeDescriptionDialog({ open, theme: open ? themeDescriptionDialog.theme : null })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{themeDescriptionDialog.theme?.name || 'Theme Description'}</DialogTitle>
+              <DialogDescription>
+                {themeDescriptionDialog.theme?.description || 'No description available.'}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setThemeDescriptionDialog({ open: false, theme: null })}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -4246,7 +6179,7 @@ type SessionItem = {
   current: boolean
 }
 
-const DEFAULT_SESSIONS: SessionItem[] = [
+const DEFAULT_SESSIONS: (t: (key: string, params?: Record<string, string | number>) => string) => SessionItem[] = (t) => [
   {
     id: 'session-1',
     device: 'MacBook Pro',
@@ -4254,7 +6187,7 @@ const DEFAULT_SESSIONS: SessionItem[] = [
     browser: 'Arc 1.38 · macOS 15.1',
     location: 'Valencia, Spain',
     ip: '193.42.12.18',
-    lastActive: 'Active now',
+    lastActive: t('settings.sessions.activeNow'),
     current: true,
   },
   {
@@ -4264,7 +6197,7 @@ const DEFAULT_SESSIONS: SessionItem[] = [
     browser: 'Aetheris iOS',
     location: 'Barcelona, Spain',
     ip: '82.19.44.21',
-    lastActive: '2 hours ago',
+    lastActive: t('settings.sessions.hoursAgo', { hours: 2 }),
     current: false,
   },
   {
@@ -4274,7 +6207,7 @@ const DEFAULT_SESSIONS: SessionItem[] = [
     browser: 'Edge 130 · Windows 11',
     location: 'Berlin, Germany',
     ip: '91.202.17.55',
-    lastActive: 'Yesterday · 22:17',
+    lastActive: `${t('settings.sessions.yesterday')} ${t('settings.sessions.at')} 22:17`,
     current: false,
   },
 ]
@@ -4282,7 +6215,7 @@ const DEFAULT_SESSIONS: SessionItem[] = [
 function SessionsSettings() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const [sessions, setSessions] = useState<SessionItem[]>(DEFAULT_SESSIONS)
+  const [sessions, setSessions] = useState<SessionItem[]>(DEFAULT_SESSIONS(t))
   const [signingOutId, setSigningOutId] = useState<string | null>(null)
 
   const handleSignOut = async (sessionId: string) => {
@@ -4471,12 +6404,6 @@ function LanguageSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         <section className="space-y-4">
-          <div className="space-y-1">
-            <Label className="text-sm font-semibold">{t('settings.language.title')}</Label>
-        <p className="text-sm text-muted-foreground">
-              {t('settings.language.description')}
-            </p>
-          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {languageOptions.map((option) => {
               const isActive = language === option.value
@@ -4499,12 +6426,9 @@ function LanguageSettings() {
         <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
           <div className="flex items-start gap-3">
             <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">{t('settings.language.title')}</p>
-              <p>
-                {t('settings.language.languageDescription')}
-              </p>
-            </div>
+            <p>
+              {t('settings.language.languageDescription')}
+            </p>
           </div>
         </div>
       </CardContent>
@@ -4517,30 +6441,38 @@ function BillingSettings() {
   const { toast } = useToast()
   const [processingAction, setProcessingAction] = useState<'manage' | 'payment' | null>(null)
   const invoices: Invoice[] = useMemo(
-    () => [
-      {
-        id: 'INV-2025-003',
-        period: 'November 2025',
-        amount: '$18.00',
-        status: 'Paid',
-        downloadUrl: '#',
-      },
-      {
-        id: 'INV-2025-002',
-        period: 'October 2025',
-        amount: '$18.00',
-        status: 'Paid',
-        downloadUrl: '#',
-      },
-      {
-        id: 'INV-2025-001',
-        period: 'September 2025',
-        amount: '$12.00',
-        status: 'Refunded',
-        downloadUrl: '#',
-      },
-    ],
-    []
+    () => {
+      const monthMap: Record<string, string> = {
+        'November': t('settings.billing.months.november'),
+        'October': t('settings.billing.months.october'),
+        'September': t('settings.billing.months.september'),
+        'December': t('settings.billing.months.december'),
+      }
+      return [
+        {
+          id: 'INV-2025-003',
+          period: `${monthMap['November']} 2025`,
+          amount: '$18.00',
+          status: 'Paid',
+          downloadUrl: '#',
+        },
+        {
+          id: 'INV-2025-002',
+          period: `${monthMap['October']} 2025`,
+          amount: '$18.00',
+          status: 'Paid',
+          downloadUrl: '#',
+        },
+        {
+          id: 'INV-2025-001',
+          period: `${monthMap['September']} 2025`,
+          amount: '$12.00',
+          status: 'Refunded',
+          downloadUrl: '#',
+        },
+      ]
+    },
+    [t]
   )
 
   const handlePlanAction = async (type: 'manage' | 'payment') => {
@@ -4548,17 +6480,17 @@ function BillingSettings() {
     await new Promise((resolve) => setTimeout(resolve, 600))
     setProcessingAction(null)
     toast({
-      title: type === 'manage' ? 'Subscription portal' : 'Payment method',
-      description: 'TODO: connect billing actions to the Stripe customer portal.',
+      title: type === 'manage' ? t('settings.billing.subscriptionPortal') : t('settings.billing.paymentMethod'),
+      description: t('settings.billing.actionDescription'),
     })
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Billing</CardTitle>
+        <CardTitle>{t('settings.billing.title')}</CardTitle>
         <CardDescription>
-          Review your current plan, payment method, and download past invoices.
+          {t('settings.billing.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -4567,24 +6499,24 @@ function BillingSettings() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Crown className="h-4 w-4 text-primary" />
-                Creator Pro
+                {t('settings.billing.creatorPro')}
               </div>
               <p className="text-xs text-muted-foreground">
-                Unlimited drafts, advanced analytics, and priority support.
+                {t('settings.billing.creatorProDescription')}
               </p>
             </div>
             <Badge variant="secondary" className="w-fit">
-              Active · $18/month
+              {t('settings.billing.active', { amount: '$18' })}
             </Badge>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <CalendarClock className="h-3 w-3" />
-              Next invoice: <span className="font-medium text-foreground">December 10, 2025</span>
+              {t('settings.billing.nextInvoice', { date: `${t('settings.billing.months.december')} 10, 2025` })}
             </span>
             <span className="inline-flex items-center gap-1">
               <ShieldCheck className="h-3 w-3 text-primary" />
-              Trial credits applied
+              {t('settings.billing.trialCreditsApplied')}
             </span>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -4598,12 +6530,12 @@ function BillingSettings() {
               {processingAction === 'manage' ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Opening portal...
+                  {t('settings.billing.openingPortal')}
                 </>
               ) : (
                 <>
                   <Crown className="h-4 w-4" />
-                  Manage subscription
+                  {t('settings.billing.manageSubscription')}
                 </>
               )}
             </Button>
@@ -4615,14 +6547,14 @@ function BillingSettings() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
-                Payment method
+                {t('settings.billing.paymentMethod')}
               </div>
               <p className="text-xs text-muted-foreground">
-                Visa ending in 4242 · Expires 08/27 · Billing email invoices@aetheris.dev
+                {t('settings.billing.paymentMethodDescription')}
               </p>
             </div>
             <Badge variant="outline" className="px-3 py-1 text-[11px] uppercase tracking-wide">
-              Primary
+              {t('settings.billing.primary')}
             </Badge>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -4636,12 +6568,12 @@ function BillingSettings() {
               {processingAction === 'payment' ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Updating...
+                  {t('settings.billing.updating')}
                 </>
               ) : (
                 <>
                   <Wallet className="h-4 w-4" />
-                  Update payment method
+                  {t('settings.billing.updatePaymentMethod')}
                 </>
               )}
             </Button>
@@ -4651,10 +6583,10 @@ function BillingSettings() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Invoices
+              {t('settings.billing.invoices')}
             </h3>
             <Badge variant="secondary" className="px-3 py-1 text-[11px] uppercase tracking-wide">
-              Latest 12 months
+              {t('settings.billing.latest12Months')}
             </Badge>
           </div>
           <div className="space-y-2">
@@ -4675,13 +6607,13 @@ function BillingSettings() {
                         invoice.status === 'Refunded' && 'bg-muted text-muted-foreground'
                       )}
                     >
-                      {invoice.status}
+                      {t(`settings.billing.status.${invoice.status.toLowerCase()}`)}
                     </Badge>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
                   <Download className="h-4 w-4" />
-                  Download PDF
+                  {t('settings.billing.downloadPDF')}
                 </Button>
               </div>
             ))}
@@ -4689,10 +6621,9 @@ function BillingSettings() {
         </section>
 
         <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Need help with billing?</p>
+          <p className="font-medium text-foreground">{t('settings.billing.needHelp')}</p>
           <p className="mt-1">
-            Email <span className="font-medium text-foreground">billing@aetheris.dev</span> and we&apos;ll
-            respond within one business day.
+            {t('settings.billing.needHelpDescription')}
           </p>
         </div>
       </CardContent>

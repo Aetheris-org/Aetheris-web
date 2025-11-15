@@ -158,7 +158,7 @@ export default function ArticlePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { toast } = useToast()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const queryClient = useQueryClient()
 
   const [commentText, setCommentText] = useState('')
@@ -1198,7 +1198,7 @@ export default function ArticlePage() {
   }
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
@@ -1625,7 +1625,7 @@ export default function ArticlePage() {
                   </p>
                   {infoParent && (
                     <p className="text-xs text-muted-foreground">
-                      Ответ на @{infoParent.author.username}
+                      {t('article.replyTo', { username: infoParent.author.username })}
                     </p>
                   )}
                 </div>

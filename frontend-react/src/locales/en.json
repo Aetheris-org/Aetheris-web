@@ -27,7 +27,8 @@
     "first": "First",
     "categories": "Categories",
     "retry": "Retry",
-    "optional": "optional"
+    "optional": "optional",
+    "and": "and"
   },
   "settings": {
     "title": "Settings",
@@ -45,6 +46,27 @@
       "changeCover": "Change cover",
       "uploadCover": "Upload cover",
       "adjustCrop": "Adjust crop",
+      "adjustProfileCover": "Adjust profile cover",
+      "adjustProfileCoverDescription": "Drag to frame the banner. The cover displays on your profile and author highlights.",
+      "adjustAvatar": "Adjust avatar",
+      "adjustAvatarDescription": "Make sure your face or logo stays centered. This avatar appears across the platform.",
+      "zoom": "Zoom",
+      "coverGuidelines": "Cover guidelines",
+      "keepFocusCentered": "Keep focus centered",
+      "keepFocusCenteredDescription": "Important artwork and text should sit comfortably within the central area.",
+      "useLargeImages": "Use large images",
+      "useLargeImagesDescription": "For best results pick images at least {size}.",
+      "reEditAnytime": "Re-edit anytime",
+      "reEditAnytimeDescription": "You can reopen this editor before saving changes to fine-tune the crop.",
+      "waitingForImage": "Waiting for image...",
+      "wideBanner": "Wide banner",
+      "squareCrop": "Square crop",
+      "processing": "Processing...",
+      "useImage": "Use image",
+      "imageProcessingFailed": "Image processing failed",
+      "imageProcessingFailedDescription": "Failed to process the image. Please try again.",
+      "unsupportedFile": "Unsupported file",
+      "unsupportedFileDescription": "Please choose an image (JPG, PNG, or WEBP).",
       "remove": "Remove",
       "avatar": "Avatar",
       "changeAvatar": "Change avatar",
@@ -55,17 +77,26 @@
       "bioPlaceholder": "Share a short introduction to let readers know who you are.",
       "firstName": "First name",
       "lastName": "Last name",
+      "contactDetails": "Contact details",
+      "contactDetailsDescription": "Share how editors and collaborators can reach you. These fields will sync with the backend in a future release.",
       "contactEmail": "Contact email",
       "contactEmailDescription": "Shown to editors only. Account login email remains unchanged.",
       "website": "Website",
       "location": "Location",
+      "socialProfiles": "Social profiles",
+      "socialProfilesDescription": "Display external profiles on your public page. Add full URLs for best results.",
+      "professionalProfile": "Professional profile",
+      "professionalProfileDescription": "Curate how Aetheris introduces you in newsletters, listings, and profile summaries.",
+      "focusVisibility": "Focus & visibility",
+      "focusVisibilityDescription": "Highlight the work you are excited about and how collaborators should reach out.",
+      "availability": "Availability",
       "twitter": "Twitter / X",
       "github": "GitHub",
       "linkedin": "LinkedIn",
       "portfolio": "Portfolio",
       "headline": "Headline",
       "headlinePlaceholder": "Design director crafting calm, accessible publishing tools",
-      "availability": "Availability note",
+      "availabilityNote": "Availability note",
       "availabilityPlaceholder": "Open for fractional design leadership, UX critiques, and conference talks.",
       "currentRole": "Current role",
       "currentCompany": "Organisation",
@@ -81,6 +112,16 @@
       "openToConsulting": "Consulting",
       "openToSpeaking": "Speaking",
       "preferredContactMethod": "Preferred contact method",
+      "preferredContactMethodEmail": "Email",
+      "preferredContactMethodEmailDescription": "Reply within 1-2 business days",
+      "preferredContactMethodDirectMessage": "Direct messages",
+      "preferredContactMethodDirectMessageDescription": "Connect via the built-in messenger",
+      "preferredContactMethodSchedule": "Scheduling link",
+      "preferredContactMethodScheduleDescription": "Share a Calendly or other booking link",
+      "preferredContactMethodSocial": "Social first",
+      "preferredContactMethodSocialDescription": "Reach out via social handles",
+      "preferredContactMethodNotSpecified": "No preference",
+      "preferredContactMethodNotSpecifiedDescription": "Decide together as needed",
       "newsletterName": "Newsletter name",
       "newsletterUrl": "Newsletter link",
       "saveContactInfo": "Save contact info",
@@ -180,7 +221,263 @@
       "saveCurrentAppearance": "Save current appearance",
       "presetName": "Preset name",
       "savePreset": "Save preset",
-      "noPresets": "You haven't saved any appearance presets yet. Tune a look you love, give it a name, and save it for instant switching."
+      "noPresets": "You haven't saved any appearance presets yet. Tune a look you love, give it a name, and save it for instant switching.",
+      "themeExported": "Theme exported",
+      "themeExportedDescription": "Theme configuration copied to clipboard.",
+      "cssCopied": "CSS copied",
+      "cssCopiedDescription": "CSS variables copied to clipboard.",
+      "exportJson": "Export JSON",
+      "copyCssVariables": "Copy CSS Variables",
+      "themeGroups": {
+        "basic": "Basic",
+        "games": "Games",
+        "anime": "Anime",
+        "extraordinary": "Extraordinary",
+        "yourThemes": "Your themes",
+        "theme": "theme",
+        "themes": "themes"
+      },
+      "contrast": {
+        "standard": "Standard contrast",
+        "standardDescription": "Balanced tone for everyday reading.",
+        "bold": "Bold contrast",
+        "boldDescription": "Higher contrast for more dramatic separation."
+      },
+      "motion": {
+        "animated": "Animated",
+        "animatedDescription": "Retain smooth transitions and micro-interactions.",
+        "reduced": "Reduced motion",
+        "reducedDescription": "Minimize motion for people sensitive to animation."
+      },
+      "depth": {
+        "flat": "Flat",
+        "flatDescription": "Minimal outlines with no drop shadows.",
+        "soft": "Soft",
+        "softDescription": "Gentle ambient shadows for subtle depth.",
+        "elevated": "Elevated",
+        "elevatedDescription": "Pronounced shadows suited for hero moments."
+      },
+      "themes": {
+        "defaultTheme": {
+          "name": "Default Theme",
+          "description": "The classic choice — pure elegance meets obsidian darkness. Timeless, refined, and effortlessly comfortable."
+        },
+        "midnightBlue": {
+          "name": "Midnight Blue",
+          "description": "Dive into the depths of productivity. Deep, calming blues that whisper focus and command attention."
+        },
+        "sunsetWarm": {
+          "name": "Sunset Warm",
+          "description": "Where creativity meets warmth. Golden hour vibes that spark inspiration and wrap you in cozy amber glow."
+        },
+        "forestGreen": {
+          "name": "Forest Green",
+          "description": "Nature's embrace in digital form. Fresh greens that breathe life into your workspace and calm your mind."
+        },
+        "minimalLight": {
+          "name": "Minimal Light",
+          "description": "Less is more, perfected. Ultra-clean aesthetics that strip away noise and let your content shine."
+        },
+        "cosmicDark": {
+          "name": "Cosmic Dark",
+          "description": "Journey through the stars. Deep space aesthetics that transform your screen into a portal to the cosmos."
+        },
+        "oceanBreeze": {
+          "name": "Ocean Breeze",
+          "description": "Feel the gentle waves. Serene blue-greens that wash over you like a calm ocean, perfect for deep reading."
+        },
+        "autumnWarmth": {
+          "name": "Autumn Warmth",
+          "description": "Cozy up with autumn's finest. Rich oranges and reds that feel like a warm blanket on a crisp day."
+        },
+        "snowWhite": {
+          "name": "Snow White",
+          "description": "Pristine purity meets elegance. Crisp whites and subtle grays that create a canvas of infinite possibilities."
+        },
+        "deepPurple": {
+          "name": "Deep Purple",
+          "description": "Royal creativity unleashed. Rich purples that channel your inner artist and inspire bold thinking."
+        },
+        "cyberpunk": {
+          "name": "Cyberpunk 2077",
+          "description": "Wake up, samurai. Neon-drenched streets, electric dreams, and the pink-purple glow of Night City's endless night."
+        },
+        "minecraft": {
+          "name": "Minecraft",
+          "description": "Craft your digital world. Blocky perfection meets earthy tones — where creativity knows no bounds."
+        },
+        "csgo": {
+          "name": "CS:GO",
+          "description": "Lock and load. Tactical orange cuts through darkness — built for precision, designed for victory."
+        },
+        "dota": {
+          "name": "Dota 2",
+          "description": "The ancient calls. Mystical blues and reds clash in eternal battle — where legends are forged."
+        },
+        "anime1": {
+          "name": "Studio Ghibli",
+          "description": "Whimsical wonder awaits. Soft pastels and gentle gradients that capture the magic of Miyazaki's worlds."
+        },
+        "anime2": {
+          "name": "Neon Genesis",
+          "description": "The future is now. Electric purples and cyber greens that pulse with the energy of tomorrow."
+        },
+        "anime3": {
+          "name": "One Piece",
+          "description": "Set sail for adventure. Vibrant blues and warm oranges that capture the spirit of the Grand Line."
+        },
+        "terraria": {
+          "description": "Dig deep, build high. Earthy tones that capture the spirit of endless adventure and discovery."
+        },
+        "geometryDash": {
+          "description": "Feel the beat. Electric neons pulse with rhythm — pure energy that makes every click count."
+        },
+        "valorant": {
+          "description": "Precision meets power. Stark red-black contrast that screams tactical excellence and lethal focus."
+        },
+        "leagueOfLegends": {
+          "description": "Welcome to the Rift. Royal gold and blue unite in regal splendor — where champions are born."
+        },
+        "overwatch": {
+          "description": "Heroes never die. Bright blue-orange energy that powers every epic moment and legendary play."
+        },
+        "apexLegends": {
+          "description": "Become a legend. Fiery orange-red energy that fuels your climb to the top of the arena."
+        },
+        "fortnite": {
+          "description": "Victory royale vibes. Vibrant purple-pink explosions of color that celebrate every win in style."
+        },
+        "amongUs": {
+          "description": "Sus vibes only. Colorful space chaos where trust is optional and fun is mandatory."
+        },
+        "pokemon": {
+          "description": "Gotta catch 'em all! Electric yellow-blue energy that captures the spirit of adventure and friendship."
+        },
+        "zelda": {
+          "description": "Courage, wisdom, power. Emerald greens and golden light that echo the hero's journey through Hyrule."
+        },
+        "portal": {
+          "description": "The cake is a lie. Aperture Science's iconic blue-orange portals that bend reality itself."
+        },
+        "halfLife": {
+          "description": "Wake up, Mr. Freeman. Black Mesa's signature orange hazard warnings — where science meets survival."
+        },
+        "undertale": {
+          "description": "Determination flows through you. Warm, nostalgic earth tones that tell a story of friendship and choice."
+        },
+        "hollowKnight": {
+          "description": "Descend into Hallownest. Dark depths pierced by pale white light — a kingdom of bugs and dreams."
+        },
+        "stardewValley": {
+          "description": "Simple life, endless joy. Warm greens and browns that capture the peaceful rhythm of farm living."
+        },
+        "balatro": {
+          "description": "All in. Vintage casino elegance meets roguelike chaos — dark green-gold that screams high stakes."
+        },
+        "metroLastLight": {
+          "description": "Survive the tunnels. Post-apocalyptic darkness where every flicker of light is a beacon of hope."
+        },
+        "metroExodus": {
+          "description": "Escape the wasteland. Fiery orange-red tones that burn with the will to survive and find home."
+        },
+        "warThunder": {
+          "description": "Take to the skies. Military precision in blue-gray tones — where every mission is a masterpiece."
+        },
+        "warhammer": {
+          "description": "In the grim darkness, there is only war. Stark red-black contrast that embodies the eternal conflict."
+        },
+        "clashRoyale": {
+          "description": "Clash of colors! Vibrant mobile strategy that brings the arena to life with explosive energy."
+        },
+        "blockStrike": {
+          "description": "Block by block, victory by victory. Voxel perfection meets FPS action in pixelated glory."
+        },
+        "scp": {
+          "description": "[REDACTED]. Secure. Contain. Protect. Classified aesthetics for those who know too much."
+        },
+        "backrooms": {
+          "name": "Backrooms",
+          "description": "You've nocliped out of reality. Liminal yellow fluorescent hell where time has no meaning."
+        },
+        "ussr": {
+          "name": "USSR",
+          "description": "Союз нерушимый. Soviet power in red and gold — where history meets aesthetics."
+        },
+        "china": {
+          "name": "China",
+          "description": "Ancient wisdom, modern elegance. Traditional red-gold harmony that honors millennia of culture."
+        },
+        "banana": {
+          "name": "Banana",
+          "description": "Peel back the ordinary. Bright yellow tropical energy that's simply bananas — in the best way."
+        },
+        "appleInc": {
+          "description": "Think different. Iconic minimalism — clean whites and grays that define modern elegance."
+        },
+        "arasaka": {
+          "description": "Corporate power, absolute control. Red-black dominance that screams megacorp authority."
+        },
+        "aliexpress": {
+          "description": "Shop the world. E-commerce orange-blue energy that brings global markets to your screen."
+        },
+        "alien": {
+          "name": "Alien",
+          "description": "In space, no one can hear you scream. Dark green-black terror that haunts your digital nightmares."
+        },
+        "predator": {
+          "name": "Predator",
+          "description": "If it bleeds, we can kill it. Red-green thermal vision aesthetics for the ultimate hunter."
+        },
+        "anime": {
+          "description": "Kawaii overload! Vibrant Japanese animation energy that brings every scene to life with explosive color."
+        },
+        "demonSlayer": {
+          "description": "Breath of the elements. Water and fire unite in a palette that channels the power of breathing techniques."
+        },
+        "onePiece": {
+          "name": "One Piece",
+          "description": "Set sail for adventure! Ocean blue tones that capture the spirit of the Grand Line and endless dreams."
+        },
+        "truffle": {
+          "name": "Truffle",
+          "description": "Luxury unearthed. Rich earthy browns that taste like sophistication and smell like success."
+        },
+        "calamity": {
+          "description": "Cosmic chaos unleashed. Terraria mod aesthetics where disaster meets beauty in violet cosmic splendor."
+        },
+        "berserk": {
+          "name": "Berserk",
+          "description": "Struggle, endure, contend. Dark fantasy brutality in red-black — where every panel bleeds with raw emotion and unrelenting will."
+        },
+        "vagabond": {
+          "name": "Vagabond",
+          "description": "The way of the sword, the way of the brush. Ink-wash perfection that captures the soul of a wandering samurai."
+        },
+        "chainsawMan": {
+          "name": "Chainsaw Man",
+          "description": "REV IT UP! Chaotic crimson energy that screams pure, unhinged action — where chainsaws meet demons meet madness."
+        },
+        "hunterXHunter": {
+          "name": "Hunter x Hunter",
+          "description": "Become a Hunter. Vibrant azure energy that captures the thrill of adventure, friendship, and limitless potential."
+        },
+        "manga": {
+          "name": "Manga",
+          "description": "Pure manga essence. Classic black-white perfection — where every line tells a story and every panel breathes life."
+        },
+        "madeInAbyss": {
+          "name": "Made in Abyss",
+          "description": "Descend into the unknown. Deep violet mysteries that echo the abyss's call — beautiful, terrifying, and unforgettable."
+        }
+      },
+      "contentDensity": {
+        "title": "Content density",
+        "description": "Control vertical rhythm for lists, cards, and navigation.",
+        "resetLabel": "Reset density to default",
+        "adjustLabel": "Adjust interface density",
+        "baseline": "Baseline"
+      },
+      "styleSettingsMoved": "Style settings have been moved to the Themes tab."
     },
     "privacy": {
       "title": "Privacy",
@@ -255,7 +552,11 @@
       "sessionRevoked": "Session revoked",
       "sessionRevokedDescription": "TODO: connect session revocation with the authentication service.",
       "otherSessionsSignedOut": "Other sessions signed out",
-      "otherSessionsSignedOutDescription": "TODO: revoke sessions server-side and notify connected devices."
+      "otherSessionsSignedOutDescription": "TODO: revoke sessions server-side and notify connected devices.",
+      "activeNow": "Active now",
+      "hoursAgo": "{hours} {hours, plural, one {hour} other {hours}} ago",
+      "yesterday": "Yesterday",
+      "at": "at"
     },
     "billing": {
       "title": "Billing",
@@ -283,7 +584,21 @@
         "pending": "Pending"
       },
       "needHelp": "Need help with billing?",
-      "needHelpDescription": "Email billing@aetheris.dev and we'll respond within one business day."
+      "needHelpDescription": "Email billing@aetheris.dev and we'll respond within one business day.",
+      "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+      }
     },
     "language": {
       "title": "Interface Language",
@@ -307,9 +622,6 @@
     "networkingDescription": "Opportunities, mentors, and verified partner teams.",
     "coursesDescription": "Guided tracks, workshops, and cohort-based learning.",
     "developersDescription": "Toolkits, changelog, and integration playbooks."
-  },
-  "footer": {
-    "createArticle": "Create article"
   },
   "explore": {
     "title": "Explore",
@@ -355,27 +667,6 @@
     "viewResults": "View Results",
     "noEventsFound": "No events found",
     "noEventsFoundDescription": "Try adjusting your filters or check back later!"
-  },
-  "networking": {
-    "title": "Networking",
-    "companies": "Companies",
-    "freelance": "Freelance",
-    "requests": "Requests",
-    "offers": "Offers",
-    "search": "Search",
-    "sortBy": "Sort by",
-    "relevance": "Relevance",
-    "newest": "Newest",
-    "rating": "Rating",
-    "boosted": "Boosted",
-    "showFilters": "Show filters",
-    "hideFilters": "Hide filters",
-    "clearFilters": "Clear filters",
-    "activeJobs": "Active Jobs",
-    "clientRequests": "Client Requests",
-    "freelancerOffers": "Freelancer Offers",
-    "noResults": "No results found",
-    "noResultsDescription": "Try adjusting your filters or search terms."
   },
   "home": {
     "spotlight": {
@@ -465,15 +756,15 @@
     "publish": "Publish",
     "publishing": "Publishing...",
     "reply": "Reply",
-    "writeReply": "Write your reply...",
+    "writeReplyPlaceholder": "Write your reply...",
     "share": "Share",
     "shareArticle": "Share Article",
     "chooseHowToShare": "Choose how to share",
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
     "linkCopiedDescription": "Article link copied to clipboard",
-    "copyError": "Error",
-    "copyErrorDescription": "Failed to copy link",
+    "copyLinkError": "Error",
+    "copyLinkErrorDescription": "Failed to copy link",
     "twitter": "Twitter",
     "facebook": "Facebook",
     "linkedin": "LinkedIn",
@@ -485,7 +776,7 @@
     "deleteArticle": "Delete Article",
     "deleteConfirm": "This action cannot be undone",
     "deleteMessage": "Are you sure you want to delete the article",
-    "deleting": "Deleting...",
+    "deletingArticle": "Deleting...",
     "deleted": "Article deleted",
     "deletedDescription": "Article has been successfully deleted",
     "deleteError": "Delete error",
@@ -613,7 +904,8 @@
     "shareTitle": "{title} on Aetheris",
     "shareTitleDefault": "Check out this article on Aetheris",
     "thisArticle": "this article",
-    "info": "Info"
+    "info": "Info",
+    "replyTo": "Reply to @{username}"
   },
   "createArticle": {
     "title": "Create Article",
@@ -641,8 +933,8 @@
     },
     "category": "Article category",
     "categoryDescription": "Select a category for your article",
-    "previewImage": "Preview image",
-    "previewImageDescription": "Upload an image or edit the current preview",
+    "previewImageUpload": "Preview image",
+    "previewImageUploadDescription": "Upload an image or edit the current preview",
     "upload": "Upload",
     "edit": "Edit",
     "preview": "Preview:",
@@ -717,7 +1009,104 @@
       "reviewDescription": "Final preview",
       "guidelines": "Guidelines",
       "guidelinesDescription": "Publishing rules"
-    }
+    },
+    "addTag": "Add",
+    "difficultyLevel": "Difficulty Level",
+    "difficultyLevelDescription": "Select the difficulty level that best matches your article content.",
+    "previewImageTitle": "Preview Image",
+    "previewImageDescription": "Upload a hero image that appears on article cards, homepage, and social shares. Recommended size 1200×630px.",
+    "perfectForSocial": "Perfect for social previews",
+    "adjustCrop": "Adjust crop",
+    "replaceImage": "Replace image",
+    "removeImage": "Remove",
+    "imageUploadHint": "Upload JPG, PNG, or WEBP up to 5MB. You can always readjust the crop later.",
+    "addHeroImage": "Add a hero image",
+    "addHeroImageDescription": "The preview appears on article cards, the homepage, and social shares. Recommended size 1200×630px.",
+    "uploadImage": "Upload image",
+    "showLess": "Show less",
+    "showMore": "Show more content",
+    "tagsLabel": "Tags",
+    "difficultyLabel": "Difficulty",
+    "excerptLabel": "Excerpt",
+    "statistics": "Statistics",
+    "words": "Words",
+    "titleLabel": "Title",
+    "contentLabel": "Content",
+    "noContentYet": "No content yet",
+    "publishingGuidelines": "Publishing Guidelines",
+    "publishingGuidelinesDescription": "Review the rules and requirements before publishing your article",
+    "reviewRulesBeforePublishing": "Review the rules and requirements before publishing your article",
+    "requirements": "Requirements",
+    "titleRequirement": "10-{max} characters, clear and descriptive",
+    "charactersClearDescriptive": "characters, clear and descriptive",
+    "contentRequirement": "Min 100 words, max {max} characters",
+    "minWordsMaxChars": "Min 100 words, max {max} characters",
+    "excerptRequirement": "Optional, up to {max} characters",
+    "optionalUpToChars": "Optional, up to {max} characters",
+    "guidelines": "Guidelines",
+    "guidelinesTitle": "Guidelines",
+    "originality": "Originality",
+    "originalityDescription": "Original content or properly attributed",
+    "originalContentOrAttributed": "Original content or properly attributed",
+    "quality": "Quality",
+    "qualityDescription": "Well-written, informative, valuable content",
+    "wellWrittenInformative": "Well-written, informative, valuable content",
+    "formatting": "Formatting",
+    "formattingDescription": "Proper structure, headings, readability",
+    "properStructureHeadings": "Proper structure, headings, readability",
+    "prohibited": "Prohibited",
+    "harmfulContent": "Harmful Content",
+    "harmfulContentDescription": "Hateful, discriminatory, or violent content",
+    "hatefulDiscriminatoryViolent": "Hateful, discriminatory, or violent content",
+    "spamMisinformation": "Spam & Misinformation",
+    "spamMisinformationDescription": "Clickbait, spam, misleading information",
+    "clickbaitSpamMisleading": "Clickbait, spam, misleading information",
+    "copyright": "Copyright",
+    "copyrightDescription": "No copyright or IP violations",
+    "noCopyrightViolations": "No copyright or IP violations",
+    "inappropriateMedia": "Inappropriate Media",
+    "inappropriateMediaDescription": "Explicit, violent, or inappropriate images",
+    "explicitViolentInappropriate": "Explicit, violent, or inappropriate images",
+    "publishingTitle": "Publishing",
+    "reviewProcess": "Review Process",
+    "reviewProcessDescription": "All articles are subject to review",
+    "allArticlesSubjectToReview": "All articles are subject to review",
+    "edits": "Edits",
+    "editsDescription": "Significant changes may require re-review",
+    "significantChangesMayRequireReview": "Significant changes may require re-review",
+    "tagsCategories": "Tags & Categories",
+    "tagsCategoriesDescription": "Use relevant tags and difficulty levels",
+    "useRelevantTagsDifficulty": "Use relevant tags and difficulty levels",
+    "heroImage": "Hero Image",
+    "heroImageDescription": "Optional but recommended for visibility",
+    "optionalButRecommended": "Optional but recommended for visibility",
+    "byPublishingYouConfirm": "By publishing, you confirm that you have read and agree to follow all guidelines. Violations may result in content removal or account restrictions.",
+    "confirmReadAgreeGuidelines": "I confirm that I have read and agree to follow all publishing guidelines and rules",
+    "important": "Important",
+    "importantDescription": "By publishing, you confirm that you have read and agree to follow all guidelines. Violations may result in content removal or account restrictions.",
+    "agreeToGuidelines": "I confirm that I have read and agree to follow all publishing guidelines and rules",
+    "mustAgree": "You must check this box to proceed with publishing your article.",
+    "stepCounter": "Step {current} of {total}",
+    "saveDraft": "Save Draft",
+    "previous": "Previous",
+    "next": "Next",
+    "complete": "Complete",
+    "untitled": "Untitled",
+    "noTags": "No tags",
+    "refineHeroImage": "Refine your hero image",
+    "refineHeroImageDescription": "Drag to reframe the focus area. The preview below keeps a cinematic 16:9 ratio for article cards and social sharing.",
+    "zoom": "Zoom",
+    "croppingTips": "Cropping tips",
+    "aimForClarity": "Aim for clarity",
+    "aimForClarityDescription": "Keep the subject centered and avoid placing important details near the frame edges. The crop is responsive and scales across devices.",
+    "resolutionMatters": "Resolution matters",
+    "resolutionMattersDescription": "Higher resolution assets deliver sharper cards. For best results use images at least 1200×630px.",
+    "needAdjustmentsLater": "Need adjustments later?",
+    "needAdjustmentsLaterDescription": "You can reopen this editor anytime after uploading. The original image stays intact until you confirm the crop.",
+    "processing": "Processing...",
+    "useImage": "Use image",
+    "balancedFraming": "Balanced framing",
+    "waitingForImage": "Waiting for image..."
   },
   "drafts": {
     "title": "Drafts",
@@ -787,7 +1176,13 @@
     "authorDashboardDescription": "Track article views, reactions, and community engagement at a glance.",
     "instantEditorAccess": "Instant editor access",
     "instantEditorAccessDescription": "Jump straight into the draft editor without losing your last edits.",
-    "termsAndPrivacy": "By continuing, you agree to our Terms of Service and Privacy Policy. We only use your email for authentication and account recovery.",
+    "termsAndPrivacy": "By continuing, you agree to our Terms of Service and Privacy Policy.",
+    "termsAndPrivacyPrefix": "By continuing, you agree to our",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "emailHashInfo": "For your security, we only store a hash of your email address, not the email itself.",
+    "privacyFirst": "Privacy first",
+    "benefitsTitle": "What you'll get",
     "needHelp": "Need help? Reach us at"
   },
   "footer": {
@@ -835,7 +1230,48 @@
     "notifications": "Notifications",
     "readingList": "Reading list",
     "friends": "Friends",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "profileNotFound": "Profile not found",
+    "profileNotFoundDescription": "Could not determine which profile to show. Try selecting an author from the article list.",
+    "loadingError": "Loading error",
+    "loadingErrorDescription": "Failed to load profile. Refresh the page or try again later.",
+    "memberSince": "Member since {date}",
+    "articlesCount": "articles",
+    "likesCount": "likes",
+    "commentsCount": "comments",
+    "draftsCount": "drafts",
+    "levelBadge": "Level {level}",
+    "shareProfile": "Share profile",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "report": "Report",
+    "additionalActions": "Additional actions",
+    "openArticles": "Open articles",
+    "articlesTab": "Articles",
+    "articlesTabShort": "Posts",
+    "commentsTab": "Comments",
+    "commentsTabShort": "Comm.",
+    "bookmarksTab": "Bookmarks",
+    "bookmarksTabShort": "Bookm.",
+    "noArticlesOwn": "You haven't published any articles yet",
+    "noArticlesOther": "Author hasn't published any articles yet",
+    "activityStreak": "Activity streak",
+    "streakDays": "{count} {count, plural, one {day} other {days}}",
+    "noComments": "No comments yet",
+    "noBookmarks": "No bookmarks yet",
+    "likes": "{count} {count, plural, one {like} other {likes}}",
+    "moreAchievements": "+{count} more",
+    "audienceInsights": "Audience Insights",
+    "contentMix": "Content Mix",
+    "articlesCountShort": "{count} {count, plural, one {article} other {articles}}",
+    "recentActivity": "Recent Activity",
+    "creatorGoals": "Creator Goals",
+    "pinnedCollections": "Pinned Collections",
+    "linkCopiedDescription": "Profile link copied to clipboard",
+    "copyError": "Failed to copy link",
+    "shareTitle": "Check out {username}'s profile on Aetheris",
+    "shareText": "View {username}'s articles and achievements on Aetheris",
+    "reportDescription": "Report functionality will be implemented soon"
   },
   "trending": {
     "title": "Trending",
@@ -931,8 +1367,6 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "biweekly": "Twice a month",
-      "monthly": "Monthly",
-      "project": "Per project",
       "employmentExperience": "Employment & Experience",
       "employmentType": "Employment type",
       "experienceLevel": "Experience level",
@@ -1199,8 +1633,183 @@
     "readingList": "Reading list",
     "drafts": "Drafts",
     "helpCenter": "Help center",
+    "feedback": "Feedback",
+    "stats": "Statistics",
+    "viewStats": "View statistics",
+    "viewAchievements": "View achievements",
     "signOut": "Sign out",
     "signIn": "Sign In"
+  },
+  "readingList": {
+    "title": "Reading list",
+    "back": "Back",
+    "noSavedArticles": "No saved articles yet",
+    "noSavedArticlesDescription": "Use the \"Read later\" button on any article to add it to your personal reading queue.",
+    "browseArticles": "Browse articles",
+    "savedForLater": "Saved for later",
+    "oneArticleInQueue": "1 article in your queue",
+    "articlesReadyToRead": "{count} articles ready to read",
+    "clearAll": "Clear all",
+    "savedOn": "Saved on {date}",
+    "continueReading": "Continue reading",
+    "remove": "Remove",
+    "minRead": "{minutes} min read"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "description": "Report bugs, share ideas, and help improve the platform",
+    "bugs": "Bugs",
+    "features": "Features",
+    "resolved": "Resolved",
+    "inProgress": "In Progress",
+    "createNew": "Create New",
+    "search": "Search...",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your filters or search query",
+    "createBug": "Report a Bug",
+    "createFeature": "Suggest a Feature",
+    "createDescription": "Describe the issue or your suggestion in as much detail as possible",
+    "form": {
+      "type": "Type",
+      "bugDescription": "Report a bug or issue",
+      "featureDescription": "Suggest a new feature or improvement",
+      "title": "Title",
+      "titlePlaceholder": "Brief description of the issue or suggestion",
+      "description": "Description",
+      "descriptionPlaceholder": "Detailed description of the issue or details of your suggestion",
+      "stepsToReproduce": "Steps to Reproduce",
+      "stepsToReproducePlaceholder": "1. Open...\n2. Click on...\n3. Observe error...",
+      "stepsToReproduceHint": "Describe step-by-step actions that lead to the problem",
+      "priority": "Priority",
+      "tags": "Tags",
+      "tagsPlaceholder": "Enter a tag and press Enter",
+      "addTag": "Add",
+      "submit": "Submit",
+      "submitBug": "Submit Report",
+      "submitFeature": "Submit Suggestion"
+    },
+    "stepsToReproduce": "Steps to Reproduce",
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allPriorities": "All Priorities"
+    },
+    "status": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "resolved": "Resolved",
+      "rejected": "Rejected"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First",
+      "mostVoted": "Most Voted",
+      "priority": "By Priority"
+    },
+    "reactions": {
+      "upvote": "Upvote",
+      "downvote": "Downvote",
+      "important": "Important",
+      "duplicate": "Duplicate",
+      "wontfix": "Won't Fix"
+    }
+  },
+  "legal": {
+    "termsOfService": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated",
+      "section1": {
+        "title": "1. Acceptance of Terms",
+        "content": "Welcome to Aetheris! By using our service, you agree to comply with these Terms of Service. If you do not agree with any of these terms, please do not use our service."
+      },
+      "section2": {
+        "title": "2. Use of Service",
+        "content": "You agree to use Aetheris only for lawful purposes and in accordance with these Terms. In particular, you agree:",
+        "item1": "Not to infringe on the intellectual property rights of other users",
+        "item2": "Not to post content that is illegal, offensive, or violates the rights of others",
+        "item3": "Not to use the service for spam or unsolicited messages",
+        "item4": "Not to attempt to gain unauthorized access to systems or data"
+      },
+      "section3": {
+        "title": "3. User Content",
+        "content": "You retain all rights to the content you post on Aetheris. However, by posting content, you grant us a license to use, display, and distribute it within our service. You are solely responsible for all content you post.",
+        "item1": "You warrant that you have all necessary rights to the content you post",
+        "item2": "You agree not to post content that infringes on third-party rights",
+        "item3": "We reserve the right to remove any content that violates our rules",
+        "item4": "You may delete your content at any time"
+      },
+      "section4": {
+        "title": "4. Intellectual Property",
+        "content": "All materials, including design, logos, text, and software of Aetheris, are protected by copyright and other intellectual property laws. You may not copy, modify, or distribute these materials without our written permission."
+      },
+      "section5": {
+        "title": "5. Termination",
+        "content": "We reserve the right to suspend or terminate your access to the service at any time if you violate these Terms of Service or for any other reason at our discretion."
+      },
+      "section6": {
+        "title": "6. Disclaimer",
+        "content": "Aetheris is provided \"as is\" without any warranties. We do not guarantee that the service will operate without interruption or errors. We are not liable for any damages arising from the use or inability to use our service."
+      },
+      "section7": {
+        "title": "7. Changes to Terms",
+        "content": "We reserve the right to modify these Terms of Service at any time. We will notify you of significant changes by posting a new version on this page. Continued use of the service after changes constitutes your acceptance of the new terms."
+      },
+      "section8": {
+        "title": "8. Contact Information",
+        "content": "If you have any questions about these Terms of Service, please contact us at hello@aetheris.dev."
+      },
+      "contact": "For questions regarding these Terms of Service, please contact us at hello@aetheris.dev"
+    },
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated",
+      "section1": {
+        "title": "1. Introduction",
+        "content": "We at Aetheris take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our service."
+      },
+      "section2": {
+        "title": "2. Information We Collect",
+        "content": "We collect the following information:",
+        "item1": "Authentication information: we use OAuth2 for Google sign-in. We only store a hash of your email address, not the address itself, to ensure maximum security",
+        "item2": "Profile information: name, bio, avatar, and other information you voluntarily provide",
+        "item3": "Content: articles, comments, and other content you post",
+        "item4": "Technical information: IP address, browser type, service usage data"
+      },
+      "section3": {
+        "title": "3. How We Use Information",
+        "content": "We use the collected information to:",
+        "item1": "Provide and improve our services",
+        "item2": "Personalize your experience",
+        "item3": "Process transactions and send notifications",
+        "item4": "Ensure security and prevent fraud"
+      },
+      "section4": {
+        "title": "4. Data Protection",
+        "content": "We employ modern encryption and security methods to protect your data. Your email address is stored only as a hash, making it impossible to recover even in the event of a data breach."
+      },
+      "section5": {
+        "title": "5. Information Sharing",
+        "content": "We do not sell or share your personal information with third parties, except when necessary to provide services, required by law, or with your explicit consent."
+      },
+      "section6": {
+        "title": "6. Your Rights",
+        "content": "You have the right to request access, correction, or deletion of your personal data at any time. You may also opt out of receiving marketing messages."
+      },
+      "section7": {
+        "title": "7. Cookies",
+        "content": "We use cookies and similar technologies to improve service functionality, analyze usage, and personalize content. You can manage cookie settings in your browser."
+      },
+      "section8": {
+        "title": "8. Policy Changes",
+        "content": "We may periodically update this Privacy Policy. We will notify you of significant changes by posting a new version on this page."
+      },
+      "contact": "For privacy-related questions, please contact us at hello@aetheris.dev"
+    }
   }
 }
 

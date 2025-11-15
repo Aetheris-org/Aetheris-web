@@ -11,9 +11,11 @@ import {
   selectReadingListItems,
   useReadingListStore,
 } from '@/stores/readingListStore'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function ReadingListPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const items = useReadingListStore(selectReadingListItems)
   const remove = useReadingListStore((state) => state.remove)
   const clear = useReadingListStore((state) => state.clear)
@@ -44,10 +46,10 @@ export default function ReadingListPage() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('readingList.back')}
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Reading list</h1>
+            <h1 className="text-lg font-semibold">{t('readingList.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -61,11 +63,11 @@ export default function ReadingListPage() {
           <Card className="mx-auto max-w-2xl border-dashed bg-muted/30">
             <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <Bookmark className="h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">No saved articles yet</CardTitle>
+              <CardTitle className="text-xl">{t('readingList.noSavedArticles')}</CardTitle>
               <CardDescription className="max-w-md">
-                Use the “Read later” button on any article to add it to your personal reading queue.
+                {t('readingList.noSavedArticlesDescription')}
               </CardDescription>
-              <Button onClick={() => navigate('/')}>Browse articles</Button>
+              <Button onClick={() => navigate('/')}>{t('readingList.browseArticles')}</Button>
             </CardContent>
           </Card>
         ) : (
@@ -73,11 +75,11 @@ export default function ReadingListPage() {
             <Card>
               <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Saved for later</CardTitle>
+                  <CardTitle>{t('readingList.savedForLater')}</CardTitle>
                   <CardDescription>
                     {sortedItems.length === 1
-                      ? '1 article in your queue'
-                      : `${sortedItems.length} articles ready to read`}
+                      ? t('readingList.oneArticleInQueue')
+                      : t('readingList.articlesReadyToRead', { count: sortedItems.length })}
                   </CardDescription>
                 </div>
                 <Button
@@ -87,7 +89,7 @@ export default function ReadingListPage() {
                   onClick={clear}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Clear all
+                  {t('readingList.clearAll')}
                 </Button>
               </CardHeader>
             </Card>
@@ -103,7 +105,7 @@ export default function ReadingListPage() {
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <Badge variant="outline" className="gap-1">
                           <Bookmark className="h-3 w-3" />
-                          Saved on {new Date(article.savedAt).toLocaleDateString()}
+                          {t('readingList.savedOn', { date: new Date(article.savedAt).toLocaleDateString() })}
                         </Badge>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
@@ -111,7 +113,7 @@ export default function ReadingListPage() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          {Math.ceil(article.content.length / 1000)} min read
+                          {t('readingList.minRead', { minutes: Math.ceil(article.content.length / 1000) })}
                         </span>
                       </div>
                       <h2 className="text-xl font-semibold tracking-tight text-foreground hover:text-primary">
@@ -143,7 +145,7 @@ export default function ReadingListPage() {
                         className="gap-2"
                         onClick={() => handleOpenArticle(article.id)}
                       >
-                        Continue reading
+                        {t('readingList.continueReading')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -152,7 +154,7 @@ export default function ReadingListPage() {
                         onClick={() => handleRemove(article.id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        Remove
+                        {t('readingList.remove')}
                       </Button>
                     </div>
                   </CardContent>

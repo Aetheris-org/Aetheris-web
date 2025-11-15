@@ -26,6 +26,10 @@ import ExplorePage from '@/pages/ExplorePage'
 import EventDetailPage from '@/pages/EventDetailPage'
 import ExploreAchievementsPage from '@/pages/ExploreAchievementsPage'
 import PricingPage from '@/pages/PricingPage'
+import FeedbackPage from '@/pages/FeedbackPage'
+import DashboardPage from '@/pages/DashboardPage'
+import TermsOfServicePage from '@/pages/TermsOfServicePage'
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
@@ -58,7 +62,12 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           <Route path="/" element={<ForumLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
@@ -83,6 +92,10 @@ function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/legal/terms" element={<TermsOfServicePage />} />
+          <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
         </Routes>
         <SiteFooter />
         <Toaster />

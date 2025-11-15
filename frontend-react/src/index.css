@@ -217,19 +217,9 @@
   }
 }
 
-/* Apply contrast filter to page content, but exclude portals and fixed position elements */
-/* Filter is applied to #root children, not to body, to avoid stacking context issues */
-:root[data-contrast='bold'] #root > * {
-  filter: contrast(1.06) saturate(1.08);
-}
-
-/* Explicitly exclude Radix portals from any filter - they render outside #root */
-:root[data-contrast='bold'] [data-radix-portal],
-:root[data-contrast='bold'] [data-radix-portal] *,
-:root[data-contrast='bold'] body > [data-radix-portal],
-:root[data-contrast='bold'] body > [data-radix-portal] * {
-  filter: none !important;
-}
+/* Bold contrast is now applied via CSS variable transformations in themeStore.ts */
+/* This avoids layout issues caused by CSS filter creating new stacking contexts */
+/* The visual effect (increased contrast and saturation) is achieved by modifying HSL color values */
 
 :root[data-depth='flat'] .shadow-sm,
 :root[data-depth='flat'] .shadow,

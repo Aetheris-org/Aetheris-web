@@ -31,6 +31,32 @@ export type SurfaceStyle =
   | 'cosmos'
   | 'nightfall'
   | 'onyx'
+  | 'snow'
+  | 'cream'
+  | 'pearl'
+  | 'ivory'
+  | 'sand'
+  | 'stone'
+  | 'slate'
+  | 'charcoal'
+  | 'ash'
+  | 'smoke'
+  | 'fog'
+  | 'cloud'
+  | 'storm'
+  | 'shadow'
+  | 'abyss'
+  | 'deep'
+  | 'pitch'
+  | 'coal'
+  | 'jet'
+  | 'carbon'
+  | 'cyberpunk'
+  | 'minecraft'
+  | 'csgo'
+  | 'dota'
+  | 'terraria'
+  | 'geometrydash'
 export type AccentColor =
   | 'indigo'
   | 'violet'
@@ -56,6 +82,26 @@ export type AccentColor =
   | 'pure'
   | 'lime'
   | 'mint'
+  | 'orange'
+  | 'yellow'
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'pink'
+  | 'red'
+  | 'brown'
+  | 'gold'
+  | 'silver'
+  | 'bronze'
+  | 'turquoise'
+  | 'lavender'
+  | 'fuchsia'
+  | 'salmon'
+  | 'olive'
+  | 'navy'
+  | 'sky'
+  | 'forest'
+  | 'ocean'
   | 'custom'
 
 type ResolvedTheme = 'light' | 'dark'
@@ -166,6 +212,32 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
   'inkwell',
   'cosmos',
   'onyx',
+  'snow',
+  'cream',
+  'pearl',
+  'ivory',
+  'sand',
+  'stone',
+  'slate',
+  'charcoal',
+  'ash',
+  'smoke',
+  'fog',
+  'cloud',
+  'storm',
+  'shadow',
+  'abyss',
+  'deep',
+  'pitch',
+  'coal',
+  'jet',
+  'carbon',
+  'cyberpunk',
+  'minecraft',
+  'csgo',
+  'dota',
+  'terraria',
+  'geometrydash',
 ]
 
 const DEFAULT_PREFERENCES: StoredPreferences = {
@@ -694,6 +766,426 @@ export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig>
         accent: '150 40% 24%',
         accentForeground: '150 80% 88%',
         ring: '150 70% 60%',
+      },
+    },
+  },
+  orange: {
+    label: 'Orange',
+    description: 'Vibrant orange for energetic interfaces',
+    preview: '25 95% 53%',
+    values: {
+      light: {
+        primary: '25 95% 53%',
+        primaryForeground: '20 100% 10%',
+        accent: '25 100% 95%',
+        accentForeground: '25 90% 35%',
+        ring: '25 95% 53%',
+      },
+      dark: {
+        primary: '25 95% 65%',
+        primaryForeground: '20 100% 12%',
+        accent: '25 50% 26%',
+        accentForeground: '25 100% 92%',
+        ring: '25 95% 65%',
+      },
+    },
+  },
+  yellow: {
+    label: 'Yellow',
+    description: 'Bright yellow for optimistic highlights',
+    preview: '48 96% 53%',
+    values: {
+      light: {
+        primary: '48 96% 53%',
+        primaryForeground: '26 100% 12%',
+        accent: '48 100% 95%',
+        accentForeground: '35 85% 36%',
+        ring: '48 96% 53%',
+      },
+      dark: {
+        primary: '48 96% 68%',
+        primaryForeground: '30 100% 14%',
+        accent: '34 48% 28%',
+        accentForeground: '40 100% 92%',
+        ring: '48 96% 68%',
+      },
+    },
+  },
+  green: {
+    label: 'Green',
+    description: 'Classic green for natural, balanced feel',
+    preview: '142 76% 36%',
+    values: {
+      light: {
+        primary: '142 76% 36%',
+        primaryForeground: '142 82% 96%',
+        accent: '140 100% 95%',
+        accentForeground: '154 86% 25%',
+        ring: '142 76% 36%',
+      },
+      dark: {
+        primary: '142 76% 52%',
+        primaryForeground: '149 80% 8%',
+        accent: '155 40% 23%',
+        accentForeground: '152 80% 88%',
+        ring: '142 76% 52%',
+      },
+    },
+  },
+  blue: {
+    label: 'Blue',
+    description: 'Trustworthy blue for professional interfaces',
+    preview: '217 91% 60%',
+    values: {
+      light: {
+        primary: '217 91% 60%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '217 100% 96%',
+        accentForeground: '217 88% 40%',
+        ring: '217 91% 60%',
+      },
+      dark: {
+        primary: '217 91% 70%',
+        primaryForeground: '222 68% 18%',
+        accent: '222 60% 30%',
+        accentForeground: '216 100% 92%',
+        ring: '217 91% 70%',
+      },
+    },
+  },
+  purple: {
+    label: 'Purple',
+    description: 'Royal purple for creative and premium feel',
+    preview: '262 83% 58%',
+    values: {
+      light: {
+        primary: '262 83% 58%',
+        primaryForeground: '260 100% 97%',
+        accent: '262 100% 96%',
+        accentForeground: '262 75% 40%',
+        ring: '262 83% 58%',
+      },
+      dark: {
+        primary: '262 83% 72%',
+        primaryForeground: '261 83% 18%',
+        accent: '263 57% 28%',
+        accentForeground: '258 100% 93%',
+        ring: '262 83% 72%',
+      },
+    },
+  },
+  pink: {
+    label: 'Pink',
+    description: 'Soft pink for friendly, approachable designs',
+    preview: '330 81% 60%',
+    values: {
+      light: {
+        primary: '330 81% 60%',
+        primaryForeground: '333 82% 97%',
+        accent: '330 100% 96%',
+        accentForeground: '330 75% 42%',
+        ring: '330 81% 60%',
+      },
+      dark: {
+        primary: '330 81% 72%',
+        primaryForeground: '343 88% 15%',
+        accent: '339 49% 24%',
+        accentForeground: '343 90% 92%',
+        ring: '330 81% 72%',
+      },
+    },
+  },
+  red: {
+    label: 'Red',
+    description: 'Bold red for attention-grabbing actions',
+    preview: '0 84% 60%',
+    values: {
+      light: {
+        primary: '0 84% 60%',
+        primaryForeground: '355 100% 96%',
+        accent: '0 100% 95%',
+        accentForeground: '0 78% 40%',
+        ring: '0 84% 60%',
+      },
+      dark: {
+        primary: '0 84% 70%',
+        primaryForeground: '354 82% 15%',
+        accent: '0 56% 28%',
+        accentForeground: '0 92% 92%',
+        ring: '0 84% 70%',
+      },
+    },
+  },
+  brown: {
+    label: 'Brown',
+    description: 'Earthy brown for warm, grounded aesthetics',
+    preview: '25 50% 40%',
+    values: {
+      light: {
+        primary: '25 50% 40%',
+        primaryForeground: '20 100% 96%',
+        accent: '25 60% 92%',
+        accentForeground: '25 45% 30%',
+        ring: '25 50% 40%',
+      },
+      dark: {
+        primary: '25 50% 60%',
+        primaryForeground: '24 98% 14%',
+        accent: '22 52% 26%',
+        accentForeground: '24 96% 92%',
+        ring: '25 50% 60%',
+      },
+    },
+  },
+  gold: {
+    label: 'Gold',
+    description: 'Luxurious gold for premium experiences',
+    preview: '43 96% 56%',
+    values: {
+      light: {
+        primary: '43 96% 56%',
+        primaryForeground: '26 100% 12%',
+        accent: '43 100% 95%',
+        accentForeground: '35 85% 38%',
+        ring: '43 96% 56%',
+      },
+      dark: {
+        primary: '43 96% 70%',
+        primaryForeground: '30 100% 14%',
+        accent: '34 48% 30%',
+        accentForeground: '40 100% 92%',
+        ring: '43 96% 70%',
+      },
+    },
+  },
+  silver: {
+    label: 'Silver',
+    description: 'Metallic silver for modern, sleek designs',
+    preview: '210 16% 50%',
+    values: {
+      light: {
+        primary: '210 16% 50%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '210 20% 92%',
+        accentForeground: '210 14% 40%',
+        ring: '210 16% 50%',
+      },
+      dark: {
+        primary: '210 16% 70%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '210 18% 24%',
+        accentForeground: '210 14% 84%',
+        ring: '210 16% 70%',
+      },
+    },
+  },
+  bronze: {
+    label: 'Bronze',
+    description: 'Warm bronze for vintage, classic feel',
+    preview: '30 45% 45%',
+    values: {
+      light: {
+        primary: '30 45% 45%',
+        primaryForeground: '20 100% 96%',
+        accent: '30 55% 92%',
+        accentForeground: '30 40% 35%',
+        ring: '30 45% 45%',
+      },
+      dark: {
+        primary: '30 45% 65%',
+        primaryForeground: '24 98% 14%',
+        accent: '22 52% 28%',
+        accentForeground: '24 96% 92%',
+        ring: '30 45% 65%',
+      },
+    },
+  },
+  turquoise: {
+    label: 'Turquoise',
+    description: 'Vibrant turquoise for tropical, fresh vibes',
+    preview: '174 72% 47%',
+    values: {
+      light: {
+        primary: '174 72% 47%',
+        primaryForeground: '175 82% 96%',
+        accent: '174 100% 95%',
+        accentForeground: '174 68% 35%',
+        ring: '174 72% 47%',
+      },
+      dark: {
+        primary: '174 72% 63%',
+        primaryForeground: '172 62% 12%',
+        accent: '172 44% 26%',
+        accentForeground: '170 92% 88%',
+        ring: '174 72% 63%',
+      },
+    },
+  },
+  lavender: {
+    label: 'Lavender',
+    description: 'Gentle lavender for calm, peaceful interfaces',
+    preview: '270 68% 65%',
+    values: {
+      light: {
+        primary: '270 68% 65%',
+        primaryForeground: '288 100% 97%',
+        accent: '270 100% 96%',
+        accentForeground: '270 62% 45%',
+        ring: '270 68% 65%',
+      },
+      dark: {
+        primary: '270 68% 75%',
+        primaryForeground: '286 70% 18%',
+        accent: '286 48% 32%',
+        accentForeground: '286 84% 92%',
+        ring: '270 68% 75%',
+      },
+    },
+  },
+  fuchsia: {
+    label: 'Fuchsia',
+    description: 'Electric fuchsia for bold, energetic designs',
+    preview: '300 90% 60%',
+    values: {
+      light: {
+        primary: '300 90% 60%',
+        primaryForeground: '312 100% 97%',
+        accent: '300 100% 96%',
+        accentForeground: '300 80% 42%',
+        ring: '300 90% 60%',
+      },
+      dark: {
+        primary: '300 90% 72%',
+        primaryForeground: '304 86% 16%',
+        accent: '303 58% 32%',
+        accentForeground: '302 100% 92%',
+        ring: '300 90% 72%',
+      },
+    },
+  },
+  salmon: {
+    label: 'Salmon',
+    description: 'Soft salmon for warm, inviting tones',
+    preview: '6 78% 68%',
+    values: {
+      light: {
+        primary: '6 78% 68%',
+        primaryForeground: '355 100% 96%',
+        accent: '6 100% 95%',
+        accentForeground: '6 70% 48%',
+        ring: '6 78% 68%',
+      },
+      dark: {
+        primary: '6 78% 78%',
+        primaryForeground: '354 82% 15%',
+        accent: '350 56% 30%',
+        accentForeground: '350 92% 92%',
+        ring: '6 78% 78%',
+      },
+    },
+  },
+  olive: {
+    label: 'Olive',
+    description: 'Muted olive for natural, earthy aesthetics',
+    preview: '60 30% 45%',
+    values: {
+      light: {
+        primary: '60 30% 45%',
+        primaryForeground: '60 100% 98%',
+        accent: '60 40% 92%',
+        accentForeground: '60 28% 35%',
+        ring: '60 30% 45%',
+      },
+      dark: {
+        primary: '60 30% 65%',
+        primaryForeground: '60 100% 12%',
+        accent: '60 20% 26%',
+        accentForeground: '60 36% 84%',
+        ring: '60 30% 65%',
+      },
+    },
+  },
+  navy: {
+    label: 'Navy',
+    description: 'Deep navy for professional, trustworthy feel',
+    preview: '220 70% 35%',
+    values: {
+      light: {
+        primary: '220 70% 35%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '220 80% 92%',
+        accentForeground: '220 65% 28%',
+        ring: '220 70% 35%',
+      },
+      dark: {
+        primary: '220 70% 60%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '220 50% 24%',
+        accentForeground: '220 16% 84%',
+        ring: '220 70% 60%',
+      },
+    },
+  },
+  sky: {
+    label: 'Sky',
+    description: 'Bright sky blue for open, airy interfaces',
+    preview: '199 89% 48%',
+    values: {
+      light: {
+        primary: '199 89% 48%',
+        primaryForeground: '192 100% 96%',
+        accent: '199 100% 95%',
+        accentForeground: '199 85% 36%',
+        ring: '199 89% 48%',
+      },
+      dark: {
+        primary: '199 89% 64%',
+        primaryForeground: '192 66% 16%',
+        accent: '192 68% 24%',
+        accentForeground: '189 96% 92%',
+        ring: '199 89% 64%',
+      },
+    },
+  },
+  forest: {
+    label: 'Forest',
+    description: 'Deep forest green for natural, grounded feel',
+    preview: '142 50% 30%',
+    values: {
+      light: {
+        primary: '142 50% 30%',
+        primaryForeground: '142 82% 96%',
+        accent: '140 60% 92%',
+        accentForeground: '154 60% 22%',
+        ring: '142 50% 30%',
+      },
+      dark: {
+        primary: '142 50% 55%',
+        primaryForeground: '149 80% 8%',
+        accent: '155 35% 22%',
+        accentForeground: '152 75% 85%',
+        ring: '142 50% 55%',
+      },
+    },
+  },
+  ocean: {
+    label: 'Ocean',
+    description: 'Deep ocean blue for calm, immersive experiences',
+    preview: '200 80% 40%',
+    values: {
+      light: {
+        primary: '200 80% 40%',
+        primaryForeground: '192 100% 96%',
+        accent: '200 90% 93%',
+        accentForeground: '200 75% 30%',
+        ring: '200 80% 40%',
+      },
+      dark: {
+        primary: '200 80% 58%',
+        primaryForeground: '192 66% 16%',
+        accent: '192 65% 24%',
+        accentForeground: '189 95% 90%',
+        ring: '200 80% 58%',
       },
     },
   },
@@ -1540,6 +2032,890 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
       },
     },
   },
+  snow: {
+    label: 'Snow',
+    description: 'Pure white with crisp clarity',
+    values: {
+      light: {
+        background: '0 0% 100%',
+        foreground: '222 35% 12%',
+        card: '0 0% 100%',
+        cardForeground: '222 35% 12%',
+        popover: '0 0% 100%',
+        popoverForeground: '222 35% 12%',
+        muted: '210 20% 96%',
+        mutedForeground: '215.4 16.3% 46.9%',
+        secondary: '210 20% 96%',
+        secondaryForeground: '222.2 47.4% 11.2%',
+        border: '214.3 31.8% 91.4%',
+        input: '214.3 31.8% 91.4%',
+      },
+      dark: {
+        background: '222.2 84% 4.9%',
+        foreground: '210 40% 98%',
+        card: '222.2 84% 6%',
+        cardForeground: '210 40% 98%',
+        popover: '222.2 84% 6%',
+        popoverForeground: '210 40% 98%',
+        muted: '217.2 32.6% 17.5%',
+        mutedForeground: '215 20.2% 65.1%',
+        secondary: '217.2 32.6% 17.5%',
+        secondaryForeground: '210 40% 98%',
+        border: '217.2 32.6% 17.5%',
+        input: '217.2 32.6% 17.5%',
+      },
+    },
+  },
+  cream: {
+    label: 'Cream',
+    description: 'Warm off-white with subtle yellow undertones',
+    values: {
+      light: {
+        background: '50 100% 98%',
+        foreground: '222 35% 12%',
+        card: '50 80% 96%',
+        cardForeground: '222 35% 12%',
+        popover: '50 80% 96%',
+        popoverForeground: '222 35% 12%',
+        muted: '48 60% 92%',
+        mutedForeground: '222 20% 38%',
+        secondary: '48 50% 88%',
+        secondaryForeground: '222 35% 12%',
+        border: '48 40% 86%',
+        input: '48 40% 86%',
+      },
+      dark: {
+        background: '222 35% 12%',
+        foreground: '50 90% 95%',
+        card: '222 30% 16%',
+        cardForeground: '50 90% 95%',
+        popover: '222 30% 16%',
+        popoverForeground: '50 90% 95%',
+        muted: '222 20% 24%',
+        mutedForeground: '50 70% 80%',
+        secondary: '222 20% 24%',
+        secondaryForeground: '50 90% 95%',
+        border: '222 20% 24%',
+        input: '222 20% 24%',
+      },
+    },
+  },
+  pearl: {
+    label: 'Pearl',
+    description: 'Iridescent white with soft blue-grey hints',
+    values: {
+      light: {
+        background: '220 30% 98%',
+        foreground: '222 35% 12%',
+        card: '220 25% 96%',
+        cardForeground: '222 35% 12%',
+        popover: '220 25% 96%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 20% 92%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 18% 88%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 16% 86%',
+        input: '220 16% 86%',
+      },
+      dark: {
+        background: '220 30% 12%',
+        foreground: '220 30% 96%',
+        card: '220 28% 16%',
+        cardForeground: '220 30% 96%',
+        popover: '220 28% 16%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 20% 24%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 20% 24%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 20% 24%',
+        input: '220 20% 24%',
+      },
+    },
+  },
+  ivory: {
+    label: 'Ivory',
+    description: 'Soft white with warm beige undertones',
+    values: {
+      light: {
+        background: '45 40% 98%',
+        foreground: '222 35% 12%',
+        card: '45 30% 96%',
+        cardForeground: '222 35% 12%',
+        popover: '45 30% 96%',
+        popoverForeground: '222 35% 12%',
+        muted: '45 25% 92%',
+        mutedForeground: '222 20% 38%',
+        secondary: '45 20% 88%',
+        secondaryForeground: '222 35% 12%',
+        border: '45 18% 86%',
+        input: '45 18% 86%',
+      },
+      dark: {
+        background: '222 35% 12%',
+        foreground: '45 80% 95%',
+        card: '222 30% 16%',
+        cardForeground: '45 80% 95%',
+        popover: '222 30% 16%',
+        popoverForeground: '45 80% 95%',
+        muted: '222 20% 24%',
+        mutedForeground: '45 60% 80%',
+        secondary: '222 20% 24%',
+        secondaryForeground: '45 80% 95%',
+        border: '222 20% 24%',
+        input: '222 20% 24%',
+      },
+    },
+  },
+  sand: {
+    label: 'Sand',
+    description: 'Warm beige with desert-inspired tones',
+    values: {
+      light: {
+        background: '35 30% 97%',
+        foreground: '222 35% 12%',
+        card: '35 25% 95%',
+        cardForeground: '222 35% 12%',
+        popover: '35 25% 95%',
+        popoverForeground: '222 35% 12%',
+        muted: '35 20% 90%',
+        mutedForeground: '222 20% 38%',
+        secondary: '35 18% 86%',
+        secondaryForeground: '222 35% 12%',
+        border: '35 16% 84%',
+        input: '35 16% 84%',
+      },
+      dark: {
+        background: '35 40% 11%',
+        foreground: '35 70% 94%',
+        card: '35 36% 15%',
+        cardForeground: '35 70% 94%',
+        popover: '35 36% 15%',
+        popoverForeground: '35 70% 94%',
+        muted: '35 28% 22%',
+        mutedForeground: '35 50% 78%',
+        secondary: '35 28% 22%',
+        secondaryForeground: '35 70% 94%',
+        border: '35 28% 22%',
+        input: '35 28% 22%',
+      },
+    },
+  },
+  stone: {
+    label: 'Stone',
+    description: 'Neutral grey with natural stone texture feel',
+    values: {
+      light: {
+        background: '220 15% 96%',
+        foreground: '222 35% 12%',
+        card: '220 12% 94%',
+        cardForeground: '222 35% 12%',
+        popover: '220 12% 94%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 10% 90%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 8% 86%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 10% 88%',
+        input: '220 10% 88%',
+      },
+      dark: {
+        background: '220 20% 13%',
+        foreground: '220 30% 96%',
+        card: '220 18% 17%',
+        cardForeground: '220 30% 96%',
+        popover: '220 18% 17%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 14% 24%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 14% 24%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 14% 24%',
+        input: '220 14% 24%',
+      },
+    },
+  },
+  slate: {
+    label: 'Slate',
+    description: 'Cool blue-grey with slate stone character',
+    values: {
+      light: {
+        background: '214 20% 95%',
+        foreground: '222 35% 12%',
+        card: '214 18% 93%',
+        cardForeground: '222 35% 12%',
+        popover: '214 18% 93%',
+        popoverForeground: '222 35% 12%',
+        muted: '214 15% 88%',
+        mutedForeground: '222 20% 38%',
+        secondary: '214 12% 84%',
+        secondaryForeground: '222 35% 12%',
+        border: '214 14% 86%',
+        input: '214 14% 86%',
+      },
+      dark: {
+        background: '214 28% 12%',
+        foreground: '214 40% 96%',
+        card: '214 26% 16%',
+        cardForeground: '214 40% 96%',
+        popover: '214 26% 16%',
+        popoverForeground: '214 40% 96%',
+        muted: '214 20% 24%',
+        mutedForeground: '214 25% 72%',
+        secondary: '214 20% 24%',
+        secondaryForeground: '214 40% 96%',
+        border: '214 20% 24%',
+        input: '214 20% 24%',
+      },
+    },
+  },
+  charcoal: {
+    label: 'Charcoal',
+    description: 'Deep grey with warm undertones',
+    values: {
+      light: {
+        background: '220 12% 94%',
+        foreground: '222 35% 12%',
+        card: '220 10% 92%',
+        cardForeground: '222 35% 12%',
+        popover: '220 10% 92%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 8% 88%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 6% 84%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 8% 86%',
+        input: '220 8% 86%',
+      },
+      dark: {
+        background: '220 18% 10%',
+        foreground: '220 30% 96%',
+        card: '220 16% 14%',
+        cardForeground: '220 30% 96%',
+        popover: '220 16% 14%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 12% 22%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 12% 22%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 12% 22%',
+        input: '220 12% 22%',
+      },
+    },
+  },
+  ash: {
+    label: 'Ash',
+    description: 'Cool grey with ashy, muted tones',
+    values: {
+      light: {
+        background: '210 15% 95%',
+        foreground: '222 35% 12%',
+        card: '210 12% 93%',
+        cardForeground: '222 35% 12%',
+        popover: '210 12% 93%',
+        popoverForeground: '222 35% 12%',
+        muted: '210 10% 88%',
+        mutedForeground: '222 20% 38%',
+        secondary: '210 8% 84%',
+        secondaryForeground: '222 35% 12%',
+        border: '210 10% 86%',
+        input: '210 10% 86%',
+      },
+      dark: {
+        background: '210 20% 11%',
+        foreground: '210 35% 96%',
+        card: '210 18% 15%',
+        cardForeground: '210 35% 96%',
+        popover: '210 18% 15%',
+        popoverForeground: '210 35% 96%',
+        muted: '210 14% 23%',
+        mutedForeground: '210 20% 72%',
+        secondary: '210 14% 23%',
+        secondaryForeground: '210 35% 96%',
+        border: '210 14% 23%',
+        input: '210 14% 23%',
+      },
+    },
+  },
+  smoke: {
+    label: 'Smoke',
+    description: 'Light grey with smoky, diffused feel',
+    values: {
+      light: {
+        background: '220 10% 97%',
+        foreground: '222 35% 12%',
+        card: '220 8% 95%',
+        cardForeground: '222 35% 12%',
+        popover: '220 8% 95%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 6% 91%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 5% 87%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 6% 89%',
+        input: '220 6% 89%',
+      },
+      dark: {
+        background: '220 15% 9%',
+        foreground: '220 30% 96%',
+        card: '220 13% 13%',
+        cardForeground: '220 30% 96%',
+        popover: '220 13% 13%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 10% 21%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 10% 21%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 10% 21%',
+        input: '220 10% 21%',
+      },
+    },
+  },
+  fog: {
+    label: 'Fog',
+    description: 'Misty grey with soft, blurred edges',
+    values: {
+      light: {
+        background: '220 18% 96%',
+        foreground: '222 35% 12%',
+        card: '220 15% 94%',
+        cardForeground: '222 35% 12%',
+        popover: '220 15% 94%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 12% 90%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 10% 86%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 12% 88%',
+        input: '220 12% 88%',
+      },
+      dark: {
+        background: '220 22% 10%',
+        foreground: '220 30% 96%',
+        card: '220 20% 14%',
+        cardForeground: '220 30% 96%',
+        popover: '220 20% 14%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 16% 22%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 16% 22%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 16% 22%',
+        input: '220 16% 22%',
+      },
+    },
+  },
+  cloud: {
+    label: 'Cloud',
+    description: 'Soft white-grey with cloud-like lightness',
+    values: {
+      light: {
+        background: '220 25% 98%',
+        foreground: '222 35% 12%',
+        card: '220 22% 96%',
+        cardForeground: '222 35% 12%',
+        popover: '220 22% 96%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 18% 92%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 16% 88%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 18% 90%',
+        input: '220 18% 90%',
+      },
+      dark: {
+        background: '220 25% 11%',
+        foreground: '220 35% 96%',
+        card: '220 23% 15%',
+        cardForeground: '220 35% 96%',
+        popover: '220 23% 15%',
+        popoverForeground: '220 35% 96%',
+        muted: '220 19% 23%',
+        mutedForeground: '220 20% 72%',
+        secondary: '220 19% 23%',
+        secondaryForeground: '220 35% 96%',
+        border: '220 19% 23%',
+        input: '220 19% 23%',
+      },
+    },
+  },
+  storm: {
+    label: 'Storm',
+    description: 'Dark grey with stormy, dramatic atmosphere',
+    values: {
+      light: {
+        background: '220 8% 93%',
+        foreground: '222 35% 12%',
+        card: '220 6% 91%',
+        cardForeground: '222 35% 12%',
+        popover: '220 6% 91%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 5% 87%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 4% 83%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 5% 85%',
+        input: '220 5% 85%',
+      },
+      dark: {
+        background: '220 12% 8%',
+        foreground: '220 30% 96%',
+        card: '220 10% 12%',
+        cardForeground: '220 30% 96%',
+        popover: '220 10% 12%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 8% 20%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 8% 20%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 8% 20%',
+        input: '220 8% 20%',
+      },
+    },
+  },
+  shadow: {
+    label: 'Shadow',
+    description: 'Deep grey with shadowy, mysterious depth',
+    values: {
+      light: {
+        background: '220 6% 92%',
+        foreground: '222 35% 12%',
+        card: '220 5% 90%',
+        cardForeground: '222 35% 12%',
+        popover: '220 5% 90%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 4% 86%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 3% 82%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 4% 84%',
+        input: '220 4% 84%',
+      },
+      dark: {
+        background: '220 10% 7%',
+        foreground: '220 30% 96%',
+        card: '220 8% 11%',
+        cardForeground: '220 30% 96%',
+        popover: '220 8% 11%',
+        popoverForeground: '220 30% 96%',
+        muted: '220 6% 19%',
+        mutedForeground: '220 18% 72%',
+        secondary: '220 6% 19%',
+        secondaryForeground: '220 30% 96%',
+        border: '220 6% 19%',
+        input: '220 6% 19%',
+      },
+    },
+  },
+  abyss: {
+    label: 'Abyss',
+    description: 'Ultra-dark with abyssal depth',
+    values: {
+      light: {
+        background: '220 5% 91%',
+        foreground: '222 35% 12%',
+        card: '220 4% 89%',
+        cardForeground: '222 35% 12%',
+        popover: '220 4% 89%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 3% 85%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 2% 81%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 3% 83%',
+        input: '220 3% 83%',
+      },
+      dark: {
+        background: '230 40% 3%',
+        foreground: '210 40% 97%',
+        card: '230 35% 5%',
+        cardForeground: '210 40% 97%',
+        popover: '230 35% 5%',
+        popoverForeground: '210 40% 97%',
+        muted: '230 25% 15%',
+        mutedForeground: '210 16% 72%',
+        secondary: '230 25% 15%',
+        secondaryForeground: '210 40% 97%',
+        border: '230 25% 15%',
+        input: '230 25% 15%',
+      },
+    },
+  },
+  deep: {
+    label: 'Deep',
+    description: 'Profound darkness with deep ocean feel',
+    values: {
+      light: {
+        background: '220 4% 90%',
+        foreground: '222 35% 12%',
+        card: '220 3% 88%',
+        cardForeground: '222 35% 12%',
+        popover: '220 3% 88%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 2% 84%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 1% 80%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 2% 82%',
+        input: '220 2% 82%',
+      },
+      dark: {
+        background: '220 35% 4%',
+        foreground: '210 40% 97%',
+        card: '220 32% 6%',
+        cardForeground: '210 40% 97%',
+        popover: '220 32% 6%',
+        popoverForeground: '210 40% 97%',
+        muted: '220 22% 16%',
+        mutedForeground: '210 16% 72%',
+        secondary: '220 22% 16%',
+        secondaryForeground: '210 40% 97%',
+        border: '220 22% 16%',
+        input: '220 22% 16%',
+      },
+    },
+  },
+  pitch: {
+    label: 'Pitch',
+    description: 'Pitch black with maximum contrast',
+    values: {
+      light: {
+        background: '220 3% 89%',
+        foreground: '222 35% 12%',
+        card: '220 2% 87%',
+        cardForeground: '222 35% 12%',
+        popover: '220 2% 87%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 1% 83%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 0% 79%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 1% 81%',
+        input: '220 1% 81%',
+      },
+      dark: {
+        background: '0 0% 0%',
+        foreground: '210 40% 98%',
+        card: '0 0% 2%',
+        cardForeground: '210 40% 98%',
+        popover: '0 0% 2%',
+        popoverForeground: '210 40% 98%',
+        muted: '0 0% 15%',
+        mutedForeground: '210 16% 72%',
+        secondary: '0 0% 15%',
+        secondaryForeground: '210 40% 98%',
+        border: '0 0% 15%',
+        input: '0 0% 15%',
+      },
+    },
+  },
+  coal: {
+    label: 'Coal',
+    description: 'Rich black with coal-like texture',
+    values: {
+      light: {
+        background: '220 2% 88%',
+        foreground: '222 35% 12%',
+        card: '220 1% 86%',
+        cardForeground: '222 35% 12%',
+        popover: '220 1% 86%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 0% 82%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 0% 78%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 0% 80%',
+        input: '220 0% 80%',
+      },
+      dark: {
+        background: '0 0% 2%',
+        foreground: '210 40% 98%',
+        card: '0 0% 4%',
+        cardForeground: '210 40% 98%',
+        popover: '0 0% 4%',
+        popoverForeground: '210 40% 98%',
+        muted: '0 0% 16%',
+        mutedForeground: '210 16% 72%',
+        secondary: '0 0% 16%',
+        secondaryForeground: '210 40% 98%',
+        border: '0 0% 16%',
+        input: '0 0% 16%',
+      },
+    },
+  },
+  jet: {
+    label: 'Jet',
+    description: 'Deep black with jet stone intensity',
+    values: {
+      light: {
+        background: '220 1% 87%',
+        foreground: '222 35% 12%',
+        card: '220 0% 85%',
+        cardForeground: '222 35% 12%',
+        popover: '220 0% 85%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 0% 81%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 0% 77%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 0% 79%',
+        input: '220 0% 79%',
+      },
+      dark: {
+        background: '0 0% 1%',
+        foreground: '210 40% 98%',
+        card: '0 0% 3%',
+        cardForeground: '210 40% 98%',
+        popover: '0 0% 3%',
+        popoverForeground: '210 40% 98%',
+        muted: '0 0% 17%',
+        mutedForeground: '210 16% 72%',
+        secondary: '0 0% 17%',
+        secondaryForeground: '210 40% 98%',
+        border: '0 0% 17%',
+        input: '0 0% 17%',
+      },
+    },
+  },
+  carbon: {
+    label: 'Carbon',
+    description: 'Pure carbon black with matte finish',
+    values: {
+      light: {
+        background: '220 0% 86%',
+        foreground: '222 35% 12%',
+        card: '220 0% 84%',
+        cardForeground: '222 35% 12%',
+        popover: '220 0% 84%',
+        popoverForeground: '222 35% 12%',
+        muted: '220 0% 80%',
+        mutedForeground: '222 20% 38%',
+        secondary: '220 0% 76%',
+        secondaryForeground: '222 35% 12%',
+        border: '220 0% 78%',
+        input: '220 0% 78%',
+      },
+      dark: {
+        background: '0 0% 0%',
+        foreground: '210 40% 98%',
+        card: '0 0% 2%',
+        cardForeground: '210 40% 98%',
+        popover: '0 0% 2%',
+        popoverForeground: '210 40% 98%',
+        muted: '0 0% 18%',
+        mutedForeground: '210 16% 72%',
+        secondary: '0 0% 18%',
+        secondaryForeground: '210 40% 98%',
+        border: '0 0% 18%',
+        input: '0 0% 18%',
+      },
+    },
+  },
+  cyberpunk: {
+    label: 'Cyberpunk',
+    description: 'Neon-lit dark surfaces with electric purple-pink glow',
+    values: {
+      light: {
+        background: '280 20% 95%',
+        foreground: '280 30% 15%',
+        card: '280 15% 98%',
+        cardForeground: '280 30% 15%',
+        popover: '280 15% 98%',
+        popoverForeground: '280 30% 15%',
+        muted: '280 18% 90%',
+        mutedForeground: '280 25% 40%',
+        secondary: '280 16% 85%',
+        secondaryForeground: '280 30% 15%',
+        border: '280 20% 88%',
+        input: '280 20% 88%',
+      },
+      dark: {
+        background: '280 45% 8%',
+        foreground: '300 85% 95%',
+        card: '280 40% 12%',
+        cardForeground: '300 85% 95%',
+        popover: '280 40% 12%',
+        popoverForeground: '300 85% 95%',
+        muted: '280 35% 20%',
+        mutedForeground: '300 60% 80%',
+        secondary: '280 35% 20%',
+        secondaryForeground: '300 85% 95%',
+        border: '280 35% 20%',
+        input: '280 35% 20%',
+      },
+    },
+  },
+  minecraft: {
+    label: 'Minecraft',
+    description: 'Blocky earth tones with natural green-brown palette',
+    values: {
+      light: {
+        background: '85 35% 92%',
+        foreground: '85 40% 12%',
+        card: '85 30% 96%',
+        cardForeground: '85 40% 12%',
+        popover: '85 30% 96%',
+        popoverForeground: '85 40% 12%',
+        muted: '85 28% 88%',
+        mutedForeground: '85 35% 38%',
+        secondary: '85 25% 84%',
+        secondaryForeground: '85 40% 12%',
+        border: '85 30% 86%',
+        input: '85 30% 86%',
+      },
+      dark: {
+        background: '85 30% 10%',
+        foreground: '85 50% 92%',
+        card: '85 28% 14%',
+        cardForeground: '85 50% 92%',
+        popover: '85 28% 14%',
+        popoverForeground: '85 50% 92%',
+        muted: '85 22% 22%',
+        mutedForeground: '85 40% 75%',
+        secondary: '85 22% 22%',
+        secondaryForeground: '85 50% 92%',
+        border: '85 22% 22%',
+        input: '85 22% 22%',
+      },
+    },
+  },
+  csgo: {
+    label: 'CS:GO',
+    description: 'Competitive orange-dark theme inspired by Counter-Strike',
+    values: {
+      light: {
+        background: '25 25% 94%',
+        foreground: '25 35% 14%',
+        card: '25 20% 97%',
+        cardForeground: '25 35% 14%',
+        popover: '25 20% 97%',
+        popoverForeground: '25 35% 14%',
+        muted: '25 18% 90%',
+        mutedForeground: '25 30% 40%',
+        secondary: '25 16% 86%',
+        secondaryForeground: '25 35% 14%',
+        border: '25 20% 88%',
+        input: '25 20% 88%',
+      },
+      dark: {
+        background: '25 40% 9%',
+        foreground: '25 70% 94%',
+        card: '25 35% 13%',
+        cardForeground: '25 70% 94%',
+        popover: '25 35% 13%',
+        popoverForeground: '25 70% 94%',
+        muted: '25 30% 20%',
+        mutedForeground: '25 55% 78%',
+        secondary: '25 30% 20%',
+        secondaryForeground: '25 70% 94%',
+        border: '25 30% 20%',
+        input: '25 30% 20%',
+      },
+    },
+  },
+  dota: {
+    label: 'Dota 2',
+    description: 'Mystical blue-red palette from the world of Dota',
+    values: {
+      light: {
+        background: '220 30% 93%',
+        foreground: '220 40% 14%',
+        card: '220 25% 96%',
+        cardForeground: '220 40% 14%',
+        popover: '220 25% 96%',
+        popoverForeground: '220 40% 14%',
+        muted: '220 22% 89%',
+        mutedForeground: '220 35% 40%',
+        secondary: '220 20% 85%',
+        secondaryForeground: '220 40% 14%',
+        border: '220 25% 87%',
+        input: '220 25% 87%',
+      },
+      dark: {
+        background: '220 50% 8%',
+        foreground: '220 70% 95%',
+        card: '220 45% 12%',
+        cardForeground: '220 70% 95%',
+        popover: '220 45% 12%',
+        popoverForeground: '220 70% 95%',
+        muted: '220 40% 20%',
+        mutedForeground: '220 60% 80%',
+        secondary: '220 40% 20%',
+        secondaryForeground: '220 70% 95%',
+        border: '220 40% 20%',
+        input: '220 40% 20%',
+      },
+    },
+  },
+  terraria: {
+    label: 'Terraria',
+    description: 'Adventure-ready earth tones with warm brown-orange base',
+    values: {
+      light: {
+        background: '30 40% 93%',
+        foreground: '30 45% 14%',
+        card: '30 35% 96%',
+        cardForeground: '30 45% 14%',
+        popover: '30 35% 96%',
+        popoverForeground: '30 45% 14%',
+        muted: '30 32% 89%',
+        mutedForeground: '30 40% 40%',
+        secondary: '30 28% 85%',
+        secondaryForeground: '30 45% 14%',
+        border: '30 35% 87%',
+        input: '30 35% 87%',
+      },
+      dark: {
+        background: '30 45% 9%',
+        foreground: '30 70% 94%',
+        card: '30 40% 13%',
+        cardForeground: '30 70% 94%',
+        popover: '30 40% 13%',
+        popoverForeground: '30 70% 94%',
+        muted: '30 35% 20%',
+        mutedForeground: '30 60% 78%',
+        secondary: '30 35% 20%',
+        secondaryForeground: '30 70% 94%',
+        border: '30 35% 20%',
+        input: '30 35% 20%',
+      },
+    },
+  },
+  geometrydash: {
+    label: 'Geometry Dash',
+    description: 'Vibrant neon colors with high-energy bright surfaces',
+    values: {
+      light: {
+        background: '75 80% 98%',
+        foreground: '75 50% 12%',
+        card: '75 70% 100%',
+        cardForeground: '75 50% 12%',
+        popover: '75 70% 100%',
+        popoverForeground: '75 50% 12%',
+        muted: '75 60% 94%',
+        mutedForeground: '75 45% 38%',
+        secondary: '75 55% 90%',
+        secondaryForeground: '75 50% 12%',
+        border: '75 65% 88%',
+        input: '75 65% 88%',
+      },
+      dark: {
+        background: '75 50% 8%',
+        foreground: '75 90% 95%',
+        card: '75 45% 12%',
+        cardForeground: '75 90% 95%',
+        popover: '75 45% 12%',
+        popoverForeground: '75 90% 95%',
+        muted: '75 40% 20%',
+        mutedForeground: '75 75% 80%',
+        secondary: '75 40% 20%',
+        secondaryForeground: '75 90% 95%',
+        border: '75 40% 20%',
+        input: '75 40% 20%',
+      },
+    },
+  },
 }
 
 function resolveTheme(mode: ThemeMode): ResolvedTheme {
@@ -1702,6 +3078,26 @@ function loadPreferences(): StoredPreferences {
         accent === 'pure' ||
         accent === 'lime' ||
         accent === 'mint' ||
+        accent === 'orange' ||
+        accent === 'yellow' ||
+        accent === 'green' ||
+        accent === 'blue' ||
+        accent === 'purple' ||
+        accent === 'pink' ||
+        accent === 'red' ||
+        accent === 'brown' ||
+        accent === 'gold' ||
+        accent === 'silver' ||
+        accent === 'bronze' ||
+        accent === 'turquoise' ||
+        accent === 'lavender' ||
+        accent === 'fuchsia' ||
+        accent === 'salmon' ||
+        accent === 'olive' ||
+        accent === 'navy' ||
+        accent === 'sky' ||
+        accent === 'forest' ||
+        accent === 'ocean' ||
         accent === 'custom'
       return {
         theme: parsed.theme === 'light' || parsed.theme === 'dark' || parsed.theme === 'system' ? parsed.theme : DEFAULT_PREFERENCES.theme,
@@ -1746,6 +3142,26 @@ function loadPreferences(): StoredPreferences {
                 presetAccent === 'pure' ||
                 presetAccent === 'lime' ||
                 presetAccent === 'mint' ||
+                presetAccent === 'orange' ||
+                presetAccent === 'yellow' ||
+                presetAccent === 'green' ||
+                presetAccent === 'blue' ||
+                presetAccent === 'purple' ||
+                presetAccent === 'pink' ||
+                presetAccent === 'red' ||
+                presetAccent === 'brown' ||
+                presetAccent === 'gold' ||
+                presetAccent === 'silver' ||
+                presetAccent === 'bronze' ||
+                presetAccent === 'turquoise' ||
+                presetAccent === 'lavender' ||
+                presetAccent === 'fuchsia' ||
+                presetAccent === 'salmon' ||
+                presetAccent === 'olive' ||
+                presetAccent === 'navy' ||
+                presetAccent === 'sky' ||
+                presetAccent === 'forest' ||
+                presetAccent === 'ocean' ||
                 presetAccent === 'custom'
               return {
                 ...preset,
@@ -1810,6 +3226,85 @@ function extractPreferences(state: ThemeState): StoredPreferences {
   }
 }
 
+// Helper function to apply bold contrast transformations to HSL color values
+function applyBoldContrast(
+  colors: {
+    background: string
+    foreground: string
+    card: string
+    cardForeground: string
+    popover: string
+    popoverForeground: string
+    muted: string
+    mutedForeground: string
+    secondary: string
+    secondaryForeground: string
+    border: string
+    input: string
+  },
+  resolved: ResolvedTheme
+): typeof colors {
+  // Parse HSL string (format: "H S% L%") and adjust for bold contrast
+  const adjustHSL = (hsl: string, isBackground: boolean, isLight: boolean): string => {
+    const parts = hsl.trim().split(/\s+/)
+    if (parts.length !== 3) return hsl
+
+    const h = parseFloat(parts[0])
+    const s = parseFloat(parts[1].replace('%', ''))
+    const l = parseFloat(parts[2].replace('%', ''))
+
+    if (isNaN(h) || isNaN(s) || isNaN(l)) return hsl
+
+    // Increase saturation by 18% for more vibrant, expressive colors
+    const newS = Math.min(100, s * 1.18)
+
+    // Adjust lightness based on context - more aggressive changes for stronger contrast
+    let newL = l
+    if (isLight) {
+      // Light theme adjustments
+      if (isBackground) {
+        // Backgrounds: make them noticeably lighter for more contrast
+        newL = Math.min(100, l * 1.06)
+      } else {
+        // Foregrounds/text: make them significantly darker for better readability
+        if (l > 50) {
+          newL = Math.max(0, l * 0.92)
+        } else {
+          newL = Math.max(0, l * 0.88)
+        }
+      }
+    } else {
+      // Dark theme adjustments
+      if (isBackground) {
+        // Backgrounds: make them noticeably darker for more depth and drama
+        newL = Math.max(0, l * 0.90)
+      } else {
+        // Foregrounds/text: make them significantly lighter for better contrast
+        newL = Math.min(100, l * 1.08)
+      }
+    }
+
+    return `${h} ${newS.toFixed(1)}% ${newL.toFixed(1)}%`
+  }
+
+  const isLight = resolved === 'light'
+
+  return {
+    background: adjustHSL(colors.background, true, isLight),
+    foreground: adjustHSL(colors.foreground, false, isLight),
+    card: adjustHSL(colors.card, true, isLight),
+    cardForeground: adjustHSL(colors.cardForeground, false, isLight),
+    popover: adjustHSL(colors.popover, true, isLight),
+    popoverForeground: adjustHSL(colors.popoverForeground, false, isLight),
+    muted: adjustHSL(colors.muted, true, isLight),
+    mutedForeground: adjustHSL(colors.mutedForeground, false, isLight),
+    secondary: adjustHSL(colors.secondary, true, isLight),
+    secondaryForeground: adjustHSL(colors.secondaryForeground, false, isLight),
+    border: adjustHSL(colors.border, true, isLight),
+    input: adjustHSL(colors.input, true, isLight),
+  }
+}
+
 function applyThemePreferences(state: ThemeState) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
@@ -1846,7 +3341,14 @@ function applyThemePreferences(state: ThemeState) {
   root.style.removeProperty('--aetheris-surface-flat')
   root.style.removeProperty('--aetheris-surface-gradient')
 
-  const surfaceValues = SURFACE_PRESETS[state.surface].values[resolved]
+  let surfaceValues = SURFACE_PRESETS[state.surface].values[resolved]
+
+  // Apply bold contrast transformations if enabled
+  // This modifies colors via CSS variables instead of CSS filter to avoid layout issues
+  if (state.contrast === 'bold') {
+    surfaceValues = applyBoldContrast(surfaceValues, resolved)
+  }
+
   root.style.setProperty('--background', surfaceValues.background)
   root.style.setProperty('--foreground', surfaceValues.foreground)
   root.style.setProperty('--card', surfaceValues.card)

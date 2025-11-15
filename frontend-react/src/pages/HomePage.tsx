@@ -737,9 +737,7 @@ export default function HomePage() {
                               e.stopPropagation()
                             }}
                             disabled={page === 1}
-                          >
-                            <span className="hidden sm:inline">{t('home.pagination.prev')}</span>
-                          </PaginationPrevious>
+                          />
                         </PaginationItem>
                         {paginationPages.map((item, idx) =>
                           item === 'ellipsis' ? (
@@ -781,9 +779,7 @@ export default function HomePage() {
                               e.stopPropagation()
                             }}
                             disabled={page === totalPages}
-                          >
-                            <span className="hidden sm:inline">{t('home.pagination.next')}</span>
-                          </PaginationNext>
+                          />
                         </PaginationItem>
                     </PaginationContent>
                   </Pagination>

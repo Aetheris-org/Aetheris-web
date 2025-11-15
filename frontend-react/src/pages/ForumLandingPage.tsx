@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SiteHeader } from '@/components/SiteHeader'
+import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +48,19 @@ gsap.registerPlugin(ScrollTrigger)
 
 export default function ForumLandingPage() {
   const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const themeParams = useThemeStore((state) => ({
+    motion: state.motion,
+    depth: state.depth,
+    contrast: state.contrast,
+    accent: state.accent,
+    surface: state.surface,
+    radius: state.radius,
+    typography: state.typography,
+    density: state.density,
+    resolvedTheme: state.resolvedTheme,
+  }))
+  
   const heroRef = useRef<HTMLDivElement>(null)
   const horizontalRef = useRef<HTMLDivElement>(null)
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
@@ -55,206 +70,217 @@ export default function ForumLandingPage() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
+  // Создаем уникальный ключ для принудительной переинициализации при изменении темы
+  const themeKey = `${themeParams.accent}-${themeParams.surface}-${themeParams.radius}-${themeParams.typography}-${themeParams.density}-${themeParams.contrast}-${themeParams.resolvedTheme}`
+
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Hero fade in
-      gsap.from('.hero-content', {
-        opacity: 0,
-        y: 30,
-        duration: 1,
-        ease: 'power2.out',
-      })
+    // Убиваем все существующие ScrollTrigger
+    ScrollTrigger.getAll().forEach((t) => t.kill())
+    
+    let ctx: gsap.Context | null = null
 
-      // Scroll indicator - скрывается при скролле
-      if (scrollIndicatorRef.current) {
-        gsap.to(scrollIndicatorRef.current, {
-          opacity: 0,
-          y: -20,
-          duration: 0.5,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
-        })
-      }
+    ctx = gsap.context(() => {
+          // Hero fade in
+          gsap.from('.hero-content', {
+            opacity: 0,
+            y: 30,
+            duration: 1,
+            ease: 'power2.out',
+          })
 
-      // Animated geometric background parallax - движение без размытия
-      const bgElements = [
-        // Геометрические формы - медленное движение
-        { selector: '.bg-shape-1', x: -200, y: 150, rotation: 25, scale: 1.3, scrub: 3 },
-        { selector: '.bg-shape-2', x: 250, y: -200, rotation: -30, scale: 1.2, scrub: 3 },
-        { selector: '.bg-shape-3', x: -150, y: 300, scale: 1.5, scrub: 3 },
-        
-        // Вертикальные линии - движение в стороны
-        { selector: '.bg-line-1', x: 100, scrub: 2.5 },
-        { selector: '.bg-line-2', x: -80, scrub: 2.5 },
-        { selector: '.bg-line-3', x: 120, scrub: 2.5 },
-        
-        // Горизонтальные линии - движение вверх-вниз
-        { selector: '.bg-line-h1', y: -150, scrub: 2.5 },
-        { selector: '.bg-line-h2', y: 200, scrub: 2.5 },
-        { selector: '.bg-line-h3', y: -180, scrub: 2.5 },
-        
-        // Сетка - легкое движение (будет обработано отдельно)
-        { selector: '.bg-grid', isGrid: true, scrub: 4 },
-      ]
-
-      bgElements.forEach((element) => {
-        const el = document.querySelector(element.selector) as HTMLElement
-        if (el) {
-          // Специальная обработка для сетки - эффект перспективы, где границы сдвигаются друг к другу
-          if ((element as any).isGrid) {
-            // Комбинируем backgroundPosition и transform для создания эффекта глубины
-            gsap.fromTo(el, 
-              { 
-                backgroundPosition: '0px 0px',
-                x: 0,
-                y: 0,
-                scale: 1,
+          // Scroll indicator - скрывается при скролле
+          if (scrollIndicatorRef.current) {
+            gsap.to(scrollIndicatorRef.current, {
+              opacity: 0,
+              y: -20,
+              duration: 0.5,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: heroRef.current,
+                start: 'top top',
+                end: 'bottom top',
+                scrub: true,
               },
-              {
-                backgroundPosition: '120px 120px',
-                x: 40,
-                y: 40,
-                scale: 1.05,
+            })
+          }
+
+          // Animated geometric background parallax - движение без размытия
+          const bgElements = [
+            // Геометрические формы - медленное движение
+            { selector: '.bg-shape-1', x: -200, y: 150, rotation: 25, scale: 1.3, scrub: 3 },
+            { selector: '.bg-shape-2', x: 250, y: -200, rotation: -30, scale: 1.2, scrub: 3 },
+            { selector: '.bg-shape-3', x: -150, y: 300, scale: 1.5, scrub: 3 },
+            
+            // Вертикальные линии - движение в стороны
+            { selector: '.bg-line-1', x: 100, scrub: 2.5 },
+            { selector: '.bg-line-2', x: -80, scrub: 2.5 },
+            { selector: '.bg-line-3', x: 120, scrub: 2.5 },
+            
+            // Горизонтальные линии - движение вверх-вниз
+            { selector: '.bg-line-h1', y: -150, scrub: 2.5 },
+            { selector: '.bg-line-h2', y: 200, scrub: 2.5 },
+            { selector: '.bg-line-h3', y: -180, scrub: 2.5 },
+            
+            // Сетка - легкое движение (будет обработано отдельно)
+            { selector: '.bg-grid', isGrid: true, scrub: 4 },
+          ]
+
+          bgElements.forEach((element) => {
+            const el = document.querySelector(element.selector) as HTMLElement
+            if (el) {
+              // Специальная обработка для сетки - эффект перспективы, где границы сдвигаются друг к другу
+              if ((element as any).isGrid) {
+                // Комбинируем backgroundPosition и transform для создания эффекта глубины
+                gsap.fromTo(el, 
+                  { 
+                    backgroundPosition: '0px 0px',
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                  },
+                  {
+                    backgroundPosition: '120px 120px',
+                    x: 40,
+                    y: 40,
+                    scale: 1.05,
+                    ease: 'none',
+                    scrollTrigger: {
+                      trigger: document.body,
+                      start: 'top top',
+                      end: 'max',
+                      scrub: element.scrub || 4,
+                      invalidateOnRefresh: true,
+                    },
+                  }
+                )
+                return
+              }
+              
+              const animProps: any = {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: document.body,
                   start: 'top top',
                   end: 'max',
-                  scrub: element.scrub || 4,
+                  scrub: element.scrub || 2,
+                  invalidateOnRefresh: true,
                 },
               }
-            )
-            return
-          }
-          
-          const animProps: any = {
-            ease: 'none',
-            scrollTrigger: {
-              trigger: document.body,
-              start: 'top top',
-              end: 'max',
-              scrub: element.scrub || 2,
-            },
-          }
-          
-          if (element.x !== undefined) animProps.x = element.x
-          if (element.y !== undefined) animProps.y = element.y
-          if (element.rotation !== undefined) animProps.rotation = element.rotation
-          if (element.scale !== undefined) animProps.scale = element.scale
-          
-          gsap.to(el, animProps)
-        }
-      })
+              
+              if (element.x !== undefined) animProps.x = element.x
+              if (element.y !== undefined) animProps.y = element.y
+              if (element.rotation !== undefined) animProps.rotation = element.rotation
+              if (element.scale !== undefined) animProps.scale = element.scale
+              
+              gsap.to(el, animProps)
+            }
+          })
 
-      // Легкая анимация нижней линии при скролле
-      const bottomLine = document.querySelector('.bg-bottom-line') as HTMLElement
-      if (bottomLine) {
-        gsap.to(bottomLine, {
-          opacity: 0.5,
-          scaleX: 1.1,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: document.body,
-            start: 'top top',
-            end: 'max',
-            scrub: 2,
-          },
-        })
-      }
-
-      // HORIZONTAL SCROLL - вертикальный скролл = горизонтальное движение
-      const horizontalSection = horizontalRef.current
-      if (horizontalSection) {
-        const sections = gsap.utils.toArray<HTMLElement>('.h-section')
-        const totalWidth = sections.reduce((acc, section) => acc + section.offsetWidth, 0)
-        
-        gsap.to(sections, {
-          xPercent: -100 * (sections.length - 1),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: horizontalSection,
-            pin: true,
-            scrub: 1,
-            end: () => `+=${totalWidth}`,
-          },
-        })
-      }
-
-      // Feature cards fade in - надежная анимация
-      const featureCards = gsap.utils.toArray<HTMLElement>('.feature-card')
-      
-      // Анимация появления при скролле с явным указанием начального состояния
-      featureCards.forEach((card, index) => {
-        // Устанавливаем начальное состояние для каждой карточки
-        gsap.set(card, {
-          opacity: 0,
-          scale: 0.8,
-          y: 20,
-        })
-        
-        // Анимация с fromTo для надежности
-        gsap.fromTo(card, 
-          {
-            opacity: 0,
-            scale: 0.8,
-            y: 20,
-          },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.6,
-            ease: 'back.out(1.7)',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 90%',
-              end: 'bottom 10%',
-              once: true,
-              toggleActions: 'play none none none',
-              invalidateOnRefresh: true,
-            },
-            delay: (index % 6) * 0.05,
-          }
-        )
-      })
-      
-      // Fallback: если карточки уже в viewport при загрузке, показываем их сразу
-      const checkInitialVisibility = () => {
-        featureCards.forEach((card, index) => {
-          const rect = card.getBoundingClientRect()
-          const isInViewport = rect.top < window.innerHeight && rect.bottom > 0
-          if (isInViewport) {
-            // Если карточка уже видна, показываем её сразу
-            gsap.to(card, {
-              opacity: 1,
-              scale: 1,
-              y: 0,
-              duration: 0.4,
-              ease: 'power2.out',
-              delay: (index % 6) * 0.05,
+          // Легкая анимация нижней линии при скролле
+          const bottomLine = document.querySelector('.bg-bottom-line') as HTMLElement
+          if (bottomLine) {
+            gsap.to(bottomLine, {
+              opacity: 0.5,
+              scaleX: 1.1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: document.body,
+                start: 'top top',
+                end: 'max',
+                scrub: 2,
+                invalidateOnRefresh: true,
+              },
             })
           }
-        })
-      }
-      
-      // Проверяем после небольшой задержки, чтобы ScrollTrigger успел инициализироваться
-      setTimeout(() => {
-        checkInitialVisibility()
-        // Обновляем ScrollTrigger на случай, если страница уже прокручена
-        ScrollTrigger.refresh()
-      }, 200)
+
+          // HORIZONTAL SCROLL - вертикальный скролл = горизонтальное движение
+          const horizontalSection = horizontalRef.current
+          if (horizontalSection) {
+            const sections = gsap.utils.toArray<HTMLElement>('.h-section')
+            const totalWidth = sections.reduce((acc, section) => {
+              return acc + section.offsetWidth
+            }, 0)
+            
+            gsap.to(sections, {
+              xPercent: -100 * (sections.length - 1),
+              ease: 'none',
+              scrollTrigger: {
+                trigger: horizontalSection,
+                pin: true,
+                scrub: 1,
+                end: () => `+=${totalWidth}`,
+                invalidateOnRefresh: true,
+              },
+            })
+          }
+
+          // Feature cards fade in
+          const featureCards = gsap.utils.toArray<HTMLElement>('.feature-card')
+          
+          featureCards.forEach((card, index) => {
+            gsap.set(card, {
+              opacity: 0,
+              scale: 0.8,
+              y: 20,
+            })
+            
+            gsap.fromTo(card, 
+              {
+                opacity: 0,
+                scale: 0.8,
+                y: 20,
+              },
+              {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                duration: 0.6,
+                ease: 'back.out(1.7)',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top 90%',
+                  end: 'bottom 10%',
+                  once: true,
+                  toggleActions: 'play none none none',
+                  invalidateOnRefresh: true,
+                },
+                delay: (index % 6) * 0.05,
+              }
+            )
+          })
+          
+          // Fallback: если карточки уже в viewport при загрузке, показываем их сразу
+          const checkInitialVisibility = () => {
+            featureCards.forEach((card, index) => {
+              const rect = card.getBoundingClientRect()
+              const isInViewport = rect.top < window.innerHeight && rect.bottom > 0
+              if (isInViewport) {
+                gsap.to(card, {
+                  opacity: 1,
+                  scale: 1,
+                  y: 0,
+                  duration: 0.4,
+                  ease: 'power2.out',
+                  delay: (index % 6) * 0.05,
+                })
+              }
+            })
+          }
+          
+          // Проверяем после небольшой задержки, чтобы ScrollTrigger успел инициализироваться
+          setTimeout(() => {
+            checkInitialVisibility()
+            ScrollTrigger.refresh()
+          }, 200)
     })
 
     return () => {
-      ctx.revert()
+      if (ctx) {
+        ctx.revert()
+      }
       ScrollTrigger.getAll().forEach((t) => t.kill())
     }
-  }, [])
+  }, [themeKey])
 
   const features = [
     {
@@ -797,7 +823,7 @@ export default function ForumLandingPage() {
             <Button
               size="lg"
               className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate(isAuthenticated ? '/forum' : '/auth')}
             >
               Регистрация бесплатно
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />

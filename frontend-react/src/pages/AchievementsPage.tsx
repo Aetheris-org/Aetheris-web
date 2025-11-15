@@ -846,8 +846,8 @@ function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
                       />
                     ))}
                   </div>
-                <span className="font-medium text-foreground">{rarity.label}</span>
-              </div>
+                  <span className="font-medium text-foreground">{rarity.label}</span>
+                </div>
               <span className="text-muted-foreground">{count} {t('achievements.unlocked')}</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
