@@ -8,6 +8,7 @@ interface ArticleCardProps {
   article: Article
   onTagClick?: (tag: string) => void
   onArticleClick?: (articleId: string) => void
+  onMouseEnter?: () => void
   hidePreview?: boolean
 }
 
@@ -15,6 +16,7 @@ export function ArticleCard({
   article,
   onTagClick,
   onArticleClick,
+  onMouseEnter,
   hidePreview = false,
 }: ArticleCardProps) {
   const { t } = useTranslation()
@@ -37,6 +39,7 @@ export function ArticleCard({
     <Card
       className="group relative overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer"
       onClick={() => onArticleClick?.(article.id)}
+      onMouseEnter={onMouseEnter}
     >
       {!hidePreview && article.previewImage && (
         <div className="relative w-full overflow-hidden border-b border-border/40">

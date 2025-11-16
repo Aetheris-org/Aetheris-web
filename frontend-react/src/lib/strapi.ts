@@ -53,11 +53,24 @@ export function unwrapStrapiResponse<T>(response: any): T & { id: number } {
 
 /**
  * Unwrap a full Strapi collection response
+ * Supports both Strapi v4 (with attributes) and v5 (flat) formats
  */
 export function unwrapStrapiCollectionResponse<T>(
   response: any
 ): Array<T & { id: number }> {
-  return unwrapStrapiCollection(response.data)
+  // Если response уже массив (Strapi v5 flat format)
+  if (Array.isArray(response)) {
+    return response.map((item) => unwrapStrapiEntity<T>(item))
+  }
+  
+  // Если response.data это массив (Strapi v4/v5 standard format)
+  if (response?.data && Array.isArray(response.data)) {
+    return unwrapStrapiCollection(response.data)
+  }
+  
+  // Fallback: возвращаем пустой массив
+  console.warn('[unwrapStrapiCollectionResponse] Unexpected response format:', response)
+  return []
 }
 
 /**

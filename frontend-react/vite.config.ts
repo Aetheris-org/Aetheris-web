@@ -15,6 +15,16 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:1337',
         changeOrigin: true,
+        secure: false,
+        // Важно: для OAuth callback нужно передавать cookies
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Передаем все cookies от клиента к бэкенду
+            if (req.headers.cookie) {
+              proxyReq.setHeader('Cookie', req.headers.cookie);
+            }
+          });
+        },
       },
     },
   },

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Calendar, Clock, Heart, Bookmark, Share2, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,6 +69,7 @@ export default function CreateArticlePage() {
   const { toast } = useToast()
   const { user } = useAuthStore()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -88,7 +90,7 @@ export default function CreateArticlePage() {
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [isLoadingDraft, setIsLoadingDraft] = useState(false)
   const [draftId, setDraftId] = useState<number | null>(null)
-  const [existingPreviewImageId, setExistingPreviewImageId] = useState<number | null>(null)
+  const [existingPreviewImageId, setExistingPreviewImageId] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [isTitleFocused, setIsTitleFocused] = useState(false)
   const [isExcerptFocused, setIsExcerptFocused] = useState(false)
@@ -108,24 +110,55 @@ export default function CreateArticlePage() {
   const draftParam = searchParams.get('draft')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
 
-  const uploadPreviewImageAsset = useCallback(async (): Promise<number | null> => {
+  const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     if (!croppedImageBlob) {
-      return existingPreviewImageId ?? null
+      return existingPreviewImageId ? String(existingPreviewImageId) : null
     }
 
     const formData = new FormData()
     formData.append('files', croppedImageBlob, `article-preview-${Date.now()}.jpg`)
 
-    const uploadResponse = await apiClient.post('/api/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    // Используем новый эндпоинт для загрузки через imgBB
+    // Retry логика для отказоустойчивости
+    let lastError: any = null
+    const maxRetries = 3
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const uploadResponse = await apiClient.post('/upload/image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 90000, // 90 секунд таймаут (бэкенд использует 60 секунд + запас)
+        })
 
-    const newId = uploadResponse.data?.[0]?.id ?? null
-    setExistingPreviewImageId(newId)
-    setCroppedImageBlob(null)
-    return newId
+        const uploadedFile = uploadResponse.data?.[0]
+        if (!uploadedFile || !uploadedFile.url) {
+          throw new Error('Invalid response from upload service')
+        }
+
+        // Сохраняем URL изображения (imgBB возвращает URL, а не ID)
+        const imageUrl = uploadedFile.url
+        setExistingPreviewImageId(imageUrl)
+        setCroppedImageBlob(null)
+        return imageUrl
+      } catch (error: any) {
+        lastError = error
+        
+        // Если это не сетевая ошибка или таймаут, не повторяем
+        if (error.code !== 'ECONNABORTED' && error.code !== 'ERR_NETWORK' && error.response?.status !== 408) {
+          break
+        }
+        
+        // Экспоненциальная задержка перед повтором
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        }
+      }
+    }
+
+    // Если все попытки не удались, выбрасываем последнюю ошибку
+    throw lastError || new Error('Failed to upload image after multiple attempts')
   }, [croppedImageBlob, existingPreviewImageId])
 
   const handleAddTag = () => {
@@ -180,14 +213,6 @@ export default function CreateArticlePage() {
     }
   }, [currentStep])
 
-  const formatDate = (date: string | Date) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
 
   const estimateReadTime = (content: string) => {
     const wordsPerMinute = 200
@@ -225,17 +250,17 @@ export default function CreateArticlePage() {
     setIsSavingDraft(true)
 
     try {
-      let previewImageId: number | null = null
+      let previewImageUrl: string | null = null
 
       try {
-        previewImageId = await uploadPreviewImageAsset()
-    } catch (error) {
+        previewImageUrl = await uploadPreviewImageAsset()
+      } catch (error) {
         console.error('Preview upload failed', error)
-      toast({
+        toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedDescription'),
-        variant: 'destructive',
-      })
+          variant: 'destructive',
+        })
         setIsSavingDraft(false)
         return
       }
@@ -246,7 +271,7 @@ export default function CreateArticlePage() {
         excerpt: excerpt.trim() || null,
         tags,
         difficulty,
-        previewImageId,
+        previewImageUrl,
       }
 
       const saved = draftId
@@ -254,7 +279,8 @@ export default function CreateArticlePage() {
         : await createDraftArticle(payload)
 
       setDraftId(saved.databaseId)
-      setExistingPreviewImageId(saved.previewImageId ?? null)
+      // Сохраняем URL изображения (теперь это строка, а не ID)
+      setExistingPreviewImageId(saved.previewImage || null)
       if (saved.previewImage) {
         setCroppedImageUrl(saved.previewImage)
         croppedImageUrlRef.current = saved.previewImage
@@ -443,7 +469,7 @@ export default function CreateArticlePage() {
             ? (draft.difficulty as typeof difficulty)
             : 'medium'
         setDifficulty(nextDifficulty)
-        setExistingPreviewImageId(draft.previewImageId ?? null)
+        setExistingPreviewImageId(draft.previewImage || null)
         setOriginalImageUrl(null)
         setSelectedImageUrl(null)
         setCroppedImageBlob(null)
@@ -540,31 +566,48 @@ export default function CreateArticlePage() {
     setIsPublishing(true)
 
     try {
-      let previewImageId: number | null = null
+      let previewImageUrl: string | null = null
 
       try {
-        previewImageId = await uploadPreviewImageAsset()
-        } catch (error) {
+        previewImageUrl = await uploadPreviewImageAsset()
+      } catch (error) {
         console.error('Preview upload failed', error)
-          toast({
+        toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedPublishDescription'),
-            variant: 'destructive',
-          })
-          setIsPublishing(false)
-          return
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
       }
 
       const payload = {
-            title: title.trim(),
+        title: title.trim(),
         content: sanitizedContent,
-            excerpt: excerpt.trim() || null,
-            tags,
-            difficulty,
-        previewImageId,
+        excerpt: excerpt.trim() || null,
+        tags,
+        difficulty,
+        previewImageUrl,
       }
 
       const publishedArticle = await publishArticle(payload, draftId)
+      
+      // После успешной публикации инвалидируем кэш списка и трендовых статей,
+      // чтобы на HomePage новые статьи появились сразу, без жесткого перезагруза.
+      queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['trending-articles'] })
+      
+      // Используем documentId для навигации (более надежно, чем databaseId)
+      const articleId = publishedArticle.documentId || publishedArticle.id || String(publishedArticle.databaseId)
+      
+      if (import.meta.env.DEV) {
+        console.log('[CreateArticlePage] Article published:', {
+          id: publishedArticle.id,
+          documentId: publishedArticle.documentId,
+          databaseId: publishedArticle.databaseId,
+          articleId,
+        })
+      }
       
       toast({
         title: t('createArticle.articlePublished'),
@@ -585,7 +628,12 @@ export default function CreateArticlePage() {
       setSearchParams(nextParams, { replace: true })
       loadedDraftIdRef.current = null
 
-      navigate(`/article/${publishedArticle.databaseId}`)
+      // Небольшая задержка перед навигацией, чтобы дать время базе данных синхронизироваться
+      // Это особенно важно для только что созданных статей
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Используем documentId для навигации (более надежно)
+      navigate(`/article/${articleId}`)
     } catch (error: unknown) {
       console.error('Failed to publish article:', error)
       const message =

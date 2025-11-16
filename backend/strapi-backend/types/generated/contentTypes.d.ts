@@ -387,6 +387,84 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
+  collectionName: 'articles';
+  info: {
+    description: 'User-created articles with rich text content';
+    displayName: 'Article';
+    pluralName: 'articles';
+    singularName: 'article';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: true;
+    };
+    'content-type-builder': {
+      visible: true;
+    };
+  };
+  attributes: {
+    author: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'> &
+      Schema.Attribute.Required;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+        minLength: 100;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    difficulty: Schema.Attribute.Enumeration<['easy', 'medium', 'hard']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'medium'>;
+    dislikes_count: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    excerpt: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    likes_count: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::article.article'> &
+      Schema.Attribute.Private;
+    preview_image: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    tags: Schema.Attribute.JSON;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+        minLength: 10;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    views: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+  };
+}
+
 export interface PluginContentReleasesRelease extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
   info: {
@@ -760,38 +838,41 @@ export interface PluginUsersPermissionsRole extends Struct.CollectionTypeSchema 
 export interface PluginUsersPermissionsUser extends Struct.CollectionTypeSchema {
   collectionName: 'up_users';
   info: {
-    description: '';
+    description: 'Platform users managed by Users & Permissions plugin';
     displayName: 'User';
-    name: 'user';
     pluralName: 'users';
     singularName: 'user';
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
+  };
+  pluginOptions: {
+    'content-type-builder': {
+      visible: false;
+    };
   };
   attributes: {
+    avatar: Schema.Attribute.Media<'images'>;
+    bio: Schema.Attribute.Text;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
+    confirmationToken: Schema.Attribute.String;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    coverImage: Schema.Attribute.Media<'images'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
+      Schema.Attribute.Unique &
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'plugin::users-permissions.user'> &
       Schema.Attribute.Private;
-    password: Schema.Attribute.Password &
-      Schema.Attribute.Private &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 6;
-      }>;
+    password: Schema.Attribute.Password;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
+    resetPasswordToken: Schema.Attribute.String;
     role: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.role'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
@@ -815,6 +896,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::article.article': ApiArticleArticle;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

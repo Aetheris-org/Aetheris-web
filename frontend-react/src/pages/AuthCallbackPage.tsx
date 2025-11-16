@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { getTokenFromCookie } from '@/lib/axios'
 import { getCurrentUser } from '@/api/profile'
 import { useAuthStore } from '@/stores/authStore'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
 
 export default function AuthCallbackPage() {
   const location = useLocation()
@@ -36,106 +33,26 @@ export default function AuthCallbackPage() {
         return
       }
 
-      console.log('🔐 OAuth callback - checking tokens...')
-      console.log('   search:', location.search)
-      console.log('   hash:', location.hash)
+      console.log('🔐 OAuth callback - checking authentication...')
 
-      const shouldExchange =
-        searchParams.has('code') ||
-        searchParams.has('access_token') ||
-        searchParams.has('id_token') ||
-        hashParams.has('code') ||
-        hashParams.has('access_token') ||
-        hashParams.has('id_token')
-
-      let userFromExchange: any = null
-
-      if (shouldExchange) {
-        // Объединяем параметры поиска и хеша в один query string для Strapi
-        const mergedParams = new URLSearchParams(location.search)
-        hashParams.forEach((value, key) => {
-          if (!mergedParams.has(key)) {
-            mergedParams.append(key, value)
-          }
-        })
-
-        console.log('🔄 Exchanging OAuth data with Strapi callback:', mergedParams.toString())
-
-        try {
-          const exchangeResponse = await fetch(
-            `${API_BASE}/api/auth/google/callback?${mergedParams.toString()}`,
-            {
-              credentials: 'include',
-            },
-          )
-
-          if (!exchangeResponse.ok) {
-            const errorBody = await exchangeResponse.text()
-            console.error(
-              '❌ Failed to exchange data for JWT:',
-              exchangeResponse.status,
-              errorBody,
-            )
-            setErrorMessage('Не удалось получить токен от сервера. Попробуйте ещё раз.')
-            setTimeout(() => navigate('/auth', { replace: true }), 3000)
-            return
-          }
-
-          const exchangeData = await exchangeResponse.json()
-          console.log('✅ Received exchange payload:', exchangeData)
-
-          if (exchangeData?.jwt) {
-            document.cookie = `accessToken=${encodeURIComponent(exchangeData.jwt)}; path=/; SameSite=Lax`
-          } else {
-            console.warn('⚠️ Strapi callback response does not contain jwt field.')
-          }
-
-          if (exchangeData?.user) {
-            userFromExchange = exchangeData.user
-
-            setUser({
-              id: exchangeData.user.id,
-              nickname: exchangeData.user.username ?? exchangeData.user.email ?? 'user',
-              email: exchangeData.user.email ?? '',
-              avatar: exchangeData.user.avatar ?? undefined,
-              bio: exchangeData.user.bio ?? undefined,
-              articlesCount: 0,
-              commentsCount: 0,
-              likesReceived: 0,
-              viewsReceived: 0,
-              createdAt: exchangeData.user.createdAt ?? new Date().toISOString(),
-              status: 'active',
-              role: exchangeData.user.role ?? 'user',
-              isVerified: exchangeData.user.confirmed ?? true,
-              isProfilePublic: true,
-              showEmail: false,
-              showLastSeen: false,
-              reputation: 0,
-              level: 1,
-              experience: 0,
-            })
-          }
-        } catch (exchangeError) {
-          console.error('❌ Unexpected error during OAuth exchange:', exchangeError)
-          setErrorMessage('Произошла ошибка при завершении авторизации.')
-          setTimeout(() => navigate('/auth', { replace: true }), 3000)
-          return
-        }
+      // В development токен передается через URL (для кросс-доменных запросов)
+      // В production токен в httpOnly cookie (более безопасно)
+      const accessToken = searchParams.get('access_token') || hashParams.get('access_token')
+      
+      if (accessToken) {
+        console.log('✅ Received access_token from OAuth callback')
+        // Сохраняем токен в cookie для последующих запросов
+        // В development используем обычную cookie (не httpOnly), так как JavaScript должен иметь доступ
+        const maxAge = 7 * 24 * 60 * 60 // 7 дней в секундах
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax; max-age=${maxAge}`
+        document.cookie = `jwtToken=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax; max-age=${maxAge}`
+        console.log('💾 Token saved to cookies')
       }
 
-      // Убираем чувствительные query-параметры из URL
+      // Убираем чувствительные query-параметры из URL для безопасности
       navigate('/auth/callback', { replace: true })
 
-      const token = getTokenFromCookie()
-      console.log('🔐 Final token check:', !!token, 'cookie value length:', token?.length ?? 0)
-
-      if (!token) {
-        setErrorMessage('Токен авторизации не найден. Попробуйте войти снова.')
-        setTimeout(() => navigate('/auth', { replace: true }), 3000)
-        return
-      }
-
-      if (!userFromExchange) {
+      // Получаем данные пользователя - токен теперь в cookie или был передан через URL
       try {
         const user = await getCurrentUser()
         setUser(user)
@@ -153,17 +70,6 @@ export default function AuthCallbackPage() {
         console.error('Failed to finalize OAuth callback:', error)
         setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
         setTimeout(() => navigate('/auth', { replace: true }), 3000)
-        }
-      } else {
-        const savedRedirect = sessionStorage.getItem('auth_redirect')
-        console.log('🔍 Checking auth_redirect from sessionStorage (userFromExchange):', savedRedirect)
-        
-        // Используем сохраненный redirect, если он есть (даже если это '/')
-        // Если redirect не был сохранен, используем '/forum' (главная страница со статьями)
-        const redirect = savedRedirect !== null ? savedRedirect : '/forum'
-        console.log('🚀 Navigating to:', redirect)
-        sessionStorage.removeItem('auth_redirect')
-        navigate(redirect, { replace: true })
       }
     }
 

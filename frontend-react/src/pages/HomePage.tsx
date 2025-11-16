@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search,
   SlidersHorizontal,
@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getAllArticles, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
+import { getAllArticles, getTrendingArticles, searchArticles, getArticle, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -51,12 +51,12 @@ import {
 } from '@/components/ui/pagination'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { useLocalStorage } from 'usehooks-ts'
 import { useTranslation } from '@/hooks/useTranslation'
 
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
   const viewModeOptions: Array<{
@@ -129,12 +129,12 @@ export default function HomePage() {
   )
   const upcomingCourses = useMemo(() => featuredCourses.length, [])
 
-  // Queries
-  const { data: articlesData, isLoading } = useQuery({
+  // Queries с оптимизированными настройками для высокой нагрузки
+  const { data: articlesData, isLoading, error: articlesError } = useQuery({
     queryKey: [
       'articles',
-        page,
-        pageSize,
+      page,
+      pageSize,
       selectedTags.slice().sort().join(','),
       difficultyFilter,
       sortOption,
@@ -147,11 +147,31 @@ export default function HomePage() {
         difficulty: difficultyFilter,
         sort: sortOption,
       }),
+    // Кэшируем на 5 минут (данные статей не меняются часто)
+    staleTime: 5 * 60 * 1000,
+    // Храним в кэше 30 минут
+    gcTime: 30 * 60 * 1000,
+    // Retry только на сетевые ошибки
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      return failureCount < 3
+    },
   })
 
   const { data: trendingArticles = [], isLoading: loadingTrending } = useQuery({
     queryKey: ['trending-articles', user?.id],
     queryFn: () => getTrendingArticles(user?.id, 5),
+    // Трендовые статьи кэшируем дольше (10 минут)
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 
   // Debounced search query
@@ -173,6 +193,16 @@ export default function HomePage() {
     queryKey: ['search-articles', debouncedSearchQuery, user?.id],
     queryFn: () => searchArticles(debouncedSearchQuery, user?.id, 0, 10),
     enabled: debouncedSearchQuery.length >= 2,
+    // Поиск кэшируем на 2 минуты (результаты могут меняться)
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    // Retry только на сетевые ошибки
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 
   const trendingSummary = useMemo(() => {
@@ -185,6 +215,19 @@ export default function HomePage() {
 
   const articles = articlesData?.data || []
   const totalRecords = articlesData?.total || 0
+  
+  // Логирование для отладки (только в development)
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[HomePage] Articles state:', {
+        isLoading,
+        hasError: !!articlesError,
+        articlesCount: articles.length,
+        totalRecords,
+        articlesData,
+      })
+    }
+  }, [isLoading, articlesError, articles.length, totalRecords, articlesData])
   const rawTotalPages = Math.ceil(totalRecords / pageSize)
   const totalPages = Math.max(1, rawTotalPages || 1)
   const hasMultiplePages = totalRecords > pageSize
@@ -286,11 +329,25 @@ export default function HomePage() {
     setSearchInputFocused(true)
   }
 
+  // Prefetch article при наведении на карточку (для быстрой загрузки)
+  const handleArticleMouseEnter = useCallback((articleId: string) => {
+    // Prefetch только если статья еще не в кэше
+    queryClient.prefetchQuery({
+      queryKey: ['article', articleId],
+      queryFn: () => getArticle(articleId, { userId: user?.id }),
+      staleTime: 10 * 60 * 1000, // 10 минут
+    })
+  }, [queryClient, user?.id])
+
   const handleSearchResultClick = (articleId: string) => {
     setShowSearchResults(false)
     setSearchInputFocused(false)
     navigate(`/article/${articleId}`)
   }
+  
+  const handleArticleClick = useCallback((articleId: string) => {
+    navigate(`/article/${articleId}`)
+  }, [navigate])
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
@@ -346,6 +403,8 @@ export default function HomePage() {
       <SiteHeader />
 
       <main className="container space-y-8 sm:space-y-8 lg:space-y-10 pb-6 sm:pb-6 pt-6 sm:pt-6 px-4 sm:px-6">
+        {/* HERO BLOCK DISABLED - Чтобы включить обратно, раскомментируйте код ниже и удалите этот комментарий */}
+        {/* 
         {!isSpotlightDismissed && (
         <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/15 p-6 sm:p-6 shadow-sm">
           <Button
@@ -408,6 +467,7 @@ export default function HomePage() {
           </div>
         </section>
         )}
+        */}
 
         <section className="flex flex-col gap-6 sm:gap-8 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
           <div className="space-y-6 sm:space-y-6 order-2 lg:order-1">
@@ -675,6 +735,26 @@ export default function HomePage() {
                   return <ArticleCardSkeleton key={i} />
                 })}
               </div>
+            ) : articlesError ? (
+              <Card className="border-dashed border-destructive/50">
+                <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12 text-center px-4">
+                  <p className="text-lg sm:text-lg font-medium text-destructive">{t('home.articles.error')}</p>
+                  <p className="mt-2 text-sm sm:text-sm text-muted-foreground">
+                    {articlesError?.response?.status === 429 
+                      ? t('home.articles.rateLimitError')
+                      : t('home.articles.errorDescription')}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['articles'] })
+                    }} 
+                    className="mt-4 h-10 sm:h-10 text-sm sm:text-sm"
+                  >
+                    {t('home.articles.retry')}
+                  </Button>
+                </CardContent>
+              </Card>
             ) : articles.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12 text-center px-4">
@@ -695,7 +775,8 @@ export default function HomePage() {
                           key={article.id}
                           article={article}
                           onTagClick={handleTagClick}
-                          onArticleClick={(id) => navigate(`/article/${id}`)}
+                          onArticleClick={handleArticleClick}
+                          onMouseEnter={() => handleArticleMouseEnter(article.id)}
                         />
                       )
                     }
@@ -705,7 +786,8 @@ export default function HomePage() {
                           key={article.id}
                           article={article}
                           onTagClick={handleTagClick}
-                          onArticleClick={(id) => navigate(`/article/${id}`)}
+                          onArticleClick={handleArticleClick}
+                          onMouseEnter={() => handleArticleMouseEnter(article.id)}
                         />
                       )
                     }
@@ -714,7 +796,8 @@ export default function HomePage() {
                         key={article.id}
                         article={article}
                         onTagClick={handleTagClick}
-                        onArticleClick={(id) => navigate(`/article/${id}`)}
+                        onArticleClick={handleArticleClick}
+                        onMouseEnter={() => handleArticleMouseEnter(article.id)}
                       />
                     )
                   })}
@@ -841,7 +924,7 @@ export default function HomePage() {
                       <div className="mt-2 sm:mt-2 flex items-center gap-3 sm:gap-3 text-xs sm:text-xs text-muted-foreground">
                         <span>{article.views?.toLocaleString?.() ?? '—'} {t('home.trending.views')}</span>
                         <span>•</span>
-                        <span>{article.reactions ?? '—'} {t('home.trending.reactions')}</span>
+                        <span>{(article.likes || 0) + (article.dislikes || 0)} {t('home.trending.reactions')}</span>
                     </div>
                     </button>
                   ))

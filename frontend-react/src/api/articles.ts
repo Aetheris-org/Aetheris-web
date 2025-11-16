@@ -34,8 +34,13 @@ function getPreviewImageId(previewImage: any): number | null {
 
 function transformArticle(strapiArticle: any): Article {
   const author = unwrapAuthor(strapiArticle.author)
-  const previewUrl = getStrapiMediaUrl(strapiArticle.preview_image)
-  const previewId = getPreviewImageId(strapiArticle.preview_image)
+  // preview_image теперь строка (URL от imgBB), а не media объект
+  const previewUrl = typeof strapiArticle.preview_image === 'string' 
+    ? strapiArticle.preview_image 
+    : getStrapiMediaUrl(strapiArticle.preview_image)
+  const previewId = typeof strapiArticle.preview_image === 'string'
+    ? null // URL не имеет ID
+    : getPreviewImageId(strapiArticle.preview_image)
 
   const documentId =
     strapiArticle.documentId ||
@@ -108,8 +113,8 @@ function buildArticleQueryParams(options: ArticleQueryOptions = {}) {
         populate: {
           avatar: { fields: ['url'] }
         }
-      },
-      preview_image: { fields: ['url'] }
+      }
+      // preview_image теперь строка (URL), не требует populate
     },
     'filters[publishedAt][$notNull]': true,
     'pagination[start]': start,
@@ -145,21 +150,73 @@ function buildArticleQueryParams(options: ArticleQueryOptions = {}) {
 }
 
 export async function getAllArticles(options: ArticleQueryOptions = {}): Promise<ArticlesResponse> {
-  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles', {
-    params: buildArticleQueryParams(options)
-  })
-  
-  const articles = unwrapStrapiCollectionResponse(res.data).map(transformArticle)
-  const total = res.data.meta?.pagination?.total || articles.length
-  
-  return {
-    data: articles,
-    total
+  try {
+    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/articles', {
+      params: buildArticleQueryParams(options)
+    })
+    
+        // Логирование для отладки (только в development)
+        if (import.meta.env.DEV) {
+          console.log('[getAllArticles] Raw response:', JSON.stringify(res.data, null, 2))
+          console.log('[getAllArticles] Response structure:', {
+            hasData: !!res.data,
+            hasDataData: !!res.data?.data,
+            dataType: Array.isArray(res.data?.data) ? 'array' : typeof res.data?.data,
+            dataLength: Array.isArray(res.data?.data) ? res.data.data.length : 0,
+            firstItem: Array.isArray(res.data?.data) && res.data.data.length > 0 ? JSON.stringify(res.data.data[0], null, 2) : null,
+            meta: res.data?.meta,
+            fullResponse: res.data,
+          })
+        }
+    
+    // Strapi v5 возвращает данные напрямую в data (без attributes)
+    // Проверяем формат ответа
+    const rawData = res.data?.data
+    if (!rawData) {
+      console.error('[getAllArticles] No data in response:', res.data)
+      return { data: [], total: 0 }
+    }
+    
+    if (!Array.isArray(rawData)) {
+      console.error('[getAllArticles] Data is not an array:', typeof rawData, rawData)
+      return { data: [], total: 0 }
+    }
+    
+    // Обрабатываем ответ через unwrapStrapiCollectionResponse
+        const unwrappedArticles = unwrapStrapiCollectionResponse(res.data)
+        
+        if (import.meta.env.DEV) {
+          console.log('[getAllArticles] Unwrapped articles:', {
+            count: unwrappedArticles.length,
+            firstArticle: unwrappedArticles[0] ? JSON.stringify(unwrappedArticles[0], null, 2) : null,
+            allArticles: unwrappedArticles.length > 0 ? unwrappedArticles.map(a => ({ id: a.id, title: (a as any).title, publishedAt: (a as any).publishedAt })) : [],
+          })
+        }
+    
+    const articles = unwrappedArticles.map(transformArticle)
+    const total = res.data.meta?.pagination?.total || articles.length
+    
+    if (import.meta.env.DEV) {
+      console.log('[getAllArticles] Processed:', {
+        articlesCount: articles.length,
+        total,
+        firstTransformed: articles[0] ? JSON.stringify(articles[0], null, 2) : null,
+        allTransformed: articles.length > 0 ? articles.map(a => ({ id: a.id, title: a.title, publishedAt: (a as any).publishedAt })) : [],
+      })
+    }
+    
+    return {
+      data: articles,
+      total
+    }
+  } catch (error) {
+    logAxiosError('[getAllArticles] request failed', error)
+    throw error
   }
 }
 
 export async function searchArticles(query: string, _userId?: number, skip: number = 0, limit: number = 100): Promise<Article[]> {
-  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles/search', {
+  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/articles/search', {
     params: { 
       q: query,
       skip,
@@ -171,7 +228,7 @@ export async function searchArticles(query: string, _userId?: number, skip: numb
 }
 
 export async function getTrendingArticles(_userId?: number, limit: number = 3): Promise<Article[]> {
-  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles', {
+  const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/articles', {
     params: {
       populate: {
         author: {
@@ -179,8 +236,8 @@ export async function getTrendingArticles(_userId?: number, limit: number = 3): 
           populate: {
             avatar: { fields: ['url'] }
           }
-        },
-        preview_image: { fields: ['url'] }
+        }
+        // preview_image теперь строка (URL), не требует populate
       },
       'filters[publishedAt][$notNull]': true,
       'pagination[limit]': limit,
@@ -227,13 +284,13 @@ export async function getArticle(id: string, _options: GetArticleOptions = {}): 
           populate: {
             avatar: { fields: ['url'] }
           }
-        },
-        preview_image: { fields: ['url'] }
+        }
+        // preview_image теперь строка (URL), не требует populate
       }
     }
 
   try {
-    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/api/articles/${id}`, {
+    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/articles/${id}`, {
       params,
     })
     
@@ -250,7 +307,7 @@ export async function getDraftArticle(id: number): Promise<Article> {
   }
 
   try {
-    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/api/articles/me/drafts/${id}`, {
+    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/articles/me/drafts/${id}`, {
       headers: {
         'X-Require-Auth': 'true',
       },
@@ -264,7 +321,7 @@ export async function getDraftArticle(id: number): Promise<Article> {
 }
 
 export async function reactArticle(articleId: string, reaction: 'like' | 'dislike'): Promise<Article> {
-  const res = await apiClient.post<StrapiResponse<any>>(`/api/articles/${articleId}/react`, {
+  const res = await apiClient.post<StrapiResponse<any>>(`/articles/${articleId}/react`, {
     reaction,
   })
 
@@ -272,7 +329,7 @@ export async function reactArticle(articleId: string, reaction: 'like' | 'dislik
 }
 
 export async function deleteArticle(id: number): Promise<void> {
-  await apiClient.delete(`/api/articles/${id}`)
+  await apiClient.delete(`/articles/${id}`)
 }
 
 export interface DraftPayload {
@@ -281,7 +338,7 @@ export interface DraftPayload {
   excerpt?: string | null
   tags?: string[]
   difficulty?: ArticleDifficulty | 'all'
-  previewImageId?: number | null
+  previewImageUrl?: string | null
 }
 
 function buildArticleData(payload: DraftPayload, publishedAt?: string | null) {
@@ -291,18 +348,18 @@ function buildArticleData(payload: DraftPayload, publishedAt?: string | null) {
     excerpt: payload.excerpt ?? null,
     tags: payload.tags ?? [],
     difficulty: payload.difficulty && payload.difficulty !== 'all' ? payload.difficulty : 'medium',
-    preview_image: typeof payload.previewImageId === 'number' ? payload.previewImageId : null,
+    preview_image: payload.previewImageUrl || null,
     ...(typeof publishedAt !== 'undefined' ? { publishedAt } : {}),
   }
 }
 
 export async function createDraftArticle(payload: DraftPayload): Promise<Article> {
-  const res = await apiClient.post('/api/articles', wrapStrapiData(buildArticleData(payload, null)))
+  const res = await apiClient.post('/articles', wrapStrapiData(buildArticleData(payload, null)))
   return transformArticle(unwrapStrapiResponse(res.data))
 }
 
 export async function updateDraftArticle(id: number, payload: DraftPayload): Promise<Article> {
-  const res = await apiClient.put(`/api/articles/${id}`, wrapStrapiData(buildArticleData(payload, null)))
+  const res = await apiClient.put(`/articles/${id}`, wrapStrapiData(buildArticleData(payload, null)))
   return transformArticle(unwrapStrapiResponse(res.data))
 }
 
@@ -313,8 +370,8 @@ export async function publishArticle(
   const data = buildArticleData(payload, new Date().toISOString())
 
   const res = draftId
-    ? await apiClient.put(`/api/articles/${draftId}`, wrapStrapiData(data))
-    : await apiClient.post('/api/articles', wrapStrapiData(data))
+    ? await apiClient.put(`/articles/${draftId}`, wrapStrapiData(data))
+    : await apiClient.post('/articles', wrapStrapiData(data))
 
   return transformArticle(unwrapStrapiResponse(res.data))
 }
@@ -331,7 +388,7 @@ export async function getDraftArticles(userId: number, options: { limit?: number
   }
 
   try {
-    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/api/articles/me/drafts', {
+    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/articles/me/drafts', {
       params,
       headers: {
         'X-Require-Auth': 'true',

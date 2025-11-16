@@ -34,11 +34,45 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
 
+/**
+ * QueryClient с оптимизированными настройками для высокой нагрузки
+ * - Кэширование для снижения нагрузки на сервер
+ * - Retry логика для отказоустойчивости
+ * - Stale time для баланса между актуальностью и производительностью
+ */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // Не рефетчить при фокусе окна (снижает нагрузку)
       refetchOnWindowFocus: false,
-      retry: 1,
+      // Не рефетчить при переподключении (опционально, можно включить для критичных данных)
+      refetchOnReconnect: false,
+      // Retry логика: 3 попытки с экспоненциальной задержкой
+      retry: (failureCount, error: any) => {
+        // Не ретраить на 4xx ошибки (клиентские ошибки)
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false
+        }
+        // Максимум 3 попытки для сетевых/серверных ошибок
+        return failureCount < 3
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Время, в течение которого данные считаются свежими (5 минут)
+      staleTime: 5 * 60 * 1000,
+      // Время хранения в кэше (30 минут)
+      gcTime: 30 * 60 * 1000, // ранее cacheTime
+      // Таймаут запроса (30 секунд)
+      networkMode: 'online',
+    },
+    mutations: {
+      // Retry для мутаций только на сетевые ошибки
+      retry: (failureCount, error: any) => {
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false
+        }
+        return failureCount < 2
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
 })

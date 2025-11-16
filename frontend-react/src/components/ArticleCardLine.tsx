@@ -7,12 +7,14 @@ interface ArticleCardLineProps {
   article: Article
   onTagClick?: (tag: string) => void
   onArticleClick?: (articleId: string) => void
+  onMouseEnter?: () => void
 }
 
 export function ArticleCardLine({
   article,
   onTagClick,
   onArticleClick,
+  onMouseEnter,
 }: ArticleCardLineProps) {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -31,6 +33,7 @@ export function ArticleCardLine({
     <Card
       className="group overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer"
       onClick={() => onArticleClick?.(article.id)}
+      onMouseEnter={onMouseEnter}
     >
       <div className="p-4">
         <div className="flex items-center gap-4">

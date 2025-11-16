@@ -1,18 +1,18 @@
 export default ({ env }) => {
-  const url = env('PUBLIC_URL')
+  const url = env('PUBLIC_URL');
 
   return {
-    host: env('HOST', '0.0.0.0'),
-    port: env.int('PORT', 1337),
+  host: env('HOST', '0.0.0.0'),
+  port: env.int('PORT', 1337),
     ...(url ? { url } : {}),
-    app: {
-      keys: env.array('APP_KEYS'),
-    },
+  app: {
+    keys: env.array('APP_KEYS'),
+  },
     settings: {
       cors: {
         enabled: true,
         origin: [
-          env('FRONTEND_URL', 'http://localhost:5174'),
+          env('FRONTEND_URL', 'http://localhost:5173'),
           url || 'http://localhost:1337',
         ],
         headers: '*',
@@ -20,5 +20,5 @@ export default ({ env }) => {
         credentials: true,
       },
     },
-  }
-}
+  };
+};

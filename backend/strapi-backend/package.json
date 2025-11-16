@@ -8,7 +8,6 @@
     "console": "strapi console",
     "deploy": "strapi deploy",
     "dev": "strapi develop",
-    "dev:webpack": "strapi develop --bundler=webpack",
     "develop": "strapi develop",
     "start": "strapi start",
     "strapi": "strapi",
@@ -17,6 +16,7 @@
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",
+    "@strapi/plugin-cloud": "5.30.0",
     "@strapi/plugin-users-permissions": "5.30.0",
     "@strapi/strapi": "5.30.0",
     "better-sqlite3": "11.3.0",
@@ -33,24 +33,14 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "buffer": "^6.0.3",
-    "events": "^3.3.0",
-    "path-browserify": "^1.0.1",
-    "process": "^0.11.10",
-    "source-map-js": "^1.2.1",
-    "sqlite3": "^5.1.7",
-    "stream-browserify": "^3.0.0",
-    "typescript": "^5",
-    "url": "^0.11.4",
-    "util": "^0.12.5",
-    "vite-plugin-node-polyfills": "^0.24.0"
+    "typescript": "^5"
   },
   "engines": {
     "node": ">=18.0.0 <=22.x.x",
     "npm": ">=6.0.0"
   },
   "strapi": {
-    "uuid": "1c55bd6d-c63a-4ee0-ac65-db278fc19e2d",
-    "installId": "b922d21aa4e009fb3700c6151607c0be2d09ffca6e223f959ead4f26991b76fa"
+    "uuid": "122fda0c-c154-4ae6-bd39-f38c18651854",
+    "installId": "9319c9a349b4bdb9cc8239186be0156979a90ed4dc256805ae7660fef1bf6012"
   }
 }

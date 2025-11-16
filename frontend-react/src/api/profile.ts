@@ -44,17 +44,17 @@ export function adaptBackendUser(backendUser: BackendUser): User {
 }
 
 export async function getCurrentUser(): Promise<User> {
-  const token = getTokenFromCookie()
-  console.log('👤 getCurrentUser called, token present:', !!token)
+  // Токен теперь в httpOnly cookie - JavaScript не может его прочитать
+  // Но он автоматически отправится с запросом через withCredentials: true
+  // Просто делаем запрос - если токен валидный, запрос пройдет
+  console.log('👤 getCurrentUser called (token in httpOnly cookie)')
 
-  if (!token) {
-    throw new Error('Access token is missing')
-  }
-
-  console.log('🔵 Getting current user from /api/users/me')
+  console.log('🔵 Getting current user from /users/me')
   try {
-    const response = await apiClient.get<BackendUser>('/api/users/me', {
+    // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
+    const response = await apiClient.get<BackendUser>('/users/me', {
     timeout: 10000,
+      withCredentials: true, // Важно: отправляет httpOnly cookies
   })
 
     const backendUser = response.data
@@ -152,7 +152,8 @@ function adaptProfileArticle(article: BackendProfileResponse['data']['articles']
 }
 
 export async function getUserProfile(userId: number): Promise<UserProfile> {
-  const response = await apiClient.get<BackendProfileResponse>(`/api/profile/${userId}`, {
+  // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
+  const response = await apiClient.get<BackendProfileResponse>(`/profile/${userId}`, {
     timeout: 15000,
   })
 
@@ -198,7 +199,8 @@ export async function uploadProfileMedia(file: File): Promise<UploadResponseItem
   const formData = new FormData()
   formData.append('files', file)
 
-  const response = await apiClient.post<UploadResponseItem[]>('/api/upload', formData, {
+  // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
+  const response = await apiClient.post<UploadResponseItem[]>('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
       'X-Require-Auth': 'true',
@@ -221,8 +223,9 @@ interface UpdateUserProfilePayload {
 }
 
 export async function updateUserProfile(userId: number, payload: UpdateUserProfilePayload): Promise<User> {
+  // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
   const response = await apiClient.put<BackendUser>(
-    `/api/users/${userId}`,
+    `/users/${userId}`,
     {
       username: payload.username,
       bio: payload.bio ?? null,

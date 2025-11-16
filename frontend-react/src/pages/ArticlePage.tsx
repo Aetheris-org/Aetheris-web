@@ -195,11 +195,29 @@ export default function ArticlePage() {
     }
   }, [])
 
-  // Fetch article
+  // Fetch article с оптимизированными настройками
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id],
     queryFn: () => getArticle(id as string, { userId: user?.id }),
     enabled: !!id,
+    // Статьи кэшируем на 10 минут (контент меняется редко)
+    staleTime: 10 * 60 * 1000,
+    // Храним в кэше 1 час
+    gcTime: 60 * 60 * 1000,
+    // Retry логика
+    retry: (failureCount, error: any) => {
+      // Не ретраить на 404 (статья не найдена)
+      if (error?.response?.status === 404) {
+        return false
+      }
+      // Не ретраить на другие 4xx ошибки
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      // Максимум 3 попытки для сетевых/серверных ошибок
+      return failureCount < 3
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 
   // Track reading progress
@@ -1308,21 +1326,56 @@ export default function ArticlePage() {
     )
   }
 
-  if (error || !article) {
+  // Обработка ошибок с retry кнопкой
+  if (error) {
+    const isNotFound = (error as any)?.response?.status === 404
+    const isRateLimit = (error as any)?.response?.status === 429
+    const isServerError = (error as any)?.response?.status >= 500
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-2xl font-bold">{t('article.notFound')}</h2>
+            <h2 className="text-2xl font-bold">
+              {isNotFound 
+                ? t('article.notFound')
+                : isRateLimit
+                ? t('article.rateLimit') || 'Rate Limit Exceeded'
+                : t('article.error') || 'Error'}
+            </h2>
             <p className="text-muted-foreground">
-              {t('article.notFoundDescription')}
+              {isNotFound
+                ? t('article.notFoundDescription')
+                : isRateLimit
+                ? t('article.rateLimitDescription') || 'Too many requests. Please try again later.'
+                : t('article.errorDescription') || 'An error occurred while loading the article.'}
             </p>
-            <Button onClick={() => navigate('/')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('article.backToHome')}
-            </Button>
+            <div className="flex gap-2 justify-center">
+              {!isNotFound && (
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ['article', id] })
+                  }}
+                >
+                  {t('article.retry') || 'Retry'}
+                </Button>
+              )}
+              <Button onClick={() => navigate('/')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t('article.backToHome')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
+
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -1334,8 +1387,8 @@ export default function ArticlePage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Reading Progress Bar */}
         {readingProgress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-1">
-            <Progress value={readingProgress} className="h-1 rounded-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-70">
+            <Progress value={readingProgress} className="h-0.5 rounded-none" />
           </div>
         )}
         <div className="container flex h-16 items-center justify-between">

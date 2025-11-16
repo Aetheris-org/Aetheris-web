@@ -7,12 +7,14 @@ interface ArticleCardSquareProps {
   article: Article
   onTagClick?: (tag: string) => void
   onArticleClick?: (articleId: string) => void
+  onMouseEnter?: () => void
 }
 
 export function ArticleCardSquare({
   article,
   onTagClick,
   onArticleClick,
+  onMouseEnter,
 }: ArticleCardSquareProps) {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -31,6 +33,7 @@ export function ArticleCardSquare({
     <Card
       className="group overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col"
       onClick={() => onArticleClick?.(article.id)}
+      onMouseEnter={onMouseEnter}
     >
       {article.previewImage && (
         <div className="relative w-full overflow-hidden border-b border-border/40">

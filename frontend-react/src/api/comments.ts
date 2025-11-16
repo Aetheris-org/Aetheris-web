@@ -67,7 +67,7 @@ export async function getArticleComments(
   if (typeof options.start !== 'undefined') params.start = options.start
   if (typeof options.limit !== 'undefined') params.limit = options.limit
 
-  const response = await apiClient.get(`/api/articles/${articleDocumentId}/comments`, {
+  const response = await apiClient.get(`/articles/${articleDocumentId}/comments`, {
     params,
   })
 
@@ -85,7 +85,7 @@ export async function createArticleComment(
   payload: { text: string; parentId?: string | null },
 ): Promise<Comment> {
   const response = await apiClient.post(
-    `/api/articles/${articleDocumentId}/comments`,
+    `/articles/${articleDocumentId}/comments`,
     {
       data: {
         text: payload.text,

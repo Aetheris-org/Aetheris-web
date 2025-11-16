@@ -1,1 +1,0 @@
-import{d as t,u as s,i as n,j as o,t as a,E as c,_}from"./index-Cha8mMNk.js";const l={class:"development-text"},p=t({__name:"Analytics",setup(r){const{t:i}=s();return(e,d)=>(c(),n("div",null,[o("h1",l,a(e.$t("common.in_development")),1)]))}}),u=_(p,[["__scopeId","data-v-5764f793"]]);export{u as default};

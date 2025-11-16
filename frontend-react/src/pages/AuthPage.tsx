@@ -8,7 +8,11 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
 import { useTranslation } from '@/hooks/useTranslation'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
+// В development используем прокси Vite для всех запросов
+// Это позволяет cookie работать, так как все запросы идут через один домен
+const API_BASE = import.meta.env.DEV 
+  ? '' // Используем прокси Vite (/api -> http://localhost:1337)
+  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
 
 export default function AuthPage() {
   const navigate = useNavigate()
@@ -60,7 +64,10 @@ export default function AuthPage() {
       console.log('⚠️ No explicit redirect found, will use /forum after auth')
     }
 
-    window.location.href = `${API_BASE}/api/connect/google`
+    // Используем кастомный OAuth endpoint, который обрабатывает callback правильно
+    const frontendCallbackUrl = `${window.location.origin}/auth/callback`
+    // Используем стандартный Strapi connect endpoint, но callback будет обработан кастомным контроллером
+    window.location.href = `${API_BASE}/api/connect/google?redirect=${encodeURIComponent(frontendCallbackUrl)}`
   }
 
   const benefits = [

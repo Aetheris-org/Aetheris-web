@@ -8,8 +8,25 @@ export default [
   {
     name: 'strapi::security',
     config: {
-      hsts: false,
+      hsts: process.env.NODE_ENV === 'production', // Включаем HSTS только в production
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Для Strapi admin
+          'style-src': ["'self'", "'unsafe-inline'"],
+          'img-src': ["'self'", 'data:', 'https:'],
+          'connect-src': ["'self'", 'https://oauth2.googleapis.com', 'https://www.googleapis.com', 'https://api.imgbb.com'],
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Отключаем для совместимости
     },
+  },
+  
+  // Rate limiting (защита от brute-force)
+  {
+    name: 'global::rate-limit',
+    config: {},
   },
   
   // CORS с строгими настройками
@@ -37,15 +54,21 @@ export default [
   {
     name: 'strapi::body',
     config: {
-      formLimit: '5mb', // 5MB max for form data
+      formLimit: '10mb', // 10MB max for form data (для загрузки изображений)
       jsonLimit: '5mb',
       textLimit: '5mb',
+      multipart: true, // Включаем парсинг multipart/form-data
       formidable: {
-        maxFileSize: 5 * 1024 * 1024, // 5MB max file size
+        maxFileSize: 10 * 1024 * 1024, // 10MB max file size
+        keepExtensions: true,
       },
     },
   },
   'strapi::session',
+  {
+    name: 'global::jwt-cookie',
+    config: {},
+  },
   'strapi::favicon',
   'strapi::public',
 ];

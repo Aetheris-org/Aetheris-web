@@ -1,6 +1,11 @@
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
+// В development используем прокси Vite (/api -> http://localhost:1337)
+// Это позволяет cookie работать, так как все запросы идут через один домен (localhost:5173)
+// В production используем прямой URL из env
+const baseURL = import.meta.env.DEV 
+  ? '/api' // Используем прокси Vite в development
+  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
 
 let isRefreshing = false
 let failedQueue: Array<{
@@ -12,7 +17,8 @@ let csrfToken: string | null = null
 
 async function fetchCsrfToken(): Promise<string | null> {
   try {
-    const response = await axios.get(`${baseURL}/api/auth/csrf`, {
+    // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
+    const response = await axios.get(`${baseURL}/auth/csrf`, {
       withCredentials: true,
     })
     if (response.data?.csrfToken) {
@@ -89,25 +95,33 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   config.headers = config.headers || {}
   
-  // Добавляем токен если он есть И:
-  // - Это защищенный метод (POST, PUT, DELETE, PATCH), ИЛИ
-  // - URL требует авторизации (/api/users/me, /api/articles/*/react, и т.д.), ИЛИ
-  // - Явно указано X-Require-Auth
-  const token = getTokenFromCookie()
+  // Токен теперь в httpOnly cookie - JavaScript не может его прочитать
+  // Но он автоматически отправится с запросом через withCredentials: true
+  // Пытаемся прочитать токен из cookie (может не получиться для httpOnly)
+  // Если токен доступен - добавляем в Authorization header для обратной совместимости
+  // Если нет - полагаемся на автоматическую отправку cookie
+  const token = getTokenFromCookie() // Может вернуть null для httpOnly cookies
+  
   const isProtectedMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase() || '')
-  const requiresAuth = config.url?.includes('/api/me') ||
+  // baseURL уже содержит /api, поэтому проверяем пути без /api
+  const requiresAuth = config.url?.includes('/me') ||
                        config.url?.includes('/users/me') ||
                        config.url?.includes('/react') ||
                        config.url?.includes('/user-reaction') ||
                        config.headers['X-Require-Auth'] ||
                        config.headers['x-require-auth']
   
+  // Если токен доступен (не httpOnly) - добавляем в Authorization header
+  // Если нет - полагаемся на автоматическую отправку httpOnly cookie
   if (token && (isProtectedMethod || requiresAuth)) {
     config.headers.Authorization = `Bearer ${token}`
     console.log('🔐 Adding Authorization header for:', config.url, 'token length:', token.length)
     delete config.headers['X-Require-Auth'] // Удаляем служебный заголовок
-  } else if (!token && requiresAuth) {
-    console.warn('⚠️ No token found but request requires auth:', config.url)
+  } else if (requiresAuth) {
+    // Для httpOnly cookies токен автоматически отправится через cookie
+    // Бэкенд прочитает его из cookie в jwt-auth middleware
+    console.log('🔐 Using httpOnly cookie for auth:', config.url)
+    delete config.headers['X-Require-Auth'] // Удаляем служебный заголовок
   }
   
   if (!(config.data instanceof FormData) && !config.headers['Content-Type']) {
