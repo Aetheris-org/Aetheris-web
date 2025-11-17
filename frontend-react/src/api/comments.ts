@@ -64,6 +64,53 @@ function transformComment(raw: any): Comment {
     }
   }
 
+  // Извлекаем userReaction (может быть в разных местах после transformResponse)
+  let userReaction = raw.userReaction ?? raw.attributes?.userReaction ?? null
+
+  // Если userReaction является объектом, пытаемся извлечь значение
+  // Это может произойти, если transformResponse обернул значение в объект
+  if (userReaction !== null && typeof userReaction === 'object') {
+    // Если это объект с полями like/dislike, извлекаем значение
+    if ('like' in userReaction || 'dislike' in userReaction) {
+      userReaction = (userReaction as any).like ? 'like' : (userReaction as any).dislike ? 'dislike' : null
+    } else if ('reaction' in userReaction) {
+      // Если это объект с полем reaction
+      userReaction = (userReaction as any).reaction
+    } else {
+      // Неизвестный формат объекта - логируем и устанавливаем null
+      if (import.meta.env.DEV) {
+        console.warn('[transformComment] userReaction is object with unknown format:', {
+          id: numericId,
+          userReaction,
+          keys: Object.keys(userReaction),
+        })
+      }
+      userReaction = null
+    }
+  }
+
+  // Проверяем, что userReaction является строкой 'like' или 'dislike', или null
+  if (userReaction !== null && userReaction !== 'like' && userReaction !== 'dislike') {
+    if (import.meta.env.DEV) {
+      console.warn('[transformComment] userReaction has invalid value:', {
+        id: numericId,
+        userReaction,
+        userReactionType: typeof userReaction,
+      })
+    }
+    userReaction = null
+  }
+
+  // Логирование для отладки (только в development)
+  if (import.meta.env.DEV && userReaction !== null) {
+    console.log('[transformComment] userReaction found:', {
+      id: numericId,
+      userReaction,
+      raw: raw.userReaction,
+      attributes: raw.attributes?.userReaction,
+    })
+  }
+
   return {
     id: String(numericId),
     text: raw.text || raw.attributes?.text || '',
@@ -77,7 +124,7 @@ function transformComment(raw: any): Comment {
     parentId,
     likes: raw.likes_count ?? raw.attributes?.likes_count ?? 0,
     dislikes: raw.dislikes_count ?? raw.attributes?.dislikes_count ?? 0,
-    userReaction: raw.userReaction ?? raw.attributes?.userReaction ?? null,
+    userReaction,
   }
 }
 
@@ -116,13 +163,29 @@ export async function getArticleComments(
 
   // Логирование для отладки (только в development)
   if (import.meta.env.DEV) {
+    const firstCommentRaw = collection[0]
+    const firstCommentTransformed = comments[0]
     console.log('[getArticleComments] Response:', {
       articleId,
-      rawData: response.data,
       collectionLength: collection.length,
       commentsLength: comments.length,
-      firstComment: collection[0] ? transformComment(collection[0]) : null,
-      allComments: comments,
+      firstCommentRaw: firstCommentRaw ? {
+        id: firstCommentRaw.id,
+        userReaction: firstCommentRaw.userReaction,
+        hasUserReaction: !!(firstCommentRaw as any).userReaction,
+        allKeys: Object.keys(firstCommentRaw),
+      } : null,
+      firstCommentTransformed: firstCommentTransformed ? {
+        id: firstCommentTransformed.id,
+        userReaction: firstCommentTransformed.userReaction,
+        hasUserReaction: !!firstCommentTransformed.userReaction,
+      } : null,
+      allCommentsWithReactions: comments.map(c => ({
+        id: c.id,
+        userReaction: c.userReaction,
+        hasUserReaction: !!c.userReaction,
+      })),
+      rawResponse: response.data,
     })
   }
 
@@ -205,7 +268,44 @@ export async function reactToComment(
     reaction,
   })
 
+  // Логирование для отладки (только в development)
+  if (import.meta.env.DEV) {
+    console.log('[reactToComment] Response:', {
+      commentId,
+      reaction,
+      rawData: response.data,
+      hasData: !!(response.data as any)?.data,
+      dataUserReaction: (response.data as any)?.data?.userReaction,
+      directUserReaction: (response.data as any)?.userReaction,
+      rawDataKeys: response.data ? Object.keys(response.data) : [],
+    })
+  }
+
   const entity = unwrapStrapiResponse(response.data)
-  return transformComment(entity)
+  
+  if (import.meta.env.DEV) {
+    console.log('[reactToComment] Unwrapped:', {
+      commentId,
+      entityId: (entity as any).id,
+      entityKeys: Object.keys(entity || {}),
+      hasUserReaction: !!(entity as any).userReaction,
+      userReaction: (entity as any).userReaction,
+      entityUserReactionType: typeof (entity as any).userReaction,
+    })
+  }
+  
+  const transformed = transformComment(entity)
+  
+  if (import.meta.env.DEV) {
+    console.log('[reactToComment] Transformed:', {
+      commentId,
+      transformedId: transformed.id,
+      hasUserReaction: !!transformed.userReaction,
+      userReaction: transformed.userReaction,
+      userReactionType: typeof transformed.userReaction,
+    })
+  }
+  
+  return transformed
 }
 

@@ -184,13 +184,50 @@ export default factories.createCoreController('api::article.article', ({ strapi 
         article = articles[0];
       } else {
         // Для аутентифицированных - сначала пробуем через entityService
-        // Это гарантирует, что мы увидим статьи, обновленные через entityService или documentService
+        // Если не найдено, пробуем через documentService (для статей, обновленных через documentService)
+        strapi.log.info(`[findOne] Attempting to find article: articleId=${articleId}, userId=${user.id}`);
+        
         article = await strapi.entityService.findOne('api::article.article', articleId, {
           populate: populate as any,
         });
         
         if (!article) {
-          return ctx.notFound('Article not found');
+          // Если не найдено через entityService, пробуем через documentService
+          // Сначала пробуем опубликованные, потом черновики
+          strapi.log.warn(`[findOne] Article not found via entityService, trying documentService: articleId=${articleId}, userId=${user.id}`);
+          
+          // Пробуем опубликованные статьи
+          let publishedDocs = await strapi.documents('api::article.article').findMany({
+            filters: { id: { $eq: articleId } },
+            populate,
+            status: 'published',
+            limit: 1,
+          });
+          
+          if (publishedDocs && publishedDocs.length > 0) {
+            article = publishedDocs[0];
+            strapi.log.info(`[findOne] Article found via documentService (published): articleId=${articleId}, publishedAt=${(article as any).publishedAt}`);
+          } else {
+            // Пробуем черновики
+            strapi.log.warn(`[findOne] Published article not found, trying drafts: articleId=${articleId}, userId=${user.id}`);
+            
+            const draftDocs = await strapi.documents('api::article.article').findMany({
+              filters: { id: { $eq: articleId } },
+              populate,
+              status: 'draft',
+              limit: 1,
+            });
+            
+            if (draftDocs && draftDocs.length > 0) {
+              article = draftDocs[0];
+              strapi.log.info(`[findOne] Article found via documentService (draft): articleId=${articleId}, publishedAt=${(article as any).publishedAt}`);
+            } else {
+              strapi.log.warn(`[findOne] Article not found via documentService (published or draft): articleId=${articleId}, userId=${user.id}`);
+              return ctx.notFound('Article not found');
+            }
+          }
+        } else {
+          strapi.log.info(`[findOne] Article found via entityService: articleId=${articleId}, publishedAt=${(article as any).publishedAt}, authorId=${typeof (article as any).author === 'object' ? (article as any).author?.id : (article as any).author}`);
         }
         
         // Если статья не опубликована - проверяем авторство
@@ -201,6 +238,7 @@ export default factories.createCoreController('api::article.article', ({ strapi 
               : (article as any).author;
 
           if (String(authorId) !== String(user.id)) {
+            strapi.log.warn(`[findOne] Unauthorized access to draft: articleId=${articleId}, authorId=${authorId}, userId=${user.id}`);
             return ctx.notFound('Article not found');
           }
         }
@@ -220,16 +258,104 @@ export default factories.createCoreController('api::article.article', ({ strapi 
           });
 
           if (userReactions && userReactions.length > 0) {
-            (article as any).userReaction = (userReactions[0] as any).reaction;
+            const reactionValue = (userReactions[0] as any).reaction;
+            (article as any).userReaction = reactionValue;
+            strapi.log.info(`[findOne] Found user reaction: articleId=${articleId}, userId=${user.id}, reaction=${reactionValue}, reactionType=${typeof reactionValue}`);
           } else {
             (article as any).userReaction = null;
+            strapi.log.info(`[findOne] No user reaction found: articleId=${articleId}, userId=${user.id}`);
           }
         } catch (error) {
           // Если модель реакций еще не создана, просто не добавляем userReaction
           (article as any).userReaction = null;
+          strapi.log.warn(`[findOne] Error fetching user reaction:`, error);
         }
       }
 
+      // В Strapi v5 transformResponse может не сохранять кастомные поля (userReaction)
+      // Используем стандартный transformResponse и добавляем userReaction вручную
+      if (user && (article as any).userReaction !== undefined) {
+        const userReactionValue = (article as any).userReaction;
+        
+        // Используем стандартный transformResponse
+        const response = this.transformResponse(article) as any;
+        
+        // Логирование для отладки
+        strapi.log.info(`[findOne] transformResponse result: articleId=${articleId}, responseType=${typeof response}, responseIsArray=${Array.isArray(response)}, hasData=${!!response?.data}, responseDataKeys=${response?.data ? Object.keys(response.data).join(',') : 'N/A'}, responseKeys=${response && typeof response === 'object' ? Object.keys(response).join(',') : 'N/A'}`);
+        
+        // Добавляем userReaction в ответ
+        if (response?.data) {
+          (response.data as any).userReaction = userReactionValue;
+          strapi.log.info(`[findOne] Added userReaction to response.data: articleId=${articleId}, userId=${user.id}, userReaction=${userReactionValue}, responseDataUserReaction=${(response.data as any).userReaction}, responseDataId=${(response.data as any).id}, responseDataHasContent=${!!(response.data as any).content}`);
+          return response;
+        } else if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // Проверяем, что response содержит данные (есть id или content)
+          const responseKeys = Object.keys(response);
+          const hasData = (response as any).id || (response as any).content || responseKeys.length > 0;
+          
+          if (hasData && (response as any).id) {
+            // Response содержит данные, добавляем userReaction
+            (response as any).userReaction = userReactionValue;
+            strapi.log.info(`[findOne] Added userReaction to response object: articleId=${articleId}, userId=${user.id}, userReaction=${userReactionValue}, responseUserReaction=${(response as any).userReaction}, responseId=${(response as any).id}, responseHasContent=${!!(response as any).content}`);
+            return response;
+          } else {
+            // Response пустой, используем fallback
+            strapi.log.warn(`[findOne] Response object is empty, using fallback: articleId=${articleId}, responseKeys=${responseKeys.join(',')}, hasId=${!!(response as any).id}, hasContent=${!!(response as any).content}`);
+          }
+        }
+        
+        // Если формат неожиданный или response пустой, используем ctx.body напрямую
+        {
+          strapi.log.warn(`[findOne] Unexpected response format or empty response, using ctx.body: articleId=${articleId}, responseType=${typeof response}, isArray=${Array.isArray(response)}`);
+          
+          // Создаем объект статьи вручную из оригинального article
+          // ВАЖНО: Используем articleId из параметров запроса, а не article.id, чтобы гарантировать правильный ID
+          const articleData: any = {
+            id: articleId, // Используем articleId из параметров запроса
+            title: article.title,
+            content: article.content,
+            excerpt: article.excerpt,
+            createdAt: article.createdAt,
+            updatedAt: article.updatedAt,
+            publishedAt: article.publishedAt,
+            likes_count: article.likes_count || 0,
+            dislikes_count: article.dislikes_count || 0,
+            views: article.views || 0,
+            tags: article.tags || [],
+            difficulty: article.difficulty,
+            userReaction: userReactionValue,
+          };
+          
+          // Добавляем автора
+          if (article.author) {
+            if (typeof article.author === 'object' && article.author !== null) {
+              articleData.author = {
+                id: article.author.id,
+                username: article.author.username || 'Anonymous',
+                avatar: article.author.avatar ? (typeof article.author.avatar === 'object' ? article.author.avatar.url : article.author.avatar) : null,
+              };
+            } else {
+              articleData.author = { id: article.author };
+            }
+          }
+          
+          // Добавляем previewImage если есть
+          if (article.previewImage) {
+            if (typeof article.previewImage === 'object' && article.previewImage !== null) {
+              articleData.previewImage = article.previewImage.url || null;
+            } else {
+              articleData.previewImage = article.previewImage;
+            }
+          }
+          
+          strapi.log.info(`[findOne] Using ctx.body with manual article data: articleId=${articleId}, userId=${user.id}, userReaction=${userReactionValue}, articleDataId=${articleData.id}, articleDataHasContent=${!!articleData.content}`);
+          
+          ctx.body = { data: articleData };
+          return;
+        }
+      }
+      
+      // Если пользователь не аутентифицирован или userReaction не определен, используем стандартный transformResponse
       return this.transformResponse(article);
     } catch (error) {
       strapi.log.error(`[findOne] Unexpected error:`, error);
@@ -688,6 +814,7 @@ export default factories.createCoreController('api::article.article', ({ strapi 
         }
       } else {
         // Для черновиков используем entityService
+        // Статья уже найдена через entityService.findOne в начале метода
         updated = await strapi.entityService.update('api::article.article', articleId, {
           data: updateData,
           populate: populate as any,
@@ -701,8 +828,87 @@ export default factories.createCoreController('api::article.article', ({ strapi 
 
       // Добавляем информацию о реакции пользователя в ответ
       (updated as any).userReaction = finalUserReaction;
+      
+      // Логирование перед transformResponse
+      strapi.log.info(`[react] Before transformResponse: articleId=${articleId}, userId=${user.id}, finalUserReaction=${finalUserReaction}, finalUserReactionType=${typeof finalUserReaction}, updatedHasUserReaction=${!!(updated as any).userReaction}, updatedUserReaction=${(updated as any).userReaction}, updatedUserReactionType=${typeof (updated as any).userReaction}`);
 
-      return this.transformResponse(updated);
+      // В Strapi v5 transformResponse может не сохранять кастомные поля
+      // Используем стандартный transformResponse и добавляем userReaction вручную
+      const response = this.transformResponse(updated) as any;
+      
+      // Логирование для отладки
+      strapi.log.info(`[react] transformResponse result: articleId=${articleId}, responseType=${typeof response}, responseIsArray=${Array.isArray(response)}, hasData=${!!response?.data}, responseDataKeys=${response?.data ? Object.keys(response.data).join(',') : 'N/A'}, responseKeys=${response && typeof response === 'object' ? Object.keys(response).join(',') : 'N/A'}`);
+      
+      // Добавляем userReaction в ответ
+      if (response?.data) {
+        (response.data as any).userReaction = finalUserReaction;
+        strapi.log.info(`[react] Added userReaction to response.data: articleId=${articleId}, userId=${user.id}, userReaction=${finalUserReaction}, responseDataUserReaction=${(response.data as any).userReaction}, responseDataId=${(response.data as any).id}, responseDataHasContent=${!!(response.data as any).content}`);
+        return response;
+      } else if (response && typeof response === 'object' && !Array.isArray(response)) {
+        // Проверяем, что response содержит данные (есть id или content)
+        const responseKeys = Object.keys(response);
+        const hasData = (response as any).id || (response as any).content || responseKeys.length > 0;
+        
+        if (hasData && (response as any).id) {
+          // Response содержит данные, добавляем userReaction
+          (response as any).userReaction = finalUserReaction;
+          strapi.log.info(`[react] Added userReaction to response object: articleId=${articleId}, userId=${user.id}, userReaction=${finalUserReaction}, responseUserReaction=${(response as any).userReaction}, responseId=${(response as any).id}, responseHasContent=${!!(response as any).content}`);
+          return response;
+        } else {
+          // Response пустой, используем fallback
+          strapi.log.warn(`[react] Response object is empty, using fallback: articleId=${articleId}, responseKeys=${responseKeys.join(',')}, hasId=${!!(response as any).id}, hasContent=${!!(response as any).content}`);
+        }
+      }
+      
+      // Если формат неожиданный или response пустой, используем ctx.body напрямую
+      {
+        strapi.log.warn(`[react] Unexpected response format or empty response, using ctx.body: articleId=${articleId}, responseType=${typeof response}, isArray=${Array.isArray(response)}`);
+        
+        // Создаем объект статьи вручную из оригинального updated
+        // ВАЖНО: Используем articleId из параметров запроса, а не updated.id, чтобы гарантировать правильный ID
+        const articleData: any = {
+          id: articleId, // Используем articleId из параметров запроса
+          title: updated.title,
+          content: updated.content,
+          excerpt: updated.excerpt,
+          createdAt: updated.createdAt,
+          updatedAt: updated.updatedAt,
+          publishedAt: updated.publishedAt,
+          likes_count: updated.likes_count || 0,
+          dislikes_count: updated.dislikes_count || 0,
+          views: updated.views || 0,
+          tags: updated.tags || [],
+          difficulty: updated.difficulty,
+          userReaction: finalUserReaction,
+        };
+        
+        // Добавляем автора
+        if (updated.author) {
+          if (typeof updated.author === 'object' && updated.author !== null) {
+            articleData.author = {
+              id: updated.author.id,
+              username: updated.author.username || 'Anonymous',
+              avatar: updated.author.avatar ? (typeof updated.author.avatar === 'object' ? updated.author.avatar.url : updated.author.avatar) : null,
+            };
+          } else {
+            articleData.author = { id: updated.author };
+          }
+        }
+        
+        // Добавляем previewImage если есть
+        if (updated.previewImage) {
+          if (typeof updated.previewImage === 'object' && updated.previewImage !== null) {
+            articleData.previewImage = updated.previewImage.url || null;
+          } else {
+            articleData.previewImage = updated.previewImage;
+          }
+        }
+        
+        strapi.log.info(`[react] Using ctx.body with manual article data: articleId=${articleId}, userId=${user.id}, userReaction=${finalUserReaction}, articleDataId=${articleData.id}, articleDataHasContent=${!!articleData.content}`);
+        
+        ctx.body = { data: articleData };
+        return;
+      }
     } catch (error) {
       strapi.log.error(`[react] Unexpected error:`, error);
       return ctx.internalServerError('An unexpected error occurred');

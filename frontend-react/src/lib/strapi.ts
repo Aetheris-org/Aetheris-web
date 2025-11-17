@@ -28,9 +28,11 @@ export interface StrapiEntity<T> {
  */
 export function unwrapStrapiEntity<T>(response: any): T & { id: number } {
   if (!response.attributes) {
+    // Strapi v5 flat format - возвращаем как есть, сохраняя все поля включая userReaction
     return response
   }
   
+  // Strapi v4 format - распаковываем attributes
   return {
     id: response.id,
     ...response.attributes

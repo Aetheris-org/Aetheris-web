@@ -49,6 +49,20 @@ function transformArticle(strapiArticle: any): Article {
       ? strapiArticle.id
       : Number.parseInt(strapiArticle.id, 10) || 0
 
+  // Извлекаем userReaction (может быть в разных местах после transformResponse)
+  const userReaction = strapiArticle.userReaction ?? strapiArticle.user_reaction ?? strapiArticle.attributes?.userReaction ?? null
+
+  // Логирование для отладки (только в development)
+  if (import.meta.env.DEV && userReaction !== null) {
+    logger.debug('[transformArticle] userReaction found:', {
+      id: numericId,
+      userReaction,
+      raw: strapiArticle.userReaction,
+      rawAlt: strapiArticle.user_reaction,
+      attributes: strapiArticle.attributes?.userReaction,
+    })
+  }
+
   return {
     id: String(numericId),
     title: strapiArticle.title,
@@ -69,7 +83,7 @@ function transformArticle(strapiArticle: any): Article {
     commentsCount: strapiArticle.comments_count || 0,
     createdAt: strapiArticle.createdAt || strapiArticle.created_at,
     updatedAt: strapiArticle.updatedAt || strapiArticle.updated_at,
-    userReaction: strapiArticle.userReaction || strapiArticle.user_reaction || null,
+    userReaction,
     isBookmarked: strapiArticle.is_bookmarked || false,
     views: strapiArticle.views || 0,
     previewImageId: previewId ?? null
@@ -280,7 +294,26 @@ export async function getArticle(id: string, _options: GetArticleOptions = {}): 
       params,
     })
     
-    return transformArticle(unwrapStrapiResponse(res.data))
+    const unwrapped = unwrapStrapiResponse(res.data)
+    
+    // Логирование для отладки (только в development)
+    if (import.meta.env.DEV) {
+      logger.debug('[getArticle] Response:', {
+        id,
+        rawData: res.data,
+        rawDataKeys: res.data ? Object.keys(res.data) : [],
+        hasData: !!(res.data as any)?.data,
+        dataUserReaction: (res.data as any)?.data?.userReaction,
+        directUserReaction: (res.data as any)?.userReaction,
+        unwrapped,
+        unwrappedKeys: Object.keys(unwrapped || {}),
+        hasUserReaction: !!(unwrapped as any).userReaction,
+        userReaction: (unwrapped as any).userReaction,
+        userReactionType: typeof (unwrapped as any).userReaction,
+      })
+    }
+    
+    return transformArticle(unwrapped)
   } catch (error) {
     logAxiosError('[api/getArticle] request failed', error)
     throw error
@@ -312,7 +345,46 @@ export async function reactArticle(articleId: string, reaction: 'like' | 'dislik
     reaction,
   })
 
-  return transformArticle(res.data.data)
+  // Логирование для отладки (только в development)
+  if (import.meta.env.DEV) {
+    logger.debug('[reactArticle] Response:', {
+      articleId,
+      reaction,
+      rawData: res.data,
+      rawDataKeys: res.data ? Object.keys(res.data) : [],
+      hasData: !!(res.data as any)?.data,
+      dataUserReaction: (res.data as any)?.data?.userReaction,
+      directUserReaction: (res.data as any)?.userReaction,
+    })
+  }
+
+  // Используем unwrapStrapiResponse для консистентности с другими методами
+  const unwrapped = unwrapStrapiResponse(res.data)
+  
+  if (import.meta.env.DEV) {
+    logger.debug('[reactArticle] Unwrapped:', {
+      articleId,
+      unwrappedId: (unwrapped as any).id,
+      unwrappedKeys: Object.keys(unwrapped || {}),
+      hasUserReaction: !!(unwrapped as any).userReaction,
+      userReaction: (unwrapped as any).userReaction,
+      userReactionType: typeof (unwrapped as any).userReaction,
+    })
+  }
+  
+  const transformed = transformArticle(unwrapped)
+  
+  if (import.meta.env.DEV) {
+    logger.debug('[reactArticle] Transformed:', {
+      articleId,
+      transformedId: transformed.id,
+      hasUserReaction: !!transformed.userReaction,
+      userReaction: transformed.userReaction,
+      userReactionType: typeof transformed.userReaction,
+    })
+  }
+  
+  return transformed
 }
 
 export async function deleteArticle(id: number | string): Promise<void> {

@@ -203,16 +203,17 @@ export default function ArticlePage() {
   }, [])
 
   // Fetch article с оптимизированными настройками
+  // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
   const { data: article, isLoading, error } = useQuery({
-    queryKey: ['article', id],
+    queryKey: ['article', id, user?.id],
     queryFn: () => getArticle(id as string, { userId: user?.id }),
     enabled: !!id,
     // Статьи кэшируем на 10 минут (контент меняется редко)
     staleTime: 10 * 60 * 1000,
     // Храним в кэше 1 час
     gcTime: 60 * 60 * 1000,
-    // Не рефетчить при монтировании, если данные свежие
-    refetchOnMount: false,
+    // Рефетчим при монтировании, если пользователь изменился (для загрузки userReaction)
+    refetchOnMount: true,
     // Retry логика
     retry: (failureCount, error: any) => {
       // Не ретраить на 404 (статья не найдена)
@@ -228,6 +229,47 @@ export default function ArticlePage() {
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
+
+  // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
+  useEffect(() => {
+    if (user?.id && id) {
+      // Небольшая задержка, чтобы убедиться, что пользователь полностью загружен
+      const timeoutId = setTimeout(() => {
+        const articleData = queryClient.getQueryData(['article', id, user.id]) as any
+        const commentsData = queryClient.getQueryData(['article-comments', id, user.id]) as any
+        
+        // Рефетчим, если:
+        // 1. Данных нет
+        // 2. userReaction не определен (undefined) - значит данные были загружены до загрузки пользователя
+        const needsArticleRefetch = !articleData || articleData.userReaction === undefined
+        const needsCommentsRefetch = !commentsData
+        
+        if (needsArticleRefetch) {
+          if (import.meta.env.DEV) {
+            logger.debug('[ArticlePage] Refetching article for userReaction:', {
+              articleId: id,
+              userId: user.id,
+              hasData: !!articleData,
+              currentUserReaction: articleData?.userReaction,
+            })
+          }
+          queryClient.refetchQueries({ queryKey: ['article', id, user.id] })
+        }
+        
+        if (needsCommentsRefetch) {
+          if (import.meta.env.DEV) {
+            logger.debug('[ArticlePage] Refetching comments for userReaction:', {
+              articleId: id,
+              userId: user.id,
+            })
+          }
+          queryClient.refetchQueries({ queryKey: ['article-comments', id, user.id] })
+        }
+      }, 100) // Небольшая задержка для стабилизации
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [user?.id, id, queryClient])
 
   // Track reading progress
   useEffect(() => {
@@ -313,7 +355,7 @@ export default function ArticlePage() {
     isLoading: isCommentsLoading,
     isRefetching: isCommentsRefetching,
   } = useQuery({
-    queryKey: ['article-comments', id],
+    queryKey: ['article-comments', id, user?.id],
     queryFn: () => getArticleComments(id as string),
     enabled: !!id,
     staleTime: 0, // Всегда считаем данные устаревшими для комментариев
@@ -340,10 +382,10 @@ export default function ArticlePage() {
       return reactArticle(article.id, reaction)
     },
     onSuccess: (updatedArticle) => {
-      // Обновляем кэш статьи с новыми данными
+      // Обновляем кэш статьи с новыми данными (включая userReaction)
       // Не используем invalidateQueries, так как это вызывает повторный запрос,
       // который может не найти статью из-за синхронизации между entityService и documentService
-      queryClient.setQueryData(['article', id], updatedArticle)
+      queryClient.setQueryData(['article', id, user?.id], updatedArticle)
       // Не показываем toast для toggle действий, чтобы не спамить
     },
     // Не делать автоматический refetch связанных queries после мутации
@@ -454,7 +496,7 @@ export default function ArticlePage() {
       logger.debug('[createCommentMutation] Comment created:', newComment)
       
       // Инвалидируем кэш для получения актуальных данных с сервера
-      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
       
       toast({
         title: t('article.commentSaved'),
@@ -464,7 +506,7 @@ export default function ArticlePage() {
     onError: (error: any) => {
       logger.error('Failed to create comment:', error)
       // Откатываем оптимистичное обновление при ошибке
-      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
       toast({
         title: t('article.commentError') || 'Ошибка',
         description: error?.response?.data?.error?.message || t('article.commentErrorDescription') || 'Не удалось создать комментарий',
@@ -478,7 +520,7 @@ export default function ArticlePage() {
       return updateComment(commentId, { text })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
       toast({
         title: t('article.commentUpdated') || 'Комментарий обновлен',
         description: t('article.commentUpdatedDescription') || 'Комментарий успешно обновлен',
@@ -499,7 +541,7 @@ export default function ArticlePage() {
       return deleteComment(commentId)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
       toast({
         title: t('article.commentDeleted') || 'Комментарий удален',
         description: t('article.commentDeletedDescription') || 'Комментарий успешно удален',
@@ -520,9 +562,9 @@ export default function ArticlePage() {
       return reactToComment(commentId, reaction)
     },
     onSuccess: (updatedComment) => {
-      // Обновляем кэш комментариев
+      // Обновляем кэш комментариев (включая userReaction)
       // parentId должен приходить с сервера в populate, но на всякий случай сохраняем из старого
-      queryClient.setQueryData(['article-comments', id], (old: any) => {
+      queryClient.setQueryData(['article-comments', id, user?.id], (old: any) => {
         if (!old) return old
         const updateCommentInList = (comments: RemoteComment[]): RemoteComment[] => {
           return comments.map((comment) => {
@@ -1268,7 +1310,10 @@ export default function ArticlePage() {
     })
   }
 
-  const estimateReadTime = (content: string) => {
+  const estimateReadTime = (content: string | undefined) => {
+    if (!content || typeof content !== 'string') {
+      return 0
+    }
     const wordsPerMinute = 200
     const words = content.split(/\s+/).length
     return Math.ceil(words / wordsPerMinute)
@@ -1400,7 +1445,7 @@ export default function ArticlePage() {
                 <Button 
                   variant="outline"
                   onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ['article', id] })
+                    queryClient.invalidateQueries({ queryKey: ['article', id, user?.id] })
                   }}
                 >
                   {t('article.retry') || 'Retry'}
