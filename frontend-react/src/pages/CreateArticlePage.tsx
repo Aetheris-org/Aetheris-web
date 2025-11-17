@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
@@ -126,11 +127,11 @@ export default function CreateArticlePage() {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const uploadResponse = await apiClient.post('/upload/image', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
           timeout: 90000, // 90 секунд таймаут (бэкенд использует 60 секунд + запас)
-        })
+    })
 
         const uploadedFile = uploadResponse.data?.[0]
         if (!uploadedFile || !uploadedFile.url) {
@@ -140,7 +141,7 @@ export default function CreateArticlePage() {
         // Сохраняем URL изображения (imgBB возвращает URL, а не ID)
         const imageUrl = uploadedFile.url
         setExistingPreviewImageId(imageUrl)
-        setCroppedImageBlob(null)
+    setCroppedImageBlob(null)
         return imageUrl
       } catch (error: any) {
         lastError = error
@@ -254,13 +255,13 @@ export default function CreateArticlePage() {
 
       try {
         previewImageUrl = await uploadPreviewImageAsset()
-      } catch (error) {
-        console.error('Preview upload failed', error)
-        toast({
+    } catch (error) {
+        logger.error('Preview upload failed', error)
+      toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedDescription'),
-          variant: 'destructive',
-        })
+        variant: 'destructive',
+      })
         setIsSavingDraft(false)
         return
       }
@@ -278,7 +279,9 @@ export default function CreateArticlePage() {
         ? await updateDraftArticle(draftId, payload)
         : await createDraftArticle(payload)
 
-      setDraftId(saved.databaseId)
+      // id - это строковое представление числового Strapi id
+      const numericId = Number.parseInt(saved.id, 10)
+      setDraftId(numericId)
       // Сохраняем URL изображения (теперь это строка, а не ID)
       setExistingPreviewImageId(saved.previewImage || null)
       if (saved.previewImage) {
@@ -287,16 +290,16 @@ export default function CreateArticlePage() {
       }
 
       const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('draft', String(saved.databaseId))
+      nextParams.set('draft', String(numericId))
       setSearchParams(nextParams, { replace: true })
-      loadedDraftIdRef.current = saved.databaseId
+      loadedDraftIdRef.current = numericId
 
       toast({
         title: t('createArticle.draftSaved'),
         description: t('createArticle.draftSavedDescription'),
       })
     } catch (error: unknown) {
-      console.error('Failed to save draft', error)
+      logger.error('Failed to save draft', error)
       const message =
         typeof error === 'object' && error && 'response' in error
           ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
@@ -396,7 +399,7 @@ export default function CreateArticlePage() {
         fileInputRef.current.value = ''
       }
     } catch (error) {
-      console.error('Failed to crop image', error)
+      logger.error('Failed to crop image', error)
       toast({
         title: t('createArticle.imageProcessingFailed'),
         description: t('createArticle.imageProcessingFailedDescription'),
@@ -459,7 +462,8 @@ export default function CreateArticlePage() {
         if (cancelled) return
 
         loadedDraftIdRef.current = draftIdFromQuery
-        setDraftId(draft.databaseId)
+        const numericId = Number.parseInt(draft.id, 10)
+        setDraftId(numericId)
         setTitle(draft.title ?? '')
         setContent(normalizeRichText(draft.content))
         setExcerpt(draft.excerpt ?? '')
@@ -479,7 +483,7 @@ export default function CreateArticlePage() {
           croppedImageUrlRef.current = draft.previewImage
         }
       } catch (error) {
-        console.error('Failed to load draft', error)
+        logger.error('Failed to load draft', error)
         if (!cancelled) {
           toast({
             title: t('createArticle.unableToLoadDraft'),
@@ -570,23 +574,23 @@ export default function CreateArticlePage() {
 
       try {
         previewImageUrl = await uploadPreviewImageAsset()
-      } catch (error) {
-        console.error('Preview upload failed', error)
-        toast({
+        } catch (error) {
+        logger.error('Preview upload failed', error)
+          toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedPublishDescription'),
-          variant: 'destructive',
-        })
-        setIsPublishing(false)
-        return
+            variant: 'destructive',
+          })
+          setIsPublishing(false)
+          return
       }
 
       const payload = {
-        title: title.trim(),
+            title: title.trim(),
         content: sanitizedContent,
-        excerpt: excerpt.trim() || null,
-        tags,
-        difficulty,
+            excerpt: excerpt.trim() || null,
+            tags,
+            difficulty,
         previewImageUrl,
       }
 
@@ -597,17 +601,13 @@ export default function CreateArticlePage() {
       queryClient.invalidateQueries({ queryKey: ['articles'] })
       queryClient.invalidateQueries({ queryKey: ['trending-articles'] })
       
-      // Используем documentId для навигации (более надежно, чем databaseId)
-      const articleId = publishedArticle.documentId || publishedArticle.id || String(publishedArticle.databaseId)
+      // id - это строковое представление числового Strapi id
+      const articleId = publishedArticle.id
       
-      if (import.meta.env.DEV) {
-        console.log('[CreateArticlePage] Article published:', {
-          id: publishedArticle.id,
-          documentId: publishedArticle.documentId,
-          databaseId: publishedArticle.databaseId,
-          articleId,
-        })
-      }
+      logger.debug('[CreateArticlePage] Article published:', {
+        id: publishedArticle.id,
+        articleId,
+      })
       
       toast({
         title: t('createArticle.articlePublished'),
@@ -632,7 +632,6 @@ export default function CreateArticlePage() {
       // Это особенно важно для только что созданных статей
       await new Promise(resolve => setTimeout(resolve, 200))
       
-      // Используем documentId для навигации (более надежно)
       navigate(`/article/${articleId}`)
     } catch (error: unknown) {
       console.error('Failed to publish article:', error)

@@ -14,6 +14,44 @@ export default {
     },
     {
       method: 'GET',
+      path: '/articles/search',
+      handler: 'article.search',
+      config: {
+        auth: false, // Публичный доступ для поиска
+      },
+    },
+    {
+      method: 'GET',
+      path: '/articles/me/drafts',
+      handler: 'article.findDrafts',
+      config: {
+        auth: {
+          scope: [], // Требует аутентификации
+        },
+      },
+    },
+    {
+      method: 'GET',
+      path: '/articles/me/drafts/:id',
+      handler: 'article.findDraft',
+      config: {
+        auth: {
+          scope: [], // Требует аутентификации
+        },
+      },
+    },
+    {
+      method: 'POST',
+      path: '/articles/:id/react',
+      handler: 'article.react',
+      config: {
+        auth: {
+          scope: [], // Требует аутентификации
+        },
+      },
+    },
+    {
+      method: 'GET',
       path: '/articles/:id',
       handler: 'article.findOne',
       config: {
@@ -48,34 +86,6 @@ export default {
         auth: {
           scope: [], // Требует аутентификации
         },
-      },
-    },
-    {
-      method: 'GET',
-      path: '/articles/me/drafts',
-      handler: 'article.findDrafts',
-      config: {
-        auth: {
-          scope: [], // Требует аутентификации
-        },
-      },
-    },
-    {
-      method: 'GET',
-      path: '/articles/me/drafts/:id',
-      handler: 'article.findDraft',
-      config: {
-        auth: {
-          scope: [], // Требует аутентификации
-        },
-      },
-    },
-    {
-      method: 'GET',
-      path: '/articles/search',
-      handler: 'article.search',
-      config: {
-        auth: false, // Публичный доступ для поиска
       },
     },
   ],

@@ -10,6 +10,7 @@ import {
   Clock,
   User,
   Heart,
+  ThumbsDown,
   Share2,
   Bookmark,
   Copy,
@@ -37,7 +38,13 @@ import {
   Link2,
 } from 'lucide-react'
 import { getArticle, reactArticle } from '@/api/articles'
-import { getArticleComments } from '@/api/comments'
+import { 
+  getArticleComments, 
+  createArticleComment, 
+  updateComment, 
+  deleteComment, 
+  reactToComment 
+} from '@/api/comments'
 import type { Comment as RemoteComment } from '@/api/comments'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
@@ -73,6 +80,7 @@ import {
 } from '@/stores/localCommentsStore'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { logger } from '@/lib/logger'
 
 function DiscordIcon(props: LucideProps) {
   return (
@@ -175,7 +183,6 @@ export default function ArticlePage() {
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({})
   const [threadRootId, setThreadRootId] = useState<string | null>(null)
   const replyHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [reactionState, setReactionState] = useState<Record<string, CommentReactionState>>({})
   const [infoComment, setInfoComment] = useState<CommentNode | null>(null)
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -204,6 +211,8 @@ export default function ArticlePage() {
     staleTime: 10 * 60 * 1000,
     // Храним в кэше 1 час
     gcTime: 60 * 60 * 1000,
+    // Не рефетчить при монтировании, если данные свежие
+    refetchOnMount: false,
     // Retry логика
     retry: (failureCount, error: any) => {
       // Не ретраить на 404 (статья не найдена)
@@ -307,7 +316,20 @@ export default function ArticlePage() {
     queryKey: ['article-comments', id],
     queryFn: () => getArticleComments(id as string),
     enabled: !!id,
+    staleTime: 0, // Всегда считаем данные устаревшими для комментариев
+    gcTime: 10 * 60 * 1000, // 10 минут
+    refetchOnMount: true, // Всегда обновляем при монтировании
   })
+
+  // Логирование для отладки
+  useEffect(() => {
+    if (import.meta.env.DEV && commentsResponse) {
+      logger.debug('[ArticlePage] Comments response:', {
+        commentsCount: commentsResponse.comments?.length || 0,
+        comments: commentsResponse.comments,
+      })
+    }
+  }, [commentsResponse])
 
   // React to article
   const reactMutation = useMutation({
@@ -317,11 +339,22 @@ export default function ArticlePage() {
       }
       return reactArticle(article.id, reaction)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['article', id] })
+    onSuccess: (updatedArticle) => {
+      // Обновляем кэш статьи с новыми данными
+      // Не используем invalidateQueries, так как это вызывает повторный запрос,
+      // который может не найти статью из-за синхронизации между entityService и documentService
+      queryClient.setQueryData(['article', id], updatedArticle)
+      // Не показываем toast для toggle действий, чтобы не спамить
+    },
+    // Не делать автоматический refetch связанных queries после мутации
+    // Мы уже обновили кеш через setQueryData
+    gcTime: 0, // Не кэшировать мутацию
+    onError: (error: any) => {
+      logger.error('Failed to react to article:', error)
       toast({
-        title: t('common.success'),
-        description: t('article.reactionRecorded'),
+        title: t('article.reactionError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.reactionErrorDescription') || 'Не удалось поставить реакцию',
+        variant: 'destructive',
       })
     },
   })
@@ -352,10 +385,8 @@ export default function ArticlePage() {
     article ? state.items.some((item) => item.id === article.id) : false
   )
   const articleCommentKey = useMemo(() => {
-    if (article && typeof (article as any).documentId !== 'undefined' && (article as any).documentId) {
-      return String((article as any).documentId)
-    }
     if (article?.id) {
+      // id - это строковое представление числового Strapi id
       return String(article.id)
     }
     return typeof id === 'string' ? id : ''
@@ -410,54 +441,125 @@ export default function ArticlePage() {
     return true
   }
 
-  const commitLocalComment = (content: string, parentId: string | null) => {
-    if (!article) {
+  // Mutations для комментариев
+  const createCommentMutation = useMutation({
+    mutationFn: ({ text, parentId }: { text: string; parentId?: string | null }) => {
+      if (!id) {
+        throw new Error('Article ID is missing')
+      }
+      // Используем id из URL, а не article.id, чтобы избежать рассинхронизации
+      return createArticleComment(id, { text, parentId: parentId || null })
+    },
+    onSuccess: (newComment) => {
+      logger.debug('[createCommentMutation] Comment created:', newComment)
+      
+      // Инвалидируем кэш для получения актуальных данных с сервера
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      
       toast({
-        title: 'Подождите',
-        description: 'Статья ещё не успела загрузиться. Попробуйте чуть позже.',
+        title: t('article.commentSaved'),
+        description: t('article.commentSavedDescription'),
+      })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to create comment:', error)
+      // Откатываем оптимистичное обновление при ошибке
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      toast({
+        title: t('article.commentError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.commentErrorDescription') || 'Не удалось создать комментарий',
         variant: 'destructive',
       })
-      return false
-    }
+    },
+  })
 
-    const trimmed = content.trim()
-    if (!trimmed) {
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ commentId, text }: { commentId: string; text: string }) => {
+      return updateComment(commentId, { text })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      toast({
+        title: t('article.commentUpdated') || 'Комментарий обновлен',
+        description: t('article.commentUpdatedDescription') || 'Комментарий успешно обновлен',
+      })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to update comment:', error)
+      toast({
+        title: t('article.commentError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.commentErrorDescription') || 'Не удалось обновить комментарий',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => {
+      return deleteComment(commentId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['article-comments', id] })
+      toast({
+        title: t('article.commentDeleted') || 'Комментарий удален',
+        description: t('article.commentDeletedDescription') || 'Комментарий успешно удален',
+      })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to delete comment:', error)
+      toast({
+        title: t('article.commentError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.commentErrorDescription') || 'Не удалось удалить комментарий',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const reactCommentMutation = useMutation({
+    mutationFn: ({ commentId, reaction }: { commentId: string; reaction: 'like' | 'dislike' }) => {
+      return reactToComment(commentId, reaction)
+    },
+    onSuccess: (updatedComment) => {
+      // Обновляем кэш комментариев
+      // parentId должен приходить с сервера в populate, но на всякий случай сохраняем из старого
+      queryClient.setQueryData(['article-comments', id], (old: any) => {
+        if (!old) return old
+        const updateCommentInList = (comments: RemoteComment[]): RemoteComment[] => {
+          return comments.map((comment) => {
+            if (comment.id === updatedComment.id) {
+              return updatedComment
+            }
+            return comment
+          })
+        }
+        return {
+          ...old,
+          comments: updateCommentInList(old.comments || []),
+        }
+      })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to react to comment:', error)
+      toast({
+        title: t('article.reactionError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.reactionErrorDescription') || 'Не удалось поставить реакцию',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const handleSubmitComment = () => {
+    if (!ensureCommentAuth()) return
+    if (!commentText.trim()) {
       toast({
         title: t('article.emptyComment'),
         description: t('article.emptyCommentDescription'),
         variant: 'destructive',
       })
-      return false
+      return
     }
-
-    const fallbackKey =
-      typeof id === 'string' ? id : String(article.id ?? article.documentId ?? '')
-    const articleKey = articleCommentKey || fallbackKey
-
-    addLocalComment({
-      id: `local-${Date.now()}`,
-      articleId: articleKey,
-      text: trimmed,
-      createdAt: new Date().toISOString(),
-      parentId,
-      author: {
-        id: user!.id,
-        username: user?.nickname ?? user?.email ?? 'Вы',
-        avatar: user?.avatar,
-      },
-    })
-    return true
-  }
-
-  const handleSubmitComment = () => {
-    if (!ensureCommentAuth()) return
-    if (commitLocalComment(commentText, null)) {
-      setCommentText('')
-      toast({
-        title: t('article.commentSaved'),
-        description: t('article.commentSavedDescription'),
-      })
-    }
+    createCommentMutation.mutate({ text: commentText.trim(), parentId: null })
+    setCommentText('')
   }
 
   const handleReplyClick = (commentId: string, authorName: string) => {
@@ -474,14 +576,17 @@ export default function ArticlePage() {
   const handleSubmitReply = () => {
     if (!activeReply) return
     if (!ensureCommentAuth()) return
-    if (commitLocalComment(replyText, activeReply.parentId)) {
-      setReplyText('')
-      setActiveReply(null)
+    if (!replyText.trim()) {
       toast({
-        title: t('article.replySaved'),
-        description: t('article.replySavedDescription'),
+        title: t('article.emptyComment'),
+        description: t('article.emptyCommentDescription'),
+        variant: 'destructive',
       })
+      return
     }
+    createCommentMutation.mutate({ text: replyText.trim(), parentId: activeReply.parentId })
+    setReplyText('')
+    setActiveReply(null)
   }
 
   const handleShare = () => {
@@ -558,8 +663,6 @@ export default function ArticlePage() {
 
     const local: UnifiedComment[] = localComments.map((comment) => ({
       id: comment.id,
-      documentId: comment.id,
-      databaseId: Number.parseInt(comment.articleId, 10) || 0,
       text: comment.text,
       createdAt: comment.createdAt,
       updatedAt: undefined,
@@ -570,6 +673,9 @@ export default function ArticlePage() {
       },
       parentId: comment.parentId ?? null,
       source: 'local' as const,
+      likes: 0,
+      dislikes: 0,
+      userReaction: null,
     }))
 
     const merged = [...remote, ...local]
@@ -577,23 +683,6 @@ export default function ArticlePage() {
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     )
   }, [commentsResponse?.comments, localComments])
-
-  useEffect(() => {
-    setReactionState((prev) => {
-      const next: Record<string, CommentReactionState> = { ...prev }
-      combinedComments.forEach((comment) => {
-      if (!next[comment.id]) {
-          next[comment.id] = {
-          score: 0,
-          positive: 0,
-          negative: 0,
-            userReaction: null,
-          }
-        }
-      })
-      return next
-    })
-  }, [combinedComments])
 
   const commentGraph = useMemo(() => {
     const nodes = new Map<string, CommentNode>()
@@ -656,7 +745,12 @@ export default function ArticlePage() {
   const descendantCountById = commentGraph.descendantCountById
   const maxCommentDepth = commentGraph.maxDepth
 
-  const infoReactions = infoComment ? reactionState[infoComment.id] : undefined
+  const infoReactions = infoComment ? {
+    score: (infoComment.likes || 0) - (infoComment.dislikes || 0),
+    positive: infoComment.likes || 0,
+    negative: infoComment.dislikes || 0,
+    userReaction: infoComment.userReaction || null,
+  } : undefined
   const infoParent = infoComment?.parentId ? nodeLookup.get(infoComment.parentId) : undefined
 
   const hoverContext = useMemo(() => {
@@ -740,58 +834,9 @@ export default function ArticlePage() {
       return
     }
 
-    setReactionState((prev) => {
-      const current =
-        prev[commentId] ?? { score: 0, positive: 0, negative: 0, userReaction: null }
-      let {
-        score = 0,
-        positive = 0,
-        negative = 0,
-        userReaction,
-      } = current
-
-      if (reaction === 'up') {
-        if (userReaction === 'up') {
-          positive = Math.max(0, positive - 1)
-          score = Math.max(-999, score - 1)
-          userReaction = null
-        } else {
-          if (userReaction === 'down') {
-            negative = Math.max(0, negative - 1)
-            score += 1
-          }
-          positive += 1
-          score += 1
-          userReaction = 'up'
-        }
-      } else {
-        if (userReaction === 'down') {
-          negative = Math.max(0, negative - 1)
-          score = Math.min(999, score + 1)
-          userReaction = null
-        } else {
-          if (userReaction === 'up') {
-            positive = Math.max(0, positive - 1)
-            score -= 1
-          }
-          negative += 1
-          score -= 1
-          userReaction = 'down'
-        }
-      }
-
-      return {
-        ...prev,
-        [commentId]: {
-          score,
-          positive,
-          negative,
-          userReaction,
-        },
-      }
-    })
-
-    // TODO: integrate with Strapi comment reaction API
+    // Преобразуем 'up'/'down' в 'like'/'dislike' для API
+    const apiReaction = reaction === 'up' ? 'like' : 'dislike'
+    reactCommentMutation.mutate({ commentId, reaction: apiReaction })
   }
 
   const handleCommentAction = (
@@ -806,16 +851,16 @@ export default function ArticlePage() {
         })
         break
       case 'edit':
+        // TODO: Реализовать редактирование комментария
         toast({
           title: t('article.editing'),
           description: t('article.editingNotImplemented'),
         })
         break
       case 'delete':
-        toast({
-          title: t('article.deleting'),
-          description: t('article.deletingNotImplemented'),
-        })
+        if (confirm(t('article.confirmDelete') || 'Вы уверены, что хотите удалить этот комментарий?')) {
+          deleteCommentMutation.mutate(comment.id)
+        }
         break
       case 'info':
         setInfoComment(comment)
@@ -1041,11 +1086,11 @@ export default function ArticlePage() {
                           size="icon"
                           className={cn(
                             'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
-                            reactionState[node.id]?.userReaction === 'up' &&
+                            node.userReaction === 'like' &&
                               'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
                           onClick={() => handleCommentReaction(node.id, 'up')}
-                          disabled={!user}
+                          disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.support')}
                         >
                           <Plus className="h-3.5 w-3.5" />
@@ -1053,23 +1098,23 @@ export default function ArticlePage() {
                         <span
                           className={cn(
                             'min-w-[36px] px-2 py-1 text-center text-xs font-semibold tabular-nums',
-                            (reactionState[node.id]?.score ?? 0) > 0 && 'text-emerald-400',
-                            (reactionState[node.id]?.score ?? 0) < 0 && 'text-destructive',
-                            (reactionState[node.id]?.score ?? 0) === 0 && 'text-foreground/70'
+                            ((node.likes || 0) - (node.dislikes || 0)) > 0 && 'text-emerald-400',
+                            ((node.likes || 0) - (node.dislikes || 0)) < 0 && 'text-destructive',
+                            ((node.likes || 0) - (node.dislikes || 0)) === 0 && 'text-foreground/70'
                           )}
                         >
-                          {reactionState[node.id]?.score ?? 0}
+                          {(node.likes || 0) - (node.dislikes || 0)}
                         </span>
                         <Button
                           variant="ghost"
                           size="icon"
                           className={cn(
                             'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
-                            reactionState[node.id]?.userReaction === 'down' &&
+                            node.userReaction === 'dislike' &&
                               'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                           )}
                           onClick={() => handleCommentReaction(node.id, 'down')}
-                          disabled={!user}
+                          disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.against')}
                         >
                           <Minus className="h-3.5 w-3.5" />
@@ -1083,10 +1128,10 @@ export default function ArticlePage() {
                       className="flex items-center gap-3 rounded-[calc(var(--radius)*1.05)] border border-border/70 bg-popover/95 px-3 py-1.5 text-xs font-semibold tabular-nums shadow-lg backdrop-blur-sm"
                     >
                       <span className="text-emerald-400">
-                        +{reactionState[node.id]?.positive ?? 0}
+                        +{node.likes || 0}
                       </span>
                       <span className="text-destructive">
-                        -{reactionState[node.id]?.negative ?? 0}
+                        -{node.dislikes || 0}
                       </span>
                     </TooltipContent>
                   </Tooltip>
@@ -1361,10 +1406,10 @@ export default function ArticlePage() {
                   {t('article.retry') || 'Retry'}
                 </Button>
               )}
-              <Button onClick={() => navigate('/')}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t('article.backToHome')}
-              </Button>
+            <Button onClick={() => navigate('/')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t('article.backToHome')}
+            </Button>
             </div>
           </CardContent>
         </Card>
@@ -1455,19 +1500,44 @@ export default function ArticlePage() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
-                variant="outline"
+                variant={article.userReaction === 'like' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleReaction('like')}
-                className="gap-2"
+                disabled={reactMutation.isPending}
+                className={cn(
+                  "gap-2 transition-colors",
+                  article.userReaction === 'like' && "bg-primary hover:bg-primary/90"
+                )}
+                aria-pressed={article.userReaction === 'like'}
               >
                 <Heart
-                  className={`h-4 w-4 ${
-                    article.userReaction === 'like' ? 'fill-current' : ''
-                  }`}
+                  className={cn(
+                    "h-4 w-4 transition-all",
+                    article.userReaction === 'like' && "fill-current text-primary-foreground"
+                  )}
                 />
-                {article.likes || 0}
+                <span>{article.likes || 0}</span>
+              </Button>
+              <Button
+                variant={article.userReaction === 'dislike' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleReaction('dislike')}
+                disabled={reactMutation.isPending}
+                className={cn(
+                  "gap-2 transition-colors",
+                  article.userReaction === 'dislike' && "bg-destructive hover:bg-destructive/90"
+                )}
+                aria-pressed={article.userReaction === 'dislike'}
+              >
+                <ThumbsDown
+                  className={cn(
+                    "h-4 w-4 transition-all",
+                    article.userReaction === 'dislike' && "fill-current text-destructive-foreground"
+                  )}
+                />
+                <span>{article.dislikes || 0}</span>
               </Button>
               <Button
                 variant={isSaved ? 'default' : 'outline'}

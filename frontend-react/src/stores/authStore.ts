@@ -3,6 +3,7 @@ import apiClient, { cancelAllRequests, deleteTokenCookie, getTokenFromCookie } f
 import { getCurrentUser } from '@/api/profile'
 import type { User } from '@/types/user'
 import { useGamificationStore } from '@/stores/gamificationStore'
+import { logger } from '@/lib/logger'
 
 interface AuthState {
   user: User | null
@@ -59,31 +60,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     if (get().initializing) return
 
-    console.log('🔐 AuthStore initialize called')
+    logger.debug('🔐 AuthStore initialize called')
     set({ initializing: true })
 
     try {
-      console.log('🔐 Loading user from storage...')
+      logger.debug('🔐 Loading user from storage...')
       get().loadFromStorage()
 
       const token = getTokenFromCookie()
-      console.log('🔐 Token from cookie:', !!token)
+      logger.debug('🔐 Token from cookie:', !!token)
 
       if (!token) {
-        console.log('🔐 No token found, skipping user fetch')
+        logger.debug('🔐 No token found, skipping user fetch')
         set({ initializing: false })
         return
       }
 
-      console.log('🔐 Fetching current user...')
+      logger.debug('🔐 Fetching current user...')
       const user = await getCurrentUser()
-      console.log('🔐 Setting user:', user.nickname)
+      logger.debug('🔐 Setting user:', user.nickname)
       get().setUser(user)
     } catch (error) {
-      console.warn('Failed to initialize auth state:', error)
+      logger.warn('Failed to initialize auth state:', error)
       get().setUser(null)
     } finally {
-      console.log('🔐 AuthStore initialize completed')
+      logger.debug('🔐 AuthStore initialize completed')
       set({ initializing: false })
     }
   },

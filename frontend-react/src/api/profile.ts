@@ -3,6 +3,7 @@ import { getStrapiMediaUrl } from '@/lib/strapi'
 import type { User } from '@/types/user'
 import type { Article } from '@/types/article'
 import type { UserProfile } from '@/types/profile'
+import { logger } from '@/lib/logger'
 
 interface BackendUser {
   id: number | string
@@ -47,9 +48,9 @@ export async function getCurrentUser(): Promise<User> {
   // Токен теперь в httpOnly cookie - JavaScript не может его прочитать
   // Но он автоматически отправится с запросом через withCredentials: true
   // Просто делаем запрос - если токен валидный, запрос пройдет
-  console.log('👤 getCurrentUser called (token in httpOnly cookie)')
+  logger.debug('👤 getCurrentUser called (token in httpOnly cookie)')
 
-  console.log('🔵 Getting current user from /users/me')
+  logger.debug('🔵 Getting current user from /users/me')
   try {
     // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
     const response = await apiClient.get<BackendUser>('/users/me', {
@@ -60,14 +61,14 @@ export async function getCurrentUser(): Promise<User> {
     const backendUser = response.data
 
     if (!backendUser || !backendUser.id || !backendUser.username) {
-    console.error('❌ No data in response:', response.data)
+    logger.error('❌ No data in response:', response.data)
     throw new Error('Failed to load user profile')
   }
 
-    console.log('✅ User data loaded:', backendUser.username)
+    logger.debug('✅ User data loaded:', backendUser.username)
     return adaptBackendUser(backendUser)
   } catch (error: any) {
-    console.error(
+    logger.error(
       '❌ Failed to load current user:',
       error?.response?.status,
       error?.response?.data ?? error,
@@ -98,7 +99,6 @@ interface BackendProfileResponse {
     }
     articles: Array<{
       id: number | string
-      documentId?: string
       title: string
       content: string
       excerpt?: string | null
@@ -121,16 +121,12 @@ interface BackendProfileResponse {
 }
 
 function adaptProfileArticle(article: BackendProfileResponse['data']['articles'][number]): Article {
-  const documentId =
-    article.documentId ??
-    (typeof article.id === 'string' ? article.id : String(article.id))
-  const databaseId =
+  // id - это строковое представление числового Strapi id
+  const numericId =
     typeof article.id === 'number' ? article.id : Number.parseInt(article.id, 10) || 0
 
   return {
-    id: documentId,
-    documentId,
-    databaseId,
+    id: String(numericId),
     title: article.title,
     content: article.content,
     excerpt: article.excerpt ?? undefined,

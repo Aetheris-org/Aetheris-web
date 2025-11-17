@@ -4,9 +4,8 @@ export interface Author {
 }
 
 export interface Article {
+  // id - это строковое представление числового Strapi id (для роутов)
   id: string
-  documentId: string
-  databaseId: number
   title: string
   content: string
   excerpt?: string

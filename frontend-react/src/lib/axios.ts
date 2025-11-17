@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { logger } from './logger'
 
 // В development используем прокси Vite (/api -> http://localhost:1337)
 // Это позволяет cookie работать, так как все запросы идут через один домен (localhost:5173)
@@ -14,8 +15,15 @@ let failedQueue: Array<{
 }> = []
 
 let csrfToken: string | null = null
+let csrfTokenExpiry: number = 0
+const CSRF_TOKEN_TTL = 60 * 60 * 1000 // 1 час
 
 async function fetchCsrfToken(): Promise<string | null> {
+  // Проверяем, не истек ли токен
+  if (csrfToken && Date.now() < csrfTokenExpiry) {
+    return csrfToken
+  }
+
   try {
     // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
     const response = await axios.get(`${baseURL}/auth/csrf`, {
@@ -23,12 +31,24 @@ async function fetchCsrfToken(): Promise<string | null> {
     })
     if (response.data?.csrfToken) {
       csrfToken = response.data.csrfToken
-      console.log('✅ CSRF token fetched')
+      csrfTokenExpiry = Date.now() + CSRF_TOKEN_TTL
+      if (import.meta.env.DEV) {
+        logger.debug('✅ CSRF token fetched')
+      }
       return csrfToken
     }
     return null
-  } catch (error) {
-    console.error('❌ Failed to fetch CSRF token:', error)
+  } catch (error: any) {
+    // Игнорируем 429 ошибки (Too Many Requests) - просто используем старый токен
+    if (error?.response?.status === 429) {
+      if (import.meta.env.DEV) {
+        logger.warn('⚠️ CSRF token rate limited, using cached token')
+      }
+      return csrfToken // Возвращаем старый токен, если есть
+    }
+    if (import.meta.env.DEV) {
+      logger.error('❌ Failed to fetch CSRF token:', error)
+    }
     return null
   }
 }
@@ -46,15 +66,15 @@ const processQueue = (error: any, token: string | null = null) => {
 
 function getTokenFromCookie(): string | null {
   const cookies = document.cookie.split(';')
-  console.log('🍪 All cookies:', document.cookie)
+  logger.debug('🍪 All cookies:', document.cookie)
 
   // Prefer accessToken over jwtToken since it's our internal token format
   for (const cookie of cookies) {
     const [name, value] = cookie.trim().split('=')
-    console.log('🍪 Checking cookie:', name, value ? 'present' : 'empty')
+    logger.debug('🍪 Checking cookie:', name, value ? 'present' : 'empty')
     if (name === 'accessToken') {
       const token = decodeURIComponent(value)
-      console.log(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
+      logger.debug(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
       return token
     }
   }
@@ -64,12 +84,12 @@ function getTokenFromCookie(): string | null {
     const [name, value] = cookie.trim().split('=')
     if (name === 'jwtToken') {
       const token = decodeURIComponent(value)
-      console.log(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
+      logger.debug(`🎫 Found ${name} cookie:`, token.substring(0, 20) + '...')
       return token
     }
   }
 
-  console.log('❌ No jwtToken or accessToken cookie found')
+  logger.debug('❌ No jwtToken or accessToken cookie found')
   return null
 }
 
@@ -81,7 +101,7 @@ export function deleteTokenCookie() {
 async function refreshAccessToken(): Promise<string | null> {
   // Users & Permissions плагин Strapi не поддерживает refresh-токены из коробки.
   // Если понадобится собственная реализация — добавить здесь.
-  console.warn('🔄 Refresh token flow is not implemented for Strapi users-permissions')
+  logger.warn('🔄 Refresh token flow is not implemented for Strapi users-permissions')
     return null
 }
 
@@ -115,12 +135,12 @@ apiClient.interceptors.request.use(async (config) => {
   // Если нет - полагаемся на автоматическую отправку httpOnly cookie
   if (token && (isProtectedMethod || requiresAuth)) {
     config.headers.Authorization = `Bearer ${token}`
-    console.log('🔐 Adding Authorization header for:', config.url, 'token length:', token.length)
+    logger.debug('🔐 Adding Authorization header for:', config.url, 'token length:', token.length)
     delete config.headers['X-Require-Auth'] // Удаляем служебный заголовок
   } else if (requiresAuth) {
     // Для httpOnly cookies токен автоматически отправится через cookie
     // Бэкенд прочитает его из cookie в jwt-auth middleware
-    console.log('🔐 Using httpOnly cookie for auth:', config.url)
+    logger.debug('🔐 Using httpOnly cookie for auth:', config.url)
     delete config.headers['X-Require-Auth'] // Удаляем служебный заголовок
   }
   
@@ -174,7 +194,12 @@ apiClient.interceptors.response.use(
     const status = err.response?.status
     
     if (status === 403 && err.response?.data?.message?.includes('CSRF')) {
-      console.warn('⚠️  CSRF token expired, fetching new one')
+      if (import.meta.env.DEV) {
+        logger.warn('⚠️  CSRF token expired, fetching new one')
+      }
+      // Сбрасываем кэш токена при ошибке CSRF
+      csrfToken = null
+      csrfTokenExpiry = 0
       await fetchCsrfToken()
       
       if (csrfToken && originalRequest.headers) {

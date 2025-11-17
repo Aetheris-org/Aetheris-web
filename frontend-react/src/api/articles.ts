@@ -10,6 +10,7 @@ import {
   type StrapiResponse,
   type StrapiEntity
 } from '@/lib/strapi'
+import { logger } from '@/lib/logger'
 
 /**
  * Transform Strapi article to frontend Article type
@@ -42,19 +43,14 @@ function transformArticle(strapiArticle: any): Article {
     ? null // URL не имеет ID
     : getPreviewImageId(strapiArticle.preview_image)
 
-  const documentId =
-    strapiArticle.documentId ||
-    strapiArticle.document_id ||
-    (typeof strapiArticle.id !== 'undefined' ? String(strapiArticle.id) : '')
-  const databaseId =
+  // id - это строковое представление числового Strapi id
+  const numericId =
     typeof strapiArticle.id === 'number'
       ? strapiArticle.id
       : Number.parseInt(strapiArticle.id, 10) || 0
 
   return {
-    id: documentId,
-    documentId,
-    databaseId,
+    id: String(numericId),
     title: strapiArticle.title,
     content: strapiArticle.content,
     excerpt: strapiArticle.excerpt || undefined,
@@ -73,7 +69,7 @@ function transformArticle(strapiArticle: any): Article {
     commentsCount: strapiArticle.comments_count || 0,
     createdAt: strapiArticle.createdAt || strapiArticle.created_at,
     updatedAt: strapiArticle.updatedAt || strapiArticle.updated_at,
-    userReaction: strapiArticle.user_reaction || null,
+    userReaction: strapiArticle.userReaction || strapiArticle.user_reaction || null,
     isBookmarked: strapiArticle.is_bookmarked || false,
     views: strapiArticle.views || 0,
     previewImageId: previewId ?? null
@@ -152,62 +148,56 @@ function buildArticleQueryParams(options: ArticleQueryOptions = {}) {
 export async function getAllArticles(options: ArticleQueryOptions = {}): Promise<ArticlesResponse> {
   try {
     const res = await apiClient.get<StrapiResponse<StrapiEntity<any>[]>>('/articles', {
-      params: buildArticleQueryParams(options)
-    })
-    
+    params: buildArticleQueryParams(options)
+  })
+  
         // Логирование для отладки (только в development)
-        if (import.meta.env.DEV) {
-          console.log('[getAllArticles] Raw response:', JSON.stringify(res.data, null, 2))
-          console.log('[getAllArticles] Response structure:', {
-            hasData: !!res.data,
-            hasDataData: !!res.data?.data,
-            dataType: Array.isArray(res.data?.data) ? 'array' : typeof res.data?.data,
-            dataLength: Array.isArray(res.data?.data) ? res.data.data.length : 0,
-            firstItem: Array.isArray(res.data?.data) && res.data.data.length > 0 ? JSON.stringify(res.data.data[0], null, 2) : null,
-            meta: res.data?.meta,
-            fullResponse: res.data,
-          })
-        }
+        logger.debug('[getAllArticles] Raw response:', JSON.stringify(res.data, null, 2))
+        logger.debug('[getAllArticles] Response structure:', {
+          hasData: !!res.data,
+          hasDataData: !!res.data?.data,
+          dataType: Array.isArray(res.data?.data) ? 'array' : typeof res.data?.data,
+          dataLength: Array.isArray(res.data?.data) ? res.data.data.length : 0,
+          firstItem: Array.isArray(res.data?.data) && res.data.data.length > 0 ? JSON.stringify(res.data.data[0], null, 2) : null,
+          meta: res.data?.meta,
+          fullResponse: res.data,
+        })
     
     // Strapi v5 возвращает данные напрямую в data (без attributes)
     // Проверяем формат ответа
     const rawData = res.data?.data
     if (!rawData) {
-      console.error('[getAllArticles] No data in response:', res.data)
+      logger.error('[getAllArticles] No data in response:', res.data)
       return { data: [], total: 0 }
     }
     
     if (!Array.isArray(rawData)) {
-      console.error('[getAllArticles] Data is not an array:', typeof rawData, rawData)
+      logger.error('[getAllArticles] Data is not an array:', typeof rawData, rawData)
       return { data: [], total: 0 }
     }
     
     // Обрабатываем ответ через unwrapStrapiCollectionResponse
         const unwrappedArticles = unwrapStrapiCollectionResponse(res.data)
         
-        if (import.meta.env.DEV) {
-          console.log('[getAllArticles] Unwrapped articles:', {
-            count: unwrappedArticles.length,
-            firstArticle: unwrappedArticles[0] ? JSON.stringify(unwrappedArticles[0], null, 2) : null,
-            allArticles: unwrappedArticles.length > 0 ? unwrappedArticles.map(a => ({ id: a.id, title: (a as any).title, publishedAt: (a as any).publishedAt })) : [],
-          })
-        }
+        logger.debug('[getAllArticles] Unwrapped articles:', {
+          count: unwrappedArticles.length,
+          firstArticle: unwrappedArticles[0] ? JSON.stringify(unwrappedArticles[0], null, 2) : null,
+          allArticles: unwrappedArticles.length > 0 ? unwrappedArticles.map(a => ({ id: a.id, title: (a as any).title, publishedAt: (a as any).publishedAt })) : [],
+        })
     
     const articles = unwrappedArticles.map(transformArticle)
-    const total = res.data.meta?.pagination?.total || articles.length
+  const total = res.data.meta?.pagination?.total || articles.length
     
-    if (import.meta.env.DEV) {
-      console.log('[getAllArticles] Processed:', {
-        articlesCount: articles.length,
-        total,
-        firstTransformed: articles[0] ? JSON.stringify(articles[0], null, 2) : null,
-        allTransformed: articles.length > 0 ? articles.map(a => ({ id: a.id, title: a.title, publishedAt: (a as any).publishedAt })) : [],
-      })
-    }
-    
-    return {
-      data: articles,
-      total
+    logger.debug('[getAllArticles] Processed:', {
+      articlesCount: articles.length,
+      total,
+      firstTransformed: articles[0] ? JSON.stringify(articles[0], null, 2) : null,
+      allTransformed: articles.length > 0 ? articles.map(a => ({ id: a.id, title: a.title, publishedAt: (a as any).publishedAt })) : [],
+    })
+  
+  return {
+    data: articles,
+    total
     }
   } catch (error) {
     logAxiosError('[getAllArticles] request failed', error)
@@ -253,10 +243,6 @@ export interface GetArticleOptions {
 }
 
 function logAxiosError(label: string, error: unknown) {
-  if (!import.meta.env.DEV) {
-    return
-  }
-
   const possibleAxiosError = error as Partial<AxiosError>
 
   if (possibleAxiosError && typeof possibleAxiosError === 'object' && possibleAxiosError?.isAxiosError) {
@@ -270,9 +256,9 @@ function logAxiosError(label: string, error: unknown) {
       method: possibleAxiosError.config?.method,
     }
 
-    console.error(`${label}: ${JSON.stringify(payload, null, 2)}`)
+    logger.error(`${label}: ${JSON.stringify(payload, null, 2)}`)
   } else {
-    console.error(label, error)
+    logger.error(label, error)
   }
 }
 
@@ -301,13 +287,14 @@ export async function getArticle(id: string, _options: GetArticleOptions = {}): 
   }
 }
 
-export async function getDraftArticle(id: number): Promise<Article> {
-  if (!Number.isFinite(id)) {
+export async function getDraftArticle(id: number | string): Promise<Article> {
+  const numericId = typeof id === 'string' ? Number.parseInt(id, 10) : id
+  if (!Number.isFinite(numericId)) {
     throw new Error('Draft id must be a number')
   }
 
   try {
-    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/articles/me/drafts/${id}`, {
+    const res = await apiClient.get<StrapiResponse<StrapiEntity<any>>>(`/articles/me/drafts/${numericId}`, {
       headers: {
         'X-Require-Auth': 'true',
       },
@@ -328,8 +315,9 @@ export async function reactArticle(articleId: string, reaction: 'like' | 'dislik
   return transformArticle(res.data.data)
 }
 
-export async function deleteArticle(id: number): Promise<void> {
-  await apiClient.delete(`/articles/${id}`)
+export async function deleteArticle(id: number | string): Promise<void> {
+  const numericId = typeof id === 'string' ? Number.parseInt(id, 10) : id
+  await apiClient.delete(`/articles/${numericId}`)
 }
 
 export interface DraftPayload {
@@ -358,19 +346,20 @@ export async function createDraftArticle(payload: DraftPayload): Promise<Article
   return transformArticle(unwrapStrapiResponse(res.data))
 }
 
-export async function updateDraftArticle(id: number, payload: DraftPayload): Promise<Article> {
-  const res = await apiClient.put(`/articles/${id}`, wrapStrapiData(buildArticleData(payload, null)))
+export async function updateDraftArticle(id: number | string, payload: DraftPayload): Promise<Article> {
+  const numericId = typeof id === 'string' ? Number.parseInt(id, 10) : id
+  const res = await apiClient.put(`/articles/${numericId}`, wrapStrapiData(buildArticleData(payload, null)))
   return transformArticle(unwrapStrapiResponse(res.data))
 }
 
 export async function publishArticle(
   payload: DraftPayload,
-  draftId?: number | null
+  draftId?: number | string | null
 ): Promise<Article> {
   const data = buildArticleData(payload, new Date().toISOString())
 
   const res = draftId
-    ? await apiClient.put(`/articles/${draftId}`, wrapStrapiData(data))
+    ? await apiClient.put(`/articles/${typeof draftId === 'string' ? Number.parseInt(draftId, 10) : draftId}`, wrapStrapiData(data))
     : await apiClient.post('/articles', wrapStrapiData(data))
 
   return transformArticle(unwrapStrapiResponse(res.data))

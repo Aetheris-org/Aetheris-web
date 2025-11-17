@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { logger } from '@/lib/logger'
 import {
   Search,
   SlidersHorizontal,
@@ -133,8 +134,8 @@ export default function HomePage() {
   const { data: articlesData, isLoading, error: articlesError } = useQuery({
     queryKey: [
       'articles',
-      page,
-      pageSize,
+        page,
+        pageSize,
       selectedTags.slice().sort().join(','),
       difficultyFilter,
       sortOption,
@@ -218,15 +219,13 @@ export default function HomePage() {
   
   // Логирование для отладки (только в development)
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('[HomePage] Articles state:', {
-        isLoading,
-        hasError: !!articlesError,
-        articlesCount: articles.length,
-        totalRecords,
-        articlesData,
-      })
-    }
+    logger.debug('[HomePage] Articles state:', {
+      isLoading,
+      hasError: !!articlesError,
+      articlesCount: articles.length,
+      totalRecords,
+      articlesData,
+    })
   }, [isLoading, articlesError, articles.length, totalRecords, articlesData])
   const rawTotalPages = Math.ceil(totalRecords / pageSize)
   const totalPages = Math.max(1, rawTotalPages || 1)

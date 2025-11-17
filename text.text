@@ -2,9 +2,11 @@
 
 Frontend: React 18.2.0 с TypeScript 5.3.3, Vite 5.0.11, React Router DOM 6.21.3, UI-библиотеки shadcn/ui (Radix UI компоненты), Tailwind CSS 3.4.1 с tailwindcss-animate, редактор контента TipTap 3.10.5 с расширениями, Zustand и TanStack React Query для управления состоянием, Axios как HTTP клиент и другие вспомогательные библиотеки.
 
-Backend: Strapi 5.30.0 с TypeScript 5 и Node.js 18-22, база данных SQLite (better-sqlite3), с поддержкой MySQL и PostgreSQL, реализующая аутентификацию через OAuth2 и JWT, использует Helmet для безопасности, koa-ratelimit для rate limiting, @koa/cors для CORS, Redis (ioredis) для кэширования и сессий.
+Backend: Strapi 5.30.0 с TypeScript 5 и Node.js 18-22, база данных SQLite (better-sqlite3), с поддержкой MySQL и PostgreSQL, реализующая аутентификацию через OAuth2 и JWT, использует Helmet для безопасности, koa-ratelimit для rate limiting, @koa/cors для CORS, Redis (ioredis) для кэширования и сессий, утилита logger для логгирования.
 
 Требования к backend:
+
+Для логгирования используй утилиту logger
 
 Используй встроенные механизмы Strapi для ролей, прав доступа (RBAC), OAuth2 и JWT аутентификацию.
 
@@ -21,5 +23,11 @@ Backend: Strapi 5.30.0 с TypeScript 5 и Node.js 18-22, база данных S
 Обеспечь документацию к API и настройкам безопасности для frontend-разработчиков.
 
 Учитывай разделение frontend (frontend-react/) и backend (backend/strapi-backend/) в монолитном репозитории, проксирование запросов через Vite (/api → http://localhost:1337).
+
+Решай проблемы без технических долгов, колхозных решений и костылей.
+
+Перед решением задачи изучи интернет-ресурсы, учтывай стек и очень внимательно прочитай документацию.
+
+Когда создаешь таблицы сразу расставляй индексы и все необходимые оптимизации для бесперебойной, стабильной и быстрой работы в нагруженных условиях.
 
 Этот блок дополнит ваш конкретный запрос и гарантирует генерацию высококачественного, безопасного и интегрированного с frontend backend-кода без ненужных костылей

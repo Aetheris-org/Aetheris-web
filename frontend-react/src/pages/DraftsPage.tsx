@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileText, Clock, PencilLine, Trash2 } from 'lucide-react'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -49,9 +50,7 @@ export default function DraftsPage() {
       if (!user?.id) {
         return Promise.resolve([])
       }
-      if (import.meta.env.DEV) {
-        console.info('[DraftsPage] Fetching drafts for user', user.id)
-      }
+      logger.debug('[DraftsPage] Fetching drafts for user', user.id)
       return getDraftArticles(user.id, { limit: 50 })
     },
     enabled: !!user?.id,
@@ -70,11 +69,11 @@ export default function DraftsPage() {
     navigate('/create')
   }
 
-  const handleContinueDraft = (draftId: number) => {
+  const handleContinueDraft = (draftId: string | number) => {
     navigate(`/create?draft=${draftId}`)
   }
 
-  const handleDeleteDraft = async (draftId: number) => {
+  const handleDeleteDraft = async (draftId: string | number) => {
     try {
       await deleteArticle(draftId)
       await refetch()
@@ -84,7 +83,7 @@ export default function DraftsPage() {
       })
       queryClient.invalidateQueries({ queryKey: ['drafts', user?.id] })
     } catch (error: unknown) {
-      console.error('[DraftsPage] Failed to remove draft', error)
+      logger.error('[DraftsPage] Failed to remove draft', error)
       toast({
         title: t('drafts.deleteError'),
         description:
@@ -201,7 +200,7 @@ export default function DraftsPage() {
 
             <div className="space-y-4">
               {formattedDrafts.map((draft) => (
-                <Card key={draft.databaseId} className="border-border/60">
+                <Card key={draft.id} className="border-border/60">
                   <CardContent className="flex flex-col gap-4 p-5">
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -238,7 +237,7 @@ export default function DraftsPage() {
                       <Button
                         size="sm"
                         className="gap-2 sm:w-auto"
-                        onClick={() => handleContinueDraft(draft.databaseId)}
+                        onClick={() => handleContinueDraft(draft.id)}
                       >
                         <PencilLine className="h-4 w-4" />
                         {t('drafts.continueWriting')}
@@ -247,7 +246,7 @@ export default function DraftsPage() {
                         variant="ghost"
                         size="sm"
                         className="gap-2 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteDraft(draft.databaseId)}
+                        onClick={() => handleDeleteDraft(draft.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                         {t('drafts.delete')}
