@@ -86,6 +86,7 @@ type SlashCommandItem = {
   icon: ReactNode
   keywords?: string[]
   hint?: string
+  disabled?: boolean
   command: (props: { editor: Editor; range: Range }) => void
 }
 
@@ -104,27 +105,43 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
   const selectItem = useCallback(
     (index: number) => {
       const item = items[index]
-      if (!item) return
+      if (!item || item.disabled) return
       command(item)
     },
     [items, command]
   )
 
   useEffect(() => {
-    setSelectedIndex(0)
+    // Находим первый не-disabled элемент
+    const firstEnabledIndex = items.findIndex(item => !item.disabled)
+    setSelectedIndex(firstEnabledIndex >= 0 ? firstEnabledIndex : 0)
   }, [items])
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
       if (event.key === 'ArrowUp') {
         event.preventDefault()
-        setSelectedIndex((index) => (index + items.length - 1) % items.length)
+        // Пропускаем disabled элементы при навигации
+        let newIndex = (selectedIndex + items.length - 1) % items.length
+        let attempts = 0
+        while (items[newIndex]?.disabled && attempts < items.length) {
+          newIndex = (newIndex + items.length - 1) % items.length
+          attempts++
+        }
+        setSelectedIndex(newIndex)
         return true
       }
 
       if (event.key === 'ArrowDown') {
         event.preventDefault()
-        setSelectedIndex((index) => (index + 1) % items.length)
+        // Пропускаем disabled элементы при навигации
+        let newIndex = (selectedIndex + 1) % items.length
+        let attempts = 0
+        while (items[newIndex]?.disabled && attempts < items.length) {
+          newIndex = (newIndex + 1) % items.length
+          attempts++
+        }
+        setSelectedIndex(newIndex)
         return true
       }
 
@@ -158,25 +175,31 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
     >
       <CardContent className="space-y-1 p-1.5">
         {items.map((item, index) => {
-          const isActive = index === selectedIndex
+          const isActive = index === selectedIndex && !item.disabled
+          const isDisabled = item.disabled
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => selectItem(index)}
+              onClick={() => !isDisabled && selectItem(index)}
+              disabled={isDisabled}
               className={cn(
                 'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors',
-                isActive
-                  ? 'bg-primary/15 text-foreground shadow-sm ring-1 ring-primary/20'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                isDisabled
+                  ? 'cursor-not-allowed opacity-50'
+                  : isActive
+                    ? 'bg-primary/15 text-foreground shadow-sm ring-1 ring-primary/20'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
               )}
             >
               <span
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-md border transition-colors',
-                  isActive
-                    ? 'border-primary/60 bg-primary/20 text-primary shadow-sm'
-                    : 'border-border/80 bg-background/80'
+                  isDisabled
+                    ? 'border-border/40 bg-muted/40'
+                    : isActive
+                      ? 'border-primary/60 bg-primary/20 text-primary shadow-sm'
+                      : 'border-border/80 bg-background/80'
                 )}
               >
                 {item.icon}
@@ -185,21 +208,30 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
                 <span
                   className={cn(
                     'text-sm font-medium transition-colors',
-                    isActive ? 'text-foreground' : 'text-foreground'
+                    isDisabled ? 'text-muted-foreground/60' : isActive ? 'text-foreground' : 'text-foreground'
                   )}
                 >
                   {item.title}
+                  {isDisabled && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      (в разработке)
+                    </span>
+                  )}
                 </span>
                 <span
                   className={cn(
                     'text-xs transition-colors',
-                    isActive ? 'text-muted-foreground/80' : 'text-muted-foreground'
+                    isDisabled
+                      ? 'text-muted-foreground/50'
+                      : isActive
+                        ? 'text-muted-foreground/80'
+                        : 'text-muted-foreground'
                   )}
                 >
                   {item.description}
                 </span>
               </span>
-              {item.hint && (
+              {item.hint && !isDisabled && (
                 <span className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
                   {item.hint}
                 </span>
@@ -451,6 +483,12 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
   )
 }
 
+export type RichTextEditorRef = {
+  getJSON: () => any
+  getHTML: () => string
+  getText: () => string
+}
+
 type RichTextEditorProps = {
   value: string
   onChange: (value: string) => void
@@ -464,7 +502,7 @@ type RichTextEditorProps = {
   ariaDescribedBy?: string
 }
 
-export function RichTextEditor({
+export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
   value,
   onChange,
   placeholder = 'Start writing your story...',
@@ -475,7 +513,7 @@ export function RichTextEditor({
   ariaLabel,
   ariaLabelledBy,
   ariaDescribedBy,
-}: RichTextEditorProps) {
+}, ref) => {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkValue, setLinkValue] = useState('')
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
@@ -597,6 +635,30 @@ export function RichTextEditor({
       },
     },
   })
+
+  // Экспортируем методы через ref
+  useImperativeHandle(ref, () => ({
+    getJSON: () => {
+      if (!editor) {
+        console.warn('[RichTextEditor] getJSON called but editor is not initialized')
+        return null
+      }
+      try {
+        const json = editor.getJSON()
+        // Проверяем, что это валидный ProseMirror документ
+        if (!json || typeof json !== 'object' || json.type !== 'doc') {
+          console.warn('[RichTextEditor] getJSON returned invalid document:', json)
+          return null
+        }
+        return json
+      } catch (error) {
+        console.error('[RichTextEditor] Error getting JSON:', error)
+        return null
+      }
+    },
+    getHTML: () => editor?.getHTML() || '',
+    getText: () => editor?.getText() || '',
+  }), [editor])
 
   const characterCount = editor?.storage.characterCount.characters() ?? value.length
   const wordCount =
@@ -847,6 +909,7 @@ export function RichTextEditor({
         title: 'Anchor',
         description: 'Добавить якорь к блоку',
         icon: <Hash className="h-4 w-4" />,
+        disabled: true,
         command: ({ editor, range }) => {
           editor.chain().focus().deleteRange(range).run()
           openAnchorDialog('create')
@@ -857,6 +920,7 @@ export function RichTextEditor({
         title: 'Link to anchor',
         description: 'Ссылка на существующий блок',
         icon: <Link2 className="h-4 w-4" />,
+        disabled: true,
         command: ({ editor, range }) => {
           editor.chain().focus().deleteRange(range).run()
           openAnchorDialog('link')
@@ -1367,6 +1431,8 @@ export function RichTextEditor({
       </Dialog>
     </>
   )
-}
+})
+
+RichTextEditor.displayName = 'RichTextEditor'
 
 export default RichTextEditor

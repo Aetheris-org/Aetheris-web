@@ -64,10 +64,9 @@ export default function AuthPage() {
       console.log('⚠️ No explicit redirect found, will use /forum after auth')
     }
 
-    // Используем кастомный OAuth endpoint, который обрабатывает callback правильно
-    const frontendCallbackUrl = `${window.location.origin}/auth/callback`
-    // Используем стандартный Strapi connect endpoint, но callback будет обработан кастомным контроллером
-    window.location.href = `${API_BASE}/api/connect/google?redirect=${encodeURIComponent(frontendCallbackUrl)}`
+    // Используем KeystoneJS OAuth endpoint
+    // Backend обработает OAuth и редиректнет на /auth/callback
+    window.location.href = `${API_BASE}/api/connect/google`
   }
 
   const benefits = [

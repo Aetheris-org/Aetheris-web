@@ -149,6 +149,8 @@ export interface AppearancePreset {
 interface StoredPreferences {
   theme: ThemeMode
   accent: AccentColor
+  secondaryAccent?: AccentColor // Дополнительный акцентный цвет для тем с несколькими цветами
+  tertiaryAccent?: AccentColor // Третий акцентный цвет (если нужен)
   surface: SurfaceStyle
   radius: number
   customAccent: CustomAccentColors
@@ -165,6 +167,8 @@ interface ThemeState extends StoredPreferences {
   initialize: () => void
   setTheme: (mode: ThemeMode) => void
   setAccent: (accent: AccentColor) => void
+  setSecondaryAccent: (accent: AccentColor | undefined) => void
+  setTertiaryAccent: (accent: AccentColor | undefined) => void
   setSurface: (surface: SurfaceStyle) => void
   setRadius: (radius: number) => void
   setCustomAccentColor: (mode: ResolvedTheme, color: string) => void
@@ -3214,6 +3218,8 @@ function extractPreferences(state: ThemeState): StoredPreferences {
   return {
     theme: state.theme,
     accent: state.accent,
+    secondaryAccent: state.secondaryAccent,
+    tertiaryAccent: state.tertiaryAccent,
     surface: state.surface,
     radius: state.radius,
     customAccent: state.customAccent,
@@ -3433,6 +3439,28 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       applyThemePreferences(nextState)
       savePreferences(extractPreferences(nextState))
       return { accent }
+    })
+  },
+  setSecondaryAccent: (accent) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        secondaryAccent: accent,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { secondaryAccent: accent }
+    })
+  },
+  setTertiaryAccent: (accent) => {
+    set((state) => {
+      const nextState = {
+        ...state,
+        tertiaryAccent: accent,
+      }
+      applyThemePreferences(nextState)
+      savePreferences(extractPreferences(nextState))
+      return { tertiaryAccent: accent }
     })
   },
   setSurface: (surface) => {

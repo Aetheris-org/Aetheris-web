@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
+import { getCurrentUser as getCurrentUserGraphQL } from '@/api/auth-graphql'
 import { getCurrentUser } from '@/api/profile'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -17,12 +18,9 @@ export default function AuthCallbackPage() {
     
     const handleCallback = async () => {
       const searchParams = new URLSearchParams(location.search)
-      const hashParams = new URLSearchParams(
-        location.hash.startsWith('#') ? location.hash.slice(1) : location.hash,
-      )
 
-      const errorParam = searchParams.get('error') || hashParams.get('error')
-
+      // Проверяем ошибки OAuth
+      const errorParam = searchParams.get('error')
       if (errorParam) {
         try {
           setErrorMessage(decodeURIComponent(errorParam))
@@ -33,44 +31,75 @@ export default function AuthCallbackPage() {
         return
       }
 
-      console.log('🔐 OAuth callback - checking authentication...')
+      // Проверяем успешный OAuth callback от KeystoneJS backend
+      const oauthSuccess = searchParams.get('oauth')
+      const userId = searchParams.get('userId')
 
-      // В development токен передается через URL (для кросс-доменных запросов)
-      // В production токен в httpOnly cookie (более безопасно)
-      const accessToken = searchParams.get('access_token') || hashParams.get('access_token')
-      
-      if (accessToken) {
-        console.log('✅ Received access_token from OAuth callback')
-        // Сохраняем токен в cookie для последующих запросов
-        // В development используем обычную cookie (не httpOnly), так как JavaScript должен иметь доступ
-        const maxAge = 7 * 24 * 60 * 60 // 7 дней в секундах
-        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax; max-age=${maxAge}`
-        document.cookie = `jwtToken=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax; max-age=${maxAge}`
-        console.log('💾 Token saved to cookies')
-      }
-
-      // Убираем чувствительные query-параметры из URL для безопасности
-      navigate('/auth/callback', { replace: true })
-
-      // Получаем данные пользователя - токен теперь в cookie или был передан через URL
-      try {
-        const user = await getCurrentUser()
-        setUser(user)
-
-        const savedRedirect = sessionStorage.getItem('auth_redirect')
-        console.log('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
+      if (oauthSuccess === 'success' && userId) {
+        console.log('✅ OAuth callback successful, userId:', userId)
         
-        // Используем сохраненный redirect, если он есть (даже если это '/')
-        // Если redirect не был сохранен, используем '/forum' (главная страница со статьями)
-        const redirect = savedRedirect !== null ? savedRedirect : '/forum'
-        console.log('🚀 Navigating to:', redirect)
-        sessionStorage.removeItem('auth_redirect')
-        navigate(redirect, { replace: true })
-      } catch (error) {
-        console.error('Failed to finalize OAuth callback:', error)
-        setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
-        setTimeout(() => navigate('/auth', { replace: true }), 3000)
+        // KeystoneJS backend создал пользователя и сохранил userId в Express session
+        // Теперь нужно создать KeystoneJS session через специальный endpoint
+        try {
+          const API_BASE = import.meta.env.DEV 
+            ? '' // Используем прокси Vite
+            : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
+
+          // Создаем KeystoneJS session для OAuth пользователя
+          const sessionResponse = await fetch(`${API_BASE}/api/auth/oauth/session`, {
+            method: 'POST',
+            credentials: 'include', // Важно: отправляем cookies
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+
+          if (!sessionResponse.ok) {
+            const errorData = await sessionResponse.json().catch(() => ({}))
+            throw new Error(errorData.error || 'Failed to create session')
+          }
+
+          const sessionData = await sessionResponse.json()
+          console.log('✅ KeystoneJS session created:', sessionData)
+
+          // ПРИМЕЧАНИЕ: cookie с httpOnly: true не виден через document.cookie
+          // Это нормально и правильно для безопасности
+          // Cookie должен автоматически передаваться в следующих запросах благодаря credentials: 'include'
+
+          // Теперь получаем данные пользователя через GraphQL
+          // Cookie должен автоматически передаваться благодаря credentials: 'include'
+          console.log('🔍 Fetching user data via GraphQL...')
+          const graphqlUser = await getCurrentUserGraphQL()
+          console.log('👤 GraphQL user:', graphqlUser)
+          
+          if (!graphqlUser) {
+            throw new Error('Failed to get user data after OAuth')
+          }
+
+          // Преобразуем GraphQL user в формат, ожидаемый authStore
+          const user = await getCurrentUser()
+          setUser(user)
+
+          const savedRedirect = sessionStorage.getItem('auth_redirect')
+          console.log('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
+          
+          // Используем сохраненный redirect, если он есть
+          const redirect = savedRedirect !== null ? savedRedirect : '/forum'
+          console.log('🚀 Navigating to:', redirect)
+          sessionStorage.removeItem('auth_redirect')
+          navigate(redirect, { replace: true })
+        } catch (error) {
+          console.error('Failed to finalize OAuth callback:', error)
+          setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
+          setTimeout(() => navigate('/auth', { replace: true }), 3000)
+        }
+        return
       }
+
+      // Если нет параметров OAuth, возможно это старый формат или ошибка
+      console.warn('⚠️ Unexpected OAuth callback format:', location.search)
+      setErrorMessage('Неверный формат callback. Повторите попытку.')
+      setTimeout(() => navigate('/auth', { replace: true }), 3000)
     }
 
     handleCallback()

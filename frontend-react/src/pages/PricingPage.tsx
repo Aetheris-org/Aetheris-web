@@ -31,7 +31,7 @@ const pricingPlans = [
   {
     name: 'Voyager',
     description: 'Для тех, кто исследует новые горизонты',
-    price: '499₽',
+    price: '379₽',
     period: 'в месяц',
     badge: 'Популярный',
     icon: Rocket,

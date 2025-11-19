@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getAllArticles, getTrendingArticles, searchArticles, getArticle, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
+import { getArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles-graphql'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -141,9 +141,9 @@ export default function HomePage() {
       sortOption,
     ],
     queryFn: () =>
-      getAllArticles({
-        start: (page - 1) * pageSize,
-        limit: pageSize,
+      getArticles({
+        page,
+        pageSize,
         tags: selectedTags.length ? selectedTags : undefined,
         difficulty: difficultyFilter,
         sort: sortOption,
@@ -163,7 +163,7 @@ export default function HomePage() {
 
   const { data: trendingArticles = [], isLoading: loadingTrending } = useQuery({
     queryKey: ['trending-articles', user?.id],
-    queryFn: () => getTrendingArticles(user?.id, 5),
+    queryFn: () => getTrendingArticles(user?.id ? String(user.id) : undefined, 5),
     // Трендовые статьи кэшируем дольше (10 минут)
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -192,7 +192,7 @@ export default function HomePage() {
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ['search-articles', debouncedSearchQuery, user?.id],
-    queryFn: () => searchArticles(debouncedSearchQuery, user?.id, 0, 10),
+    queryFn: () => searchArticles(debouncedSearchQuery, user?.id ? String(user.id) : undefined, 0, 10),
     enabled: debouncedSearchQuery.length >= 2,
     // Поиск кэшируем на 2 минуты (результаты могут меняться)
     staleTime: 2 * 60 * 1000,

@@ -64,6 +64,7 @@ export default function ForumLandingPage() {
   const heroRef = useRef<HTMLDivElement>(null)
   const horizontalRef = useRef<HTMLDivElement>(null)
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
+  const squaresContainerRef = useRef<HTMLDivElement>(null)
 
   // Прокрутка в начало страницы при загрузке
   useEffect(() => {
@@ -272,6 +273,113 @@ export default function ForumLandingPage() {
             checkInitialVisibility()
             ScrollTrigger.refresh()
           }, 200)
+
+          // Создание и анимация квадратиков с реакцией на скролл
+          if (squaresContainerRef.current) {
+            const container = squaresContainerRef.current
+            
+            // Очищаем предыдущие квадратики
+            container.innerHTML = ''
+            
+            // Определяем мобильное устройство и настраиваем параметры
+            const isMobile = window.innerWidth < 768
+            const squaresCount = isMobile ? 8 : 15 // Оптимальное количество квадратиков
+            const squares: HTMLElement[] = []
+
+            // Разные оттенки акцентного цвета (разная прозрачность для создания оттенков)
+            const opacityVariants = [
+              0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60
+            ]
+
+            // Создаем квадратики с обертками для разделения анимаций
+            for (let i = 0; i < squaresCount; i++) {
+              // Обертка для скролла
+              const wrapper = document.createElement('div')
+              wrapper.className = 'absolute'
+              wrapper.style.left = `${Math.random() * 100}%`
+              wrapper.style.top = `${Math.random() * 100}%`
+              wrapper.style.transform = 'translateZ(0)'
+              wrapper.style.willChange = 'transform'
+              
+              // Сам квадратик
+              const square = document.createElement('div')
+              const size = isMobile 
+                ? Math.random() * 6 + 4 // От 4px до 10px на мобильных
+                : Math.random() * 8 + 5 // От 5px до 13px на десктопе
+              
+              // Выбираем случайный оттенок из вариантов
+              const baseOpacity = opacityVariants[Math.floor(Math.random() * opacityVariants.length)]
+              const glowOpacity = baseOpacity * 0.8 // Немного меньше для свечения
+              
+              square.className = 'bg-primary'
+              square.style.width = `${size}px`
+              square.style.height = `${size}px`
+              square.style.opacity = `${baseOpacity}`
+              square.style.boxShadow = `0 0 ${size * 2}px hsl(var(--primary) / ${glowOpacity})`
+              square.style.willChange = 'transform, opacity'
+              square.style.transform = 'translateZ(0)' // Аппаратное ускорение
+              
+              wrapper.appendChild(square)
+              container.appendChild(wrapper)
+              squares.push({ wrapper, square })
+            }
+
+            // Анимация квадратиков с реакцией на скролл
+            squares.forEach(({ wrapper, square }, index) => {
+              // Параметры для скролла (на обертке)
+              const scrollSpeed = (Math.random() * 0.3 + 0.4) * (index % 2 === 0 ? 1 : -1)
+              const scrollX = scrollSpeed * 200
+              const scrollY = scrollSpeed * 150
+              const scrollRotation = scrollSpeed * 40
+              
+              // Реакция на скролл - анимируем обертку
+              gsap.to(wrapper, {
+                x: scrollX,
+                y: scrollY,
+                rotation: scrollRotation,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: document.body,
+                  start: 'top top',
+                  end: 'max',
+                  scrub: 1, // Плавная привязка
+                  invalidateOnRefresh: true,
+                },
+              })
+              
+              // Плавающее движение - анимируем сам квадратик (относительно обертки)
+              const floatDuration = Math.random() * 3 + 6 // От 6 до 9 секунд
+              const floatRange = 80
+              const startX = (Math.random() - 0.5) * floatRange
+              const startY = (Math.random() - 0.5) * floatRange
+              const startRotation = (Math.random() - 0.5) * 40
+              
+              // Плавающая анимация
+              const floatTL = gsap.timeline({
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut',
+              })
+              
+              floatTL.to(square, {
+                x: startX + (Math.random() - 0.5) * floatRange,
+                y: startY + (Math.random() - 0.5) * floatRange,
+                rotation: startRotation + (Math.random() - 0.5) * 40,
+                duration: floatDuration,
+              })
+              
+              // Отдельная анимация opacity и scale
+              gsap.to(square, {
+                opacity: opacityVariants[Math.floor(Math.random() * opacityVariants.length)],
+                scale: Math.random() * 0.4 + 0.85,
+                duration: floatDuration * 1.5,
+                delay: Math.random() * 2,
+                ease: 'sine.inOut',
+                repeat: -1,
+                yoyo: true,
+              })
+            })
+          }
     })
 
     return () => {
@@ -395,77 +503,8 @@ export default function ForumLandingPage() {
         <div className="bg-shape-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-primary/6 via-transparent to-transparent" style={{ clipPath: 'polygon(0% 100%, 50% 0%, 100% 100%, 0% 50%)' }} />
         <div className="bg-shape-3 absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-bl from-primary/5 via-transparent to-transparent" style={{ clipPath: 'circle(50% at 50% 50%)' }} />
         
-        {/* Анимированные точки/круги с плавающим движением */}
-        <div 
-          className="bg-dot-1 absolute top-[20%] left-[15%] w-3 h-3 rounded-full bg-primary/40"
-          style={{
-            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
-            animation: 'float-dot 6s ease-in-out infinite',
-            animationDelay: '0s',
-          }}
-        />
-        <div 
-          className="bg-dot-2 absolute top-[40%] right-[20%] w-4 h-4 rounded-full bg-primary/35"
-          style={{
-            boxShadow: '0 0 10px hsl(var(--primary) / 0.35)',
-            animation: 'float-dot 7s ease-in-out infinite',
-            animationDelay: '1s',
-          }}
-        />
-        <div 
-          className="bg-dot-3 absolute bottom-[30%] left-[60%] w-3 h-3 rounded-full bg-primary/40"
-          style={{
-            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
-            animation: 'float-dot 8s ease-in-out infinite',
-            animationDelay: '2s',
-          }}
-        />
-        <div 
-          className="bg-dot-4 absolute top-[60%] right-[40%] w-5 h-5 rounded-full bg-primary/30"
-          style={{
-            boxShadow: '0 0 12px hsl(var(--primary) / 0.3)',
-            animation: 'float-dot 5.5s ease-in-out infinite',
-            animationDelay: '0.5s',
-          }}
-        />
-        <div 
-          className="bg-dot-5 absolute bottom-[20%] left-[30%] w-4 h-4 rounded-full bg-primary/30"
-          style={{
-            boxShadow: '0 0 10px hsl(var(--primary) / 0.3)',
-            animation: 'float-dot 6.5s ease-in-out infinite',
-            animationDelay: '1.5s',
-          }}
-        />
-        <div 
-          className="bg-dot-6 absolute top-[80%] right-[60%] w-3 h-3 rounded-full bg-primary/40"
-          style={{
-            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
-            animation: 'float-dot 7.5s ease-in-out infinite',
-            animationDelay: '2.5s',
-          }}
-        />
-        
-        {/* CSS анимации для точек */}
-        <style>{`
-          @keyframes float-dot {
-            0%, 100% {
-              transform: translate(0, 0) scale(1);
-              opacity: 0.4;
-            }
-            25% {
-              transform: translate(15px, -20px) scale(1.2);
-              opacity: 0.6;
-            }
-            50% {
-              transform: translate(-10px, -30px) scale(1.3);
-              opacity: 0.8;
-            }
-            75% {
-              transform: translate(-15px, -10px) scale(1.1);
-              opacity: 0.6;
-            }
-          }
-        `}</style>
+        {/* Анимированные квадратики с GSAP */}
+        <div ref={squaresContainerRef} className="absolute inset-0" />
         
         {/* Простая градиентная линия внизу */}
         <div className="bg-bottom-line absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />

@@ -2319,3 +2319,411 @@
     "pageTitle": "Pricing"
   }
 }
+    },
+    "noResults": {
+      "companies": "No companies found",
+      "companiesDescription": "Try adjusting your filters or search query",
+      "clientRequests": "No client requests found",
+      "clientRequestsDescription": "Try adjusting your filters or search query",
+      "freelancerOffers": "No freelancer offers found",
+      "freelancerOffersDescription": "Try adjusting your filters or search query"
+    },
+    "sidebar": {
+      "popularSkills": "Popular Skills",
+      "popularSkillsDescription": "Filter by trending technologies",
+      "boostListing": "Boost Your Listing",
+      "boostDescription": "Get 10x more visibility",
+      "boostBenefits": {
+        "top": "Appear at the top of search results",
+        "badge": "Highlighted with premium badge",
+        "duration": "30-day boost duration"
+      },
+      "boostButton": "Boost Listing",
+      "needHelp": "Need Help?",
+      "howToPost": "How to post a job",
+      "pricing": "Pricing & payments",
+      "safety": "Safety guidelines"
+    },
+    "jobCard": {
+      "verified": "Verified",
+      "boosted": "Boosted",
+      "views": "views",
+      "applicants": "applicants",
+      "viewDetails": "View Details",
+      "competitiveSalary": "Competitive salary",
+      "from": "From {amount}",
+      "upTo": "Up to {amount}",
+      "range": "{min} - {max}"
+    },
+    "requestCard": {
+      "boosted": "Boosted",
+      "views": "views",
+      "proposals": "proposals",
+      "submitProposal": "Submit Proposal"
+    },
+    "offerCard": {
+      "verified": "Verified",
+      "boosted": "Boosted",
+      "projects": "projects",
+      "responds": "Responds {time}",
+      "views": "views",
+      "contacts": "contacts",
+      "viewProfile": "View Profile",
+      "contactForPricing": "Contact for pricing"
+    }
+  },
+  "achievements": {
+    "title": "Achievements",
+    "pageTitle": "Achievements",
+    "description": "Track your progress and unlock rewards",
+    "hero": {
+      "badge": "Gamification",
+      "title": "Your achievements",
+      "description": "Track milestones, unlock rewards, and showcase your progress.",
+      "expand": "Expand hero section",
+      "collapse": "Collapse hero section"
+    },
+    "stats": {
+      "unlocked": "Unlocked",
+      "available": "Available",
+      "completionRate": "Completion rate",
+      "recentUnlocks": "Recent unlocks"
+    },
+    "filters": {
+      "all": "All",
+      "level": "Level",
+      "streak": "Streak",
+      "activity": "Activity",
+      "milestone": "Milestone",
+      "social": "Social",
+      "sortBy": "Sort by",
+      "default": "Default",
+      "rarity": "Rarity",
+      "newest": "Newest first",
+      "xpReward": "XP reward"
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "breakdown": {
+      "title": "Rarity breakdown",
+      "description": "Distribution of achievements by rarity tier"
+    },
+    "noAchievements": "No achievements found",
+    "noAchievementsDescription": "Try selecting a different category.",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "xpReward": "{xp} XP reward"
+  },
+  "help": {
+    "title": "Help Center",
+    "back": "Back",
+    "knowledgeBase": "Knowledge base",
+    "howCanWeHelp": "How can we help?",
+    "description": "Browse guides, best practices, and release notes. Our support team is one click away if you get stuck.",
+    "categories": {
+      "gettingStarted": "Getting started",
+      "gettingStartedDescription": "Set up your account and publish your first story.",
+      "writing": "Writing & Publishing",
+      "writingDescription": "Draft, review, and ship stories your readers love.",
+      "account": "Account & billing",
+      "accountDescription": "Manage seats, invoices, and security options."
+    },
+    "articles": {
+      "inviteTeammates": "Invite teammates to collaborate",
+      "inviteTeammatesSummary": "Tips for running shared workspaces with unified permissions.",
+      "createFirstStory": "Create your first story",
+      "createFirstStorySummary": "A walkthrough of the editor, markdown shortcuts, and preview.",
+      "personalizeProfile": "Personalize your profile",
+      "personalizeProfileSummary": "Customize bio, cover image, and external profiles.",
+      "structuringArticles": "Structuring long-form articles",
+      "structuringArticlesSummary": "Use sections, call-outs, and embeds to keep readers engaged.",
+      "collaborativeEditing": "Collaborative editing flow",
+      "collaborativeEditingSummary": "Assign reviewers, leave inline comments, and resolve feedback.",
+      "schedulingReleases": "Scheduling releases",
+      "schedulingReleasesSummary": "Set publish windows, configure RSS, and notify subscribers.",
+      "upgradePro": "Upgrade to Creator Pro",
+      "upgradeProSummary": "Unlock advanced analytics, custom domains, and priority support.",
+      "twoFactor": "Two-factor authentication",
+      "twoFactorSummary": "Secure your workspace with OTP apps and backup codes.",
+      "viewInvoices": "View invoices and receipts",
+      "viewInvoicesSummary": "Download receipts and update billing contacts."
+    },
+    "readGuide": "Read guide",
+    "contactUs": "Contact us",
+    "contactDescription": "Prefer a human? Our team is on-call 7 days a week with escalations for production incidents.",
+    "contactOptions": {
+      "chat": "Chat with support",
+      "chatDescription": "Average response under 5 minutes during business hours.",
+      "chatAction": "Open chat",
+      "email": "Email hello@aetheris.dev",
+      "emailDescription": "Detailed requests, billing questions, or roadmap feedback.",
+      "emailAction": "Send email",
+      "escalate": "Escalate priority incident",
+      "escalateDescription": "Critical outages affecting your publication.",
+      "escalateAction": "Escalate",
+      "proBadge": "Pro"
+    },
+    "releaseHighlights": "Release highlights",
+    "releaseDescription": "Recent improvements that may answer your question before contacting support.",
+    "releases": {
+      "readingList": {
+        "title": "Reading list sync",
+        "description": "Saved articles now sync across web and mobile, with offline mode shipping next."
+      },
+      "appearancePresets": {
+        "title": "Appearance presets",
+        "description": "Create and share workspace visual presets across editorial teams."
+      },
+      "oauthUpdates": {
+        "title": "OAuth updates",
+        "description": "Additional providers are in beta. Follow the release notes for Discord and Slack support."
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "back": "Back",
+    "description": "Stay up to date with reactions, comments, and editorial updates.",
+    "markAllAsRead": "Mark all as read",
+    "inboxOverview": "Inbox overview",
+    "unreadCount": "You have {count} unread {count, plural, one {notification} other {notifications}}.",
+    "allCaughtUp": "You are all caught up for now.",
+    "new": "{count} new",
+    "zeroNew": "0 new",
+    "categories": {
+      "comments": "Comments",
+      "reactions": "Reactions",
+      "editorial": "Editorial",
+      "followers": "Followers"
+    },
+    "groups": {
+      "today": "Today",
+      "thisWeek": "This week",
+      "earlier": "Earlier"
+    },
+    "noNotifications": "No notifications yet",
+    "noNotificationsDescription": "Once notifications are enabled, you'll receive updates from the community and editorial team.",
+    "browseArticles": "Browse articles",
+    "view": "View",
+    "markAsRead": "Mark notification as read",
+    "alreadyRead": "Notification already read"
+  },
+  "accountSheet": {
+    "openMenu": "Open account menu",
+    "workspaceHub": "Workspace hub",
+    "workspaceDescription": "Review your profile at a glance, jump back into writing, and manage your account.",
+    "signedInAs": "Signed in as",
+    "level": "Level {level}",
+    "progressToNextLevel": "Progress to next level",
+    "xpProgress": "{current} / {total} XP",
+    "xpRemaining": "Remaining: {xp} XP",
+    "dailyStreak": "Daily streak",
+    "days": "{count} {count, plural, one {day} other {days}}",
+    "streakDescription": "Stay consistent to keep rewards flowing.",
+    "notifications": "Notifications",
+    "reviewInbox": "Review inbox",
+    "lifetimeExperience": "Lifetime experience:",
+    "xpEarned": "{xp} XP earned across Aetheris.",
+    "quickActions": "Quick actions",
+    "viewProfile": "View profile",
+    "writeStory": "Write a story",
+    "friends": "Friends",
+    "achievements": "Achievements",
+    "settings": "Settings",
+    "keepExploring": "Keep exploring",
+    "readingList": "Reading list",
+    "drafts": "Drafts",
+    "helpCenter": "Help center",
+    "feedback": "Feedback",
+    "stats": "Statistics",
+    "viewStats": "View statistics",
+    "viewAchievements": "View achievements",
+    "signOut": "Sign out",
+    "signIn": "Sign In"
+  },
+  "readingList": {
+    "title": "Reading list",
+    "back": "Back",
+    "noSavedArticles": "No saved articles yet",
+    "noSavedArticlesDescription": "Use the \"Read later\" button on any article to add it to your personal reading queue.",
+    "browseArticles": "Browse articles",
+    "savedForLater": "Saved for later",
+    "oneArticleInQueue": "1 article in your queue",
+    "articlesReadyToRead": "{count} articles ready to read",
+    "clearAll": "Clear all",
+    "savedOn": "Saved on {date}",
+    "continueReading": "Continue reading",
+    "remove": "Remove",
+    "minRead": "{minutes} min read"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "pageTitle": "Feedback",
+    "description": "Report bugs, share ideas, and help improve the platform",
+    "bugs": "Bugs",
+    "features": "Features",
+    "resolved": "Resolved",
+    "inProgress": "In Progress",
+    "createNew": "Create New",
+    "search": "Search...",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your filters or search query",
+    "createBug": "Report a Bug",
+    "createFeature": "Suggest a Feature",
+    "createDescription": "Describe the issue or your suggestion in as much detail as possible",
+    "form": {
+      "type": "Type",
+      "bugDescription": "Report a bug or issue",
+      "featureDescription": "Suggest a new feature or improvement",
+      "title": "Title",
+      "titlePlaceholder": "Brief description of the issue or suggestion",
+      "description": "Description",
+      "descriptionPlaceholder": "Detailed description of the issue or details of your suggestion",
+      "stepsToReproduce": "Steps to Reproduce",
+      "stepsToReproducePlaceholder": "1. Open...\n2. Click on...\n3. Observe error...",
+      "stepsToReproduceHint": "Describe step-by-step actions that lead to the problem",
+      "priority": "Priority",
+      "tags": "Tags",
+      "tagsPlaceholder": "Enter a tag and press Enter",
+      "addTag": "Add",
+      "submit": "Submit",
+      "submitBug": "Submit Report",
+      "submitFeature": "Submit Suggestion"
+    },
+    "stepsToReproduce": "Steps to Reproduce",
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allPriorities": "All Priorities"
+    },
+    "status": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "resolved": "Resolved",
+      "rejected": "Rejected"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First",
+      "mostVoted": "Most Voted",
+      "priority": "By Priority"
+    },
+    "reactions": {
+      "upvote": "Upvote",
+      "downvote": "Downvote",
+      "important": "Important",
+      "duplicate": "Duplicate",
+      "wontfix": "Won't Fix"
+    }
+  },
+  "legal": {
+    "termsOfService": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated",
+      "section1": {
+        "title": "1. Acceptance of Terms",
+        "content": "Welcome to Aetheris! By using our service, you agree to comply with these Terms of Service. If you do not agree with any of these terms, please do not use our service."
+      },
+      "section2": {
+        "title": "2. Use of Service",
+        "content": "You agree to use Aetheris only for lawful purposes and in accordance with these Terms. In particular, you agree:",
+        "item1": "Not to infringe on the intellectual property rights of other users",
+        "item2": "Not to post content that is illegal, offensive, or violates the rights of others",
+        "item3": "Not to use the service for spam or unsolicited messages",
+        "item4": "Not to attempt to gain unauthorized access to systems or data"
+      },
+      "section3": {
+        "title": "3. User Content",
+        "content": "You retain all rights to the content you post on Aetheris. However, by posting content, you grant us a license to use, display, and distribute it within our service. You are solely responsible for all content you post.",
+        "item1": "You warrant that you have all necessary rights to the content you post",
+        "item2": "You agree not to post content that infringes on third-party rights",
+        "item3": "We reserve the right to remove any content that violates our rules",
+        "item4": "You may delete your content at any time"
+      },
+      "section4": {
+        "title": "4. Intellectual Property",
+        "content": "All materials, including design, logos, text, and software of Aetheris, are protected by copyright and other intellectual property laws. You may not copy, modify, or distribute these materials without our written permission."
+      },
+      "section5": {
+        "title": "5. Termination",
+        "content": "We reserve the right to suspend or terminate your access to the service at any time if you violate these Terms of Service or for any other reason at our discretion."
+      },
+      "section6": {
+        "title": "6. Disclaimer",
+        "content": "Aetheris is provided \"as is\" without any warranties. We do not guarantee that the service will operate without interruption or errors. We are not liable for any damages arising from the use or inability to use our service."
+      },
+      "section7": {
+        "title": "7. Changes to Terms",
+        "content": "We reserve the right to modify these Terms of Service at any time. We will notify you of significant changes by posting a new version on this page. Continued use of the service after changes constitutes your acceptance of the new terms."
+      },
+      "section8": {
+        "title": "8. Contact Information",
+        "content": "If you have any questions about these Terms of Service, please contact us at hello@aetheris.dev."
+      },
+      "contact": "For questions regarding these Terms of Service, please contact us at hello@aetheris.dev"
+    },
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated",
+      "section1": {
+        "title": "1. Introduction",
+        "content": "We at Aetheris take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our service."
+      },
+      "section2": {
+        "title": "2. Information We Collect",
+        "content": "We collect the following information:",
+        "item1": "Authentication information: we use OAuth2 for Google sign-in. We only store a hash of your email address, not the address itself, to ensure maximum security",
+        "item2": "Profile information: name, bio, avatar, and other information you voluntarily provide",
+        "item3": "Content: articles, comments, and other content you post",
+        "item4": "Technical information: IP address, browser type, service usage data"
+      },
+      "section3": {
+        "title": "3. How We Use Information",
+        "content": "We use the collected information to:",
+        "item1": "Provide and improve our services",
+        "item2": "Personalize your experience",
+        "item3": "Process transactions and send notifications",
+        "item4": "Ensure security and prevent fraud"
+      },
+      "section4": {
+        "title": "4. Data Protection",
+        "content": "We employ modern encryption and security methods to protect your data. Your email address is stored only as a hash, making it impossible to recover even in the event of a data breach."
+      },
+      "section5": {
+        "title": "5. Information Sharing",
+        "content": "We do not sell or share your personal information with third parties, except when necessary to provide services, required by law, or with your explicit consent."
+      },
+      "section6": {
+        "title": "6. Your Rights",
+        "content": "You have the right to request access, correction, or deletion of your personal data at any time. You may also opt out of receiving marketing messages."
+      },
+      "section7": {
+        "title": "7. Cookies",
+        "content": "We use cookies and similar technologies to improve service functionality, analyze usage, and personalize content. You can manage cookie settings in your browser."
+      },
+      "section8": {
+        "title": "8. Policy Changes",
+        "content": "We may periodically update this Privacy Policy. We will notify you of significant changes by posting a new version on this page."
+      },
+      "contact": "For privacy-related questions, please contact us at hello@aetheris.dev"
+    }
+  },
+  "friends": {
+    "pageTitle": "Friends"
+  },
+  "dashboard": {
+    "pageTitle": "Dashboard"
+  },
+  "pricing": {
+    "pageTitle": "Pricing"
+  }
+}

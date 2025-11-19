@@ -4,6 +4,8 @@ import type { User } from '@/types/user'
 import type { Article } from '@/types/article'
 import type { UserProfile } from '@/types/profile'
 import { logger } from '@/lib/logger'
+import { getCurrentUser as getCurrentUserGraphQL } from '@/api/auth-graphql'
+import { query } from '@/lib/graphql'
 
 interface BackendUser {
   id: number | string
@@ -45,34 +47,45 @@ export function adaptBackendUser(backendUser: BackendUser): User {
 }
 
 export async function getCurrentUser(): Promise<User> {
-  // Токен теперь в httpOnly cookie - JavaScript не может его прочитать
-  // Но он автоматически отправится с запросом через withCredentials: true
-  // Просто делаем запрос - если токен валидный, запрос пройдет
-  logger.debug('👤 getCurrentUser called (token in httpOnly cookie)')
+  // Используем GraphQL API вместо REST
+  logger.debug('👤 getCurrentUser called (GraphQL)')
 
-  logger.debug('🔵 Getting current user from /users/me')
   try {
-    // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
-    const response = await apiClient.get<BackendUser>('/users/me', {
-    timeout: 10000,
-      withCredentials: true, // Важно: отправляет httpOnly cookies
-  })
+    const graphqlUser = await getCurrentUserGraphQL()
 
-    const backendUser = response.data
+    if (!graphqlUser) {
+      logger.debug('❌ No authenticated user')
+      throw new Error('Not authenticated')
+    }
 
-    if (!backendUser || !backendUser.id || !backendUser.username) {
-    logger.error('❌ No data in response:', response.data)
-    throw new Error('Failed to load user profile')
-  }
+    // Адаптируем GraphQL User к нашему типу User
+    const user: User = {
+      id: typeof graphqlUser.id === 'string' ? Number.parseInt(graphqlUser.id, 10) : Number(graphqlUser.id),
+      nickname: graphqlUser.username,
+      email: graphqlUser.email ?? '',
+      avatar: graphqlUser.avatar ?? undefined,
+      coverImage: graphqlUser.coverImage ?? undefined,
+      bio: graphqlUser.bio ?? undefined,
+      articlesCount: 0, // TODO: Получить из GraphQL
+      commentsCount: 0, // TODO: Получить из GraphQL
+      likesReceived: 0, // TODO: Получить из GraphQL
+      viewsReceived: 0, // TODO: Получить из GraphQL
+      createdAt: graphqlUser.createdAt || new Date().toISOString(),
+      status: 'active',
+      role: (graphqlUser.role as 'user' | 'admin') || 'user',
+      isVerified: false,
+      isProfilePublic: true,
+      showEmail: false,
+      showLastSeen: false,
+      reputation: 0,
+      level: 1,
+      experience: 0,
+    }
 
-    logger.debug('✅ User data loaded:', backendUser.username)
-    return adaptBackendUser(backendUser)
+    logger.debug('✅ User data loaded:', user.nickname)
+    return user
   } catch (error: any) {
-    logger.error(
-      '❌ Failed to load current user:',
-      error?.response?.status,
-      error?.response?.data ?? error,
-    )
+    logger.error('❌ Failed to load current user:', error)
     throw error
   }
 }

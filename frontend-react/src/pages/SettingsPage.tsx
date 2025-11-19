@@ -2141,6 +2141,8 @@ function AppearanceSettings() {
     setTheme,
     accent,
     setAccent,
+    setSecondaryAccent,
+    setTertiaryAccent,
     surface,
     setSurface,
     radius,
@@ -2163,6 +2165,8 @@ function AppearanceSettings() {
     setTheme: state.setTheme,
     accent: state.accent,
     setAccent: state.setAccent,
+    setSecondaryAccent: state.setSecondaryAccent,
+    setTertiaryAccent: state.setTertiaryAccent,
     surface: state.surface,
     setSurface: state.setSurface,
     radius: state.radius,
@@ -2181,6 +2185,16 @@ function AppearanceSettings() {
     setMotion: state.setMotion,
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
+
+  // Хелпер для получения акцентных цветов темы
+  const getThemeAccents = (theme: typeof allThemes[number]) => {
+    const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+    return {
+      primary: accentOptionsByValue[theme.accent],
+      secondary: themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null,
+      tertiary: themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null,
+    }
+  }
 
   const surfaceOptions = useMemo(() => {
     return Object.entries(SURFACE_PRESETS).map(([value, config]) => {
@@ -2455,90 +2469,90 @@ function AppearanceSettings() {
   const officialThemesGroups = useMemo(
     () => ({
       basic: [
-        {
-          id: 'default-theme',
+      {
+        id: 'default-theme',
           name: t('settings.appearance.themes.defaultTheme.name'),
           description: t('settings.appearance.themes.defaultTheme.description'),
-          accent: 'pure' as AccentColor,
-          surface: 'obsidian' as SurfaceStyle,
-          radius: 15 / 16, // 15px
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'midnight-blue',
+        accent: 'pure' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 15 / 16, // 15px
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'midnight-blue',
           name: t('settings.appearance.themes.midnightBlue.name'),
           description: t('settings.appearance.themes.midnightBlue.description'),
-          accent: 'cobalt' as AccentColor,
-          surface: 'midnight' as SurfaceStyle,
-          radius: 0.5,
-          typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'sunset-warm',
+        accent: 'cobalt' as AccentColor,
+        surface: 'midnight' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sunset-warm',
           name: t('settings.appearance.themes.sunsetWarm.name'),
           description: t('settings.appearance.themes.sunsetWarm.description'),
-          accent: 'amber' as AccentColor,
-          surface: 'sunset' as SurfaceStyle,
-          radius: 1,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1.05,
-          depth: 'elevated' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'forest-green',
+        accent: 'amber' as AccentColor,
+        surface: 'sunset' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'forest-green',
           name: t('settings.appearance.themes.forestGreen.name'),
           description: t('settings.appearance.themes.forestGreen.description'),
-          accent: 'emerald' as AccentColor,
-          surface: 'moss' as SurfaceStyle,
-          radius: 0.75,
-          typography: 'default' as TypographyScale,
-          contrast: 'bold' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'minimal-light',
+        accent: 'emerald' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'minimal-light',
           name: t('settings.appearance.themes.minimalLight.name'),
           description: t('settings.appearance.themes.minimalLight.description'),
-          accent: 'mono' as AccentColor,
-          surface: 'daylight' as SurfaceStyle,
-          radius: 0,
-          typography: 'compact' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 0.95,
-          depth: 'flat' as DepthStyle,
-          motion: 'reduced' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'cosmic-dark',
+        accent: 'mono' as AccentColor,
+        surface: 'daylight' as SurfaceStyle,
+        radius: 0,
+        typography: 'compact' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.95,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'cosmic-dark',
           name: t('settings.appearance.themes.cosmicDark.name'),
           description: t('settings.appearance.themes.cosmicDark.description'),
-          accent: 'violet' as AccentColor,
-          surface: 'cosmos' as SurfaceStyle,
-          radius: 1.5,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1.1,
-          depth: 'elevated' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
+        accent: 'violet' as AccentColor,
+        surface: 'cosmos' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
         {
           id: 'ocean-breeze',
           name: t('settings.appearance.themes.oceanBreeze.name'),
@@ -2591,11 +2605,11 @@ function AppearanceSettings() {
           typography: 'comfortable' as TypographyScale,
           contrast: 'bold' as ContrastMode,
           density: 1,
-          depth: 'elevated' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-      ],
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
       games: [
         {
           id: 'cyberpunk',
@@ -2798,6 +2812,7 @@ function AppearanceSettings() {
         name: 'Portal',
         description: t('settings.appearance.themes.portal.description'),
         accent: 'orange' as AccentColor,
+        secondaryAccent: 'azure' as AccentColor, // Синий портал
         surface: 'noir' as SurfaceStyle,
         radius: 0,
         typography: 'default' as TypographyScale,
@@ -3364,6 +3379,10 @@ function AppearanceSettings() {
 
   const handleApplyTheme = (theme: typeof allThemes[number]) => {
     setAccent(theme.accent)
+    // Устанавливаем дополнительные акцентные цвета, если они есть в теме
+    const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+    setSecondaryAccent(themeWithAccents.secondaryAccent)
+    setTertiaryAccent(themeWithAccents.tertiaryAccent)
     setSurface(theme.surface)
     setRadius(theme.radius)
     setTypography(theme.typography)
@@ -3626,7 +3645,7 @@ function AppearanceSettings() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-[11px] font-semibold">NR</span>
                         Nova Rivera
                       </div>
@@ -3638,12 +3657,12 @@ function AppearanceSettings() {
                         <Flame className="h-3.5 w-3.5" />
                         {t('trending.title')}
             </span>
-          </div>
+                    </div>
                     <Button variant="outline" size="sm" className="w-full justify-between">
                       {t('settings.appearance.continueReading')}
                       <CornerDownRight className="h-4 w-4" />
                     </Button>
-        </div>
+                    </div>
                   </div>
 
                 <div className="rounded-lg border border-border/70 bg-card/90 p-4 shadow-sm">
@@ -3844,306 +3863,306 @@ function AppearanceSettings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <section className="space-y-4">
-                  <div className="space-y-1">
+        <section className="space-y-4">
+          <div className="space-y-1">
                     <Label className="text-sm font-semibold">{t('settings.appearance.accentColor')}</Label>
-                    <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
                       {t('settings.appearance.accentColorDescription')}
-                    </p>
-                  </div>
-                  <div ref={accentDropdownRef} className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      style={{
-                        borderRadius: 'var(--radius-md)',
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
+            </p>
+          </div>
+              <div ref={accentDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                    <div className="flex items-center gap-3">
                         <span
-                          className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
-                          style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
-                        />
-                        <div className="flex flex-col gap-0.5">
+                      className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
+                      style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
+                    />
+                    <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-semibold">{activeAccent?.label ?? t('settings.appearance.custom')}</span>
                           <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeAccent')}</span>
-                        </div>
                       </div>
-                      {isAccentDropdownOpen ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                      )}
-                    </button>
-                    {isAccentDropdownOpen && (
-                      <div 
-                        className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
-                        style={{
-                          borderRadius: 'var(--radius-md)',
-                        }}
-                      >
-                        <div className="space-y-6">
+                    </div>
+                  {isAccentDropdownOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  )}
+                </button>
+                {isAccentDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    <div className="space-y-6">
                           {getAccentGroups(t).map((group) => {
-                            const groupAccents = group.accents
-                              .map((value) => accentOptionsByValue[value])
-                              .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
+                        const groupAccents = group.accents
+                          .map((value) => accentOptionsByValue[value])
+                          .filter((option): option is (typeof accentOptions)[number] => Boolean(option))
 
-                            if (groupAccents.length === 0) return null
+                        if (groupAccents.length === 0) return null
 
-                            return (
-                              <div key={group.id} className="space-y-3">
-                                <div className="space-y-1">
-                                  <p className="text-sm font-semibold">{group.label}</p>
-                                  <p className="text-xs text-muted-foreground">{group.description}</p>
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                  {groupAccents.map((option) => (
-                                    <AppearanceOptionCard
-                                      key={option.value}
-                                      active={accent === option.value}
-                                      leading={
-                                        <span
-                                          className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                                          style={{ background: `hsl(${option.tone})` }}
-                                        />
-                                      }
-                                      label={option.label}
-                                      description={option.description}
-                                      onSelect={() => {
-                                        setAccent(option.value)
-                                        setIsAccentDropdownOpen(false)
-                                      }}
-                                      preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          })}
-                          {customAccentOption && (
-                            <div className="space-y-3 pt-2 border-t border-border/60">
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold">{t('settings.appearance.custom')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.appearance.createYourOwnAccent')}</p>
-                              </div>
-                              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        return (
+                          <div key={group.id} className="space-y-3">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold">{group.label}</p>
+                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                              {groupAccents.map((option) => (
                                 <AppearanceOptionCard
-                                  key={customAccentOption.value}
-                                  active={accent === customAccentOption.value}
+                                  key={option.value}
+                                  active={accent === option.value}
                                   leading={
                                     <span
                                       className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
-                                      style={{ background: `hsl(${customAccentOption.tone})` }}
+                                      style={{ background: `hsl(${option.tone})` }}
                                     />
                                   }
-                                  label={customAccentOption.label}
-                                  description={customAccentOption.description}
+                                  label={option.label}
+                                  description={option.description}
                                   onSelect={() => {
-                                    setAccent('custom')
+                                    setAccent(option.value)
                                     setIsAccentDropdownOpen(false)
                                   }}
-                                  preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
-                                  footer={
-                                    <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
-                                      <div className="flex items-center justify-between gap-3">
-                                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  preview={<div className="h-2 w-full rounded-full" style={{ background: option.gradient }} />}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {customAccentOption && (
+                        <div className="space-y-3 pt-2 border-t border-border/60">
+                          <div className="space-y-1">
+                                <p className="text-sm font-semibold">{t('settings.appearance.custom')}</p>
+                                <p className="text-xs text-muted-foreground">{t('settings.appearance.createYourOwnAccent')}</p>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            <AppearanceOptionCard
+                              key={customAccentOption.value}
+                              active={accent === customAccentOption.value}
+                              leading={
+                                <span
+                                  className="block size-7 rounded-full shadow-sm ring-1 ring-border/40"
+                                  style={{ background: `hsl(${customAccentOption.tone})` }}
+                                />
+                              }
+                              label={customAccentOption.label}
+                              description={customAccentOption.description}
+                              onSelect={() => {
+                                setAccent('custom')
+                                setIsAccentDropdownOpen(false)
+                              }}
+                              preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
+                              footer={
+                                <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
                                           <span className="uppercase tracking-wide">{t('settings.appearance.light')}</span>
-                                          <input
-                                            type="color"
-                                            value={customAccent.light}
-                                            onChange={(event) => {
-                                              setAccent('custom')
-                                              setCustomAccentColor('light', event.target.value)
-                                            }}
-                                            className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                      <input
+                                        type="color"
+                                        value={customAccent.light}
+                                        onChange={(event) => {
+                                          setAccent('custom')
+                                          setCustomAccentColor('light', event.target.value)
+                                        }}
+                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
                                             aria-label={t('settings.appearance.pickAccentColorLight')}
-                                          />
-                                        </label>
-                                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      />
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
                                           <span className="uppercase tracking-wide">{t('settings.appearance.dark')}</span>
-                                          <input
-                                            type="color"
-                                            value={customAccent.dark}
-                                            onChange={(event) => {
-                                              setAccent('custom')
-                                              setCustomAccentColor('dark', event.target.value)
-                                            }}
-                                            className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                      <input
+                                        type="color"
+                                        value={customAccent.dark}
+                                        onChange={(event) => {
+                                          setAccent('custom')
+                                          setCustomAccentColor('dark', event.target.value)
+                                        }}
+                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
                                             aria-label={t('settings.appearance.pickAccentColorDark')}
-                                          />
-                                        </label>
-                                      </div>
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+              <div className="space-y-1">
+                    <Label className="text-sm font-semibold">{t('settings.appearance.surfacePalette')}</Label>
+                <p className="text-sm text-muted-foreground">
+                      {t('settings.appearance.surfacePaletteDescription')}
+                </p>
+              </div>
+              <div ref={surfaceDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
+                      style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold">{activeSurface?.label ?? t('settings.appearance.custom')}</span>
+                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeSurface')}</span>
+                    </div>
+                  </div>
+                  {isSurfaceDropdownOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                  )}
+                </button>
+                {isSurfaceDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    <div className="space-y-6">
+                          {getSurfaceGroups(t).map((group) => {
+                        const palettes = group.palettes
+                          .map((value) => surfaceOptionsByValue[value])
+                          .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
+
+                        if (palettes.length === 0) return null
+
+                        return (
+                          <div key={group.id} className="space-y-3">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold">{group.label}</p>
+                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                              {palettes.map((option) => (
+                                <AppearanceOptionCard
+                                  key={option.value}
+                                  active={surface === option.value}
+                                  leading={
+                                    <span
+                                      className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
+                                      style={{ backgroundColor: `hsl(${option.tone.background})` }}
+                                    />
+                                  }
+                                  label={option.label}
+                                  description={option.description}
+                                  onSelect={() => {
+                                    setSurface(option.value)
+                                    setIsSurfaceDropdownOpen(false)
+                                  }}
+                                  preview={
+                                    <div className="grid grid-cols-4 gap-1">
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
+                                      <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
                                     </div>
                                   }
                                 />
-                              </div>
+                              ))}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <Separator />
-
-                <section className="space-y-4">
-                  <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.surfacePalette')}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {t('settings.appearance.surfacePaletteDescription')}
-                    </p>
-                  </div>
-                  <div ref={surfaceDropdownRef} className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      style={{
-                        borderRadius: 'var(--radius-md)',
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
-                          style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
-                        />
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{activeSurface?.label ?? t('settings.appearance.custom')}</span>
-                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeSurface')}</span>
-                        </div>
-                      </div>
-                      {isSurfaceDropdownOpen ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
-                      )}
-                    </button>
-                    {isSurfaceDropdownOpen && (
-                      <div 
-                        className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
-                        style={{
-                          borderRadius: 'var(--radius-md)',
-                        }}
-                      >
-                        <div className="space-y-6">
-                          {getSurfaceGroups(t).map((group) => {
-                            const palettes = group.palettes
-                              .map((value) => surfaceOptionsByValue[value])
-                              .filter((option): option is (typeof surfaceOptions)[number] => Boolean(option))
-
-                            if (palettes.length === 0) return null
-
-                            return (
-                              <div key={group.id} className="space-y-3">
-                                <div className="space-y-1">
-                                  <p className="text-sm font-semibold">{group.label}</p>
-                                  <p className="text-xs text-muted-foreground">{group.description}</p>
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                  {palettes.map((option) => (
-                                    <AppearanceOptionCard
-                                      key={option.value}
-                                      active={surface === option.value}
-                                      leading={
-                                        <span
-                                          className="block size-7 rounded-md shadow-sm ring-1 ring-border/40"
-                                          style={{ backgroundColor: `hsl(${option.tone.background})` }}
-                                        />
-                                      }
-                                      label={option.label}
-                                      description={option.description}
-                                      onSelect={() => {
-                                        setSurface(option.value)
-                                        setIsSurfaceDropdownOpen(false)
-                                      }}
-                                      preview={
-                                        <div className="grid grid-cols-4 gap-1">
-                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.background})` }} />
-                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.card})` }} />
-                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.muted})` }} />
-                                          <span className="h-3 rounded-sm" style={{ backgroundColor: `hsl(${option.tone.secondary})` }} />
-                                        </div>
-                                      }
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <section className="space-y-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-sm font-semibold">{t('settings.appearance.interfaceShape')}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t('settings.appearance.interfaceShapeDescription')}
-                      </p>
+                          </div>
+                        )
+                      })}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setRadius(DEFAULT_RADIUS)}
-                      disabled={radiusIsDefault}
-                      aria-label={t('settings.appearance.resetRadiusToDefault')}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
                   </div>
-                  <div className="space-y-3 rounded-lg border border-dashed p-4">
-                    <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
+                )}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1">
+                      <Label className="text-sm font-semibold">{t('settings.appearance.interfaceShape')}</Label>
+            <p className="text-sm text-muted-foreground">
+                        {t('settings.appearance.interfaceShapeDescription')}
+            </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setRadius(DEFAULT_RADIUS)}
+                  disabled={radiusIsDefault}
+                      aria-label={t('settings.appearance.resetRadiusToDefault')}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+          </div>
+          <div className="space-y-3 rounded-lg border border-dashed p-4">
+                <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
                       <span>{t('settings.appearance.sharper')}</span>
                       <span>{Math.round(radius * 16)}px {t('settings.appearance.radius')}</span>
                       <span>{t('settings.appearance.softer')}</span>
-                    </div>
-                    <Slider
-                      value={[radius]}
-                      min={0}
-                      max={2}
-                      step={0.05}
-                      onValueChange={(value) => setRadius(value[0] ?? radius)}
+            </div>
+            <Slider
+              value={[radius]}
+                  min={0}
+                  max={2}
+              step={0.05}
+              onValueChange={(value) => setRadius(value[0] ?? radius)}
                       aria-label={t('settings.appearance.adjustGlobalBorderRadius')}
-                    />
-                  </div>
-                </section>
+            />
+          </div>
+        </section>
 
-                <section className="space-y-4">
-                  <div className="space-y-1">
+        <section className="space-y-4">
+          <div className="space-y-1">
                     <Label className="text-sm font-semibold">{t('settings.appearance.typographyScale')}</Label>
-                    <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
                       {t('settings.appearance.typographyScaleDescription')}
-                    </p>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    {typographyOptions.map((option) => (
-                      <AppearanceOptionCard
-                        key={option.value}
-                        active={typography === option.value}
-                        leading={<option.icon className="h-5 w-5" />}
-                        label={option.label}
-                        description={option.description}
-                        onSelect={() => setTypography(option.value)}
-                        preview={
-                          <div className="space-y-2">
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+                {typographyOptions.map((option) => (
+                  <AppearanceOptionCard
+                  key={option.value}
+                    active={typography === option.value}
+                    leading={<option.icon className="h-5 w-5" />}
+                    label={option.label}
+                    description={option.description}
+                    onSelect={() => setTypography(option.value)}
+                    preview={
+                      <div className="space-y-2">
                             <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">{t('settings.appearance.sample')}</div>
                             <p className="text-sm font-medium">{t('settings.appearance.typographyAdaptsResponsively')}</p>
-                          </div>
-                        }
-                      />
-                    ))}
-                  </div>
-                </section>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+            </section>
 
                 <Separator />
 
-                <section className="space-y-4">
-                  <div className="space-y-1">
+            <section className="space-y-4">
+              <div className="space-y-1">
                     <Label className="text-sm font-semibold">{t('settings.appearance.contrastTitle')}</Label>
                     <p className="text-sm text-muted-foreground">
                       {t('settings.appearance.contrastDescription')}
@@ -4214,43 +4233,43 @@ function AppearanceSettings() {
                 <section className="space-y-4">
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeBuilder')}</Label>
-                    <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                       {t('settings.appearance.themeBuilderDescription')}
-                    </p>
-                  </div>
+                </p>
+              </div>
 
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="border-dashed">
-                      <CardHeader className="pb-3">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card className="border-dashed">
+                  <CardHeader className="pb-3">
                         <CardTitle className="text-base font-semibold">{t('settings.appearance.createTheme')}</CardTitle>
-                        <CardDescription className="text-xs">
+                    <CardDescription className="text-xs">
                           {t('settings.appearance.createThemeDescription')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex flex-col gap-2 sm:flex-row">
-                            <div className="flex-1 relative">
-                              <Input
-                                value={themeName}
-                                onChange={(event) => setThemeName(event.target.value)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex-1 relative">
+                          <Input
+                            value={themeName}
+                            onChange={(event) => setThemeName(event.target.value)}
                                 placeholder={t('settings.appearance.myCustomTheme')}
-                                maxLength={40}
-                                className="sm:flex-1 pr-12"
-                              />
-                              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                                {themeName.length}/40
-                              </div>
-                            </div>
-                            <Button onClick={handleCreateTheme} className="sm:w-auto">
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              {t('settings.appearance.create')}
-                            </Button>
+                            maxLength={40}
+                            className="sm:flex-1 pr-12"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                            {themeName.length}/40
                           </div>
                         </div>
-                        <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
+                        <Button onClick={handleCreateTheme} className="sm:w-auto">
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                              {t('settings.appearance.create')}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
                           <p className="font-medium text-foreground mb-1">{t('settings.appearance.currentSettings')}:</p>
-                          <div className="space-y-1 text-muted-foreground">
+                      <div className="space-y-1 text-muted-foreground">
                             <p>{t('settings.appearance.accent')}: {activeAccent?.label ?? t('settings.appearance.custom')}</p>
                             <p>{t('settings.appearance.surface')}: {activeSurface?.label ?? t('settings.appearance.custom')}</p>
                             <p>{t('settings.appearance.radius')}: {Math.round(radius * 16)}px</p>
@@ -4259,282 +4278,282 @@ function AppearanceSettings() {
                             <p>{t('settings.appearance.density')}: {densityLabel}</p>
                             <p>{t('settings.appearance.depth')}: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
                             <p>{t('settings.appearance.motionTitle')}: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                    <Card className="border-dashed">
-                      <CardHeader className="pb-3">
+                <Card className="border-dashed">
+                  <CardHeader className="pb-3">
                         <CardTitle className="text-base font-semibold">{t('settings.appearance.importExport')}</CardTitle>
-                        <CardDescription className="text-xs">
+                    <CardDescription className="text-xs">
                           {t('settings.appearance.importExportDescription')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => setShowImportDialog(true)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowImportDialog(true)}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
                             {t('settings.appearance.importJson')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => {
-                              const themeConfig = {
-                                accent,
-                                surface,
-                                radius,
-                                typography,
-                                contrast,
-                                density,
-                                depth,
-                                motion,
-                              }
-                              const json = JSON.stringify(themeConfig, null, 2)
-                              navigator.clipboard.writeText(json)
-                              toast({
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          const themeConfig = {
+                            accent,
+                            surface,
+                            radius,
+                            typography,
+                            contrast,
+                            density,
+                            depth,
+                            motion,
+                          }
+                          const json = JSON.stringify(themeConfig, null, 2)
+                          navigator.clipboard.writeText(json)
+                          toast({
                                 title: t('settings.appearance.themeExported'),
                                 description: t('settings.appearance.themeExportedDescription'),
-                              })
-                            }}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
+                          })
+                        }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
                             {t('settings.appearance.exportJson')}
-                          </Button>
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            const cssVars = `--radius: ${radius * 16}px;
+                      </Button>
+                      </div>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const cssVars = `--radius: ${radius * 16}px;
 --accent: ${activeAccent?.tone ?? 'hsl(221.2 83.2% 53.3%)'};
 --surface: ${activeSurface?.tone.background ?? 'hsl(0 0% 100%)'};`
-                            navigator.clipboard.writeText(cssVars)
-                            toast({
+                        navigator.clipboard.writeText(cssVars)
+                        toast({
                               title: t('settings.appearance.cssCopied'),
                               description: t('settings.appearance.cssCopiedDescription'),
-                            })
-                          }}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
+                        })
+                      }}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
                           {t('settings.appearance.copyCssVariables')}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </section>
+                    </Button>
+                  </CardContent>
+                </Card>
+                    </div>
+            </section>
               </CardContent>
             </Card>
 
             {customThemes.length > 0 && (
               <>
-                <Separator />
-                <section className="space-y-4">
-                  <div>
+            <Separator />
+            <section className="space-y-4">
+                <div>
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
-                    <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                       {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                    </p>
+                  </p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {customThemes.map((theme) => {
-                      const themeAccent = accentOptionsByValue[theme.accent]
-                      const themeSurface = surfaceOptionsByValue[theme.surface]
-                      const isActive =
-                        accent === theme.accent &&
-                        surface === theme.surface &&
-                        Math.abs(radius - theme.radius) < 0.01 &&
-                        typography === theme.typography &&
-                        contrast === theme.contrast &&
-                        depth === theme.depth &&
-                        motion === theme.motion
+                  const themeAccent = accentOptionsByValue[theme.accent]
+                  const themeSurface = surfaceOptionsByValue[theme.surface]
+                  const isActive =
+                    accent === theme.accent &&
+                    surface === theme.surface &&
+                    Math.abs(radius - theme.radius) < 0.01 &&
+                    typography === theme.typography &&
+                    contrast === theme.contrast &&
+                    depth === theme.depth &&
+                    motion === theme.motion
 
-                      return (
-                        <Card
-                          key={theme.id}
-                          className={cn(
-                            'relative border transition-all hover:border-primary/60 flex flex-col h-full',
-                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                          )}
+                  return (
+                    <Card
+                      key={theme.id}
+                      className={cn(
+                        'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                        isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                      )}
+                    >
+                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                        <div className="flex items-start justify-between gap-2 h-full">
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <CardTitle className="text-sm font-semibold">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                      </div>
+                            </CardTitle>
+                        </div>
+                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <div className="flex flex-col space-y-3 mt-auto">
+                        <div 
+                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                          style={{ 
+                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                          }}
                         >
-                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                            <div className="flex items-start justify-between gap-2 h-full">
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <CardTitle className="text-sm font-semibold">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                  </div>
-                                </CardTitle>
-                              </div>
-                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                            </div>
-                          </CardHeader>
-                          <CardContent className="flex-1 flex flex-col">
-                            <div className="flex flex-col space-y-3 mt-auto">
-                              <div 
-                                className="border border-border/60 p-4 aspect-video relative overflow-hidden"
-                                style={{ 
-                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
-                                }}
-                              >
+                          <div 
+                            className="absolute inset-0 opacity-5"
+                            style={{
+                              background: themeAccent 
+                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                : 'transparent'
+                            }}
+                          />
+                          
+                          <div className="relative z-10 h-full flex flex-col gap-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
                                 <div 
-                                  className="absolute inset-0 opacity-5"
+                                  className="size-6 rounded-full shrink-0"
                                   style={{
-                                    background: themeAccent 
-                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                      : 'transparent'
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
                                   }}
                                 />
-                                
-                                <div className="relative z-10 h-full flex flex-col gap-2.5">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <div 
-                                        className="size-6 rounded-full shrink-0"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                        }}
-                                      />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
-                                        <div 
-                                          className="text-xs font-semibold truncate"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                              : 'hsl(var(--foreground))'
-                                          }}
-                                        >
-                                          Theme Preview
-                                        </div>
-                                        <div 
-                                          className="text-[10px] truncate opacity-70"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                              : 'hsl(var(--muted-foreground))'
-                                          }}
-                                        >
-                                          {themeAccent?.label ?? theme.accent}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div 
-                                      className="size-1.5 rounded-full shrink-0"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                      }}
-                                    />
-                                  </div>
-
+                                <div className="flex flex-col gap-0.5 min-w-0">
                                   <div 
-                                    className="flex-1 p-2.5 border"
+                                    className="text-xs font-semibold truncate"
                                     style={{
-                                      backgroundColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.card})`
-                                        : 'hsl(var(--card))',
-                                      borderColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                        : 'hsl(var(--border))',
-                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                        : 'hsl(var(--foreground))'
                                     }}
                                   >
-                                    <div className="flex flex-col gap-1.5 h-full">
-                                      <div className="flex items-center gap-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-sm flex-1"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.3,
-                                          }}
-                                        />
-                                        <div 
-                                          className="h-1.5 w-4 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.5,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="flex gap-1.5 flex-1">
-                                        <div 
-                                          className="flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.muted})`
-                                              : 'hsl(var(--muted))',
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                        <div 
-                                          className="w-3 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.2,
-                                          }}
-                                        />
-                                      </div>
-                                      <div 
-                                        className="h-1.5 rounded-full"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                          opacity: 0.6,
-                                        }}
-                                      />
-                                    </div>
+                                    Theme Preview
                                   </div>
-
-                                  <div className="flex items-center gap-1.5 justify-between">
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3].map((i) => (
-                                        <div
-                                          key={i}
-                                          className="size-1.5 rounded-full"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                              : 'hsl(var(--secondary))',
-                                            opacity: 0.3 + (i * 0.1),
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div 
-                                      className="h-2 w-8 rounded-sm"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.4,
-                                      }}
-                                    />
+                                  <div 
+                                    className="text-[10px] truncate opacity-70"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                        : 'hsl(var(--muted-foreground))'
+                                    }}
+                                  >
+                                    {themeAccent?.label ?? theme.accent}
                                   </div>
                                 </div>
                               </div>
+                              <div 
+                                className="size-1.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                }}
+                              />
+                            </div>
+
+                            <div 
+                              className="flex-1 p-2.5 border"
+                              style={{
+                                backgroundColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.card})`
+                                  : 'hsl(var(--card))',
+                                borderColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                  : 'hsl(var(--border))',
+                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                              }}
+                            >
+                              <div className="flex flex-col gap-1.5 h-full">
+                                <div className="flex items-center gap-1.5">
+                                  <div 
+                                    className="h-1.5 rounded-sm flex-1"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.3,
+                                    }}
+                                  />
+                                  <div 
+                                    className="h-1.5 w-4 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.5,
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex gap-1.5 flex-1">
+                                  <div 
+                                    className="flex-1 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.muted})`
+                                        : 'hsl(var(--muted))',
+                                      opacity: 0.4,
+                                    }}
+                                  />
+                                  <div 
+                                    className="w-3 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.2,
+                                    }}
+                                  />
+                                </div>
+                                <div 
+                                  className="h-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
+                                    opacity: 0.6,
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="size-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                        : 'hsl(var(--secondary))',
+                                      opacity: 0.3 + (i * 0.1),
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <div 
+                                className="h-2 w-8 rounded-sm"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                  opacity: 0.4,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
                               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {Math.round(theme.radius * 16)}px
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                                </Badge>
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                          </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
                                 </Badge>
@@ -4544,44 +4563,44 @@ function AppearanceSettings() {
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
                                 </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                                <Button
-                                  variant={isActive ? 'default' : 'outline'}
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleApplyTheme(theme)}
-                                >
-                                  {isActive ? (
-                                    <>
-                                      <Check className="mr-2 h-3 w-3" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Download className="mr-2 h-3 w-3" />
-                                      Apply
-                                    </>
-                                  )}
-                                </Button>
-                                {!theme.official && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleDeleteTheme(theme.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleApplyTheme(theme)}
+                          >
+                            {isActive ? (
+                              <>
+                                <Check className="mr-2 h-3 w-3" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-3 w-3" />
+                                Apply
+                              </>
+                            )}
+                          </Button>
+                          {!theme.official && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDeleteTheme(theme.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                      )}
+                    </div>
                   </div>
-                </section>
+                      </CardContent>
+                    </Card>
+              )
+            })}
+          </div>
+        </section>
               </>
             )}
           </TabsContent>
@@ -4597,10 +4616,10 @@ function AppearanceSettings() {
                   >
                   <div>
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
-                    <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                       {officialThemesGroups.basic.length} {officialThemesGroups.basic.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                    </p>
-                  </div>
+              </p>
+            </div>
                     {collapsedGroups['basic'] ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -4608,9 +4627,12 @@ function AppearanceSettings() {
                     )}
                   </button>
                   {!collapsedGroups['basic'] && (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {officialThemesGroups.basic.map((theme) => {
-                  const themeAccent = accentOptionsByValue[theme.accent]
+                  const accents = getThemeAccents(theme)
+                  const themeAccent = accents.primary
+                  const themeSecondaryAccent = accents.secondary
+                  const themeTertiaryAccent = accents.tertiary
                   const themeSurface = surfaceOptionsByValue[theme.surface]
                   const isActive =
                     accent === theme.accent &&
@@ -4657,7 +4679,7 @@ function AppearanceSettings() {
                           {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                           </div>
                         </div>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <div className="flex flex-col space-y-3 mt-auto">
                         <div 
@@ -4673,7 +4695,9 @@ function AppearanceSettings() {
                             className="absolute inset-0 opacity-5"
                             style={{
                               background: themeAccent 
-                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                ? themeSecondaryAccent
+                                  ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, hsl(${themeSecondaryAccent.tone}) 50%, transparent 100%)`
+                                  : `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
                                 : 'transparent'
                             }}
                           />
@@ -4682,14 +4706,35 @@ function AppearanceSettings() {
                             {/* Header section */}
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
-                                <div 
-                                  className="size-6 rounded-full shrink-0"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                  }}
-                                />
+                                {/* Показываем несколько цветов, если они есть */}
+                                <div className="flex items-center gap-1">
+                                  <div 
+                                    className="size-6 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                    }}
+                                  />
+                                  {themeSecondaryAccent && (
+                                    <div 
+                                      className="size-4 rounded-full shrink-0 border-2 border-background"
+                                      style={{
+                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                        marginLeft: '-8px',
+                                      }}
+                                    />
+                                  )}
+                                  {themeTertiaryAccent && (
+                                    <div 
+                                      className="size-3 rounded-full shrink-0 border-2 border-background"
+                                      style={{
+                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
+                                        marginLeft: '-6px',
+                                      }}
+                                    />
+                                  )}
+              </div>
                                 <div className="flex flex-col gap-0.5 min-w-0">
                                   <div 
                                     className="text-xs font-semibold truncate"
@@ -4710,17 +4755,419 @@ function AppearanceSettings() {
                                     }}
                                   >
                                     {themeAccent?.label ?? theme.accent}
+                                    {themeSecondaryAccent && ` + ${themeSecondaryAccent.label}`}
+                                    {themeTertiaryAccent && ` + ${themeTertiaryAccent.label}`}
                                   </div>
                                 </div>
                               </div>
+                              <div className="flex items-center gap-1">
+                                <div 
+                                  className="size-1.5 rounded-full shrink-0"
+                                  style={{
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
+                                  }}
+                                />
+                                {themeSecondaryAccent && (
+                                  <div 
+                                    className="size-1.5 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                    }}
+                                  />
+                                )}
+                                {themeTertiaryAccent && (
+                                  <div 
+                                    className="size-1.5 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Card preview */}
+                            <div 
+                              className="flex-1 p-2.5 border"
+                              style={{
+                                backgroundColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.card})`
+                                  : 'hsl(var(--card))',
+                                borderColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                  : 'hsl(var(--border))',
+                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                              }}
+                            >
+                              <div className="flex flex-col gap-1.5 h-full">
+                                <div className="flex items-center gap-1.5">
+                                  <div 
+                                    className="h-1.5 rounded-sm flex-1"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.3,
+                                    }}
+                                  />
+                                  {themeSecondaryAccent ? (
+                                    <div 
+                                      className="h-1.5 w-4 rounded-sm"
+                                      style={{
+                                        background: `linear-gradient(90deg, hsl(${themeAccent?.tone || 'var(--primary)'}) 0%, hsl(${themeSecondaryAccent.tone}) 100%)`,
+                                        opacity: 0.5,
+                                      }}
+                                    />
+                                  ) : (
+                                    <div 
+                                      className="h-1.5 w-4 rounded-sm"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.5,
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex gap-1.5 flex-1">
+                                  <div 
+                                    className="flex-1 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.muted})`
+                                        : 'hsl(var(--muted))',
+                                      opacity: 0.4,
+                                    }}
+                                  />
+                                  <div className="flex flex-col gap-0.5 w-3">
+                                    <div 
+                                      className="h-1.5 rounded-sm flex-1"
+                                      style={{
+                                        backgroundColor: themeAccent
+                                          ? `hsl(${themeAccent.tone})`
+                                          : 'hsl(var(--primary))',
+                                        opacity: 0.2,
+                                      }}
+                                    />
+                                    {themeSecondaryAccent && (
+                                      <div 
+                                        className="h-1.5 rounded-sm flex-1"
+                                        style={{
+                                          backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                          opacity: 0.2,
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div 
+                                    className="h-1.5 flex-1 rounded-full"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.6,
+                                    }}
+                                  />
+                                  {themeSecondaryAccent && (
+                                    <div 
+                                      className="h-1.5 flex-1 rounded-full"
+                                      style={{
+                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                        opacity: 0.6,
+                                      }}
+                                    />
+                                  )}
+                                  {themeTertiaryAccent && (
+                                    <div 
+                                      className="h-1.5 flex-1 rounded-full"
+                                      style={{
+                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
+                                        opacity: 0.6,
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Bottom accent indicators */}
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="size-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                        : 'hsl(var(--secondary))',
+                                      opacity: 0.3 + (i * 0.1),
+                                    }}
+                                  />
+                                ))}
+                              </div>
                               <div 
-                                className="size-1.5 rounded-full shrink-0"
+                                className="h-2 w-8 rounded-sm"
                                 style={{
                                   backgroundColor: themeAccent
                                     ? `hsl(${themeAccent.tone})`
                                     : 'hsl(var(--primary))',
+                                  opacity: 0.4,
                                 }}
                               />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {Math.round(theme.radius * 16)}px
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          {theme.description && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
+                            >
+                              <Info className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleApplyTheme(theme)}
+                          >
+                            {isActive ? (
+                              <>
+                                <Check className="mr-2 h-3 w-3" />
+                                {t('settings.appearance.active')}
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-3 w-3" />
+                                {t('settings.appearance.apply')}
+                              </>
+                            )}
+                          </Button>
+                          {!theme.official && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDeleteTheme(theme.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                      )}
+                    </div>
+                  </div>
+                      </CardContent>
+                    </Card>
+              )
+            })}
+          </div>
+                  )}
+                </div>
+              )}
+
+              {/* Games Themes */}
+              {officialThemesGroups.games.length > 0 && (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => toggleGroup('games')}
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                        >
+                          <div>
+                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
+                            <p className="text-xs text-muted-foreground">
+                        {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+                            </p>
+                          </div>
+                    {collapsedGroups['games'] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {!collapsedGroups['games'] && (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {officialThemesGroups.games.map((theme) => {
+                      const accents = getThemeAccents(theme)
+                      const themeAccent = accents.primary
+                      const themeSecondaryAccent = accents.secondary
+                      const themeTertiaryAccent = accents.tertiary
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const isActive =
+                        accent === theme.accent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
+
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              perspective: '1000px',
+                              willChange: 'transform',
+                              position: 'relative',
+                            }}
+                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
+                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
+                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
+                    >
+                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                        <div className="flex items-start justify-between gap-2 h-full">
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <CardTitle className="text-sm font-semibold">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+                                {theme.official && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
+                                    Official
+                                  </Badge>
+                        )}
+                      </div>
+                            </CardTitle>
+                        </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                              </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <div className="flex flex-col space-y-3 mt-auto">
+                        <div 
+                                  className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
+                          style={{ 
+                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                    backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
+                                    transform: 'translateZ(20px)',
+                          }}
+                        >
+                          {/* Background gradient overlay */}
+                          <div 
+                            className="absolute inset-0 opacity-5"
+                            style={{
+                              background: themeAccent 
+                                ? themeSecondaryAccent
+                                  ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, hsl(${themeSecondaryAccent.tone}) 50%, transparent 100%)`
+                                  : `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                : 'transparent'
+                            }}
+                          />
+                          
+                          <div className="relative z-10 h-full flex flex-col gap-2.5">
+                            {/* Header section */}
+                            <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                                {/* Показываем несколько цветов, если они есть */}
+                                <div className="flex items-center gap-1">
+                                  <div 
+                                    className="size-6 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                    }}
+                                  />
+                                  {themeSecondaryAccent && (
+                                    <div 
+                                      className="size-4 rounded-full shrink-0 border-2 border-background"
+                                      style={{
+                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                        marginLeft: '-8px',
+                                      }}
+                                    />
+                                  )}
+                                  {themeTertiaryAccent && (
+                                    <div 
+                                      className="size-3 rounded-full shrink-0 border-2 border-background"
+                                      style={{
+                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
+                                        marginLeft: '-6px',
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <div 
+                                    className="text-xs font-semibold truncate"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                        : 'hsl(var(--foreground))'
+                                    }}
+                                  >
+                                    Theme Preview
+                                  </div>
+                                  <div 
+                                    className="text-[10px] truncate opacity-70"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                        : 'hsl(var(--muted-foreground))'
+                                    }}
+                                  >
+                                    {themeAccent?.label ?? theme.accent}
+                                    {themeSecondaryAccent && ` + ${themeSecondaryAccent.label}`}
+                                    {themeTertiaryAccent && ` + ${themeTertiaryAccent.label}`}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div 
+                                  className="size-1.5 rounded-full shrink-0"
+                                  style={{
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
+                                  }}
+                                />
+                                {themeSecondaryAccent && (
+                                  <div 
+                                    className="size-1.5 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                    }}
+                                  />
+                                )}
+                                {themeTertiaryAccent && (
+                                  <div 
+                                    className="size-1.5 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
+                                    }}
+                                  />
+                                )}
+                              </div>
                             </div>
 
                             {/* Card preview */}
@@ -4817,308 +5264,13 @@ function AppearanceSettings() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {Math.round(theme.radius * 16)}px
+                                  {Math.round(theme.radius * 16)}px
                           </Badge>
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                             {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                          {theme.description && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
-                            >
-                              <Info className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <Button
-                            variant={isActive ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleApplyTheme(theme)}
-                          >
-                            {isActive ? (
-                              <>
-                                <Check className="mr-2 h-3 w-3" />
-                                {t('settings.appearance.active')}
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-3 w-3" />
-                                {t('settings.appearance.apply')}
-                              </>
-                            )}
-                          </Button>
-                          {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                      )}
-                    </div>
-                  </div>
-                      </CardContent>
-                    </Card>
-                    )
-                  })}
-                  </div>
-                  )}
-                </div>
-              )}
-
-              {/* Games Themes */}
-              {officialThemesGroups.games.length > 0 && (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => toggleGroup('games')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
-                  >
-                  <div>
-                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
-                    <p className="text-xs text-muted-foreground">
-                        {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                    </p>
-                  </div>
-                    {collapsedGroups['games'] ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                  {!collapsedGroups['games'] && (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {officialThemesGroups.games.map((theme) => {
-                      const themeAccent = accentOptionsByValue[theme.accent]
-                      const themeSurface = surfaceOptionsByValue[theme.surface]
-                      const isActive =
-                        accent === theme.accent &&
-                        surface === theme.surface &&
-                        Math.abs(radius - theme.radius) < 0.01 &&
-                        typography === theme.typography &&
-                        contrast === theme.contrast &&
-                        depth === theme.depth &&
-                        motion === theme.motion
-
-                      return (
-                        <Card
-                          key={theme.id}
-                          className={cn(
-                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
-                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                          )}
-                            style={{
-                              transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              willChange: 'transform',
-                              position: 'relative',
-                            }}
-                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
-                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
-                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
-                        >
-                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                            <div className="flex items-start justify-between gap-2 h-full">
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <CardTitle className="text-sm font-semibold">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                    {theme.official && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                        Official
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </CardTitle>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="flex-1 flex flex-col">
-                            <div className="flex flex-col space-y-3 mt-auto">
-                              <div 
-                                  className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
-                                style={{ 
-                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                                    backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
-                                    transform: 'translateZ(20px)',
-                                }}
-                              >
-                                {/* Background gradient overlay */}
-                                <div 
-                                  className="absolute inset-0 opacity-5"
-                                  style={{
-                                    background: themeAccent 
-                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                      : 'transparent'
-                                  }}
-                                />
-                                
-                                <div className="relative z-10 h-full flex flex-col gap-2.5">
-                                  {/* Header section */}
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <div 
-                                        className="size-6 rounded-full shrink-0"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                        }}
-                                      />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
-                                        <div 
-                                          className="text-xs font-semibold truncate"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                              : 'hsl(var(--foreground))'
-                                          }}
-                                        >
-                                          Theme Preview
-                                        </div>
-                                        <div 
-                                          className="text-[10px] truncate opacity-70"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                              : 'hsl(var(--muted-foreground))'
-                                          }}
-                                        >
-                                          {themeAccent?.label ?? theme.accent}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div 
-                                      className="size-1.5 rounded-full shrink-0"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                      }}
-                                    />
-                                  </div>
-
-                                  {/* Card preview */}
-                                  <div 
-                                    className="flex-1 p-2.5 border"
-                                    style={{
-                                      backgroundColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.card})`
-                                        : 'hsl(var(--card))',
-                                      borderColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                        : 'hsl(var(--border))',
-                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                                    }}
-                                  >
-                                    <div className="flex flex-col gap-1.5 h-full">
-                                      <div className="flex items-center gap-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-sm flex-1"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.3,
-                                          }}
-                                        />
-                                        <div 
-                                          className="h-1.5 w-4 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.5,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="flex gap-1.5 flex-1">
-                                        <div 
-                                          className="flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.muted})`
-                                              : 'hsl(var(--muted))',
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                        <div 
-                                          className="w-3 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.2,
-                                          }}
-                                        />
-                                      </div>
-                                      <div 
-                                        className="h-1.5 rounded-full"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                          opacity: 0.6,
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Bottom accent indicators */}
-                                  <div className="flex items-center gap-1.5 justify-between">
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3].map((i) => (
-                                        <div
-                                          key={i}
-                                          className="size-1.5 rounded-full"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                              : 'hsl(var(--secondary))',
-                                            opacity: 0.3 + (i * 0.1),
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div 
-                                      className="h-2 w-8 rounded-sm"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.4,
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {Math.round(theme.radius * 16)}px
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                                </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
                                 </Badge>
@@ -5127,11 +5279,11 @@ function AppearanceSettings() {
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
                                 {theme.description && (
-                                  <Button
+                            <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
@@ -5140,41 +5292,41 @@ function AppearanceSettings() {
                                     <Info className="h-3 w-3" />
                                   </Button>
                                 )}
-                                <Button
-                                  variant={isActive ? 'default' : 'outline'}
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleApplyTheme(theme)}
-                                >
-                                  {isActive ? (
-                                    <>
-                                      <Check className="mr-2 h-3 w-3" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Download className="mr-2 h-3 w-3" />
-                                      Apply
-                                    </>
-                                  )}
-                                </Button>
-                                {!theme.official && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleDeleteTheme(theme.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                              size="sm"
+                            className="flex-1"
+                            onClick={() => handleApplyTheme(theme)}
+                          >
+                            {isActive ? (
+                              <>
+                                <Check className="mr-2 h-3 w-3" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-3 w-3" />
+                              Apply
+                              </>
+                            )}
+                </Button>
+                          {!theme.official && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDeleteTheme(theme.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                </Button>
+                      )}
+              </div>
+            </div>
+                      </CardContent>
+                    </Card>
+              )
+            })}
+          </div>
                   )}
                 </div>
               )}
@@ -5185,13 +5337,13 @@ function AppearanceSettings() {
                   <button
                     onClick={() => toggleGroup('extraordinary')}
                     className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
-                  >
-                  <div>
+                        >
+                          <div>
                       <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
-                    <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                         {officialThemesGroups.extraordinary.length} {officialThemesGroups.extraordinary.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                    </p>
-                  </div>
+              </p>
+            </div>
                     {collapsedGroups['extraordinary'] ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -5247,7 +5399,7 @@ function AppearanceSettings() {
                               {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                               </div>
                             </div>
-                          </CardHeader>
+                </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
                             <div className="flex flex-col space-y-3 mt-auto">
                               <div 
@@ -5271,7 +5423,7 @@ function AppearanceSettings() {
                                 <div className="relative z-10 h-full flex flex-col gap-2.5">
                                   {/* Header section */}
                                   <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                                       <div 
                                         className="size-6 rounded-full shrink-0"
                                         style={{
@@ -5290,7 +5442,7 @@ function AppearanceSettings() {
                                           }}
                                         >
                                           Theme Preview
-                                        </div>
+              </div>
                                         <div 
                                           className="text-[10px] truncate opacity-70"
                                           style={{
@@ -5300,7 +5452,7 @@ function AppearanceSettings() {
                                           }}
                                         >
                                           {themeAccent?.label ?? theme.accent}
-                                        </div>
+                          </div>
                                       </div>
                                     </div>
                                     <div 
@@ -5393,8 +5545,8 @@ function AppearanceSettings() {
                                             opacity: 0.3 + (i * 0.1),
                                           }}
                                         />
-                                      ))}
-                                    </div>
+                      ))}
+            </div>
                                     <div 
                                       className="h-2 w-8 rounded-sm"
                                       style={{
@@ -5426,7 +5578,7 @@ function AppearanceSettings() {
                               </div>
                               <div className="flex items-center gap-2 pt-2 border-t border-border/60">
                                 {theme.description && (
-                                  <Button
+                            <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
@@ -5437,7 +5589,7 @@ function AppearanceSettings() {
                                 )}
                                 <Button
                                   variant={isActive ? 'default' : 'outline'}
-                                  size="sm"
+                              size="sm"
                                   className="flex-1"
                                   onClick={() => handleApplyTheme(theme)}
                                 >
@@ -5449,27 +5601,27 @@ function AppearanceSettings() {
                                   ) : (
                                     <>
                                       <Download className="mr-2 h-3 w-3" />
-                                      Apply
+                              Apply
                                     </>
                                   )}
-                                </Button>
+                </Button>
                                 {!theme.official && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
+                            <Button
+                              variant="ghost"
+                              size="icon"
                                     className="h-8 w-8"
                                     onClick={() => handleDeleteTheme(theme.id)}
-                                  >
+                            >
                                     <Trash2 className="h-3 w-3" />
-                                  </Button>
+                </Button>
                                 )}
-                              </div>
-                            </div>
+              </div>
+            </div>
                           </CardContent>
                         </Card>
                       )
                     })}
-                  </div>
+            </div>
                   )}
                 </div>
               )}
@@ -5479,7 +5631,7 @@ function AppearanceSettings() {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
-                <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
               </p>
             </div>
@@ -6427,9 +6579,9 @@ function LanguageSettings() {
         <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
           <div className="flex items-start gap-3">
             <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
-            <p>
-              {t('settings.language.languageDescription')}
-            </p>
+              <p>
+                {t('settings.language.languageDescription')}
+              </p>
           </div>
         </div>
       </CardContent>
@@ -6450,27 +6602,27 @@ function BillingSettings() {
         'December': t('settings.billing.months.december'),
       }
       return [
-        {
-          id: 'INV-2025-003',
+      {
+        id: 'INV-2025-003',
           period: `${monthMap['November']} 2025`,
-          amount: '$18.00',
-          status: 'Paid',
-          downloadUrl: '#',
-        },
-        {
-          id: 'INV-2025-002',
+        amount: '$18.00',
+        status: 'Paid',
+        downloadUrl: '#',
+      },
+      {
+        id: 'INV-2025-002',
           period: `${monthMap['October']} 2025`,
-          amount: '$18.00',
-          status: 'Paid',
-          downloadUrl: '#',
-        },
-        {
-          id: 'INV-2025-001',
+        amount: '$18.00',
+        status: 'Paid',
+        downloadUrl: '#',
+      },
+      {
+        id: 'INV-2025-001',
           period: `${monthMap['September']} 2025`,
-          amount: '$12.00',
-          status: 'Refunded',
-          downloadUrl: '#',
-        },
+        amount: '$12.00',
+        status: 'Refunded',
+        downloadUrl: '#',
+      },
       ]
     },
     [t]

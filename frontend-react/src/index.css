@@ -298,11 +298,12 @@
   }
 
   .tiptap code {
-    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm;
+    @apply rounded bg-muted/60 px-1.5 py-0.5 font-mono text-xs;
   }
 
   .tiptap pre {
     @apply overflow-x-auto p-4 text-sm m-0;
+    line-height: 1.65;
   }
 
   .tiptap pre code {
@@ -310,6 +311,7 @@
     /* Отключаем проверку орфографии и подчеркивание ошибок */
     spellcheck: false;
     -webkit-user-modify: read-write-plaintext-only;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   }
 
   /* Убираем подчеркивание ошибок в блоках кода */
@@ -323,7 +325,9 @@
   }
 
   .tiptap .code-block-content pre {
-    @apply rounded-b-lg;
+    @apply m-0;
+    background: hsl(var(--card));
+    line-height: 1.65;
   }
 
   /* Подсветка синтаксиса для блоков кода */
@@ -517,5 +521,406 @@
   cursor: grabbing;
   opacity: 1;
   transform: scale(0.95);
+}
+
+/* Дополнительные стили для prose элементов */
+@layer components {
+  /* Code blocks - минималистичный дизайн с акцентным цветом */
+  .prose pre {
+    @apply overflow-x-auto p-4 text-sm m-0;
+    line-height: 1.65;
+  }
+
+  /* Правило для .prose pre code, но НЕ для .tiptap (в редакторе код редактируемый) */
+  .prose:not(.tiptap) pre code,
+  .prose-neutral pre code {
+    @apply bg-transparent p-0 text-sm;
+    /* Отключаем проверку орфографии и подчеркивание ошибок */
+    spellcheck: false;
+    -webkit-user-modify: read-only;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  /* В редакторе (.tiptap) код должен быть редактируемым */
+  .tiptap pre code {
+    @apply bg-transparent p-0 text-sm;
+    /* Отключаем проверку орфографии и подчеркивание ошибок */
+    spellcheck: false;
+    -webkit-user-modify: read-write-plaintext-only !important;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  /* Убираем подчеркивание ошибок в блоках кода */
+  .prose pre code *,
+  .tiptap pre code * {
+    text-decoration: none !important;
+  }
+
+  .prose code {
+    @apply rounded bg-muted/60 px-1.5 py-0.5 font-mono text-xs;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  /* Code block wrapper - минималистичный дизайн с акцентным цветом */
+  /* Применяется везде: в редакторе, на review этапе и в опубликованных статьях */
+  .prose .code-block-wrapper,
+  .prose [class*="code-block-wrapper"],
+  .tiptap .code-block-wrapper,
+  div.prose .code-block-wrapper,
+  .prose-neutral .code-block-wrapper,
+  .prose-neutral [class*="code-block-wrapper"] {
+    @apply relative mb-6 rounded-lg overflow-hidden;
+    background: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border) / 0.4) !important;
+    transition: border-color 0.2s ease;
+  }
+
+  .prose .code-block-wrapper:hover,
+  .prose [class*="code-block-wrapper"]:hover,
+  .tiptap .code-block-wrapper:hover,
+  div.prose .code-block-wrapper:hover,
+  .prose-neutral .code-block-wrapper:hover {
+    border-color: hsl(var(--primary) / 0.3) !important;
+  }
+
+  .prose .code-block-wrapper .code-block-header,
+  .prose .code-block-wrapper > div:first-child,
+  .prose [class*="code-block-wrapper"] > div:first-child,
+  .tiptap .code-block-header,
+  div.prose .code-block-wrapper .code-block-header,
+  div.prose .code-block-wrapper > div:first-child,
+  .prose-neutral .code-block-wrapper .code-block-header,
+  .prose-neutral .code-block-wrapper > div:first-child {
+    @apply flex items-center justify-between gap-3 px-3 py-2;
+    background: hsl(var(--muted) / 0.3) !important;
+    border-bottom: 1px solid hsl(var(--border) / 0.3) !important;
+  }
+
+  .prose .code-block-wrapper .code-block-header span,
+  .prose .code-block-wrapper > div:first-child span,
+  .prose .code-block-language,
+  .tiptap .code-block-header span,
+  div.prose .code-block-wrapper .code-block-header span,
+  div.prose .code-block-wrapper > div:first-child span,
+  .prose-neutral .code-block-wrapper .code-block-header span,
+  .prose-neutral .code-block-wrapper > div:first-child span {
+    @apply text-xs font-medium;
+    color: hsl(var(--primary) / 0.8) !important;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .prose .code-block-wrapper pre,
+  .prose [class*="code-block-wrapper"] pre,
+  .prose .code-block-content,
+  .prose .code-block-content pre,
+  .tiptap .code-block-content pre,
+  div.prose .code-block-wrapper pre,
+  div.prose .code-block-content pre,
+  .prose-neutral .code-block-wrapper pre,
+  .prose-neutral .code-block-content pre {
+    @apply m-0;
+    background: hsl(var(--card)) !important;
+    line-height: 1.65;
+  }
+
+  /* В редакторе (.tiptap) код ДОЛЖЕН быть редактируемым - эти правила должны быть ПЕРЕД правилами для .prose */
+  /* Используем более специфичные селекторы, чтобы они точно применялись */
+  /* Увеличиваем специфичность, чтобы перекрыть любые правила для .prose */
+  /* Важно: эти правила должны применяться ПОСЛЕ правил для .prose, чтобы перекрыть их */
+  .tiptap .code-block-wrapper code,
+  .tiptap .code-block-content code,
+  .tiptap pre code,
+  div.tiptap .code-block-wrapper code,
+  div.tiptap .code-block-content code,
+  .tiptap .code-block-wrapper pre code,
+  .tiptap .code-block-content pre code,
+  /* Еще более специфичные селекторы для гарантии */
+  .tiptap[contenteditable="true"] .code-block-wrapper code,
+  .tiptap[contenteditable="true"] .code-block-content code,
+  .tiptap[contenteditable="true"] pre code {
+    -webkit-user-modify: read-write-plaintext-only !important;
+    -moz-user-modify: read-write !important;
+    user-modify: read-write !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    /* Убеждаемся, что contenteditable работает - НЕ устанавливаем contenteditable через CSS, это делается через DOM */
+    pointer-events: auto !important;
+    /* Убеждаемся, что код не заблокирован для редактирования */
+    -webkit-touch-callout: default !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Делаем code blocks нередактируемыми ТОЛЬКО на опубликованных статьях и review (не в редакторе!) */
+  /* Эти правила применяются только к .prose, НЕ к .tiptap */
+  .prose:not(.tiptap) .code-block-wrapper code,
+  .prose:not(.tiptap) .code-block-content code,
+  .prose:not(.tiptap) pre code,
+  div.prose:not(.tiptap) .code-block-wrapper code,
+  div.prose:not(.tiptap) .code-block-content code,
+  .prose-neutral .code-block-wrapper code,
+  .prose-neutral .code-block-content code {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    /* Запрещаем редактирование только в .prose (опубликованные статьи и review) */
+    -webkit-user-modify: read-only !important;
+    -moz-user-modify: read-only !important;
+    user-modify: read-only !important;
+  }
+
+  /* Предотвращаем редактирование через contenteditable только в .prose */
+  .prose .code-block-wrapper[contenteditable="true"] code,
+  .prose .code-block-content[contenteditable="true"] code,
+  div.prose .code-block-wrapper[contenteditable="true"] code {
+    contenteditable: false !important;
+  }
+
+  /* Разрешаем pointer-events для кнопки копирования */
+  .prose .code-block-wrapper .code-block-copy-btn,
+  div.prose .code-block-wrapper .code-block-copy-btn {
+    pointer-events: auto !important;
+  }
+
+  /* Кнопка копирования кода - минималистичный дизайн */
+  .prose .code-block-copy-btn,
+  .tiptap .code-block-header button,
+  div.prose .code-block-copy-btn,
+  .prose-neutral .code-block-copy-btn {
+    @apply h-6 w-6 flex items-center justify-center rounded shrink-0;
+    @apply text-muted-foreground hover:text-primary;
+    @apply hover:bg-primary/10 active:bg-primary/15;
+    @apply transition-all duration-150;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2;
+  }
+
+  .prose .code-block-copy-btn svg,
+  .tiptap .code-block-header button svg,
+  div.prose .code-block-copy-btn svg,
+  .prose-neutral .code-block-copy-btn svg {
+    @apply transition-transform duration-150;
+  }
+
+  .prose .code-block-copy-btn:hover svg,
+  .tiptap .code-block-header button:hover svg,
+  div.prose .code-block-copy-btn:hover svg,
+  .prose-neutral .code-block-copy-btn:hover svg {
+    @apply scale-105;
+  }
+
+  /* Подсветка синтаксиса для блоков кода (совпадает с .tiptap) */
+  .prose pre code .hljs-keyword,
+  .prose pre code .hljs-selector-tag,
+  .prose pre code .hljs-literal,
+  .prose pre code .hljs-title,
+  .prose pre code .hljs-section,
+  .prose pre code .hljs-doctag,
+  .prose pre code .hljs-type,
+  .prose pre code .hljs-name,
+  .prose pre code .hljs-strong {
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  .prose pre code .hljs-string,
+  .prose pre code .hljs-title,
+  .prose pre code .hljs-section,
+  .prose pre code .hljs-built_in,
+  .prose pre code .hljs-attr {
+    color: hsl(142 76% 36%);
+  }
+
+  .prose pre code .hljs-comment,
+  .prose pre code .hljs-quote {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .prose pre code .hljs-number,
+  .prose pre code .hljs-symbol,
+  .prose pre code .hljs-bullet {
+    color: hsl(217 91% 60%);
+  }
+
+  .prose pre code .hljs-function,
+  .prose pre code .hljs-title.function_ {
+    color: hsl(280 100% 70%);
+  }
+
+  .dark .prose pre code .hljs-string,
+  .dark .prose pre code .hljs-title,
+  .dark .prose pre code .hljs-section,
+  .dark .prose pre code .hljs-built_in,
+  .dark .prose pre code .hljs-attr {
+    color: hsl(142 71% 45%);
+  }
+
+  .dark .prose pre code .hljs-number,
+  .dark .prose pre code .hljs-symbol,
+  .dark .prose pre code .hljs-bullet {
+    color: hsl(217 92% 76%);
+  }
+
+  .dark .prose pre code .hljs-function,
+  .dark .prose pre code .hljs-title.function_ {
+    color: hsl(280 100% 80%);
+  }
+
+  /* Layout (колонки) */
+  .prose-layout {
+    @apply my-6;
+  }
+
+  .prose-layout-area {
+    @apply space-y-4;
+  }
+
+  /* Callout/Alert блоки (совпадает с редактором TipTap) */
+  .prose .callout-block,
+  .prose .tiptap .callout-block,
+  .prose aside[data-variant],
+  .prose aside.callout-block {
+    @apply relative my-4 flex gap-3 rounded-lg border border-border/60 bg-muted/30 border-l-4 px-4 py-3 text-sm transition-all;
+  }
+
+  /* Иконки и метки в callout */
+  .prose .callout-block > div:first-child,
+  .prose .tiptap .callout-block > div:first-child,
+  .prose aside[data-variant] > div:first-child {
+    @apply mt-0.5 flex h-5 w-5 shrink-0 items-start justify-center;
+  }
+
+  /* SVG иконки в callout */
+  .prose .callout-block svg,
+  .prose .tiptap .callout-block svg,
+  .prose aside[data-variant] svg {
+    @apply h-5 w-5;
+  }
+
+  .prose .callout-block > div:last-child,
+  .prose .tiptap .callout-block > div:last-child,
+  .prose aside[data-variant] > div:last-child {
+    @apply flex-1 min-w-0;
+  }
+
+  .prose .callout-block span[class*="text-xs"],
+  .prose .tiptap .callout-block span[class*="text-xs"],
+  .prose aside[data-variant] span[class*="text-xs"] {
+    @apply text-xs font-semibold uppercase tracking-wider;
+  }
+
+  /* Code block wrapper в .prose .tiptap (для этапа review) - совпадает с минималистичным дизайном */
+  .prose .tiptap .code-block-wrapper {
+    @apply relative mb-6 rounded-lg overflow-hidden;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.4);
+    transition: border-color 0.2s ease;
+  }
+
+  .prose .tiptap .code-block-wrapper:hover {
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  .prose .tiptap .code-block-header,
+  .prose .tiptap .code-block-wrapper > div:first-child {
+    @apply flex items-center justify-between gap-3 px-3 py-2;
+    background: hsl(var(--muted) / 0.3);
+    border-bottom: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .prose .tiptap .code-block-header span,
+  .prose .tiptap .code-block-wrapper > div:first-child span {
+    @apply text-xs font-medium;
+    color: hsl(var(--primary) / 0.8);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .prose .tiptap .code-block-wrapper pre {
+    @apply m-0;
+    background: hsl(var(--card));
+    line-height: 1.65;
+  }
+
+  /* Подсветка синтаксиса для .prose .tiptap (для этапа review) */
+  .prose .tiptap pre code .hljs-keyword,
+  .prose .tiptap pre code .hljs-selector-tag,
+  .prose .tiptap pre code .hljs-literal,
+  .prose .tiptap pre code .hljs-title,
+  .prose .tiptap pre code .hljs-section,
+  .prose .tiptap pre code .hljs-doctag,
+  .prose .tiptap pre code .hljs-type,
+  .prose .tiptap pre code .hljs-name,
+  .prose .tiptap pre code .hljs-strong {
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  .prose .tiptap pre code .hljs-string,
+  .prose .tiptap pre code .hljs-title,
+  .prose .tiptap pre code .hljs-section,
+  .prose .tiptap pre code .hljs-built_in,
+  .prose .tiptap pre code .hljs-attr {
+    color: hsl(142 76% 36%);
+  }
+
+  .prose .tiptap pre code .hljs-comment,
+  .prose .tiptap pre code .hljs-quote {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .prose .tiptap pre code .hljs-number,
+  .prose .tiptap pre code .hljs-symbol,
+  .prose .tiptap pre code .hljs-bullet {
+    color: hsl(217 91% 60%);
+  }
+
+  .prose .tiptap pre code .hljs-function,
+  .prose .tiptap pre code .hljs-title.function_ {
+    color: hsl(280 100% 70%);
+  }
+
+  .dark .prose .tiptap pre code .hljs-string,
+  .dark .prose .tiptap pre code .hljs-title,
+  .dark .prose .tiptap pre code .hljs-section,
+  .dark .prose .tiptap pre code .hljs-built_in,
+  .dark .prose .tiptap pre code .hljs-attr {
+    color: hsl(142 71% 45%);
+  }
+
+  .dark .prose .tiptap pre code .hljs-number,
+  .dark .prose .tiptap pre code .hljs-symbol,
+  .dark .prose .tiptap pre code .hljs-bullet {
+    color: hsl(217 92% 76%);
+  }
+
+  .dark .prose .tiptap pre code .hljs-function,
+  .dark .prose .tiptap pre code .hljs-title.function_ {
+    color: hsl(280 100% 80%);
+  }
+
+  .prose-callout {
+    @apply border-l-4;
+  }
+
+  .prose-callout-info {
+    @apply bg-blue-50 dark:bg-blue-950/20 border-blue-500 text-blue-900 dark:text-blue-100;
+  }
+
+  .prose-callout-warning {
+    @apply bg-yellow-50 dark:bg-yellow-950/20 border-yellow-500 text-yellow-900 dark:text-yellow-100;
+  }
+
+  .prose-callout-error {
+    @apply bg-red-50 dark:bg-red-950/20 border-red-500 text-red-900 dark:text-red-100;
+  }
+
+  .prose-callout-success {
+    @apply bg-green-50 dark:bg-green-950/20 border-green-500 text-green-900 dark:text-green-100;
+  }
 }
 

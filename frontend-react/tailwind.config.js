@@ -26,6 +26,10 @@ module.exports = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          secondary: "hsl(var(--primary-secondary, var(--primary)))",
+          "secondary-foreground": "hsl(var(--primary-secondary-foreground, var(--primary-foreground)))",
+          tertiary: "hsl(var(--primary-tertiary, var(--primary)))",
+          "tertiary-foreground": "hsl(var(--primary-tertiary-foreground, var(--primary-foreground)))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -79,6 +83,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
 }
 

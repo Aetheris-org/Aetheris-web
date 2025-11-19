@@ -130,15 +130,121 @@ export const Callout = Node.create({
     ]
   },
 
-  renderHTML({ HTMLAttributes }) {
+  toDOM({ node }) {
+    const variant: CalloutVariant = (node.attrs?.variant || 'info') as CalloutVariant
+    const variantConfig = CALLOUT_VARIANTS[variant]
+    
+    // SVG иконки из lucide-react (совпадают с редактором)
+    const getCalloutIconSVG = (variant: CalloutVariant): string => {
+      const icons: Record<CalloutVariant, string> = {
+        // Info icon (lucide-react Info)
+        info: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        // CheckCircle2 icon (lucide-react CheckCircle2)
+        success: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>',
+        // AlertTriangle icon (lucide-react AlertTriangle)
+        warning: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>',
+        // Lightbulb icon (lucide-react Lightbulb)
+        idea: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb"><path d="M9 21h6"></path><path d="M12 3a6 6 0 0 0 0 12c1.657 0 3-4.03 3-9s-1.343-9-3-9Z"></path><path d="M12 3c-1.657 0-3 4.03-3 9s1.343 9 3 9"></path><path d="M12 3v18"></path></svg>',
+        // StickyNote icon (lucide-react StickyNote)
+        note: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sticky-note"><path d="M16 3h5v5"></path><path d="M8 3H3v5"></path><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"></path><path d="m15 9 6-6"></path><path d="M21 3v5h-5"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path></svg>',
+      }
+      return icons[variant] || icons.info
+    }
+    
+    const iconSvg = getCalloutIconSVG(variant)
+    
+    // Создаем DOM структуру с иконками и метками, как в редакторе
+    const aside = document.createElement('aside')
+    aside.setAttribute('data-type', 'callout')
+    aside.setAttribute('data-variant', variant)
+    aside.className = `callout-block group relative my-4 flex gap-3 rounded-lg border border-border/60 bg-muted/30 ${variantConfig.borderColor} border-l-4 px-4 py-3 text-sm transition-all`
+    
+    // Контейнер для иконки
+    const iconContainer = document.createElement('div')
+    iconContainer.className = 'mt-0.5 flex h-5 w-5 shrink-0 items-start justify-center'
+    const iconSpan = document.createElement('span')
+    iconSpan.className = `h-5 w-5 ${variantConfig.iconColor}`
+    iconSpan.innerHTML = iconSvg
+    iconContainer.appendChild(iconSpan)
+    
+    // Контейнер для контента
+    const contentContainer = document.createElement('div')
+    contentContainer.className = 'flex-1 min-w-0'
+    
+    // Заголовок с меткой
+    const headerDiv = document.createElement('div')
+    headerDiv.className = 'flex items-center justify-between mb-2'
+    const labelSpan = document.createElement('span')
+    labelSpan.className = `text-xs font-semibold uppercase tracking-wider ${variantConfig.labelColor}`
+    labelSpan.textContent = variantConfig.label
+    headerDiv.appendChild(labelSpan)
+    
+    // Контейнер для содержимого
+    const proseDiv = document.createElement('div')
+    proseDiv.className = 'prose prose-sm max-w-none text-foreground leading-relaxed'
+    
+    contentContainer.appendChild(headerDiv)
+    contentContainer.appendChild(proseDiv)
+    
+    aside.appendChild(iconContainer)
+    aside.appendChild(contentContainer)
+    
+    // toDOM возвращает [dom, contentDOM]
+    // dom - основной элемент, contentDOM - элемент для контента
+    return [aside, proseDiv]
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const variant: CalloutVariant = (HTMLAttributes.variant || node?.attrs?.variant || 'info') as CalloutVariant
+    const variantConfig = CALLOUT_VARIANTS[variant]
+    
+    // SVG иконки из lucide-react (совпадают с редактором)
+    const getCalloutIconSVG = (variant: CalloutVariant): string => {
+      const icons: Record<CalloutVariant, string> = {
+        // Info icon (lucide-react Info)
+        info: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        // CheckCircle2 icon (lucide-react CheckCircle2)
+        success: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>',
+        // AlertTriangle icon (lucide-react AlertTriangle)
+        warning: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>',
+        // Lightbulb icon (lucide-react Lightbulb)
+        idea: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb"><path d="M9 21h6"></path><path d="M12 3a6 6 0 0 0 0 12c1.657 0 3-4.03 3-9s-1.343-9-3-9Z"></path><path d="M12 3c-1.657 0-3 4.03-3 9s1.343 9 3 9"></path><path d="M12 3v18"></path></svg>',
+        // StickyNote icon (lucide-react StickyNote)
+        note: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sticky-note"><path d="M16 3h5v5"></path><path d="M8 3H3v5"></path><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"></path><path d="m15 9 6-6"></path><path d="M21 3v5h-5"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path></svg>',
+      }
+      return icons[variant] || icons.info
+    }
+    
+    const iconSvg = getCalloutIconSVG(variant)
+    
+    // Возвращаем полную структуру с иконками и метками для HTML экспорта
+    // TipTap renderHTML поддерживает вложенные массивы с тегами
+    // Используем правильный синтаксис: ['tag', attributes, ...children]
+    // Для вставки HTML используем data-атрибут и затем вставляем через JavaScript на этапе review
     return [
       'aside',
       mergeAttributes(HTMLAttributes, {
         'data-type': 'callout',
-        'data-variant': HTMLAttributes.variant ?? 'info',
-        class: 'callout-block',
+        'data-variant': variant,
+        'data-icon-svg': iconSvg,
+        'data-label': variantConfig.label,
+        class: `callout-block group relative my-4 flex gap-3 rounded-lg border border-border/60 bg-muted/30 ${variantConfig.borderColor} border-l-4 px-4 py-3 text-sm transition-all`,
       }),
-      0,
+      [
+        'div',
+        { class: 'mt-0.5 flex h-5 w-5 shrink-0 items-start justify-center callout-icon-container' },
+        ['span', { class: `h-5 w-5 ${variantConfig.iconColor} callout-icon` }],
+      ],
+      [
+        'div',
+        { class: 'flex-1 min-w-0' },
+        [
+          'div',
+          { class: 'flex items-center justify-between mb-2' },
+          ['span', { class: `text-xs font-semibold uppercase tracking-wider ${variantConfig.labelColor} callout-label` }, variantConfig.label],
+        ],
+        ['div', { class: 'prose prose-sm max-w-none text-foreground leading-relaxed' }, 0],
+      ],
     ]
   },
 

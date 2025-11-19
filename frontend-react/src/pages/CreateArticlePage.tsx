@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
-import { RichTextEditor } from '@/components/RichTextEditor'
+import { RichTextEditor, type RichTextEditorRef } from '@/components/RichTextEditor'
 import { useAuthStore } from '@/stores/authStore'
 import {
   Dialog,
@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
-import { createDraftArticle, updateDraftArticle, publishArticle, getDraftArticle } from '@/api/articles'
+import { createDraftArticle, updateDraftArticle, getDraftArticle } from '@/api/articles'
+import { createArticle, updateArticle } from '@/api/articles-graphql'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 
@@ -74,6 +75,7 @@ export default function CreateArticlePage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [contentJSON, setContentJSON] = useState<any>(null) // Сохраняем JSON контент для публикации
   const [excerpt, setExcerpt] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
@@ -101,6 +103,7 @@ export default function CreateArticlePage() {
   const excerptTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const contentPreviewRef = useRef<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const editorRef = useRef<RichTextEditorRef | null>(null)
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
   const croppedImageUrlRef = useRef<string | null>(null)
@@ -204,6 +207,115 @@ export default function CreateArticlePage() {
     } else if (currentStep !== 4) {
       // Reset when leaving review step
       setIsContentExpanded(false)
+    }
+  }, [content, currentStep])
+
+  // Вставляем иконки и метки в callout блоки на этапе review
+  useEffect(() => {
+    if (currentStep === 4 && contentPreviewRef.current) {
+      // Используем setTimeout, чтобы убедиться, что HTML уже отрендерен
+      const timeoutId = setTimeout(() => {
+        const calloutBlocks = contentPreviewRef.current?.querySelectorAll('aside[data-type="callout"]')
+        calloutBlocks?.forEach((callout) => {
+          const aside = callout as HTMLElement
+          const iconSvg = aside.getAttribute('data-icon-svg')
+          const label = aside.getAttribute('data-label')
+          const variant = aside.getAttribute('data-variant') || 'info'
+          
+          // Вставляем иконку
+          if (iconSvg) {
+            const iconContainer = aside.querySelector('.callout-icon-container')
+            const iconSpan = iconContainer?.querySelector('.callout-icon')
+            if (iconSpan && !iconSpan.innerHTML.trim()) {
+              iconSpan.innerHTML = iconSvg
+            }
+          }
+          
+          // Вставляем метку
+          if (label) {
+            const labelSpan = aside.querySelector('.callout-label')
+            if (labelSpan && !labelSpan.textContent?.trim()) {
+              labelSpan.textContent = label
+            }
+          }
+        })
+      }, 100)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [content, currentStep])
+
+  // Вставляем иконки в кнопки копирования code blocks на этапе review
+  useEffect(() => {
+    if (currentStep === 4 && contentPreviewRef.current) {
+      // Используем setTimeout, чтобы убедиться, что HTML уже отрендерен
+      const timeoutId = setTimeout(() => {
+        const codeBlocks = contentPreviewRef.current?.querySelectorAll('.code-block-wrapper')
+        codeBlocks?.forEach((codeBlock) => {
+          const wrapper = codeBlock as HTMLElement
+          const copyIconSvg = wrapper.getAttribute('data-copy-icon-svg')
+          const checkIconSvg = wrapper.getAttribute('data-check-icon-svg')
+          const copyBtn = wrapper.querySelector('.code-block-copy-btn')
+          
+          // Вставляем иконки в кнопку копирования
+          if (copyBtn && !copyBtn.innerHTML.trim()) {
+            if (copyIconSvg && checkIconSvg) {
+              copyBtn.innerHTML = copyIconSvg + checkIconSvg
+            }
+          }
+          
+          // Добавляем обработчик копирования
+          if (copyBtn && !(copyBtn as any)._copyHandlerAdded) {
+            const handler = async (e: Event) => {
+              e.preventDefault()
+              e.stopPropagation()
+              
+              const codeElement = wrapper.querySelector('code')
+              if (!codeElement) return
+              
+              const codeContent = codeElement.textContent || codeElement.innerText || ''
+              
+              try {
+                await navigator.clipboard.writeText(codeContent)
+                
+                // Показываем иконку "галочка"
+                const copyIcon = copyBtn.querySelector('.copy-icon')
+                const checkIcon = copyBtn.querySelector('.check-icon')
+                
+                if (copyIcon && checkIcon) {
+                  copyIcon.classList.add('hidden')
+                  checkIcon.classList.remove('hidden')
+                  
+                  setTimeout(() => {
+                    copyIcon.classList.remove('hidden')
+                    checkIcon.classList.add('hidden')
+                  }, 2000)
+                }
+              } catch (err) {
+                console.error('Failed to copy code:', err)
+              }
+            }
+            
+            copyBtn.addEventListener('click', handler)
+            ;(copyBtn as any)._copyHandlerAdded = true
+            ;(copyBtn as any)._copyHandler = handler
+          }
+        })
+      }, 100)
+      
+      return () => {
+        clearTimeout(timeoutId)
+        // Очищаем обработчики при размонтировании
+        const codeBlocks = contentPreviewRef.current?.querySelectorAll('.code-block-wrapper')
+        codeBlocks?.forEach((codeBlock) => {
+          const copyBtn = codeBlock.querySelector('.code-block-copy-btn')
+          if (copyBtn && (copyBtn as any)._copyHandler) {
+            copyBtn.removeEventListener('click', (copyBtn as any)._copyHandler)
+            delete (copyBtn as any)._copyHandler
+            delete (copyBtn as any)._copyHandlerAdded
+          }
+        })
+      }
     }
   }, [content, currentStep])
 
@@ -541,9 +653,12 @@ export default function CreateArticlePage() {
   }, [])
 
   const handlePublish = async () => {
+    logger.debug('[CreateArticlePage] handlePublish called')
+    
     const currentUser = useAuthStore.getState().user
 
     if (!currentUser) {
+      logger.warn('[CreateArticlePage] Publish attempted without user')
       toast({
         title: t('createArticle.authRequired'),
         description: t('createArticle.authRequiredToPublish'),
@@ -558,7 +673,15 @@ export default function CreateArticlePage() {
     const hasBody = plainText.length > 0
     const sanitizedContent = content.trim()
 
+    logger.debug('[CreateArticlePage] Validation check:', {
+      hasTitle,
+      hasBody,
+      titleLength: title.trim().length,
+      contentLength: plainText.length,
+    })
+
     if (!hasTitle || !hasBody) {
+      logger.warn('[CreateArticlePage] Validation failed:', { hasTitle, hasBody })
       toast({
         title: t('createArticle.missingInformation'),
         description: t('createArticle.missingInformationDescription'),
@@ -567,15 +690,18 @@ export default function CreateArticlePage() {
       return
     }
 
+    logger.debug('[CreateArticlePage] Starting publish process')
     setIsPublishing(true)
 
     try {
+      logger.debug('[CreateArticlePage] Step 1: Uploading preview image...')
       let previewImageUrl: string | null = null
 
       try {
         previewImageUrl = await uploadPreviewImageAsset()
+        logger.debug('[CreateArticlePage] Preview image uploaded:', { url: previewImageUrl })
         } catch (error) {
-        logger.error('Preview upload failed', error)
+        logger.error('[CreateArticlePage] Preview upload failed:', error)
           toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedPublishDescription'),
@@ -585,16 +711,838 @@ export default function CreateArticlePage() {
           return
       }
 
-      const payload = {
+      // Получаем JSON из TipTap editor для отправки в GraphQL
+      logger.debug('[CreateArticlePage] Step 2: Getting JSON from editor...')
+      
+      // Пытаемся получить JSON из редактора (если он смонтирован)
+      let editorJSON: any = null
+      if (editorRef.current) {
+        try {
+          editorJSON = editorRef.current.getJSON()
+          logger.debug('[CreateArticlePage] Got JSON from editor ref')
+        } catch (error) {
+          logger.warn('[CreateArticlePage] Failed to get JSON from editor ref:', error)
+        }
+      }
+      
+      // Используем сохраненный JSON из состояния, если редактор размонтирован
+      const finalContentJSON = editorJSON || contentJSON
+      
+      logger.debug('[CreateArticlePage] Editor JSON check:', {
+        hasRef: !!editorRef.current,
+        hasEditorJSON: !!editorJSON,
+        hasSavedJSON: !!contentJSON,
+        usingSavedJSON: !editorJSON && !!contentJSON,
+        type: finalContentJSON?.type,
+        hasContentArray: Array.isArray(finalContentJSON?.content),
+        contentLength: Array.isArray(finalContentJSON?.content) ? finalContentJSON.content.length : 'not array',
+      })
+      
+      if (!finalContentJSON) {
+        logger.error('[CreateArticlePage] No content JSON available - editor not initialized and no saved JSON')
+        toast({
+          title: t('createArticle.missingInformation'),
+          description: 'Editor is not ready or content is empty. Please add content and try again.',
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+      
+      // Проверяем, что это валидный ProseMirror документ
+      if (finalContentJSON.type !== 'doc') {
+        logger.error('[CreateArticlePage] Invalid ProseMirror document:', {
+          type: finalContentJSON.type,
+          contentJSON: finalContentJSON,
+        })
+        toast({
+          title: t('createArticle.missingInformation'),
+          description: 'Invalid editor content format. Please try refreshing the page.',
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+      
+      // Проверяем, что есть контент (не пустой документ)
+      const hasContent = finalContentJSON.content && Array.isArray(finalContentJSON.content) && finalContentJSON.content.length > 0
+      if (!hasContent) {
+        logger.error('[CreateArticlePage] Editor content is empty')
+        toast({
+          title: t('createArticle.missingInformation'),
+          description: t('createArticle.contentRequired'),
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+
+      // KeystoneJS использует Slate формат (children), TipTap использует ProseMirror (content)
+      // Нужно преобразовать ProseMirror → Slate
+      // Функция преобразования ProseMirror узла в Slate узел
+      const convertProseMirrorToSlate = (node: any): any => {
+        if (!node || typeof node !== 'object') {
+          return null
+        }
+
+        // Текстовый узел: { type: "text", text: "..." } → { text: "..." }
+        if (node.type === 'text') {
+          const result: any = {
+            text: node.text || '',
+          }
+          
+          // Обработка форматирования (bold, italic, etc.)
+          if (node.marks && node.marks.length > 0) {
+            // Копируем только truthy значения (не false)
+            const hasBold = node.marks.some((m: any) => m.type === 'bold')
+            const hasItalic = node.marks.some((m: any) => m.type === 'italic')
+            const hasCode = node.marks.some((m: any) => m.type === 'code')
+            
+            if (hasBold) result.bold = true
+            if (hasItalic) result.italic = true
+            if (hasCode) result.code = true
+            
+            // НЕ добавляем url в текстовый узел - KeystoneJS не поддерживает это поле
+            // Ссылки должны быть обработаны как отдельные узлы типа 'link' на уровне paragraph
+            // Это будет обработано позже при нормализации структуры
+          }
+          
+          return result
+        }
+
+        // Специальная обработка для listItem
+        // TipTap listItem содержит content с paragraph, но KeystoneJS Slate ожидает list-item с прямыми children
+        if (node.type === 'listItem' && Array.isArray(node.content)) {
+          if (import.meta.env.DEV) {
+            logger.debug('[convertProseMirrorToSlate] Processing listItem:', {
+              contentLength: node.content.length,
+              content: JSON.stringify(node.content).substring(0, 300),
+            });
+          }
+          
+          // Преобразуем content listItem в children
+          // listItem в TipTap обычно содержит paragraph, который нужно "развернуть"
+          const convertedChildren = node.content
+            .map(convertProseMirrorToSlate)
+            .filter((child: any) => child !== null)
+          
+          if (import.meta.env.DEV) {
+            logger.debug('[convertProseMirrorToSlate] Converted listItem children:', {
+              count: convertedChildren.length,
+              children: JSON.stringify(convertedChildren).substring(0, 300),
+            });
+          }
+          
+          // Если внутри listItem есть paragraph, извлекаем его children
+          // KeystoneJS Slate ожидает: { type: 'list-item', children: [{ text: '...' }] }
+          // или { type: 'list-item', children: [{ type: 'paragraph', children: [{ text: '...' }] }] }
+          let finalChildren = convertedChildren
+          
+          // Если все children - это paragraph, можно оставить как есть или развернуть
+          // KeystoneJS поддерживает оба варианта, но лучше оставить paragraph для совместимости
+          
+          const result: any = {
+            type: 'list-item',
+            children: finalChildren.length > 0 ? finalChildren : [{ text: '' }],
+          };
+          
+          // Сохраняем blockId для anchor блоков (BlockAnchor extension)
+          if (node.attrs && node.attrs.blockId) {
+            result.blockId = node.attrs.blockId
+          }
+          
+          if (import.meta.env.DEV) {
+            logger.debug('[convertProseMirrorToSlate] Final listItem result:', {
+              result: JSON.stringify(result).substring(0, 300),
+            });
+          }
+          
+          return result;
+        }
+
+        // Обработка callout - конвертируем в blockquote с сохранением variant
+        // KeystoneJS не поддерживает кастомный тип 'callout', поэтому используем blockquote
+        // Сохраняем variant в первом дочернем элементе для надежности
+        if (node.type === 'callout' && Array.isArray(node.content)) {
+          const calloutChildren = node.content
+            .map(convertProseMirrorToSlate)
+            .filter((child: any) => child !== null)
+          
+          // Если нет children, создаем пустой paragraph
+          const finalChildren = calloutChildren.length > 0 
+            ? calloutChildren 
+            : [{ type: 'paragraph', children: [{ text: '' }] }]
+          
+          // Сохраняем variant через маркер в тексте первого paragraph
+          // KeystoneJS не принимает кастомные поля, поэтому используем маркер в тексте
+          if (node.attrs && node.attrs.variant && finalChildren.length > 0) {
+            const firstChild = finalChildren[0]
+            if (firstChild && firstChild.type === 'paragraph' && firstChild.children && firstChild.children.length > 0) {
+              // Добавляем невидимый маркер в начало первого текстового узла
+              // Формат: \u200B\u200B\u200B[CALLOUT:variant]\u200B\u200B\u200B
+              const marker = `\u200B\u200B\u200B[CALLOUT:${node.attrs.variant}]\u200B\u200B\u200B`
+              const firstTextNode = firstChild.children[0]
+              if (firstTextNode && typeof firstTextNode === 'object' && firstTextNode.text !== undefined) {
+                // Добавляем маркер в начало текста
+                firstTextNode.text = marker + (firstTextNode.text || '')
+              } else {
+                // Если нет текстового узла, создаем его
+                firstChild.children.unshift({ text: marker })
+              }
+            }
+          }
+          
+          const result: any = {
+            type: 'blockquote',
+            children: finalChildren,
+          }
+          
+          // Сохраняем blockId для anchor блоков (BlockAnchor extension)
+          if (node.attrs && node.attrs.blockId) {
+            result.blockId = node.attrs.blockId
+          }
+          
+          // НЕ сохраняем variant в самом blockquote, так как KeystoneJS не примет его
+          // Variant сохранен через маркер в тексте первого paragraph
+          // Это будет восстановлено при рендеринге в slate-to-html.ts
+          
+          return result
+        }
+
+        // Обработка columns - конвертируем в layout
+        if (node.type === 'columns' && Array.isArray(node.content)) {
+          const columns = node.content || []
+          const columnCount = columns.length
+          
+          // Определяем layout на основе количества колонок
+          let layout: number[] = [1, 1]
+          if (columnCount === 3) {
+            layout = [1, 1, 1]
+          } else if (columnCount > 3) {
+            layout = [1, 1, 1]
+            columns.splice(3)
+          }
+          
+          // Конвертируем каждую колонку в layout-area
+          const layoutAreas = columns.map((column: any) => {
+            const columnContent = column.content || []
+            const convertedChildren = columnContent
+              .map(convertProseMirrorToSlate)
+              .filter((child: any) => child !== null)
+            
+            return {
+              type: 'layout-area',
+              children: convertedChildren.length > 0 ? convertedChildren : [{ type: 'paragraph', children: [{ text: '' }] }],
+            }
+          })
+          
+          return {
+            type: 'layout',
+            layout: layout,
+            children: layoutAreas,
+          }
+        }
+
+        // Блоки: { type: "paragraph", content: [...] } → { type: "paragraph", children: [...] }
+        if (node.type && Array.isArray(node.content)) {
+          const children = node.content
+            .map(convertProseMirrorToSlate)
+            .filter((child: any) => child !== null)
+
+          // Преобразуем типы блоков TipTap в типы KeystoneJS Slate
+          // KeystoneJS поддерживает: 'paragraph', 'heading', 'blockquote', 'code', 'divider', 'list-item', 'ordered-list', 'unordered-list', 'layout', 'layout-area'
+          let slateType = node.type
+          const typeMapping: Record<string, string> = {
+            'orderedList': 'ordered-list',
+            'bulletList': 'unordered-list', // Важно: bulletList → unordered-list (не bulleted-list!)
+            'codeBlock': 'code', // Важно: codeBlock → code (не code-block!)
+            // TipTap использует те же названия для базовых блоков
+            'paragraph': 'paragraph',
+            'heading': 'heading',
+            'blockquote': 'blockquote',
+            'horizontalRule': 'divider',
+          }
+          if (typeMapping[node.type]) {
+            slateType = typeMapping[node.type]
+          }
+
+          const result: any = {
+            type: slateType,
+            children: children.length > 0 ? children : [{ text: '' }],
+          }
+
+          // Добавляем дополнительные свойства блока
+          if (node.attrs) {
+            if (node.type === 'heading' && node.attrs.level) {
+              result.level = node.attrs.level
+            }
+            if (node.attrs.textAlign) {
+              result.textAlign = node.attrs.textAlign
+            }
+            // Сохраняем язык для code blocks
+            if ((node.type === 'codeBlock' || slateType === 'code') && node.attrs.language) {
+              result.language = node.attrs.language
+            }
+            // Сохраняем blockId для anchor блоков (BlockAnchor extension)
+            if (node.attrs.blockId) {
+              result.blockId = node.attrs.blockId
+            }
+            // Сохраняем variant для callout (который конвертируется в blockquote)
+            // Это обрабатывается выше в специальной обработке callout
+          }
+
+          // Для hardBreak создаем пустой paragraph
+          if (node.type === 'hardBreak') {
+            return {
+              type: 'paragraph',
+              children: [{ text: '' }],
+            }
+          }
+
+          return result
+        }
+
+        // Если это уже Slate формат (есть children), нормализуем типы
+        if (node.type && Array.isArray(node.children)) {
+          // Нормализуем типы блоков
+          const typeMapping: Record<string, string> = {
+            'orderedList': 'ordered-list',
+            'bulletList': 'unordered-list', // Важно: bulletList → unordered-list (не bulleted-list!)
+            'codeBlock': 'code', // Важно: codeBlock → code (не code-block!)
+            'code-block': 'code', // Также нормализуем уже преобразованный тип
+            'bulleted-list': 'unordered-list', // Также нормализуем уже преобразованный тип
+            'listItem': 'list-item', // Важно: listItem → list-item
+          }
+          if (typeMapping[node.type]) {
+            return {
+              ...node,
+              type: typeMapping[node.type],
+            }
+          }
+          return node
+        }
+
+        return null
+      }
+
+      // Преобразуем ProseMirror JSON в Slate формат
+      let contentDocument: any[] = []
+      if (finalContentJSON && typeof finalContentJSON === 'object') {
+        if (finalContentJSON.type === 'doc' && Array.isArray(finalContentJSON.content)) {
+          // Извлекаем массив блоков из ProseMirror doc и преобразуем в Slate
+          contentDocument = finalContentJSON.content
+            .map(convertProseMirrorToSlate)
+            .filter((block: any) => block !== null)
+          
+          logger.debug('[CreateArticlePage] Converted ProseMirror to Slate:', {
+            contentLength: contentDocument.length,
+            firstBlock: contentDocument[0],
+          })
+        } else if (Array.isArray(finalContentJSON)) {
+          // Уже массив блоков - проверяем формат и преобразуем если нужно
+          contentDocument = finalContentJSON
+            .map(convertProseMirrorToSlate)
+            .filter((block: any) => block !== null)
+          
+          logger.debug('[CreateArticlePage] Converted array to Slate:', {
+            contentLength: contentDocument.length,
+          })
+        } else {
+          // Fallback: создаем пустой параграф
+          logger.warn('[CreateArticlePage] Unexpected content format, creating empty paragraph:', finalContentJSON)
+          contentDocument = [
+            {
+              type: 'paragraph',
+              children: [{ text: '' }],
+            },
+          ]
+        }
+      } else {
+        // Пустой документ - создаем пустой параграф
+        logger.warn('[CreateArticlePage] Empty or invalid content JSON, creating empty paragraph')
+        contentDocument = [
+          {
+            type: 'paragraph',
+            children: [{ text: '' }],
+          },
+        ]
+      }
+
+      // Валидация: убеждаемся, что contentDocument - это массив
+      if (!Array.isArray(contentDocument) || contentDocument.length === 0) {
+        logger.error('[CreateArticlePage] contentDocument is not a valid array:', contentDocument)
+        toast({
+          title: t('createArticle.missingInformation'),
+          description: 'Invalid content format',
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+
+      // Фильтруем неподдерживаемые типы блоков (например, columns)
+      // KeystoneJS document field поддерживает: 'paragraph', 'heading', 'blockquote', 'code', 'divider', 'list-item', 'ordered-list', 'unordered-list', 'layout', 'layout-area'
+      // callout конвертируется в blockquote с сохранением variant
+      const supportedTypes = ['paragraph', 'heading', 'blockquote', 'code', 'unordered-list', 'ordered-list', 'list-item', 'divider', 'layout', 'layout-area']
+      
+      // Рекурсивная функция для нормализации типов блоков в children
+      const normalizeBlockTypes = (block: any): any => {
+        if (!block || typeof block !== 'object') {
+          return block
+        }
+
+        // Нормализуем тип блока
+        // KeystoneJS использует: 'code' (не 'code-block'), 'unordered-list' (не 'bulleted-list')
+        const typeMapping: Record<string, string> = {
+          'listItem': 'list-item',
+          'orderedList': 'ordered-list',
+          'bulletList': 'unordered-list', // Важно: bulletList → unordered-list
+          'bulleted-list': 'unordered-list', // Также нормализуем уже преобразованный тип
+          'codeBlock': 'code', // Важно: codeBlock → code
+          'code-block': 'code', // Также нормализуем уже преобразованный тип
+        }
+        
+        if (block.type && typeMapping[block.type]) {
+          block = {
+            ...block,
+            type: typeMapping[block.type],
+          }
+        }
+
+        // Рекурсивно нормализуем children
+        if (Array.isArray(block.children)) {
+          block = {
+            ...block,
+            children: block.children.map(normalizeBlockTypes),
+          }
+        }
+
+        return block
+      }
+
+      // Функция для конвертации columns в layout
+      const convertColumnsToLayout = (block: any): any => {
+        if (block.type === 'columns' && Array.isArray(block.content)) {
+          // TipTap columns: { type: 'columns', content: [column, column, ...] }
+          // Конвертируем в KeystoneJS layout: { type: 'layout', layout: [1, 1] или [1, 1, 1], children: [layout-area, layout-area, ...] }
+          const columns = block.content || []
+          const columnCount = columns.length
+          
+          // Определяем layout на основе количества колонок
+          let layout: number[] = [1, 1]
+          if (columnCount === 3) {
+            layout = [1, 1, 1]
+          } else if (columnCount > 3) {
+            // Если больше 3 колонок, ограничиваем до 3
+            layout = [1, 1, 1]
+            columns.splice(3)
+          }
+          
+          // Конвертируем каждую колонку в layout-area
+          const layoutAreas = columns.map((column: any) => {
+            // TipTap column: { type: 'column', content: [...] }
+            // KeystoneJS layout-area: { type: 'layout-area', children: [...] }
+            const columnContent = column.content || []
+            const convertedChildren = columnContent
+              .map(convertProseMirrorToSlate)
+              .filter((child: any) => child !== null)
+            
+            return {
+              type: 'layout-area',
+              children: convertedChildren.length > 0 ? convertedChildren : [{ type: 'paragraph', children: [{ text: '' }] }],
+            }
+          })
+          
+          return {
+            type: 'layout',
+            layout: layout,
+            children: layoutAreas,
+          }
+        }
+        return block
+      }
+
+      contentDocument = contentDocument
+        .map((block: any) => {
+          // Сначала нормализуем типы блоков (listItem → list-item)
+          block = normalizeBlockTypes(block)
+          
+          // Конвертируем columns в layout
+          if (block.type === 'columns') {
+            const converted = convertColumnsToLayout(block)
+            if (converted.type === 'layout') {
+              return converted
+            }
+          }
+          
+          // Если тип не поддерживается, преобразуем в paragraph
+          if (block.type && !supportedTypes.includes(block.type)) {
+            logger.warn('[CreateArticlePage] Unsupported block type, converting to paragraph:', block.type)
+            // Извлекаем текст из неподдерживаемого блока
+            const extractText = (node: any): string => {
+              if (node.text) return node.text
+              if (node.children && Array.isArray(node.children)) {
+                return node.children.map(extractText).join(' ')
+              }
+              return ''
+            }
+            const text = extractText(block)
+            return {
+              type: 'paragraph',
+              children: text ? [{ text }] : [{ text: '' }],
+            }
+          }
+          return block
+        })
+        .filter((block: any) => block !== null)
+
+      // Дополнительная валидация и нормализация структуры блоков
+      // Убеждаемся, что все блоки имеют правильную структуру
+      const validateAndNormalizeBlock = (block: any): any => {
+        if (!block || typeof block !== 'object') {
+          return null
+        }
+
+        // Убеждаемся, что у блока есть type
+        if (!block.type) {
+          logger.warn('[CreateArticlePage] Block without type, skipping:', block)
+          return null
+        }
+
+        // Убеждаемся, что у блока есть children (даже если пустой массив)
+        if (!Array.isArray(block.children)) {
+          logger.warn('[CreateArticlePage] Block without children array, adding empty children:', block.type)
+          block.children = [{ text: '' }]
+        }
+
+        // Для code убеждаемся, что children содержат текст
+        // KeystoneJS использует 'code', а не 'code-block'
+        if (block.type === 'code' || block.type === 'code-block') {
+          // Сохраняем кастомные поля (language и т.д.)
+          const customFields: any = {}
+          if (block.language) customFields.language = block.language
+          if (block['data-callout-variant']) customFields['data-callout-variant'] = block['data-callout-variant']
+          
+          // Нормализуем тип
+          if (block.type === 'code-block') {
+            block.type = 'code'
+          }
+          if (block.children.length === 0) {
+            block.children = [{ text: '' }]
+          }
+          // Убеждаемся, что все children - это текстовые узлы
+          block.children = block.children.map((child: any) => {
+            if (typeof child === 'string') {
+              return { text: child }
+            }
+            if (child && typeof child === 'object' && child.text !== undefined) {
+              return child
+            }
+            return { text: String(child || '') }
+          })
+          
+          // Восстанавливаем кастомные поля
+          Object.assign(block, customFields)
+        }
+
+        // Обрабатываем blockId (для anchor блоков)
+        // KeystoneJS не принимает кастомные поля, поэтому сохраняем blockId через специальный маркер в тексте
+        if (block.blockId) {
+          const blockId = block.blockId
+          if (block.children && block.children.length > 0) {
+            // Ищем первый текстовый узел (может быть напрямую в children или в paragraph)
+            let firstTextNode: any = null
+            
+            // Проверяем, есть ли текстовый узел напрямую в children
+            const directTextNode = block.children.find((child: any) => 
+              child && typeof child === 'object' && child.text !== undefined && !child.type
+            )
+            
+            if (directTextNode) {
+              firstTextNode = directTextNode
+            } else {
+              // Ищем в первом paragraph
+              const firstChild = block.children[0]
+              if (firstChild && firstChild.type === 'paragraph' && firstChild.children && firstChild.children.length > 0) {
+                firstTextNode = firstChild.children.find((child: any) => 
+                  child && typeof child === 'object' && child.text !== undefined
+                )
+              } else if (firstChild && firstChild.text !== undefined) {
+                // Если первый child - это текстовый узел
+                firstTextNode = firstChild
+              }
+            }
+            
+            if (firstTextNode) {
+              // Добавляем невидимый маркер в начало текста
+              // Формат: \u200B\u200B\u200B[ANCHOR:blockId]\u200B\u200B\u200B
+              // Используем zero-width space (\u200B) чтобы маркер был невидим, но сохранился в БД
+              const marker = `\u200B\u200B\u200B[ANCHOR:${blockId}]\u200B\u200B\u200B`
+              if (firstTextNode.text !== undefined) {
+                // Проверяем, нет ли уже маркера (чтобы не дублировать)
+                if (!firstTextNode.text.includes(`[ANCHOR:${blockId}]`)) {
+                  const existingText = firstTextNode.text || ''
+                  // Если текст пустой или содержит только пробелы, добавляем пробел после маркера
+                  // чтобы узел не был полностью пустым (KeystoneJS может отклонить пустые узлы)
+                  firstTextNode.text = marker + (existingText.trim() === '' ? ' ' : existingText)
+                }
+              }
+            } else {
+              // Если нет текстового узла, создаем его в начале
+              if (block.children[0] && block.children[0].type === 'paragraph') {
+                // Добавляем текстовый узел с маркером в начало paragraph
+                // Добавляем пробел после маркера, чтобы узел не был пустым
+                const marker = `\u200B\u200B\u200B[ANCHOR:${blockId}]\u200B\u200B\u200B `
+                if (!Array.isArray(block.children[0].children)) {
+                  block.children[0].children = []
+                }
+                block.children[0].children.unshift({ text: marker })
+              } else {
+                // Добавляем текстовый узел с маркером в начало children
+                // Добавляем пробел после маркера, чтобы узел не был пустым
+                const marker = `\u200B\u200B\u200B[ANCHOR:${blockId}]\u200B\u200B\u200B `
+                block.children.unshift({ text: marker })
+              }
+            }
+          } else {
+            // Если нет children, создаем paragraph с текстовым узлом, содержащим маркер
+            // Добавляем пробел после маркера, чтобы узел не был пустым
+            const marker = `\u200B\u200B\u200B[ANCHOR:${blockId}]\u200B\u200B\u200B `
+            block.children = [{ type: 'paragraph', children: [{ text: marker }] }]
+          }
+        }
+
+        // Для blockquote обрабатываем variant (для callout)
+        // KeystoneJS не принимает кастомные поля, поэтому сохраняем variant через специальный маркер в тексте
+        if (block.type === 'blockquote') {
+          // Если variant есть в blockquote, сохраняем его через маркер в тексте первого paragraph
+          if (block.variant || block['data-callout-variant']) {
+            const variant = block.variant || block['data-callout-variant']
+            if (block.children && block.children.length > 0) {
+              const firstChild = block.children[0]
+              if (firstChild && firstChild.type === 'paragraph' && firstChild.children && firstChild.children.length > 0) {
+                // Добавляем невидимый маркер в начало первого текстового узла
+                // Формат: \u200B\u200B\u200B[CALLOUT:variant]\u200B\u200B\u200B
+                // Используем zero-width space (\u200B) чтобы маркер был невидим, но сохранился в БД
+                const marker = `\u200B\u200B\u200B[CALLOUT:${variant}]\u200B\u200B\u200B`
+                const firstTextNode = firstChild.children[0]
+                if (firstTextNode && typeof firstTextNode === 'object' && firstTextNode.text !== undefined) {
+                  // Проверяем, нет ли уже маркера (чтобы не дублировать)
+                  if (!firstTextNode.text.includes(`[CALLOUT:${variant}]`)) {
+                    // Добавляем маркер в начало текста
+                    firstTextNode.text = marker + (firstTextNode.text || '')
+                  }
+                } else if (firstTextNode && typeof firstTextNode === 'string') {
+                  // Если это строка, создаем текстовый узел
+                  firstChild.children[0] = { text: marker + firstTextNode }
+                } else {
+                  // Если нет текстового узла, создаем его
+                  firstChild.children.unshift({ text: marker })
+                }
+              }
+            }
+          }
+          // Удаляем variant с самого blockquote, так как KeystoneJS не примет его
+          // Variant будет восстановлен при рендеринге из маркера в тексте
+        }
+
+        // Для списков убеждаемся, что все children - это list-item
+        // KeystoneJS использует 'unordered-list', а не 'bulleted-list'
+        if (block.type === 'ordered-list' || block.type === 'unordered-list' || block.type === 'bulleted-list') {
+          // Нормализуем тип
+          if (block.type === 'bulleted-list') {
+            block.type = 'unordered-list'
+          }
+          block.children = block.children.map((child: any) => {
+            if (!child || typeof child !== 'object') {
+              return null
+            }
+            // Нормализуем тип list-item
+            if (child.type === 'listItem' || child.type === 'list-item') {
+              return {
+                ...child,
+                type: 'list-item',
+                children: Array.isArray(child.children) ? child.children : [{ text: '' }],
+              }
+            }
+            // Если это не list-item, создаем обертку
+            return {
+              type: 'list-item',
+              children: [child],
+            }
+          }).filter((child: any) => child !== null)
+        }
+
+        // Рекурсивно валидируем children
+        if (Array.isArray(block.children)) {
+          block.children = block.children.map((child: any) => {
+            if (child && typeof child === 'object' && child.type) {
+              return validateAndNormalizeBlock(child)
+            }
+            // Очищаем текстовые узлы от полей с false значениями и недопустимых полей
+            if (child && typeof child === 'object' && child.text !== undefined) {
+              const cleanedChild: any = { text: child.text }
+              // Копируем только поля с truthy значениями (кроме text)
+              if (child.bold === true) cleanedChild.bold = true
+              if (child.italic === true) cleanedChild.italic = true
+              if (child.code === true) cleanedChild.code = true
+              if (child.underline === true) cleanedChild.underline = true
+              if (child.strikethrough === true) cleanedChild.strikethrough = true
+              // Явно НЕ копируем url - KeystoneJS не поддерживает поле url в текстовых узлах
+              // Ссылки должны быть обработаны отдельно как узлы типа 'link'
+              // Если url присутствует, просто игнорируем его (ссылка будет потеряна, но структура будет валидной)
+              // TODO: Преобразовать ссылки в узлы типа 'link' на этапе convertProseMirrorToSlate
+              return cleanedChild
+            }
+            return child
+          }).filter((child: any) => child !== null)
+        }
+
+        // Сохраняем все кастомные поля (language и т.д.), но НЕ variant для blockquote
+        // Создаем новый объект с сохранением всех полей
+        const result: any = {
+          type: block.type,
+          children: block.children,
+        }
+        
+        // Копируем все кастомные поля, кроме variant, data-callout-variant и blockId
+        // (они уже сохранены через маркеры в тексте)
+        Object.keys(block).forEach(key => {
+          if (key !== 'type' && key !== 'children' && !key.startsWith('_')) {
+            // НЕ копируем blockId (сохранен через маркер в тексте)
+            if (key === 'blockId') {
+              return // Пропускаем это поле, так как blockId сохранен через маркер в тексте
+            }
+            // Для blockquote не копируем variant и data-callout-variant
+            // (variant сохранен через маркер в тексте первого paragraph)
+            if (block.type === 'blockquote' && (key === 'variant' || key === 'data-callout-variant')) {
+              return // Пропускаем эти поля для blockquote
+            }
+            // Для paragraph НЕ сохраняем data-callout-variant (используем маркер в тексте)
+            if (block.type === 'paragraph' && key === 'data-callout-variant') {
+              return // Пропускаем это поле, так как variant сохранен через маркер в тексте
+            }
+            // Для остальных типов копируем все поля
+            result[key] = block[key]
+          }
+        })
+
+        return result
+      }
+
+      // Применяем валидацию ко всем блокам
+      contentDocument = contentDocument
+        .map(validateAndNormalizeBlock)
+        .filter((block: any) => block !== null)
+
+      // Финальная очистка: удаляем url из всех текстовых узлов (KeystoneJS не поддерживает это поле)
+      const removeUrlFromTextNodes = (node: any): any => {
+        if (!node || typeof node !== 'object') return node
+        
+        // Если это текстовый узел, удаляем url
+        if (node.text !== undefined && !node.type) {
+          const cleaned = { ...node }
+          delete cleaned.url
+          return cleaned
+        }
+        
+        // Рекурсивно обрабатываем children
+        if (Array.isArray(node.children)) {
+          return {
+            ...node,
+            children: node.children.map(removeUrlFromTextNodes),
+          }
+        }
+        
+        return node
+      }
+      
+      contentDocument = contentDocument.map(removeUrlFromTextNodes)
+
+      // Логируем преобразованный контент для отладки
+      logger.debug('[CreateArticlePage] Converted content document:', {
+        length: contentDocument.length,
+        firstBlock: JSON.stringify(contentDocument[0]).substring(0, 300),
+        allBlocks: contentDocument.map((block: any) => ({
+          type: block.type,
+          hasChildren: Array.isArray(block.children),
+          childrenCount: Array.isArray(block.children) ? block.children.length : 0,
+        })),
+      })
+
+      // Финальная проверка: убеждаемся, что все блоки имеют правильную структуру
+      // KeystoneJS ожидает, что каждый блок имеет:
+      // - type: string
+      // - children: array (даже если пустой)
+      const finalValidation = contentDocument.every((block: any) => {
+        if (!block || typeof block !== 'object') return false
+        if (!block.type || typeof block.type !== 'string') return false
+        if (!Array.isArray(block.children)) return false
+        return true
+      })
+
+      if (!finalValidation) {
+        logger.error('[CreateArticlePage] Invalid block structure after validation:', {
+          blocks: contentDocument.map((block: any) => ({
+            hasType: !!block?.type,
+            type: block?.type,
+            hasChildren: Array.isArray(block?.children),
+            childrenType: typeof block?.children,
+          })),
+        })
+        toast({
+          title: t('createArticle.missingInformation'),
+          description: 'Invalid content structure. Please try again.',
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+
+      // KeystoneJS document field ожидает массив блоков напрямую
+      // inputResolver принимает массив блоков, а не объект { document: [...] }
+      // zEditorCodec = zod.z.array(zBlock) - ожидает массив блоков
+      // В GraphQL mutation нужно передавать массив напрямую в поле content
+      const keystoneContent = contentDocument
+
+      // Логируем финальную структуру для отладки
+      logger.debug('[CreateArticlePage] Final KeystoneJS content structure:', {
+        isArray: Array.isArray(keystoneContent),
+        length: Array.isArray(keystoneContent) ? keystoneContent.length : 0,
+        firstBlockType: Array.isArray(keystoneContent) && keystoneContent[0] ? keystoneContent[0].type : 'N/A',
+        allBlockTypes: Array.isArray(keystoneContent) ? keystoneContent.map((b: any) => b.type) : [],
+        preview: JSON.stringify(keystoneContent).substring(0, 1000),
+        fullStructure: JSON.stringify(keystoneContent),
+      })
+
+      // Используем GraphQL API для создания/обновления статьи
+      const articleData = {
             title: title.trim(),
-        content: sanitizedContent,
+        content: keystoneContent, // KeystoneJS ожидает массив блоков напрямую
             excerpt: excerpt.trim() || null,
             tags,
             difficulty,
-        previewImageUrl,
+        previewImage: previewImageUrl || undefined,
       }
 
-      const publishedArticle = await publishArticle(payload, draftId)
+      logger.debug('[CreateArticlePage] Article data prepared:', {
+        title: articleData.title,
+        contentLength: contentDocument.length,
+        excerpt: articleData.excerpt,
+        tags: articleData.tags,
+        difficulty: articleData.difficulty,
+        hasPreviewImage: !!articleData.previewImage,
+      })
+
+      const publishedArticle = draftId
+        ? await updateArticle(String(draftId), {
+            ...articleData,
+            publishedAt: new Date().toISOString(),
+          })
+        : await createArticle({
+            ...articleData,
+            publishedAt: new Date().toISOString(),
+          })
       
       // После успешной публикации инвалидируем кэш списка и трендовых статей,
       // чтобы на HomePage новые статьи появились сразу, без жесткого перезагруза.
@@ -634,7 +1582,28 @@ export default function CreateArticlePage() {
       
       navigate(`/article/${articleId}`)
     } catch (error: unknown) {
-      console.error('Failed to publish article:', error)
+      // Определяем articleData и contentDocument для логирования
+      let articleDataForLog: any = {}
+      let contentDocumentLength = 0
+      
+      try {
+        // Пытаемся получить данные из области видимости выше
+        if (typeof contentDocument !== 'undefined' && Array.isArray(contentDocument)) {
+          contentDocumentLength = contentDocument.length
+        }
+        // articleData может быть не определен, если ошибка произошла до его создания
+      } catch (e) {
+        // Игнорируем ошибки при логировании
+      }
+      
+      logger.error('[CreateArticlePage] Failed to publish article:', {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        contentDocumentLength,
+        articleData: articleDataForLog,
+      });
+      
       const message =
         typeof error === 'object' && error && 'response' in error
           ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
@@ -914,9 +1883,24 @@ export default function CreateArticlePage() {
             {currentStep === 1 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
                 <RichTextEditor
+                  ref={editorRef}
                   id="content-editor"
                   value={content}
-                  onChange={setContent}
+                  onChange={(html) => {
+                    setContent(html)
+                    // Сохраняем JSON контент при каждом изменении, чтобы он был доступен при публикации
+                    // даже если редактор размонтирован на других шагах
+                    if (editorRef.current) {
+                      try {
+                        const json = editorRef.current.getJSON()
+                        if (json && json.type === 'doc') {
+                          setContentJSON(json)
+                        }
+                      } catch (error) {
+                        logger.warn('[CreateArticlePage] Failed to get JSON on change:', error)
+                      }
+                    }
+                  }}
                   placeholder={t('createArticle.contentPlaceholder')}
                   characterLimit={20000}
                 />

@@ -37,15 +37,15 @@ import {
   MessageSquare,
   Link2,
 } from 'lucide-react'
-import { getArticle, reactArticle } from '@/api/articles'
+import { getArticle, reactArticle } from '@/api/articles-graphql'
 import { 
   getArticleComments, 
-  createArticleComment, 
+  createComment, 
   updateComment, 
   deleteComment, 
   reactToComment 
-} from '@/api/comments'
-import type { Comment as RemoteComment } from '@/api/comments'
+} from '@/api/comments-graphql'
+import type { Comment as RemoteComment } from '@/api/comments-graphql'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -206,7 +206,7 @@ export default function ArticlePage() {
   // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id, user?.id],
-    queryFn: () => getArticle(id as string, { userId: user?.id }),
+    queryFn: () => getArticle(id as string),
     enabled: !!id,
     // Статьи кэшируем на 10 минут (контент меняется редко)
     staleTime: 10 * 60 * 1000,
@@ -270,6 +270,72 @@ export default function ArticlePage() {
       return () => clearTimeout(timeoutId)
     }
   }, [user?.id, id, queryClient])
+
+  // Обработка кнопок копирования кода
+  useEffect(() => {
+    if (!article || !articleContentRef.current) return
+
+    const handleCopyCode = async (button: HTMLElement) => {
+      const codeBlock = button.closest('.code-block-wrapper')
+      if (!codeBlock) return
+
+      const codeElement = codeBlock.querySelector('code')
+      if (!codeElement) return
+
+      // Получаем текст из code элемента (учитываем HTML entities)
+      const codeContent = codeElement.textContent || codeElement.innerText || ''
+
+      try {
+        await navigator.clipboard.writeText(codeContent)
+        
+        // Показываем иконку "галочка"
+        const copyIcon = button.querySelector('.copy-icon')
+        const checkIcon = button.querySelector('.check-icon')
+        
+        if (copyIcon && checkIcon) {
+          copyIcon.classList.add('hidden')
+          checkIcon.classList.remove('hidden')
+          
+          setTimeout(() => {
+            copyIcon.classList.remove('hidden')
+            checkIcon.classList.add('hidden')
+          }, 2000)
+        }
+      } catch (err) {
+        console.error('Failed to copy code:', err)
+      }
+    }
+
+    // Добавляем обработчики для всех кнопок копирования
+    // Используем setTimeout, чтобы убедиться, что HTML уже отрендерен
+    const timeoutId = setTimeout(() => {
+      const copyButtons = articleContentRef.current?.querySelectorAll('.code-block-copy-btn')
+      copyButtons?.forEach((button) => {
+        const handler = (e: Event) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleCopyCode(button as HTMLElement)
+        }
+        button.addEventListener('click', handler)
+        
+        // Сохраняем обработчик для последующего удаления
+        ;(button as any)._copyHandler = handler
+      })
+    }, 100)
+
+    return () => {
+      clearTimeout(timeoutId)
+      // Очищаем обработчики при размонтировании
+      const copyButtons = articleContentRef.current?.querySelectorAll('.code-block-copy-btn')
+      copyButtons?.forEach((button) => {
+        const handler = (button as any)._copyHandler
+        if (handler) {
+          button.removeEventListener('click', handler)
+          delete (button as any)._copyHandler
+        }
+      })
+    }
+  }, [article])
 
   // Track reading progress
   useEffect(() => {
@@ -490,7 +556,7 @@ export default function ArticlePage() {
         throw new Error('Article ID is missing')
       }
       // Используем id из URL, а не article.id, чтобы избежать рассинхронизации
-      return createArticleComment(id, { text, parentId: parentId || null })
+      return createComment({ articleId: id, text, parentId: parentId || null })
     },
     onSuccess: (newComment) => {
       logger.debug('[createCommentMutation] Comment created:', newComment)
@@ -1612,6 +1678,19 @@ export default function ArticlePage() {
 
           {/* Article Content */}
           <div className="prose prose-neutral dark:prose-invert max-w-none" ref={articleContentRef}>
+            {import.meta.env.DEV && (
+              <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
+                <p className="font-semibold text-yellow-600 dark:text-yellow-400">Debug Info:</p>
+                <p className="text-yellow-700 dark:text-yellow-300">Content length: {article.content.length}</p>
+                <p className="text-yellow-700 dark:text-yellow-300">Content preview: {article.content.substring(0, 200)}...</p>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full HTML</summary>
+                  <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
+                    {article.content}
+                  </pre>
+                </details>
+              </div>
+            )}
             <div
               className="text-foreground leading-relaxed break-words"
               dangerouslySetInnerHTML={{ __html: article.content }}

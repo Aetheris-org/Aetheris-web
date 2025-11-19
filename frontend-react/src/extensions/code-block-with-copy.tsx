@@ -95,24 +95,26 @@ const CodeBlockHeader = ({ node, editor, detectedLanguage }: {
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-2 rounded-t-lg">
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+    <div className="code-block-header">
+      <span className="text-xs font-medium uppercase tracking-wide code-block-language">
         {languageLabel}
       </span>
       <button
         type="button"
         onClick={handleCopy}
         className={cn(
-          'h-6 w-6 flex items-center justify-center rounded-sm',
-          'text-muted-foreground hover:text-foreground hover:bg-muted',
-          'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          'h-6 w-6 flex items-center justify-center rounded shrink-0',
+          'text-muted-foreground hover:text-primary',
+          'hover:bg-primary/10 active:bg-primary/15',
+          'transition-all duration-150',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2'
         )}
         title={copied ? 'Скопировано!' : 'Скопировать код'}
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 transition-transform duration-150" />
         ) : (
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-3.5 w-3.5 transition-transform duration-150" />
         )}
       </button>
     </div>
@@ -120,10 +122,88 @@ const CodeBlockHeader = ({ node, editor, detectedLanguage }: {
 }
 
 export const CodeBlockWithCopy = CodeBlockLowlight.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      language: {
+        default: 'plaintext',
+      },
+    }
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const language = node.attrs.language || 'plaintext'
+    
+    // Определяем язык автоматически, если не указан
+    let detectedLanguage = language
+    if ((!node.attrs.language || node.attrs.language === 'plaintext') && node.textContent.trim().length >= 10) {
+      const detected = detectLanguage(node.textContent)
+      if (detected !== 'plaintext') {
+        detectedLanguage = detected
+      }
+    }
+    
+    const finalLanguage = detectedLanguage !== 'plaintext' ? detectedLanguage : language
+    const finalLanguageLabel = getLanguageLabel(finalLanguage)
+    
+    // SVG иконки для кнопки копирования (сохраняем в data-атрибутах)
+    const copyIconSvg = '<svg class="h-3.5 w-3.5 copy-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>'
+    const checkIconSvg = '<svg class="h-3.5 w-3.5 check-icon hidden text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
+    
+    // Возвращаем структуру с header и кнопкой копирования
+    // TipTap renderHTML поддерживает вложенные массивы
+    // Используем data-атрибуты для сохранения информации, которая будет использована на review этапе
+    return [
+      'div',
+      {
+        class: 'relative group mb-6 rounded-lg overflow-hidden code-block-wrapper',
+        'data-language': finalLanguage,
+        'data-language-label': finalLanguageLabel,
+        'data-copy-icon-svg': copyIconSvg,
+        'data-check-icon-svg': checkIconSvg,
+      },
+      [
+        'div',
+        { class: 'flex items-center justify-between gap-3 px-3 py-2 code-block-header' },
+        [
+          'span',
+          { class: 'text-xs font-medium uppercase tracking-wide code-block-language' },
+          finalLanguageLabel,
+        ],
+        [
+          'button',
+          {
+            type: 'button',
+            class: 'code-block-copy-btn',
+            title: 'Скопировать код',
+            'aria-label': 'Скопировать код',
+          },
+          '', // Пустая строка для button (иконки будут добавлены через JavaScript)
+        ],
+      ],
+      [
+        'div',
+        { class: 'code-block-content' },
+        [
+          'pre',
+          { class: 'overflow-x-auto p-4 text-sm m-0' },
+          [
+            'code',
+            {
+              class: `language-${finalLanguage}`,
+              spellcheck: 'false',
+            },
+            0, // 0 означает, что здесь будет контент узла
+          ],
+        ],
+      ],
+    ]
+  },
+
   addNodeView() {
     return ({ node, HTMLAttributes, editor }) => {
       const dom = document.createElement('div')
-      dom.className = 'relative group mb-6 rounded-lg border border-border/70 bg-muted/20 overflow-hidden'
+      dom.className = 'relative group mb-6 rounded-lg overflow-hidden code-block-wrapper'
       
       // Создаем шапку
       const headerContainer = document.createElement('div')
