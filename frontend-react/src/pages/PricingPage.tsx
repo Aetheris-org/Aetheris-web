@@ -1,5 +1,6 @@
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Sparkles, Rocket, Crown, Zap, Shield, Globe, Users, BookOpen, TrendingUp, Coins, Star, ArrowLeft } from 'lucide-react'
+import { Check, Sparkles, Rocket, Crown, Shield, Globe, Users, BookOpen, TrendingUp, Coins, Star, ArrowLeft, FileText, BarChart3, Zap, Settings, Gift, Code, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -7,75 +8,299 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 
-const pricingPlans = [
-  {
-    name: 'Free',
-    description: 'Идеально для начала пути',
-    price: '0₽',
-    period: 'навсегда',
-    badge: null,
-    icon: Sparkles,
-    features: [
-      'Доступ к форуму и обсуждениям',
-      'Базовые достижения и уровни',
-      'Создание до 5 статей в месяц',
-      'Базовые статистики профиля',
-      'Участие в кланах',
-      'Чтение всех публикаций',
-    ],
-    cta: 'Начать бесплатно',
-    popular: false,
-    gradient: 'from-muted to-muted/50',
-  },
-  {
-    name: 'Voyager',
-    description: 'Для тех, кто исследует новые горизонты',
-    price: '379₽',
-    period: 'в месяц',
-    badge: 'Популярный',
-    icon: Rocket,
-    features: [
-      'Всё из Free плана',
-      'Неограниченное создание статей',
-      'Расширенная аналитика и статистика',
-      'Приоритетная поддержка',
-      'Эксклюзивные достижения',
-      'Ранний доступ к новым функциям',
-      'Монетизация контента',
-      'Кастомные темы профиля',
-    ],
-    cta: 'Начать путешествие',
-    popular: true,
-    gradient: 'from-primary/20 via-primary/10 to-background',
-  },
-  {
-    name: 'Architect',
-    description: 'Для тех, кто строит будущее',
-    price: '999₽',
-    period: 'в месяц',
-    badge: 'Премиум',
-    icon: Crown,
-    features: [
-      'Всё из Voyager плана',
-      'Приватные кланы и сообщества',
-      'Продвинутая аналитика и инсайты',
-      'Персональный менеджер аккаунта',
-      'Эксклюзивные события и встречи',
-      'API доступ для интеграций',
-      'Кастомные бейджи и награды',
-      'Приоритет в модерации',
-      'Белый лейбл для организаций',
-    ],
-    cta: 'Стать архитектором',
-    popular: false,
-    gradient: 'from-primary/30 via-primary/15 to-background',
-  },
-]
+type FeatureCategory = {
+  title: string
+  icon: typeof FileText
+  features: string[]
+}
+
+type PricingPlan = {
+  name: string
+  description: string
+  price: string
+  period: string
+  badge: string | null
+  icon: typeof Sparkles
+  mainFeatures: string[]
+  featureCategories: FeatureCategory[]
+  cta: string
+  popular: boolean
+  gradient: string
+}
 
 export default function PricingPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const [openDialog, setOpenDialog] = useState<string | null>(null)
+
+  const pricingPlans: PricingPlan[] = useMemo(() => [
+  {
+    name: t('pricing.plans.free.name'),
+    description: t('pricing.plans.free.description'),
+    price: t('pricing.plans.free.price'),
+    period: t('pricing.plans.free.period'),
+    badge: null,
+    icon: Sparkles,
+    mainFeatures: [
+      t('pricing.plans.free.mainFeatures.forum'),
+      t('pricing.plans.free.mainFeatures.achievements'),
+      t('pricing.plans.free.mainFeatures.articles'),
+      t('pricing.plans.free.mainFeatures.stats'),
+      t('pricing.plans.free.mainFeatures.clans'),
+      t('pricing.plans.free.mainFeatures.reading'),
+    ],
+    featureCategories: [
+      {
+        title: t('pricing.plans.free.featureCategories.content.title'),
+        icon: FileText,
+        features: [
+          t('pricing.plans.free.featureCategories.content.features.comments'),
+          t('pricing.plans.free.featureCategories.content.features.reactions'),
+          t('pricing.plans.free.featureCategories.content.features.bookmarks'),
+          t('pricing.plans.free.featureCategories.content.features.trending'),
+        ],
+      },
+      {
+        title: t('pricing.plans.free.featureCategories.personalization.title'),
+        icon: Settings,
+        features: [
+          t('pricing.plans.free.featureCategories.personalization.features.themes'),
+          t('pricing.plans.free.featureCategories.personalization.features.profile'),
+          t('pricing.plans.free.featureCategories.personalization.features.settings'),
+        ],
+      },
+      {
+        title: t('pricing.plans.free.featureCategories.learning.title'),
+        icon: BookOpen,
+        features: [
+          t('pricing.plans.free.featureCategories.learning.features.courses'),
+          t('pricing.plans.free.featureCategories.learning.features.communities'),
+          t('pricing.plans.free.featureCategories.learning.features.docs'),
+          t('pricing.plans.free.featureCategories.learning.features.voting'),
+        ],
+      },
+      {
+        title: t('pricing.plans.free.featureCategories.search.title'),
+        icon: Globe,
+        features: [
+          t('pricing.plans.free.featureCategories.search.features.contentSearch'),
+          t('pricing.plans.free.featureCategories.search.features.filtering'),
+        ],
+      },
+      {
+        title: t('pricing.plans.free.featureCategories.notifications.title'),
+        icon: Zap,
+        features: [
+          t('pricing.plans.free.featureCategories.notifications.features.basic'),
+        ],
+      },
+    ],
+    cta: t('pricing.plans.free.cta'),
+    popular: false,
+    gradient: 'from-muted to-muted/50',
+  },
+  {
+    name: t('pricing.plans.voyager.name'),
+    description: t('pricing.plans.voyager.description'),
+    price: t('pricing.plans.voyager.price'),
+    period: t('pricing.plans.voyager.period'),
+    badge: t('pricing.plans.voyager.badge'),
+    icon: Rocket,
+    mainFeatures: [
+      t('pricing.plans.voyager.mainFeatures.allFree'),
+      t('pricing.plans.voyager.mainFeatures.unlimited'),
+      t('pricing.plans.voyager.mainFeatures.analytics'),
+      t('pricing.plans.voyager.mainFeatures.support'),
+      t('pricing.plans.voyager.mainFeatures.exclusive'),
+      t('pricing.plans.voyager.mainFeatures.early'),
+      t('pricing.plans.voyager.mainFeatures.monetization'),
+      t('pricing.plans.voyager.mainFeatures.themes'),
+    ],
+    featureCategories: [
+      {
+        title: t('pricing.plans.voyager.featureCategories.editor.title'),
+        icon: FileText,
+        features: [
+          t('pricing.plans.voyager.featureCategories.editor.features.advancedEditor'),
+          t('pricing.plans.voyager.featureCategories.editor.features.unlimitedDrafts'),
+          t('pricing.plans.voyager.featureCategories.editor.features.customPreview'),
+          t('pricing.plans.voyager.featureCategories.editor.features.exclusiveTemplates'),
+          t('pricing.plans.voyager.featureCategories.editor.features.formatting'),
+          t('pricing.plans.voyager.featureCategories.editor.features.customUrls'),
+          t('pricing.plans.voyager.featureCategories.editor.features.scheduling'),
+        ],
+      },
+      {
+        title: t('pricing.plans.voyager.featureCategories.analytics.title'),
+        icon: BarChart3,
+        features: [
+          t('pricing.plans.voyager.featureCategories.analytics.features.views'),
+          t('pricing.plans.voyager.featureCategories.analytics.features.articleStats'),
+          t('pricing.plans.voyager.featureCategories.analytics.features.audience'),
+          t('pricing.plans.voyager.featureCategories.analytics.features.conversions'),
+          t('pricing.plans.voyager.featureCategories.analytics.features.comments'),
+          t('pricing.plans.voyager.featureCategories.analytics.features.export'),
+        ],
+      },
+      {
+        title: t('pricing.plans.voyager.featureCategories.personalization.title'),
+        icon: Settings,
+        features: [
+          t('pricing.plans.voyager.featureCategories.personalization.features.profileSettings'),
+          t('pricing.plans.voyager.featureCategories.personalization.features.badges'),
+          t('pricing.plans.voyager.featureCategories.personalization.features.themes'),
+          t('pricing.plans.voyager.featureCategories.personalization.features.privacy'),
+          t('pricing.plans.voyager.featureCategories.personalization.features.notifications'),
+        ],
+      },
+      {
+        title: t('pricing.plans.voyager.featureCategories.organization.title'),
+        icon: Gift,
+        features: [
+          t('pricing.plans.voyager.featureCategories.organization.features.bookmarks'),
+          t('pricing.plans.voyager.featureCategories.organization.features.collections'),
+          t('pricing.plans.voyager.featureCategories.organization.features.backup'),
+        ],
+      },
+      {
+        title: t('pricing.plans.voyager.featureCategories.integrations.title'),
+        icon: Code,
+        features: [
+          t('pricing.plans.voyager.featureCategories.integrations.features.metaTags'),
+          t('pricing.plans.voyager.featureCategories.integrations.features.social'),
+        ],
+      },
+      {
+        title: t('pricing.plans.voyager.featureCategories.privileges.title'),
+        icon: Star,
+        features: [
+          t('pricing.plans.voyager.featureCategories.privileges.features.search'),
+          t('pricing.plans.voyager.featureCategories.privileges.features.moderation'),
+          t('pricing.plans.voyager.featureCategories.privileges.features.beta'),
+        ],
+      },
+    ],
+    cta: t('pricing.plans.voyager.cta'),
+    popular: true,
+    gradient: 'from-primary/20 via-primary/10 to-background',
+  },
+  {
+    name: t('pricing.plans.architect.name'),
+    description: t('pricing.plans.architect.description'),
+    price: t('pricing.plans.architect.price'),
+    period: t('pricing.plans.architect.period'),
+    badge: t('pricing.plans.architect.badge'),
+    icon: Crown,
+    mainFeatures: [
+      t('pricing.plans.architect.mainFeatures.allVoyager'),
+      t('pricing.plans.architect.mainFeatures.privateClans'),
+      t('pricing.plans.architect.mainFeatures.advanced'),
+      t('pricing.plans.architect.mainFeatures.manager'),
+      t('pricing.plans.architect.mainFeatures.events'),
+      t('pricing.plans.architect.mainFeatures.api'),
+      t('pricing.plans.architect.mainFeatures.badges'),
+      t('pricing.plans.architect.mainFeatures.whitelabel'),
+    ],
+    featureCategories: [
+      {
+        title: t('pricing.plans.architect.featureCategories.analytics.title'),
+        icon: BarChart3,
+        features: [
+          t('pricing.plans.architect.featureCategories.analytics.features.trends'),
+          t('pricing.plans.architect.featureCategories.analytics.features.audience'),
+          t('pricing.plans.architect.featureCategories.analytics.features.abTesting'),
+          t('pricing.plans.architect.featureCategories.analytics.features.multiChannel'),
+          t('pricing.plans.architect.featureCategories.analytics.features.dashboards'),
+          t('pricing.plans.architect.featureCategories.analytics.features.reports'),
+          t('pricing.plans.architect.featureCategories.analytics.features.export'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.api.title'),
+        icon: Code,
+        features: [
+          t('pricing.plans.architect.featureCategories.api.features.automation'),
+          t('pricing.plans.architect.featureCategories.api.features.webhooks'),
+          t('pricing.plans.architect.featureCategories.api.features.external'),
+          t('pricing.plans.architect.featureCategories.api.features.custom'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.content.title'),
+        icon: FileText,
+        features: [
+          t('pricing.plans.architect.featureCategories.content.features.editor'),
+          t('pricing.plans.architect.featureCategories.content.features.collaborations'),
+          t('pricing.plans.architect.featureCategories.content.features.drafts'),
+          t('pricing.plans.architect.featureCategories.content.features.domains'),
+          t('pricing.plans.architect.featureCategories.content.features.seo'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.monetization.title'),
+        icon: Coins,
+        features: [
+          t('pricing.plans.architect.featureCategories.monetization.features.subscriptions'),
+          t('pricing.plans.architect.featureCategories.monetization.features.settings'),
+          t('pricing.plans.architect.featureCategories.monetization.features.partnership'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.personalization.title'),
+        icon: Settings,
+        features: [
+          t('pricing.plans.architect.featureCategories.personalization.features.themes'),
+          t('pricing.plans.architect.featureCategories.personalization.features.colors'),
+          t('pricing.plans.architect.featureCategories.personalization.features.widgets'),
+          t('pricing.plans.architect.featureCategories.personalization.features.notifications'),
+          t('pricing.plans.architect.featureCategories.personalization.features.interface'),
+          t('pricing.plans.architect.featureCategories.personalization.features.customization'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.learning.title'),
+        icon: BookOpen,
+        features: [
+          t('pricing.plans.architect.featureCategories.learning.features.privateCourses'),
+          t('pricing.plans.architect.featureCategories.learning.features.masterclasses'),
+          t('pricing.plans.architect.featureCategories.learning.features.channels'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.storage.title'),
+        icon: Shield,
+        features: [
+          t('pricing.plans.architect.featureCategories.storage.features.media'),
+          t('pricing.plans.architect.featureCategories.storage.features.support'),
+          t('pricing.plans.architect.featureCategories.storage.features.consultations'),
+        ],
+      },
+      {
+        title: t('pricing.plans.architect.featureCategories.privileges.title'),
+        icon: Star,
+        features: [
+          t('pricing.plans.architect.featureCategories.privileges.features.recommendations'),
+          t('pricing.plans.architect.featureCategories.privileges.features.moderation'),
+          t('pricing.plans.architect.featureCategories.privileges.features.tools'),
+          t('pricing.plans.architect.featureCategories.privileges.features.support'),
+          t('pricing.plans.architect.featureCategories.privileges.features.content'),
+          t('pricing.plans.architect.featureCategories.privileges.features.search'),
+          t('pricing.plans.architect.featureCategories.privileges.features.filters'),
+          t('pricing.plans.architect.featureCategories.privileges.features.development'),
+          t('pricing.plans.architect.featureCategories.privileges.features.roadmap'),
+          t('pricing.plans.architect.featureCategories.privileges.features.features'),
+          t('pricing.plans.architect.featureCategories.privileges.features.early'),
+        ],
+      },
+    ],
+    cta: t('pricing.plans.architect.cta'),
+    popular: false,
+    gradient: 'from-primary/30 via-primary/15 to-background',
+  },
+  ], [t])
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,21 +335,21 @@ export default function PricingPage() {
           <div className="text-center space-y-6 sm:space-y-8 max-w-3xl mx-auto">
             <Badge className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm px-4 py-2">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-              Выбери свой путь
+              {t('pricing.chooseYourPath')}
             </Badge>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                Тарифы
+                {t('pricing.title')}
               </span>
               <br />
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                для каждого
+                {t('pricing.forEveryone')}
               </span>
             </h1>
             
             <p className="text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto leading-relaxed">
-              От бесплатного старта до премиум возможностей. Выбери план, который подходит именно тебе.
+              {t('pricing.subtitle')}
             </p>
           </div>
         </div>
@@ -201,19 +426,114 @@ export default function PricingPage() {
                     
                     <Separator />
                     
-                    <ul className="space-y-3">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check className="w-3 h-3 text-primary" />
-                          </div>
-                          <span className="text-sm sm:text-base text-foreground/90 leading-relaxed">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="space-y-3">
+                      {/* Основные функции - показываем все */}
+                      <ul className="space-y-2">
+                        {plan.mainFeatures.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2.5">
+                            <div className="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Check className="w-2.5 h-2.5 text-primary" />
+                            </div>
+                            <span className="text-xs sm:text-sm text-foreground/85 leading-snug">
+                              {feature}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      {/* Кнопка для просмотра дополнительных функций */}
+                      {plan.featureCategories.length > 0 && (
+                        <div className="pt-2 border-t border-border/50">
+                          <button
+                            onClick={() => setOpenDialog(plan.name)}
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/30 text-sm font-medium text-primary transition-all group"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Zap className="h-4 w-4" />
+                              <span>{t('pricing.viewAllFeatures')}</span>
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">
+                                {plan.featureCategories.reduce((acc, cat) => acc + cat.features.length, 0)}
+                              </Badge>
+                            </span>
+                            <ChevronRight className="h-4 w-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
+                  
+                  {/* Модальное окно со всеми функциями */}
+                  <Dialog open={openDialog === plan.name} onOpenChange={(open) => !open && setOpenDialog(null)}>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl sm:text-2xl">
+                          {plan.name} - {t('pricing.allFeatures')}
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      <div className="space-y-6 pt-4">
+                        {/* Основные функции */}
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3 text-foreground/90">
+                            {t('pricing.mainFeatures')}
+                          </h3>
+                          <ul className="space-y-2">
+                            {plan.mainFeatures.map((feature, index) => (
+                              <li key={index} className="flex items-start gap-2.5">
+                                <div className="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Check className="w-2.5 h-2.5 text-primary" />
+                                </div>
+                                <span className="text-sm text-foreground/85 leading-relaxed">
+                                  {feature}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {/* Дополнительные функции по категориям */}
+                        {plan.featureCategories.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold mb-3 text-foreground/90">
+                              {t('pricing.additionalFeatures')}
+                            </h3>
+                            <Accordion type="multiple" className="w-full">
+                              {plan.featureCategories.map((category, categoryIndex) => {
+                                const CategoryIcon = category.icon
+                                return (
+                                  <AccordionItem key={categoryIndex} value={`category-${categoryIndex}`} className="border-b">
+                                    <AccordionTrigger className="py-3 hover:no-underline">
+                                      <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                                        <CategoryIcon className="h-4 w-4 text-primary" />
+                                        <span>{category.title}</span>
+                                        <Badge variant="secondary" className="ml-2 text-xs">
+                                          {category.features.length}
+                                        </Badge>
+                                      </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-2 pb-3">
+                                      <ul className="space-y-2 pl-6">
+                                        {category.features.map((feature, featureIndex) => (
+                                          <li key={featureIndex} className="flex items-start gap-2.5">
+                                            <div className="w-3.5 h-3.5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                              <Check className="w-2 h-2 text-primary" />
+                                            </div>
+                                            <span className="text-sm text-foreground/75 leading-relaxed">
+                                              {feature}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )
+                              })}
+                            </Accordion>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </Card>
               )
             })}
@@ -226,21 +546,21 @@ export default function PricingPage() {
         <div className="container max-w-5xl mx-auto">
           <div className="text-center space-y-4 mb-12">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-              Что получаешь
+              {t('pricing.whatYouGet.title')}
             </h2>
             <p className="text-base sm:text-lg bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto">
-              Все планы включают базовые возможности, а премиум открывает новые горизонты
+              {t('pricing.whatYouGet.subtitle')}
             </p>
           </div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Shield, title: 'Безопасность', description: 'OAuth2 аутентификация, защита данных' },
-              { icon: Globe, title: 'Доступ везде', description: 'Синхронизация на всех устройствах' },
-              { icon: Users, title: 'Сообщество', description: 'Общение с единомышленниками' },
-              { icon: BookOpen, title: 'Обучение', description: 'Курсы, туториалы, материалы' },
-              { icon: TrendingUp, title: 'Аналитика', description: 'Статистика и инсайты' },
-              { icon: Coins, title: 'Монетизация', description: 'Зарабатывай на контенте' },
+              { icon: Shield, title: t('pricing.whatYouGet.security.title'), description: t('pricing.whatYouGet.security.description') },
+              { icon: Globe, title: t('pricing.whatYouGet.access.title'), description: t('pricing.whatYouGet.access.description') },
+              { icon: Users, title: t('pricing.whatYouGet.community.title'), description: t('pricing.whatYouGet.community.description') },
+              { icon: BookOpen, title: t('pricing.whatYouGet.learning.title'), description: t('pricing.whatYouGet.learning.description') },
+              { icon: TrendingUp, title: t('pricing.whatYouGet.analytics.title'), description: t('pricing.whatYouGet.analytics.description') },
+              { icon: Coins, title: t('pricing.whatYouGet.monetization.title'), description: t('pricing.whatYouGet.monetization.description') },
             ].map((feature, index) => {
               const Icon = feature.icon
               return (
@@ -268,27 +588,27 @@ export default function PricingPage() {
         <div className="container max-w-3xl mx-auto">
           <div className="text-center space-y-4 mb-12">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-              Частые вопросы
+              {t('pricing.faq.title')}
             </h2>
           </div>
           
           <div className="space-y-4">
             {[
               {
-                question: 'Можно ли изменить план позже?',
-                answer: 'Да, ты можешь перейти на другой план в любой момент. Изменения вступят в силу сразу.',
+                question: t('pricing.faq.changePlan.question'),
+                answer: t('pricing.faq.changePlan.answer'),
               },
               {
-                question: 'Что происходит при отмене подписки?',
-                answer: 'Ты сохраняешь доступ к функциям до конца оплаченного периода, затем переходишь на Free план.',
+                question: t('pricing.faq.cancel.question'),
+                answer: t('pricing.faq.cancel.answer'),
               },
               {
-                question: 'Есть ли скидки для студентов?',
-                answer: 'Да, мы предлагаем специальные условия для студентов. Свяжись с нами для получения скидки.',
+                question: t('pricing.faq.student.question'),
+                answer: t('pricing.faq.student.answer'),
               },
               {
-                question: 'Можно ли оплатить годом?',
-                answer: 'Да, при годовой оплате ты получаешь 2 месяца бесплатно. Это экономия 16%.',
+                question: t('pricing.faq.yearly.question'),
+                answer: t('pricing.faq.yearly.answer'),
               },
             ].map((faq, index) => (
               <Card key={index} className="border border-border/40 bg-card/50 backdrop-blur-sm">
@@ -310,10 +630,10 @@ export default function PricingPage() {
       <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="container max-w-4xl mx-auto text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-            Готов начать?
+            {t('pricing.cta.title')}
           </h2>
           <p className="text-base sm:text-lg bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto">
-            Присоединяйся к тысячам пользователей, которые уже создают будущее на Aetheris
+            {t('pricing.cta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button
@@ -321,7 +641,7 @@ export default function PricingPage() {
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-base sm:text-lg px-8 py-6"
               onClick={() => navigate('/auth')}
             >
-              Начать бесплатно
+              {t('pricing.cta.startFree')}
             </Button>
             <Button
               size="lg"
@@ -329,7 +649,7 @@ export default function PricingPage() {
               className="text-base sm:text-lg px-8 py-6"
               onClick={() => navigate('/forum')}
             >
-              Посмотреть форум
+              {t('pricing.cta.viewForum')}
             </Button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SiteHeader } from '@/components/SiteHeader'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +49,7 @@ gsap.registerPlugin(ScrollTrigger)
 
 export default function ForumLandingPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const themeParams = useThemeStore((state) => ({
     motion: state.motion,
@@ -393,83 +395,83 @@ export default function ForumLandingPage() {
   const features = [
     {
       icon: Gamepad2,
-      title: 'Уровни как в игре',
-      description: 'Кланы, PvP-рейтинг, сезонные пассы. Будто играешь, но качаешь реальные скиллы.',
+      title: t('forumLanding.features.gameLevels.title'),
+      description: t('forumLanding.features.gameLevels.description'),
       color: 'from-purple-500 to-pink-500',
     },
     {
       icon: Brain,
-      title: 'AI всё понимает',
-      description: 'Умный помощник который реально помогает, а не просто болтает. И подсказывает контент.',
+      title: t('forumLanding.features.ai.title'),
+      description: t('forumLanding.features.ai.description'),
       color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Store,
-      title: 'Свой магазин',
-      description: 'Торгуй карточками, украшениями, NFT. Крути бизнес на внутренней валюте или крипте.',
+      title: t('forumLanding.features.store.title'),
+      description: t('forumLanding.features.store.description'),
       color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Network,
-      title: 'Тусовка по интересам',
-      description: 'Чаты по странам и глобальные. Группы, каналы - как в Телеге, но лучше.',
+      title: t('forumLanding.features.network.title'),
+      description: t('forumLanding.features.network.description'),
       color: 'from-green-500 to-emerald-500',
     },
     {
       icon: GraduationCap,
-      title: 'Учись чему хочешь',
-      description: 'Курсы от профи, интерактивные статьи с выбором, туториалы. Всё в одном месте.',
+      title: t('forumLanding.features.learning.title'),
+      description: t('forumLanding.features.learning.description'),
       color: 'from-indigo-500 to-purple-500',
     },
     {
       icon: DollarSign,
-      title: 'Бабки капают',
-      description: 'Делаешь контент? Донаты, реклама, премиум, партнёрки - всё работает сразу.',
+      title: t('forumLanding.features.money.title'),
+      description: t('forumLanding.features.money.description'),
       color: 'from-emerald-500 to-teal-500',
     },
     {
       icon: Code,
-      title: 'Рай для кодеров',
-      description: 'Q&A лучше чем SO, шаринг кода, совместная разработка. Всё что нужно девелоперу.',
+      title: t('forumLanding.features.code.title'),
+      description: t('forumLanding.features.code.description'),
       color: 'from-cyan-500 to-blue-500',
     },
     {
       icon: MessageSquare,
-      title: 'Твой блог тут',
-      description: 'Пости, веди блог, создавай каналы. Как VK встретился с Reddit и добавили геймификацию.',
+      title: t('forumLanding.features.blog.title'),
+      description: t('forumLanding.features.blog.description'),
       color: 'from-pink-500 to-rose-500',
     },
     {
       icon: Briefcase,
-      title: 'Найди работу/проект',
-      description: 'Доска объявлений где можно всё: работу, фриланс, соискателей, партнёров.',
+      title: t('forumLanding.features.jobs.title'),
+      description: t('forumLanding.features.jobs.description'),
       color: 'from-violet-500 to-purple-500',
     },
     {
       icon: BookOpen,
-      title: 'Редактор-монстр',
-      description: 'Серьёзно, там куча всего. Markdown, медиа, эмбеды - делай красоту без костылей.',
+      title: t('forumLanding.features.editor.title'),
+      description: t('forumLanding.features.editor.description'),
       color: 'from-orange-500 to-red-500',
     },
     {
       icon: Star,
-      title: 'Свои токены',
-      description: 'Внутренняя валюта прямо как звёзды в ТГ. Копишь, тратишь, конвертируешь.',
+      title: t('forumLanding.features.tokens.title'),
+      description: t('forumLanding.features.tokens.description'),
       color: 'from-yellow-500 to-amber-500',
     },
     {
       icon: Shield,
-      title: 'Анонимность на максималках',
-      description: 'Мы даже email не знаем. Только OAuth2 и хеш. Утечка? Да там взять нечего.',
+      title: t('forumLanding.features.anonymity.title'),
+      description: t('forumLanding.features.anonymity.description'),
       color: 'from-red-500 to-pink-500',
     },
   ]
 
   const stats = [
-    { value: '∞', label: 'Возможностей', icon: Sparkles },
-    { value: '100%', label: 'Приватность', icon: Shield },
-    { value: '24/7', label: 'Комьюнити', icon: Users },
-    { value: '0₽', label: 'Навсегда', icon: Gift },
+    { value: '∞', label: t('forumLanding.stats.possibilities'), icon: Sparkles },
+    { value: '100%', label: t('forumLanding.stats.privacy'), icon: Shield },
+    { value: '24/7', label: t('forumLanding.stats.community'), icon: Users },
+    { value: '0₽', label: t('forumLanding.stats.forever'), icon: Gift },
   ]
 
   return (
@@ -522,20 +524,20 @@ export default function ForumLandingPage() {
           <div className="space-y-6">
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                Aetheris
+                {t('forumLanding.hero.title')}
               </span>
             </h1>
             <p className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-              Где рождаются идеи
+              {t('forumLanding.hero.subtitle')}
             </p>
             <p className="text-xl sm:text-2xl bg-gradient-to-r from-foreground/90 via-foreground/80 to-muted-foreground bg-clip-text text-transparent max-w-3xl mx-auto leading-relaxed">
-              Если бы Reddit, Discord, Coursera и Steam сделали ребёнка, а потом добавили туда игровые механики из WoW - вот это был бы Aetheris
+              {t('forumLanding.hero.description')}
             </p>
           </div>
 
           {/* Simple subtitle */}
           <p className="text-lg bg-gradient-to-r from-foreground/80 via-muted-foreground to-foreground/60 bg-clip-text text-transparent max-w-2xl mx-auto">
-            Для ученых • разработчиков • геймеров • студентов • фрилансеров
+            {t('forumLanding.hero.audience')}
           </p>
 
           {/* CTA Buttons */}
@@ -545,7 +547,7 @@ export default function ForumLandingPage() {
               className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
               onClick={() => navigate('/forum')}
             >
-              Начать бесплатно
+              {t('forumLanding.hero.startFree')}
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             <Button 
@@ -554,7 +556,7 @@ export default function ForumLandingPage() {
               className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto"
               onClick={() => navigate('/pricing')}
             >
-              Тарифы
+              {t('forumLanding.hero.pricing')}
               <ChevronDown className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
@@ -563,15 +565,15 @@ export default function ForumLandingPage() {
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
-              <span className="whitespace-nowrap">Без кредитной карты</span>
+              <span className="whitespace-nowrap">{t('forumLanding.hero.noCard')}</span>
             </span>
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
-              <span className="whitespace-nowrap">100% конфиденциально</span>
+              <span className="whitespace-nowrap">{t('forumLanding.hero.privacy')}</span>
             </span>
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
-              <span className="whitespace-nowrap">Бесплатно навсегда</span>
+              <span className="whitespace-nowrap">{t('forumLanding.hero.freeForever')}</span>
             </span>
           </div>
         </div>
@@ -590,7 +592,7 @@ export default function ForumLandingPage() {
           <section className="h-section w-screen min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 flex-shrink-0">
             <div className="container max-w-6xl mx-auto">
               <div className="text-center mb-8 sm:mb-12">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">В цифрах</h2>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">{t('forumLanding.stats.title')}</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
                 {stats.map((stat, i) => (
@@ -613,30 +615,30 @@ export default function ForumLandingPage() {
                 <div className="space-y-4 sm:space-y-6">
                   <Badge className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm">
                     <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    Игровые механики
+                    {t('forumLanding.gamification.badge')}
                   </Badge>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                    Прокачивайся
+                    {t('forumLanding.gamification.title')}
                     <br />
                     <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      прямо как в любимой MMORPG
+                      {t('forumLanding.gamification.titleHighlight')}
                     </span>
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent">
-                    Помнишь то чувство когда получал новый уровень в WoW? Вот это у нас тут на каждом шагу.
+                    {t('forumLanding.gamification.description')}
                   </p>
                   <div className="flex flex-wrap gap-2 sm:gap-3 pt-2 sm:pt-4">
                     <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
                       <Trophy className="w-4 h-4 mr-2" />
-                      500+ Ачивок
+                      {t('forumLanding.gamification.achievements')}
                     </Badge>
                     <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
                       <Crown className="w-4 h-4 mr-2" />
-                      50 Уровней
+                      {t('forumLanding.gamification.levels')}
                     </Badge>
                     <Badge className="px-4 py-2 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40 transition-all">
                       <Flame className="w-4 h-4 mr-2" />
-                      Кланы
+                      {t('forumLanding.gamification.clans')}
                     </Badge>
                   </div>
                 </div>
@@ -647,8 +649,8 @@ export default function ForumLandingPage() {
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
                         <Trophy className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">500+</div>
-                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Достижений</div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">{t('forumLanding.gamification.achievementsCount')}</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">{t('forumLanding.gamification.achievementsLabel')}</div>
                     </div>
                   </Card>
                   <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
@@ -657,8 +659,8 @@ export default function ForumLandingPage() {
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
                         <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">50</div>
-                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Уровней</div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">{t('forumLanding.gamification.levelsCount')}</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">{t('forumLanding.gamification.levelsLabel')}</div>
                     </div>
                   </Card>
                   <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
@@ -667,8 +669,8 @@ export default function ForumLandingPage() {
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
                         <Flame className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">∞</div>
-                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Кланов</div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">{t('forumLanding.gamification.clansCount')}</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">{t('forumLanding.gamification.clansLabel')}</div>
                     </div>
                   </Card>
                   <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden">
@@ -677,8 +679,8 @@ export default function ForumLandingPage() {
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3 group-hover:border-primary/40 group-hover:bg-primary/20 transition-all duration-300">
                         <Star className="w-6 h-6 sm:w-7 sm:h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">4</div>
-                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">Сезона/год</div>
+                      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300">{t('forumLanding.gamification.seasons')}</div>
+                      <div className="text-xs sm:text-sm bg-gradient-to-r from-foreground/70 to-muted-foreground bg-clip-text text-transparent">{t('forumLanding.gamification.seasonsLabel')}</div>
                     </div>
                   </Card>
                 </div>
@@ -692,17 +694,17 @@ export default function ForumLandingPage() {
               <div className="text-center space-y-4 sm:space-y-6">
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm">
                   <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                  Монетизация
+                  {t('forumLanding.monetization.badge')}
                 </Badge>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                  Деньги за то,
+                  {t('forumLanding.monetization.title')}
                   <br />
                   <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    что ты и так делаешь
+                    {t('forumLanding.monetization.titleHighlight')}
                   </span>
                 </h2>
                 <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
-                  Пишешь посты? Делаешь туториалы? Стримишь код? Всё это можно монетизировать.
+                  {t('forumLanding.monetization.description')}
                 </p>
                 <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto pt-6 sm:pt-8">
                   <Card className="p-5 sm:p-6 border border-primary/20 bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 group relative overflow-hidden text-left">
@@ -712,8 +714,8 @@ export default function ForumLandingPage() {
                         <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Реклама</h3>
-                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Процент от рекламы идет напрямую тебе</p>
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">{t('forumLanding.monetization.ads.title')}</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">{t('forumLanding.monetization.ads.description')}</p>
                       </div>
                     </div>
                   </Card>
@@ -724,8 +726,8 @@ export default function ForumLandingPage() {
                         <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Донаты</h3>
-                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Фаны поддерживают напрямую</p>
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">{t('forumLanding.monetization.donations.title')}</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">{t('forumLanding.monetization.donations.description')}</p>
                       </div>
                     </div>
                   </Card>
@@ -736,8 +738,8 @@ export default function ForumLandingPage() {
                         <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Валюта</h3>
-                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Конвертируй в реальные деньги</p>
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">{t('forumLanding.monetization.currency.title')}</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">{t('forumLanding.monetization.currency.description')}</p>
                       </div>
                     </div>
                   </Card>
@@ -748,8 +750,8 @@ export default function ForumLandingPage() {
                         <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">Партнерства</h3>
-                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">Коллаборации с брендами</p>
+                        <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-300 text-left">{t('forumLanding.monetization.partnerships.title')}</h3>
+                        <p className="text-xs sm:text-sm bg-gradient-to-r from-foreground/80 via-foreground/70 to-muted-foreground bg-clip-text text-transparent leading-relaxed text-left">{t('forumLanding.monetization.partnerships.description')}</p>
                       </div>
                     </div>
                   </Card>
@@ -767,23 +769,23 @@ export default function ForumLandingPage() {
                     <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                   </div>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                    Мы не знаем твой email. Серьёзно.
+                    {t('forumLanding.privacy.title')}
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-2">
-                    Только OAuth2 - входишь через Google, GitHub, Discord и т.д. Вместо почты храним хеш. Даже если нас взломают - взять нечего.
+                    {t('forumLanding.privacy.description')}
                   </p>
                   <div className="flex flex-wrap justify-center gap-3 sm:gap-4 pt-2 sm:pt-4">
                     <Badge variant="secondary" className="px-4 py-2">
                       <Lock className="w-4 h-4 mr-2" />
-                      OAuth2
+                      {t('forumLanding.privacy.oauth2')}
                     </Badge>
                     <Badge variant="secondary" className="px-4 py-2">
                       <Shield className="w-4 h-4 mr-2" />
-                      Хеш вместо email
+                      {t('forumLanding.privacy.hash')}
                     </Badge>
                     <Badge variant="secondary" className="px-4 py-2">
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      0 данных
+                      {t('forumLanding.privacy.zeroData')}
                     </Badge>
                   </div>
                 </div>
@@ -798,16 +800,16 @@ export default function ForumLandingPage() {
       <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
         <div className="container max-w-7xl mx-auto">
           <div className="text-center mb-12 sm:mb-16 md:mb-20 space-y-3 sm:space-y-4">
-            <Badge className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2">Что внутри</Badge>
+            <Badge className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2">{t('forumLanding.features.badge')}</Badge>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-              Твой новый дом
+              {t('forumLanding.features.title')}
               <br />
               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                в интернете
+                {t('forumLanding.features.titleHighlight')}
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
-              Серьезно, мы засунули сюда всё. Даже больше чем нужно
+              {t('forumLanding.features.subtitle')}
             </p>
           </div>
 
@@ -846,17 +848,17 @@ export default function ForumLandingPage() {
         <div className="container max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
           <Badge className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 bg-primary">
             <Rocket className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-            Начни сейчас
+            {t('forumLanding.finalCta.badge')}
           </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold px-2 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-            Ну что, заходишь?
+            {t('forumLanding.finalCta.title')}
             <br />
             <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-              Регистрация за 10 секунд
+              {t('forumLanding.finalCta.titleHighlight')}
             </span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl bg-gradient-to-r from-foreground/90 via-foreground/70 to-muted-foreground bg-clip-text text-transparent max-w-2xl mx-auto px-4">
-            Кликаешь на кнопку, выбираешь Google/GitHub/Discord, всё. Добро пожаловать в Aetheris. Серьёзно, даже email вводить не надо.
+            {t('forumLanding.finalCta.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2 sm:pt-4 px-4">
             <Button
@@ -864,11 +866,11 @@ export default function ForumLandingPage() {
               className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
               onClick={() => navigate(isAuthenticated ? '/forum' : '/auth')}
             >
-              Регистрация бесплатно
+              {t('forumLanding.finalCta.registerFree')}
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto">
-              Смотреть демо
+              {t('forumLanding.finalCta.watchDemo')}
               <Video className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
@@ -878,7 +880,7 @@ export default function ForumLandingPage() {
       {/* Footer */}
       <footer className="pt-8 pb-16 sm:pb-20 px-4 relative" style={{ zIndex: 1 }}>
         <div className="container max-w-6xl mx-auto text-center text-muted-foreground">
-          <p className="text-sm sm:text-base">© 2025 Aetheris. Создано с ❤️ для комьюнити.</p>
+          <p className="text-sm sm:text-base">{t('forumLanding.footer.text')}</p>
         </div>
       </footer>
     </div>

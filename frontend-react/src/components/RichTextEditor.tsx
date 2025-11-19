@@ -4,6 +4,7 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -212,7 +213,12 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
                   )}
                 >
                   {item.title}
-                  {isDisabled && (
+                  {isDisabled && item.hint && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      ({item.hint})
+                    </span>
+                  )}
+                  {isDisabled && !item.hint && (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground/60">
                       (в разработке)
                     </span>
@@ -500,6 +506,7 @@ type RichTextEditorProps = {
   ariaLabel?: string
   ariaLabelledBy?: string
   ariaDescribedBy?: string
+  jsonValue?: any // JSON для восстановления состояния (приоритетнее чем value)
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
@@ -513,6 +520,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   ariaLabel,
   ariaLabelledBy,
   ariaDescribedBy,
+  jsonValue,
 }, ref) => {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkValue, setLinkValue] = useState('')
@@ -538,13 +546,67 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       Placeholder.configure({
         placeholder,
       }),
-      Link.configure({
-        openOnClick: false,
+      Link.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            target: {
+              default: null,
+              parseHTML: (element) => {
+                const href = element.getAttribute('href')
+                // Внутренние ссылки (href="#...") не должны иметь target="_blank"
+                if (href?.startsWith('#')) {
+                  return null
+                }
+                return element.getAttribute('target') || '_blank'
+              },
+              renderHTML: (attributes) => {
+                // Внутренние ссылки не должны иметь target
+                if (attributes.href?.startsWith('#')) {
+                  return {}
+                }
+                return {
+                  target: attributes.target || '_blank',
+                }
+              },
+            },
+          }
+        },
+      }).configure({
+        openOnClick: (view, pos, event) => {
+          // Обрабатываем внутренние ссылки (href="#anchor-id")
+          const link = event.target as HTMLElement
+          const anchor = link.closest('a[href^="#"]')
+          if (anchor) {
+            const href = anchor.getAttribute('href')
+            if (href && href.startsWith('#')) {
+              const anchorId = href.substring(1)
+              if (anchorId) {
+                // Ищем элемент с id или data-block-id
+                const targetElement = view.dom.querySelector(
+                  `[id="${anchorId}"], [data-block-id="${anchorId}"]`
+                ) as HTMLElement | null
+                if (targetElement) {
+                  event.preventDefault()
+                  targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  // Временно подсвечиваем
+                  targetElement.style.transition = 'background-color 0.3s ease'
+                  targetElement.style.backgroundColor = 'var(--muted)'
+                  setTimeout(() => {
+                    targetElement.style.backgroundColor = ''
+                  }, 2000)
+                  return true
+                }
+              }
+            }
+          }
+          // Для внешних ссылок открываем в новой вкладке
+          return false
+        },
         autolink: true,
         HTMLAttributes: {
           rel: 'noopener noreferrer',
-          target: '_blank',
-          class: 'font-medium text-primary underline underline-offset-4',
+          class: 'font-medium text-primary underline underline-offset-4 cursor-pointer',
         },
       }),
       Typography,
@@ -620,12 +682,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
   const editor = useEditor({
     extensions,
-    content: value || '',
+    // При инициализации используем JSON, если он доступен (сохраняет атрибуты узлов)
+    content: jsonValue && jsonValue.type === 'doc' ? jsonValue : (value || ''),
     editable: !disabled,
     autofocus: false,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
-    },
     editorProps: {
       attributes: {
         class: cn(
@@ -633,6 +693,42 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           'min-h-[400px] whitespace-pre-wrap break-words text-[15px] leading-[1.7] text-foreground'
         ),
       },
+    },
+    // Убеждаемся, что addNodeView вызывается при восстановлении
+    onCreate: ({ editor }) => {
+      // При создании редактора убеждаемся, что все узлы правильно инициализированы
+      if (import.meta.env.DEV) {
+        console.log('[RichTextEditor] Editor created, content type:', jsonValue && jsonValue.type === 'doc' ? 'JSON' : 'HTML')
+        // Проверяем наличие code blocks после создания
+        const json = editor.getJSON()
+        const codeBlocks = json.content?.filter((node: any) => node.type === 'codeBlock') || []
+        if (codeBlocks.length > 0) {
+          console.log('[RichTextEditor] Code blocks found after creation:', codeBlocks.length)
+          codeBlocks.forEach((cb: any, idx: number) => {
+            console.log(`[RichTextEditor] Code block ${idx}:`, {
+              language: cb.attrs?.language || 'plaintext',
+              hasContent: !!cb.content && cb.content.length > 0,
+            })
+          })
+        }
+      }
+    },
+    // При обновлении редактора также проверяем code blocks
+    onUpdate: ({ editor, transaction }) => {
+      // Обновляем только если документ действительно изменился
+      if (transaction.docChanged) {
+        const html = editor.getHTML()
+        onChange(html)
+        // Также сохраняем JSON при каждом обновлении для правильного восстановления
+        // Это гарантирует, что jsonValue всегда актуален
+        if (import.meta.env.DEV) {
+          const json = editor.getJSON()
+          const codeBlocks = json.content?.filter((node: any) => node.type === 'codeBlock') || []
+          if (codeBlocks.length > 0) {
+            console.log('[RichTextEditor] Code blocks after update:', codeBlocks.length)
+          }
+        }
+      }
     },
   })
 
@@ -665,21 +761,67 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     editor?.storage.characterCount.words?.() ??
     (value.trim() ? value.trim().split(/\s+/).length : 0)
 
+  // Флаг для отслеживания, был ли контент уже восстановлен
+  const contentRestoredRef = useRef(false)
+  const lastJsonValueRef = useRef<any>(null)
+  const lastValueRef = useRef<string>('')
+  
   useEffect(() => {
     if (!editor) return
-    const current = editor.getHTML()
-    if (value && value !== current) {
-      editor.commands.setContent(value, false)
+    
+    // Восстанавливаем контент только при первой инициализации
+    // После этого редактор управляет своим состоянием сам
+    if (!contentRestoredRef.current) {
+      // Приоритет: используем JSON, если он доступен (сохраняет атрибуты узлов, например language для code blocks)
+      if (jsonValue && jsonValue.type === 'doc') {
+        if (import.meta.env.DEV) {
+          console.log('[RichTextEditor] Initial restore from JSON, code blocks count:', 
+            jsonValue.content?.filter((node: any) => node.type === 'codeBlock').length || 0)
+        }
+        // Восстанавливаем контент из JSON только при первой инициализации
+        editor.commands.setContent(jsonValue, false, { emitUpdate: false })
+        contentRestoredRef.current = true
+        lastJsonValueRef.current = jsonValue
+        return
+      }
+      
+      // Fallback: используем HTML, если JSON недоступен
+      if (value && value.trim()) {
+        if (import.meta.env.DEV) {
+          console.log('[RichTextEditor] Initial restore from HTML')
+        }
+        // Восстанавливаем контент из HTML только при первой инициализации
+        editor.commands.setContent(value, false, { emitUpdate: false })
+        contentRestoredRef.current = true
+        lastValueRef.current = value
+      }
     }
-    if (!value && current !== '<p></p>') {
-      editor.commands.clearContent()
+  }, [editor, jsonValue, value])
+  
+  // Сбрасываем флаг при размонтировании редактора
+  useEffect(() => {
+    if (!editor) {
+      contentRestoredRef.current = false
+      lastJsonValueRef.current = null
+      lastValueRef.current = ''
     }
-  }, [editor, value])
+  }, [editor])
 
   useEffect(() => {
     if (!editor) return
-    editor.setEditable(!disabled)
+    const isEditable = !disabled
+    editor.setEditable(isEditable)
+    if (import.meta.env.DEV) {
+      console.log('[RichTextEditor] setEditable called:', { isEditable, disabled })
+      // Проверяем, что редактор действительно редактируемый
+      const editorElement = editor.view.dom as HTMLElement
+      const contentEditable = editorElement.getAttribute('contenteditable')
+      console.log('[RichTextEditor] Editor element contenteditable:', contentEditable)
+    }
   }, [editor, disabled])
+
+  // В редакторе не добавляем постоянные индикаторы, чтобы не конфликтовать с TipTap
+  // Индикаторы будут только в опубликованных статьях
 
   const handleOpenLinkDialog = useCallback(() => {
     if (!editor) return
@@ -908,8 +1050,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         id: 'anchor',
         title: 'Anchor',
         description: 'Добавить якорь к блоку',
-        icon: <Hash className="h-4 w-4" />,
+        hint: 'В разработке',
         disabled: true,
+        icon: <Hash className="h-4 w-4" />,
         command: ({ editor, range }) => {
           editor.chain().focus().deleteRange(range).run()
           openAnchorDialog('create')
@@ -919,8 +1062,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         id: 'anchor-link',
         title: 'Link to anchor',
         description: 'Ссылка на существующий блок',
-        icon: <Link2 className="h-4 w-4" />,
+        hint: 'В разработке',
         disabled: true,
+        icon: <Link2 className="h-4 w-4" />,
         command: ({ editor, range }) => {
           editor.chain().focus().deleteRange(range).run()
           openAnchorDialog('link')

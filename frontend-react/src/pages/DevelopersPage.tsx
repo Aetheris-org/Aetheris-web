@@ -15,6 +15,7 @@ import {
   type DevelopmentTool,
 } from '@/data/mockSections'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   Rocket,
   TrendingUp,
@@ -38,6 +39,39 @@ import {
   ArrowUpRight,
   ChevronUp,
   ChevronDown,
+  Mail,
+  FileText,
+  FlaskConical,
+  TrendingDown,
+  MessageSquare,
+  Bot,
+  CreditCard,
+  Webhook,
+  Repeat,
+  Layout,
+  LineChart,
+  Thermometer,
+  Send,
+  Activity,
+  CalendarDays,
+  UserPlus,
+  Video,
+  UserCheck,
+  MousePointerClick,
+  UsersRound,
+  AlertTriangle,
+  PlayCircle,
+  Headphones,
+  Calculator,
+  Receipt,
+  FileSpreadsheet,
+  Wallet,
+  Target,
+  Award,
+  Magnet,
+  ScanSearch,
+  MessageSquareText,
+  BookOpen,
 } from 'lucide-react'
 
 type StartupCategory = Startup['category'] | 'all'
@@ -79,6 +113,7 @@ const toolCategoryLabels: Record<DevelopmentTool['category'], string> = {
 
 export default function DevelopersPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   
   // Состояние для журнала разработок
   const [activeTab, setActiveTab] = useState<'startups' | 'journal'>('startups')
@@ -163,12 +198,12 @@ export default function DevelopersPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight">Избранные стартапы</h2>
-                <p className="text-sm text-muted-foreground">Проекты, рекомендованные сообществом</p>
+                <h2 className="text-2xl font-bold tracking-tight">{t('developers.featured.title')}</h2>
+                <p className="text-sm text-muted-foreground">{t('developers.featured.description')}</p>
               </div>
               <Button variant="outline" size="sm" className="gap-2">
                 <Star className="h-4 w-4" />
-                Все избранные
+                {t('developers.featured.viewAll')}
               </Button>
                     </div>
             <div className="grid gap-6 md:grid-cols-2">
@@ -186,11 +221,11 @@ export default function DevelopersPage() {
               <TabsList className="w-fit">
                 <TabsTrigger value="startups" className="gap-2">
                   <Rocket className="h-4 w-4" />
-                  Стартапы
+                  {t('developers.tabs.startups')}
                 </TabsTrigger>
                 <TabsTrigger value="journal" className="gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  Журнал разработок
+                  {t('developers.tabs.journal')}
                 </TabsTrigger>
               </TabsList>
 
@@ -199,7 +234,7 @@ export default function DevelopersPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Поиск..."
+                    placeholder={t('developers.search.placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -217,7 +252,7 @@ export default function DevelopersPage() {
                   onChange={(e) => setCategoryFilter(e.target.value as StartupCategory)}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
                 >
-                  <option value="all">Все категории</option>
+                  <option value="all">{t('developers.filters.allCategories')}</option>
                   {Object.entries(categoryLabels).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
@@ -227,7 +262,7 @@ export default function DevelopersPage() {
                   onChange={(e) => setStageFilter(e.target.value as StartupStage)}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
                 >
-                  <option value="all">Все стадии</option>
+                  <option value="all">{t('developers.filters.allStages')}</option>
                   {Object.entries(stageLabels).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
@@ -242,7 +277,7 @@ export default function DevelopersPage() {
                       setSearchQuery('')
                     }}
                   >
-                    Сбросить
+                    {t('developers.filters.reset')}
                     </Button>
                 )}
               </div>
@@ -258,8 +293,8 @@ export default function DevelopersPage() {
                 <Card className="border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                     <Rocket className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <p className="text-lg font-medium">Стартапы не найдены</p>
-                    <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры</p>
+                    <p className="text-lg font-medium">{t('developers.empty.startups')}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{t('developers.empty.startupsDescription')}</p>
                 </CardContent>
               </Card>
             )}
@@ -277,7 +312,7 @@ export default function DevelopersPage() {
                     onClick={() => setJournalTypeFilter(type)}
                     className="capitalize"
                   >
-                    {type === 'all' ? 'Все' : journalTypeLabels[type]}
+                    {type === 'all' ? t('developers.filters.allTypes') : journalTypeLabels[type]}
                   </Button>
                 ))}
                 </div>
@@ -293,8 +328,8 @@ export default function DevelopersPage() {
                 <Card className="border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                     <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <p className="text-lg font-medium">Записи не найдены</p>
-                    <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры</p>
+                    <p className="text-lg font-medium">{t('developers.empty.journal')}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{t('developers.empty.journalDescription')}</p>
             </CardContent>
           </Card>
               )}
@@ -307,10 +342,10 @@ export default function DevelopersPage() {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Zap className="h-6 w-6 text-primary" />
-              Инструменты для разработки
+              {t('developers.tools.title')}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Монетизация, аналитика и интеграции для продвижения вашего стартапа
+              {t('developers.tools.description')}
             </p>
               </div>
 
@@ -324,7 +359,7 @@ export default function DevelopersPage() {
                 onClick={() => setToolCategoryFilter(category)}
                 className="capitalize"
               >
-                {category === 'all' ? 'Все инструменты' : toolCategoryLabels[category]}
+                {category === 'all' ? t('developers.tools.allTools') : toolCategoryLabels[category]}
               </Button>
             ))}
                 </div>
@@ -572,12 +607,52 @@ function JournalEntryCard({ entry, onClick }: { entry: DevelopmentJournalEntry; 
 }
 
 function DevelopmentToolCard({ tool }: { tool: DevelopmentTool }) {
+  const { t } = useTranslation()
   const iconMap: Record<string, any> = {
     TrendingUp,
     BarChart3,
     GitBranch,
     DollarSign,
     BadgeCheck,
+    Mail,
+    Calendar,
+    FileText,
+    Eye,
+    FlaskConical,
+    TrendingDown,
+    MessageSquare,
+    Bot,
+    CreditCard,
+    Webhook,
+    Repeat,
+    Users,
+    Heart,
+    Layout,
+    LineChart,
+    Rocket,
+    Thermometer,
+    Send,
+    Activity,
+    Search,
+    CalendarDays,
+    UserPlus,
+    Video,
+    UserCheck,
+    MousePointerClick,
+    UsersRound,
+    AlertTriangle,
+    PlayCircle,
+    Headphones,
+    Calculator,
+    Receipt,
+    FileSpreadsheet,
+    Wallet,
+    Target,
+    Award,
+    Magnet,
+    ScanSearch,
+    MessageSquareText,
+    BookOpen,
   }
   
   const Icon = iconMap[tool.icon] || Zap
@@ -588,7 +663,7 @@ function DevelopmentToolCard({ tool }: { tool: DevelopmentTool }) {
         <div className="absolute top-3 right-3">
           <Badge className="bg-primary/10 text-primary text-xs">
             <Star className="h-3 w-3 mr-1" />
-            Popular
+            {t('developers.tools.popular')}
           </Badge>
         </div>
       )}
@@ -622,7 +697,7 @@ function DevelopmentToolCard({ tool }: { tool: DevelopmentTool }) {
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="text-sm">
             {tool.price.type === 'free' ? (
-              <span className="font-semibold text-primary">Бесплатно</span>
+              <span className="font-semibold text-primary">{t('developers.tools.free')}</span>
             ) : (
               <div className="flex items-baseline gap-1">
                 <span className="text-lg font-bold">${tool.price.amount}</span>
@@ -637,13 +712,13 @@ function DevelopmentToolCard({ tool }: { tool: DevelopmentTool }) {
           </div>
           
           <Button size="sm" className="gap-2">
-            Узнать больше
+            {t('developers.tools.learnMore')}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Button>
         </div>
         
         <div className="text-xs text-muted-foreground">
-          {tool.usedBy} команд используют
+          {tool.usedBy} {t('developers.tools.teamsUse')}
         </div>
       </CardContent>
     </Card>
@@ -662,6 +737,7 @@ interface HeroSectionProps {
 }
 
 function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
+  const { t } = useTranslation()
   return (
     <section
       className={cn(
@@ -682,14 +758,14 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
           </Button>
           <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs uppercase tracking-[0.3em]">
             <Rocket className="mr-2 h-3.5 w-3.5" />
-            Development Hub
+            {t('developers.hero.badge')}
           </Badge>
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Журнал разработок стартапов
+              {t('developers.hero.title')}
             </h1>
             <p className="max-w-3xl text-lg text-muted-foreground">
-              Следите за развитием инновационных проектов, поддерживайте команды и будьте в курсе последних обновлений из мира стартапов.
+              {t('developers.hero.description')}
             </p>
           </div>
           
@@ -702,7 +778,7 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.startups}</p>
-                  <p className="text-xs text-muted-foreground">Активных стартапов</p>
+                  <p className="text-xs text-muted-foreground">{t('developers.stats.activeStartups')}</p>
                 </div>
               </div>
             </div>
@@ -713,7 +789,7 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.publications}</p>
-                  <p className="text-xs text-muted-foreground">Публикаций</p>
+                  <p className="text-xs text-muted-foreground">{t('developers.stats.publications')}</p>
                 </div>
               </div>
             </div>
@@ -724,7 +800,7 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.followers}</p>
-                  <p className="text-xs text-muted-foreground">Подписчиков</p>
+                  <p className="text-xs text-muted-foreground">{t('developers.stats.followers')}</p>
                 </div>
               </div>
             </div>
@@ -737,7 +813,7 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
                   <p className="text-2xl font-bold">
                     ${(stats.donations / 1000).toFixed(0)}K
                   </p>
-                  <p className="text-xs text-muted-foreground">Собрано донатов</p>
+                  <p className="text-xs text-muted-foreground">{t('developers.stats.donations')}</p>
                 </div>
               </div>
             </div>
@@ -747,7 +823,7 @@ function HeroSection({ isExpanded, onToggle, stats }: HeroSectionProps) {
         <div className="flex items-center gap-3 w-full">
           <Rocket className="h-4 w-4 shrink-0 text-primary" />
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm font-semibold text-foreground">Журнал разработок стартапов</span>
+            <span className="text-sm font-semibold text-foreground">{t('developers.hero.collapsedTitle')}</span>
           </div>
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">

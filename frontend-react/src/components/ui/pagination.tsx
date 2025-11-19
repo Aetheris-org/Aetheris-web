@@ -44,7 +44,7 @@ const PaginationLink = React.forwardRef<
     className={cn(
       'relative flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-all duration-200',
       'hover:bg-muted hover:text-foreground',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring-secondary,var(--ring)))] focus-visible:ring-offset-2',
       'disabled:pointer-events-none disabled:opacity-50',
       isActive
         ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   BookOpen,
   Clock,
@@ -37,6 +38,7 @@ type ViewMode = 'all' | 'verified' | 'community'
 
 export default function CoursesPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>()
@@ -138,14 +140,14 @@ export default function CoursesPage() {
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-xl">Найдите свой курс</CardTitle>
+                <CardTitle className="text-xl">{t('courses.filters.title')}</CardTitle>
                 <CardDescription>
-                  Используйте фильтры для поиска подходящего курса
+                  {t('courses.filters.description')}
                 </CardDescription>
-              </div>
+            </div>
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
-                  Сбросить фильтры
+                  {t('courses.filters.reset')}
               </Button>
           )}
             </div>
@@ -155,24 +157,24 @@ export default function CoursesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-                placeholder="Поиск по названию, автору, тегам..."
+                placeholder={t('courses.filters.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-11"
               />
-        </div>
+          </div>
 
             {/* Filter buttons */}
             <div className="space-y-4">
         <div className="space-y-2">
-                <Label className="text-sm font-medium">Категория</Label>
+                <Label className="text-sm font-medium">{t('courses.filters.category')}</Label>
               <div className="flex flex-wrap gap-2">
                   <Button
                     variant={!selectedCategory ? 'secondary' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(undefined)}
                   >
-                    Все
+                    {t('courses.filters.all')}
                   </Button>
                   {mockCategories.map((category) => (
                     <Button
@@ -191,7 +193,7 @@ export default function CoursesPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Уровень</Label>
+                  <Label className="text-sm font-medium">{t('courses.filters.level')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {['beginner', 'intermediate', 'advanced', 'expert'].map((level) => (
                       <Button
@@ -202,23 +204,23 @@ export default function CoursesPage() {
                           setSelectedLevel(selectedLevel === level ? undefined : (level as Course['level']))
                         }
                       >
-                        {level === 'beginner' && 'Начальный'}
-                        {level === 'intermediate' && 'Средний'}
-                        {level === 'advanced' && 'Продвинутый'}
-                        {level === 'expert' && 'Эксперт'}
+                        {level === 'beginner' && t('courses.filters.beginner')}
+                        {level === 'intermediate' && t('courses.filters.intermediate')}
+                        {level === 'advanced' && t('courses.filters.advanced')}
+                        {level === 'expert' && t('courses.filters.expert')}
                       </Button>
                     ))}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Доступ</Label>
+                  <Label className="text-sm font-medium">{t('courses.filters.access')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {[
-                      { value: 'free', label: 'Бесплатно' },
-                      { value: 'paid', label: 'Платно' },
-                      { value: 'subscription', label: 'Подписка' },
-                      { value: 'level-gated', label: 'По уровню' },
+                      { value: 'free', label: t('courses.filters.free') },
+                      { value: 'paid', label: t('courses.filters.paid') },
+                      { value: 'subscription', label: t('courses.filters.subscription') },
+                      { value: 'level-gated', label: t('courses.filters.levelGated') },
                     ].map((pricing) => (
                       <Button
                         key={pricing.value}
@@ -247,23 +249,23 @@ export default function CoursesPage() {
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="all" className="gap-2">
               <BookOpen className="h-4 w-4" />
-              Все
+              {t('courses.tabs.all')}
             </TabsTrigger>
             <TabsTrigger value="verified" className="gap-2">
               <ShieldCheck className="h-4 w-4" />
-              Верифицированные
+              {t('courses.tabs.verified')}
             </TabsTrigger>
             <TabsTrigger value="community" className="gap-2">
               <Users className="h-4 w-4" />
-              Сообщество
-            </TabsTrigger>
-          </TabsList>
+              {t('courses.tabs.community')}
+                    </TabsTrigger>
+                </TabsList>
 
           <TabsContent value="all" className="space-y-6 mt-6">
             {verifiedCourses.length > 0 && (
               <CourseSection
-                title="Верифицированные курсы"
-                description="Проверены модерацией и соответствуют высоким стандартам качества"
+                title={t('courses.sections.verified.title')}
+                description={t('courses.sections.verified.description')}
                 courses={verifiedCourses}
                 icon={ShieldCheck}
               />
@@ -273,8 +275,8 @@ export default function CoursesPage() {
               <>
                 {verifiedCourses.length > 0 && <Separator />}
                 <CourseSection
-                  title="Курсы от сообщества"
-                  description="Авторские материалы от опытных разработчиков"
+                  title={t('courses.sections.community.title')}
+                  description={t('courses.sections.community.description')}
                   courses={communityCourses}
                   icon={Users}
                 />
@@ -283,8 +285,8 @@ export default function CoursesPage() {
 
             {filteredCourses.length === 0 && (
               <EmptyState
-                title="Курсы не найдены"
-                description="Попробуйте изменить фильтры или поисковый запрос"
+                title={t('courses.empty.title')}
+                description={t('courses.empty.description')}
                 onReset={resetFilters}
               />
             )}
@@ -293,15 +295,15 @@ export default function CoursesPage() {
           <TabsContent value="verified" className="space-y-6 mt-6">
             {verifiedCourses.length > 0 ? (
               <CourseSection
-                title="Верифицированные курсы"
-                description="Проверены модерацией и соответствуют высоким стандартам качества"
+                title={t('courses.sections.verified.title')}
+                description={t('courses.sections.verified.description')}
                 courses={verifiedCourses}
                 icon={ShieldCheck}
               />
             ) : (
               <EmptyState
-                title="Верифицированные курсы не найдены"
-                description="Попробуйте изменить фильтры"
+                title={t('courses.empty.verifiedTitle')}
+                description={t('courses.empty.verifiedDescription')}
                 onReset={resetFilters}
               />
             )}
@@ -310,22 +312,22 @@ export default function CoursesPage() {
           <TabsContent value="community" className="space-y-6 mt-6">
             {communityCourses.length > 0 ? (
               <CourseSection
-                title="Курсы от сообщества"
-                description="Авторские материалы от опытных разработчиков"
+                title={t('courses.sections.community.title')}
+                description={t('courses.sections.community.description')}
                 courses={communityCourses}
                 icon={Users}
               />
             ) : (
               <EmptyState
-                title="Курсы от сообщества не найдены"
-                description="Попробуйте изменить фильтры"
+                title={t('courses.empty.communityTitle')}
+                description={t('courses.empty.communityDescription')}
                 onReset={resetFilters}
               />
             )}
-          </TabsContent>
-        </Tabs>
+                  </TabsContent>
+              </Tabs>
       </main>
-    </div>
+            </div>
   )
 }
 
@@ -340,7 +342,7 @@ function StatCard({ icon: Icon, label, value }: StatCardProps) {
     <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 p-4">
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
         <Icon className="h-5 w-5 text-primary" />
-      </div>
+              </div>
       <div>
         <div className="text-2xl font-bold">{value}</div>
         <div className="text-xs text-muted-foreground">{label}</div>
@@ -357,12 +359,12 @@ interface CourseSectionProps {
 }
 
 function CourseSection({ title, description, courses, icon: Icon }: CourseSectionProps) {
-  return (
+              return (
     <section className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
           <Icon className="h-5 w-5 text-primary" />
-        </div>
+                    </div>
         <div>
           <h2 className="text-2xl font-bold">{title}</h2>
           <p className="text-sm text-muted-foreground">{description}</p>
@@ -387,6 +389,7 @@ interface CourseCardProps {
 
 function CourseCard({ course }: CourseCardProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const getPricingBadge = () => {
     switch (course.access.pricing.type) {
@@ -394,7 +397,7 @@ function CourseCard({ course }: CourseCardProps) {
         return (
           <Badge variant="secondary" className="gap-1">
             <Zap className="h-3 w-3" />
-            Бесплатно
+            {t('courses.filters.free')}
           </Badge>
         )
       case 'paid':
@@ -472,10 +475,10 @@ function CourseCard({ course }: CourseCardProps) {
         {/* Level and Pricing */}
         <div className="flex items-center justify-between gap-2">
           <Badge variant="outline" className="text-xs capitalize">
-            {course.level === 'beginner' && 'Начальный'}
-            {course.level === 'intermediate' && 'Средний'}
-            {course.level === 'advanced' && 'Продвинутый'}
-            {course.level === 'expert' && 'Эксперт'}
+            {course.level === 'beginner' && t('courses.filters.beginner')}
+            {course.level === 'intermediate' && t('courses.filters.intermediate')}
+            {course.level === 'advanced' && t('courses.filters.advanced')}
+            {course.level === 'expert' && t('courses.filters.expert')}
           </Badge>
           {getPricingBadge()}
         </div>
@@ -498,14 +501,14 @@ function CourseCard({ course }: CourseCardProps) {
         {course.providesCertificate && (
           <div className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2">
             <Award className="h-4 w-4 text-primary" />
-            <span className="text-xs font-medium">Выдается сертификат</span>
+            <span className="text-xs font-medium">{t('courses.card.certificate')}</span>
           </div>
         )}
 
         {/* CTA */}
         <Button variant="outline" className="w-full gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
           <Play className="h-4 w-4" />
-          Начать обучение
+          {t('courses.card.startLearning')}
         </Button>
       </CardContent>
     </Card>
@@ -519,16 +522,17 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ title, description, onReset }: EmptyStateProps) {
+  const { t } = useTranslation()
   return (
     <Card className="border-dashed">
       <CardContent className="flex flex-col items-center justify-center py-16 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
           <Filter className="h-8 w-8 text-muted-foreground" />
-              </div>
+      </div>
         <h3 className="text-lg font-semibold mb-2">{title}</h3>
         <p className="text-sm text-muted-foreground mb-4 max-w-md">{description}</p>
         <Button variant="outline" onClick={onReset}>
-          Сбросить фильтры
+          {t('courses.filters.reset')}
               </Button>
       </CardContent>
     </Card>
@@ -566,6 +570,7 @@ interface HeroSectionProps {
 }
 
 function HeroSection({ isExpanded, onToggle, stats, onCreateCourse, onViewVerified }: HeroSectionProps) {
+  const { t } = useTranslation()
   return (
     <section
       className={cn(
@@ -586,43 +591,42 @@ function HeroSection({ isExpanded, onToggle, stats, onCreateCourse, onViewVerifi
           </Button>
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5">
             <GraduationCap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Образовательная платформа</span>
+            <span className="text-sm font-medium text-primary">{t('courses.hero.badge')}</span>
           </div>
 
           <div className="space-y-4 max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Учитесь у лучших создателей сообщества
+              {t('courses.hero.title')}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Верифицированные курсы от модерации и авторские материалы от опытных разработчиков.
-              Развивайтесь, зарабатывайте репутацию и делитесь знаниями.
+              {t('courses.hero.description')}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button size="lg" className="gap-2" onClick={onCreateCourse}>
               <Sparkles className="h-4 w-4" />
-              Создать курс
+              {t('courses.hero.createCourse')}
             </Button>
             <Button size="lg" variant="outline" className="gap-2" onClick={onViewVerified}>
               <ShieldCheck className="h-4 w-4" />
-              Верифицированные курсы
+              {t('courses.hero.viewVerified')}
             </Button>
               </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
-            <StatCard icon={BookOpen} label="Курсов" value={stats.totalCourses.toString()} />
-            <StatCard icon={Users} label="Студентов" value={formatNumber(stats.totalStudents)} />
-            <StatCard icon={ShieldCheck} label="Верифицировано" value={stats.verifiedCount.toString()} />
-            <StatCard icon={Star} label="Средний рейтинг" value={stats.avgRating} />
+            <StatCard icon={BookOpen} label={t('courses.stats.courses')} value={stats.totalCourses.toString()} />
+            <StatCard icon={Users} label={t('courses.stats.students')} value={formatNumber(stats.totalStudents)} />
+            <StatCard icon={ShieldCheck} label={t('courses.stats.verified')} value={stats.verifiedCount.toString()} />
+            <StatCard icon={Star} label={t('courses.stats.avgRating')} value={stats.avgRating} />
               </div>
       </div>
       ) : (
         <div className="flex items-center gap-3 w-full relative z-10">
           <GraduationCap className="h-4 w-4 shrink-0 text-primary" />
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm font-semibold text-foreground">Учитесь у лучших создателей сообщества</span>
+            <span className="text-sm font-semibold text-foreground">{t('courses.hero.collapsedTitle')}</span>
           </div>
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">

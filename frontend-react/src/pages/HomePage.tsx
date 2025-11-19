@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles-graphql'
+import { getArticles, getTrendingArticles, searchArticles, getArticle, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles-graphql'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -567,22 +567,24 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="relative w-10 h-10 shrink-0" data-view-mode-expander>
+                  <div className="relative shrink-0" data-view-mode-expander>
+                    {/* Единый контейнер кнопки и меню */}
                     <div
                       className={cn(
-                        'absolute top-0 left-0 flex flex-col bg-background transition-all duration-200 overflow-hidden',
-                        isViewModeExpanded && 'z-50 shadow-lg'
+                        'flex flex-col bg-background border border-border rounded-md overflow-hidden transition-all duration-300 ease-in-out z-50',
+                        isViewModeExpanded && 'shadow-lg'
                       )}
                       style={{
-                        borderRadius: isViewModeExpanded ? '0' : 'var(--radius-sm)',
                         width: '40px',
                         height: isViewModeExpanded 
                           ? `${40 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 40)}px` 
                           : '40px',
-                        border: '1px solid hsl(var(--border))',
-                        boxSizing: 'border-box',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
                       }}
                     >
+                      {/* Активная кнопка (всегда видима) */}
                       <Button
                         variant="outline"
                         size="icon"
@@ -595,25 +597,22 @@ export default function HomePage() {
                           } else if (e.key === 'ArrowDown' && !isViewModeExpanded) {
                             e.preventDefault()
                             setIsViewModeExpanded(true)
+                            // Фокусируемся на первом элементе меню
+                            setTimeout(() => {
+                              const firstButton = e.currentTarget.parentElement?.querySelector('div[class*="flex flex-col"] button') as HTMLButtonElement
+                              firstButton?.focus()
+                            }, 0)
+                          } else if (e.key === 'Tab' && isViewModeExpanded) {
+                            // При Tab закрываем меню и продолжаем навигацию
+                            setIsViewModeExpanded(false)
                           }
                         }}
                         aria-label={t('home.viewModes.selectViewMode')}
                         aria-expanded={isViewModeExpanded}
-                        className="h-10 w-10 shrink-0 border-0 overflow-hidden"
-                        style={{
-                          borderRadius: isViewModeExpanded 
-                            ? 'var(--radius-sm) var(--radius-sm) 0 0' 
-                            : 'var(--radius-sm)',
-                          borderBottom: isViewModeExpanded ? '1px solid hsl(var(--border) / 0.5)' : 'none',
-                        }}
-                        onMouseEnter={(e) => {
-                          const target = e.currentTarget
-                          target.style.backgroundColor = 'hsl(var(--muted))'
-                        }}
-                        onMouseLeave={(e) => {
-                          const target = e.currentTarget
-                          target.style.backgroundColor = ''
-                        }}
+                        className={cn(
+                          'h-10 w-10 shrink-0 border-0 rounded-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          isViewModeExpanded && 'border-b border-border/50'
+                        )}
                       >
                         {(() => {
                           const currentOption = viewModeOptions.find((option) => option.id === viewMode)
@@ -621,10 +620,14 @@ export default function HomePage() {
                           return Icon ? <Icon className="h-4 w-4" /> : null
                         })()}
                       </Button>
+                      
+                      {/* Остальные варианты (растягиваются вниз) */}
                       <div
                         className={cn(
-                          'flex flex-col transition-all duration-200',
-                          isViewModeExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'
+                          'flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
+                          isViewModeExpanded 
+                            ? 'opacity-100' 
+                            : 'opacity-0 pointer-events-none'
                         )}
                       >
                         {viewModeOptions
@@ -639,19 +642,10 @@ export default function HomePage() {
                                 size="icon"
                                 type="button"
                                 tabIndex={isViewModeExpanded ? 0 : -1}
-                                className="h-10 w-10 shrink-0 border-0 overflow-hidden"
-                                style={{
-                                  borderRadius: isLast ? '0 0 var(--radius-sm) var(--radius-sm)' : '0',
-                                  borderBottom: isLast ? 'none' : '1px solid hsl(var(--border) / 0.5)',
-                                }}
-                                onMouseEnter={(e) => {
-                                  const target = e.currentTarget
-                                  target.style.backgroundColor = 'hsl(var(--muted))'
-                                }}
-                                onMouseLeave={(e) => {
-                                  const target = e.currentTarget
-                                  target.style.backgroundColor = ''
-                                }}
+                                className={cn(
+                                  'h-10 w-10 shrink-0 border-0 rounded-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                  !isLast && 'border-b border-border/50'
+                                )}
                                 onClick={() => {
                                   setViewMode(option.id)
                                   setIsViewModeExpanded(false)
@@ -664,7 +658,13 @@ export default function HomePage() {
                                   } else if (e.key === 'ArrowDown') {
                                     e.preventDefault()
                                     const nextButton = e.currentTarget.parentElement?.children[index + 1] as HTMLButtonElement
-                                    nextButton?.focus()
+                                    if (nextButton) {
+                                      nextButton.focus()
+                                    } else {
+                                      // Если последний элемент, возвращаемся к главной кнопке
+                                      const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
+                                      mainButton?.focus()
+                                    }
                                   } else if (e.key === 'ArrowUp') {
                                     e.preventDefault()
                                     if (index === 0) {
@@ -674,6 +674,9 @@ export default function HomePage() {
                                       const prevButton = e.currentTarget.parentElement?.children[index - 1] as HTMLButtonElement
                                       prevButton?.focus()
                                     }
+                                  } else if (e.key === 'Tab' && !e.shiftKey) {
+                                    // При Tab закрываем меню и продолжаем навигацию
+                                    setIsViewModeExpanded(false)
                                   }
                                 }}
                                 aria-label={option.label}
@@ -684,6 +687,8 @@ export default function HomePage() {
                           })}
                       </div>
                     </div>
+                    {/* Невидимый placeholder для сохранения места в layout */}
+                    <div className="w-10 h-10" aria-hidden="true" />
                   </div>
                   <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
                     <SlidersHorizontal className="h-4 w-4" />
@@ -806,8 +811,8 @@ export default function HomePage() {
                   <div className="pt-6 sm:pt-6" onClick={(e) => e.stopPropagation()}>
                     <Pagination>
                       <PaginationContent className="flex-wrap gap-2 sm:gap-2">
-                        <PaginationItem>
-                          <PaginationPrevious
+                      <PaginationItem>
+                        <PaginationPrevious
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
@@ -820,16 +825,16 @@ export default function HomePage() {
                             }}
                             disabled={page === 1}
                           />
-                        </PaginationItem>
-                        {paginationPages.map((item, idx) =>
-                          item === 'ellipsis' ? (
+                      </PaginationItem>
+                      {paginationPages.map((item, idx) =>
+                        item === 'ellipsis' ? (
                             <PaginationItem key={`ellipsis-${idx}`} className="hidden sm:flex">
-                              <PaginationEllipsis />
-                            </PaginationItem>
-                          ) : (
-                            <PaginationItem key={item}>
-                              <PaginationLink
-                                isActive={page === item}
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={item}>
+                            <PaginationLink
+                              isActive={page === item}
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
@@ -841,15 +846,15 @@ export default function HomePage() {
                                 }}
                                 onMouseDown={(e) => {
                                   e.stopPropagation()
-                                }}
-                              >
-                                {item}
-                              </PaginationLink>
-                            </PaginationItem>
-                          )
-                        )}
-                        <PaginationItem>
-                          <PaginationNext
+                              }}
+                            >
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
@@ -862,7 +867,7 @@ export default function HomePage() {
                             }}
                             disabled={page === totalPages}
                           />
-                        </PaginationItem>
+                      </PaginationItem>
                     </PaginationContent>
                   </Pagination>
                   </div>

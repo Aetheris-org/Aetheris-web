@@ -317,6 +317,7 @@ type Article {
   commentsCount(where: CommentWhereInput! = {}): Int
   reactions(where: ArticleReactionWhereInput! = {}, orderBy: [ArticleReactionOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: ArticleReactionWhereUniqueInput): [ArticleReaction!]
   reactionsCount(where: ArticleReactionWhereInput! = {}): Int
+  userReaction: String
   publishedAt: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -437,6 +438,7 @@ type Comment {
   dislikes_count: Int
   reactions(where: CommentReactionWhereInput! = {}, orderBy: [CommentReactionOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: CommentReactionWhereUniqueInput): [CommentReaction!]
   reactionsCount(where: CommentReactionWhereInput! = {}): Int
+  userReaction: String
   createdAt: DateTime
   updatedAt: DateTime
 }

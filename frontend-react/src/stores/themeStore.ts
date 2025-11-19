@@ -3047,6 +3047,56 @@ export function buildCustomAccentOption(customAccent: CustomAccentColors) {
   }
 }
 
+function validateAccent(accent: unknown): accent is AccentColor {
+  return (
+    accent === 'indigo' ||
+    accent === 'violet' ||
+    accent === 'emerald' ||
+    accent === 'amber' ||
+    accent === 'rose' ||
+    accent === 'cyan' ||
+    accent === 'mono' ||
+    accent === 'peach' ||
+    accent === 'azure' ||
+    accent === 'cobalt' ||
+    accent === 'magenta' ||
+    accent === 'crimson' ||
+    accent === 'plum' ||
+    accent === 'orchid' ||
+    accent === 'teal' ||
+    accent === 'seafoam' ||
+    accent === 'sage' ||
+    accent === 'coral' ||
+    accent === 'saffron' ||
+    accent === 'sunset' ||
+    accent === 'graphite' ||
+    accent === 'pure' ||
+    accent === 'lime' ||
+    accent === 'mint' ||
+    accent === 'orange' ||
+    accent === 'yellow' ||
+    accent === 'green' ||
+    accent === 'blue' ||
+    accent === 'purple' ||
+    accent === 'pink' ||
+    accent === 'red' ||
+    accent === 'brown' ||
+    accent === 'gold' ||
+    accent === 'silver' ||
+    accent === 'bronze' ||
+    accent === 'turquoise' ||
+    accent === 'lavender' ||
+    accent === 'fuchsia' ||
+    accent === 'salmon' ||
+    accent === 'olive' ||
+    accent === 'navy' ||
+    accent === 'sky' ||
+    accent === 'forest' ||
+    accent === 'ocean' ||
+    accent === 'custom'
+  )
+}
+
 function loadPreferences(): StoredPreferences {
   if (typeof window === 'undefined') {
     return { ...DEFAULT_PREFERENCES }
@@ -3057,55 +3107,17 @@ function loadPreferences(): StoredPreferences {
     try {
       const parsed = JSON.parse(storedRaw) as Partial<StoredPreferences>
       const accent = parsed.accent
-      const isAccentValid =
-        accent === 'indigo' ||
-        accent === 'violet' ||
-        accent === 'emerald' ||
-        accent === 'amber' ||
-        accent === 'rose' ||
-        accent === 'cyan' ||
-        accent === 'mono' ||
-        accent === 'peach' ||
-        accent === 'azure' ||
-        accent === 'cobalt' ||
-        accent === 'magenta' ||
-        accent === 'crimson' ||
-        accent === 'plum' ||
-        accent === 'orchid' ||
-        accent === 'teal' ||
-        accent === 'seafoam' ||
-        accent === 'sage' ||
-        accent === 'coral' ||
-        accent === 'saffron' ||
-        accent === 'sunset' ||
-        accent === 'graphite' ||
-        accent === 'pure' ||
-        accent === 'lime' ||
-        accent === 'mint' ||
-        accent === 'orange' ||
-        accent === 'yellow' ||
-        accent === 'green' ||
-        accent === 'blue' ||
-        accent === 'purple' ||
-        accent === 'pink' ||
-        accent === 'red' ||
-        accent === 'brown' ||
-        accent === 'gold' ||
-        accent === 'silver' ||
-        accent === 'bronze' ||
-        accent === 'turquoise' ||
-        accent === 'lavender' ||
-        accent === 'fuchsia' ||
-        accent === 'salmon' ||
-        accent === 'olive' ||
-        accent === 'navy' ||
-        accent === 'sky' ||
-        accent === 'forest' ||
-        accent === 'ocean' ||
-        accent === 'custom'
+      const isAccentValid = validateAccent(accent)
+      
+      // Валидируем дополнительные акцентные цвета
+      const secondaryAccent = validateAccent(parsed.secondaryAccent) ? parsed.secondaryAccent : undefined
+      const tertiaryAccent = validateAccent(parsed.tertiaryAccent) ? parsed.tertiaryAccent : undefined
+      
       return {
         theme: parsed.theme === 'light' || parsed.theme === 'dark' || parsed.theme === 'system' ? parsed.theme : DEFAULT_PREFERENCES.theme,
         accent: isAccentValid ? (accent as AccentColor) : DEFAULT_PREFERENCES.accent,
+        secondaryAccent,
+        tertiaryAccent,
         surface:
           typeof parsed.surface === 'string' && SURFACE_STYLE_VALUES.includes(parsed.surface as SurfaceStyle)
             ? (parsed.surface as SurfaceStyle)
@@ -3330,9 +3342,49 @@ function applyThemePreferences(state: ThemeState) {
 
   root.style.setProperty('--primary', accentValues.primary)
   root.style.setProperty('--primary-foreground', accentValues.primaryForeground)
+  root.style.setProperty('--ring', accentValues.ring)
+  
+  // Устанавливаем основной accent (всегда из основного цвета)
   root.style.setProperty('--accent', accentValues.accent)
   root.style.setProperty('--accent-foreground', accentValues.accentForeground)
-  root.style.setProperty('--ring', accentValues.ring)
+  
+  // Применяем дополнительные акцентные цвета, если они есть
+  if (state.secondaryAccent) {
+    const secondaryAccentValues =
+      state.secondaryAccent === 'custom'
+        ? getCustomAccentTones(state.customAccent)[resolved]
+        : ACCENT_COLORS[state.secondaryAccent].values[resolved]
+    root.style.setProperty('--primary-secondary', secondaryAccentValues.primary)
+    root.style.setProperty('--primary-secondary-foreground', secondaryAccentValues.primaryForeground)
+    root.style.setProperty('--accent-secondary', secondaryAccentValues.accent)
+    root.style.setProperty('--accent-secondary-foreground', secondaryAccentValues.accentForeground)
+    root.style.setProperty('--ring-secondary', secondaryAccentValues.ring)
+  } else {
+    root.style.removeProperty('--primary-secondary')
+    root.style.removeProperty('--primary-secondary-foreground')
+    root.style.removeProperty('--accent-secondary')
+    root.style.removeProperty('--accent-secondary-foreground')
+    root.style.removeProperty('--ring-secondary')
+  }
+  
+  if (state.tertiaryAccent) {
+    const tertiaryAccentValues =
+      state.tertiaryAccent === 'custom'
+        ? getCustomAccentTones(state.customAccent)[resolved]
+        : ACCENT_COLORS[state.tertiaryAccent].values[resolved]
+    root.style.setProperty('--primary-tertiary', tertiaryAccentValues.primary)
+    root.style.setProperty('--primary-tertiary-foreground', tertiaryAccentValues.primaryForeground)
+    root.style.setProperty('--accent-tertiary', tertiaryAccentValues.accent)
+    root.style.setProperty('--accent-tertiary-foreground', tertiaryAccentValues.accentForeground)
+    root.style.setProperty('--ring-tertiary', tertiaryAccentValues.ring)
+  } else {
+    root.style.removeProperty('--primary-tertiary')
+    root.style.removeProperty('--primary-tertiary-foreground')
+    root.style.removeProperty('--accent-tertiary')
+    root.style.removeProperty('--accent-tertiary-foreground')
+    root.style.removeProperty('--ring-tertiary')
+  }
+  
   root.style.setProperty('--radius', `${state.radius}rem`)
   // Update adaptive radius variables
   root.style.setProperty('--radius-xs', `min(${state.radius}rem, 0.375rem)`)

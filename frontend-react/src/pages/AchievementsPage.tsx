@@ -969,7 +969,7 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
                 : achievement.rarity === 'legendary'
                   ? 'bg-muted/30 border-2 border-primary/40 opacity-80'
                   : 'bg-muted/20 border border-border/60 opacity-75',
-              achievement.unlocked && rarityStyle.effect,
+              achievement.unlocked && 'effect' in rarityStyle && rarityStyle.effect,
               achievement.rarity === 'legendary' && 'animate-legendary-glow'
             )}
           >
@@ -1065,63 +1065,4 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
   )
 }
 
-
-              <div className="space-y-1">
-                <CardTitle className="text-base font-semibold leading-tight">
-                  {achievement.title}
-                </CardTitle>
-                <CardDescription className="text-xs leading-relaxed">{achievement.description}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="mt-auto space-y-3 pt-0">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <CategoryIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="text-muted-foreground capitalize shrink-0">{achievement.category}</span>
-                  <span className="text-muted-foreground shrink-0">•</span>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'rounded-full px-2 py-0.5 text-[10px] flex items-center gap-1 border shrink-0',
-                      achievement.unlocked ? rarityStyle.badge : 'bg-muted/50 text-muted-foreground border-border/60'
-                    )}
-                  >
-                    {achievement.rarity}
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: 4 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={cn(
-                            'h-2.5 w-2.5 transition-colors shrink-0',
-                            i < rarityStyle.filledStars
-                              ? achievement.unlocked
-                                ? 'text-primary fill-primary'
-                                : 'text-muted-foreground fill-muted-foreground/40'
-                              : 'text-muted-foreground/30 fill-transparent'
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </Badge>
-                </div>
-                {achievement.xpReward && (
-                  <span className="flex items-center gap-1 font-medium text-foreground whitespace-nowrap shrink-0">
-                    <Zap className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    +{formatXP(achievement.xpReward)} XP
-                  </span>
-                )}
-              </div>
-              {achievement.unlocked && achievement.unlockedAt && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 px-2.5 py-1.5 text-xs text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>{t('achievements.unlocked')} {new Date(achievement.unlockedAt).toLocaleDateString()}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      })}
-    </div>
-  )
-}
 

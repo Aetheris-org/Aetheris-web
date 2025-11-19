@@ -2141,7 +2141,9 @@ function AppearanceSettings() {
     setTheme,
     accent,
     setAccent,
+    secondaryAccent,
     setSecondaryAccent,
+    tertiaryAccent,
     setTertiaryAccent,
     surface,
     setSurface,
@@ -2165,7 +2167,9 @@ function AppearanceSettings() {
     setTheme: state.setTheme,
     accent: state.accent,
     setAccent: state.setAccent,
+    secondaryAccent: state.secondaryAccent,
     setSecondaryAccent: state.setSecondaryAccent,
+    tertiaryAccent: state.tertiaryAccent,
     setTertiaryAccent: state.setTertiaryAccent,
     surface: state.surface,
     setSurface: state.setSurface,
@@ -2185,16 +2189,6 @@ function AppearanceSettings() {
     setMotion: state.setMotion,
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
-
-  // Хелпер для получения акцентных цветов темы
-  const getThemeAccents = (theme: typeof allThemes[number]) => {
-    const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
-    return {
-      primary: accentOptionsByValue[theme.accent],
-      secondary: themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null,
-      tertiary: themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null,
-    }
-  }
 
   const surfaceOptions = useMemo(() => {
     return Object.entries(SURFACE_PRESETS).map(([value, config]) => {
@@ -2488,40 +2482,46 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.midnightBlue.name'),
           description: t('settings.appearance.themes.midnightBlue.description'),
         accent: 'cobalt' as AccentColor,
+        secondaryAccent: 'azure' as AccentColor, // Небесный оттенок
+        tertiaryAccent: 'cyan' as AccentColor, // Яркий акцент
         surface: 'midnight' as SurfaceStyle,
-        radius: 0.5,
-        typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
-      {
-        id: 'sunset-warm',
-          name: t('settings.appearance.themes.sunsetWarm.name'),
-          description: t('settings.appearance.themes.sunsetWarm.description'),
-        accent: 'amber' as AccentColor,
-        surface: 'sunset' as SurfaceStyle,
         radius: 1,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
+        contrast: 'bold' as ContrastMode,
         density: 1.05,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
-      {
-        id: 'forest-green',
+        {
+          id: 'sunset-warm',
+          name: t('settings.appearance.themes.sunsetWarm.name'),
+          description: t('settings.appearance.themes.sunsetWarm.description'),
+        accent: 'amber' as AccentColor,
+          secondaryAccent: 'orange' as AccentColor, // Закат
+          tertiaryAccent: 'coral' as AccentColor, // Коралловый закат
+        surface: 'sunset' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+        {
+          id: 'forest-green',
           name: t('settings.appearance.themes.forestGreen.name'),
           description: t('settings.appearance.themes.forestGreen.description'),
         accent: 'emerald' as AccentColor,
+          secondaryAccent: 'forest' as AccentColor, // Лес
+          tertiaryAccent: 'lime' as AccentColor, // Свежая зелень
         surface: 'moss' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'default' as TypographyScale,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2539,31 +2539,35 @@ function AppearanceSettings() {
         motion: 'reduced' as MotionPreference,
         official: true,
       },
-      {
-        id: 'cosmic-dark',
+        {
+          id: 'cosmic-dark',
           name: t('settings.appearance.themes.cosmicDark.name'),
           description: t('settings.appearance.themes.cosmicDark.description'),
         accent: 'violet' as AccentColor,
+          secondaryAccent: 'plum' as AccentColor, // Космический фиолетовый
+          tertiaryAccent: 'magenta' as AccentColor, // Космический розовый
         surface: 'cosmos' as SurfaceStyle,
         radius: 1.5,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1.1,
-        depth: 'elevated' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
+        contrast: 'bold' as ContrastMode,
+        density: 1.15,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
         {
           id: 'ocean-breeze',
           name: t('settings.appearance.themes.oceanBreeze.name'),
           description: t('settings.appearance.themes.oceanBreeze.description'),
           accent: 'azure' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor, // Океан
+          tertiaryAccent: 'teal' as AccentColor, // Бирюза
           surface: 'harbor' as SurfaceStyle,
-          radius: 1,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2572,12 +2576,14 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.autumnWarmth.name'),
           description: t('settings.appearance.themes.autumnWarmth.description'),
           accent: 'orange' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Осенний желтый
+          tertiaryAccent: 'coral' as AccentColor, // Теплый коралл
           surface: 'ember' as SurfaceStyle,
-          radius: 0.75,
-          typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2587,10 +2593,10 @@ function AppearanceSettings() {
           description: t('settings.appearance.themes.snowWhite.description'),
           accent: 'mono' as AccentColor,
           surface: 'snow' as SurfaceStyle,
-          radius: 0.5,
-          typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
           depth: 'flat' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2600,11 +2606,13 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.deepPurple.name'),
           description: t('settings.appearance.themes.deepPurple.description'),
           accent: 'violet' as AccentColor,
+          secondaryAccent: 'plum' as AccentColor, // Слива
+          tertiaryAccent: 'fuchsia' as AccentColor, // Яркая фуксия
           surface: 'midnight' as SurfaceStyle,
-          radius: 1,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.1,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2616,11 +2624,13 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.cyberpunk.name'),
           description: t('settings.appearance.themes.cyberpunk.description'),
           accent: 'fuchsia' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor, // Неоновый синий
+          tertiaryAccent: 'lime' as AccentColor, // Неоновый зеленый
           surface: 'cyberpunk' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2630,34 +2640,39 @@ function AppearanceSettings() {
         name: t('settings.appearance.themes.minecraft.name'),
         description: t('settings.appearance.themes.minecraft.description'),
         accent: 'forest' as AccentColor,
+        secondaryAccent: 'emerald' as AccentColor, // Трава
+        tertiaryAccent: 'brown' as AccentColor, // Земля
         surface: 'minecraft' as SurfaceStyle,
-        radius: 0,
+        radius: 0.25,
         typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'flat' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
-        },
-        {
+      },
+      {
           id: 'csgo',
         name: t('settings.appearance.themes.csgo.name'),
         description: t('settings.appearance.themes.csgo.description'),
         accent: 'orange' as AccentColor,
+        secondaryAccent: 'amber' as AccentColor, // Золото
+        tertiaryAccent: 'gold' as AccentColor, // Премиум золото
         surface: 'csgo' as SurfaceStyle,
-        radius: 0.25,
-        typography: 'compact' as TypographyScale,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 0.95,
-        depth: 'soft' as DepthStyle,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
-        {
+      {
           id: 'dota',
         name: t('settings.appearance.themes.dota.name'),
         description: t('settings.appearance.themes.dota.description'),
         accent: 'blue' as AccentColor,
+        secondaryAccent: 'red' as AccentColor, // Враги
         surface: 'dota' as SurfaceStyle,
         radius: 0.75,
         typography: 'default' as TypographyScale,
@@ -2672,6 +2687,7 @@ function AppearanceSettings() {
         name: 'Terraria',
         description: t('settings.appearance.themes.terraria.description'),
         accent: 'brown' as AccentColor,
+        secondaryAccent: 'amber' as AccentColor, // Золото
         surface: 'terraria' as SurfaceStyle,
         radius: 0.5,
         typography: 'comfortable' as TypographyScale,
@@ -2686,6 +2702,8 @@ function AppearanceSettings() {
         name: 'Geometry Dash',
         description: t('settings.appearance.themes.geometryDash.description'),
         accent: 'lime' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor, // Неоновый синий
+        tertiaryAccent: 'magenta' as AccentColor, // Неоновый розовый
         surface: 'geometrydash' as SurfaceStyle,
         radius: 0,
         typography: 'default' as TypographyScale,
@@ -2700,12 +2718,14 @@ function AppearanceSettings() {
         name: 'VALORANT',
         description: t('settings.appearance.themes.valorant.description'),
         accent: 'red' as AccentColor,
+        secondaryAccent: 'crimson' as AccentColor, // Яркий красный
+        tertiaryAccent: 'amber' as AccentColor, // Золотой акцент
         surface: 'obsidian' as SurfaceStyle,
-        radius: 0.5,
-        typography: 'compact' as TypographyScale,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 0.95,
-        depth: 'soft' as DepthStyle,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -2714,11 +2734,13 @@ function AppearanceSettings() {
         name: 'League of Legends',
         description: t('settings.appearance.themes.leagueOfLegends.description'),
         accent: 'gold' as AccentColor,
+        secondaryAccent: 'blue' as AccentColor, // Мана
+        tertiaryAccent: 'amber' as AccentColor, // Золотой оттенок
         surface: 'midnight' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2728,11 +2750,13 @@ function AppearanceSettings() {
         name: 'Overwatch',
         description: t('settings.appearance.themes.overwatch.description'),
         accent: 'azure' as AccentColor,
+        secondaryAccent: 'orange' as AccentColor, // Враги
+        tertiaryAccent: 'cyan' as AccentColor, // Яркий синий
         surface: 'nightfall' as SurfaceStyle,
-        radius: 1,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2742,12 +2766,14 @@ function AppearanceSettings() {
         name: 'Apex Legends',
         description: t('settings.appearance.themes.apexLegends.description'),
         accent: 'crimson' as AccentColor,
+        secondaryAccent: 'orange' as AccentColor, // Огонь
+        tertiaryAccent: 'amber' as AccentColor, // Золотой акцент
         surface: 'void' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -2756,11 +2782,13 @@ function AppearanceSettings() {
         name: 'Fortnite',
         description: t('settings.appearance.themes.fortnite.description'),
         accent: 'magenta' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor, // Яркий синий
+        tertiaryAccent: 'fuchsia' as AccentColor, // Яркая фуксия
         surface: 'twilight' as SurfaceStyle,
-        radius: 1.25,
-        typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1.05,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2770,20 +2798,24 @@ function AppearanceSettings() {
         name: 'Among Us',
           description: t('settings.appearance.themes.amongUs.description'),
         accent: 'red' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor, // Голубой космонавт
+        tertiaryAccent: 'lime' as AccentColor, // Зеленый космонавт
           surface: 'daylight' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-          density: 1.05,
-          depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+          density: 1.1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
         official: true,
         },
-        {
-          id: 'pokemon',
+      {
+        id: 'pokemon',
         name: 'Pokémon',
         description: t('settings.appearance.themes.pokemon.description'),
         accent: 'yellow' as AccentColor,
+        secondaryAccent: 'blue' as AccentColor, // Вода
+        tertiaryAccent: 'red' as AccentColor, // Покебол
         surface: 'daylight' as SurfaceStyle,
         radius: 1,
         typography: 'comfortable' as TypographyScale,
@@ -2798,11 +2830,13 @@ function AppearanceSettings() {
         name: 'The Legend of Zelda',
         description: t('settings.appearance.themes.zelda.description'),
         accent: 'gold' as AccentColor,
+        secondaryAccent: 'emerald' as AccentColor, // Природа
+        tertiaryAccent: 'amber' as AccentColor, // Сокровища
         surface: 'moss' as SurfaceStyle,
-        radius: 0.75,
+        radius: 1,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2813,12 +2847,13 @@ function AppearanceSettings() {
         description: t('settings.appearance.themes.portal.description'),
         accent: 'orange' as AccentColor,
         secondaryAccent: 'azure' as AccentColor, // Синий портал
+        tertiaryAccent: 'cyan' as AccentColor, // Яркий синий акцент
         surface: 'noir' as SurfaceStyle,
-        radius: 0,
+        radius: 0.5,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'flat' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2827,12 +2862,14 @@ function AppearanceSettings() {
         name: 'Half-Life',
         description: t('settings.appearance.themes.halfLife.description'),
         accent: 'amber' as AccentColor,
+        secondaryAccent: 'orange' as AccentColor, // Огонь
+        tertiaryAccent: 'crimson' as AccentColor, // Опасность
         surface: 'eclipse' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2841,12 +2878,14 @@ function AppearanceSettings() {
         name: 'Undertale',
         description: t('settings.appearance.themes.undertale.description'),
         accent: 'rose' as AccentColor,
+        secondaryAccent: 'yellow' as AccentColor, // Золото
+        tertiaryAccent: 'gold' as AccentColor, // Премиум золото
         surface: 'sand' as SurfaceStyle,
-        radius: 0,
-        typography: 'compact' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 0.95,
-        depth: 'flat' as DepthStyle,
+        radius: 0.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2855,11 +2894,13 @@ function AppearanceSettings() {
         name: 'Hollow Knight',
         description: t('settings.appearance.themes.hollowKnight.description'),
         accent: 'silver' as AccentColor,
+        secondaryAccent: 'orange' as AccentColor, // Огонь
+        tertiaryAccent: 'amber' as AccentColor, // Свет
         surface: 'void' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
+        density: 1.05,
         depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -2869,12 +2910,14 @@ function AppearanceSettings() {
           name: 'Stardew Valley',
           description: t('settings.appearance.themes.stardewValley.description'),
           accent: 'emerald' as AccentColor,
+          secondaryAccent: 'brown' as AccentColor, // Земля
+          tertiaryAccent: 'amber' as AccentColor, // Золото урожая
           surface: 'terraria' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2883,11 +2926,13 @@ function AppearanceSettings() {
           name: 'Balatro',
           description: t('settings.appearance.themes.balatro.description'),
           accent: 'gold' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Золотой оттенок
+          tertiaryAccent: 'yellow' as AccentColor, // Яркое золото
           surface: 'noir' as SurfaceStyle,
-          radius: 0.5,
-          typography: 'default' as TypographyScale,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2897,12 +2942,14 @@ function AppearanceSettings() {
           name: 'Metro Last Light',
           description: t('settings.appearance.themes.metroLastLight.description'),
           accent: 'orange' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Свет фонаря
+          tertiaryAccent: 'crimson' as AccentColor, // Опасность
           surface: 'eclipse' as SurfaceStyle,
-          radius: 0.25,
-          typography: 'compact' as TypographyScale,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 0.95,
-          depth: 'soft' as DepthStyle,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2911,11 +2958,13 @@ function AppearanceSettings() {
           name: 'Metro Exodus',
           description: t('settings.appearance.themes.metroExodus.description'),
           accent: 'crimson' as AccentColor,
+          secondaryAccent: 'orange' as AccentColor, // Огонь
+          tertiaryAccent: 'amber' as AccentColor, // Свет
           surface: 'void' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2925,12 +2974,14 @@ function AppearanceSettings() {
           name: 'War Thunder',
           description: t('settings.appearance.themes.warThunder.description'),
           accent: 'blue' as AccentColor,
+          secondaryAccent: 'cobalt' as AccentColor, // Военный синий
+          tertiaryAccent: 'azure' as AccentColor, // Небо
           surface: 'slate' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2939,11 +2990,13 @@ function AppearanceSettings() {
           name: 'Warhammer',
           description: t('settings.appearance.themes.warhammer.description'),
           accent: 'red' as AccentColor,
+          secondaryAccent: 'crimson' as AccentColor, // Кровь
+          tertiaryAccent: 'gold' as AccentColor, // Имперское золото
           surface: 'obsidian' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2953,11 +3006,13 @@ function AppearanceSettings() {
           name: 'Clash Royale',
           description: t('settings.appearance.themes.clashRoyale.description'),
           accent: 'magenta' as AccentColor,
+          secondaryAccent: 'gold' as AccentColor, // Золото
+          tertiaryAccent: 'fuchsia' as AccentColor, // Яркая фуксия
           surface: 'twilight' as SurfaceStyle,
-          radius: 1,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1.05,
+          contrast: 'bold' as ContrastMode,
+          density: 1.1,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2967,12 +3022,14 @@ function AppearanceSettings() {
           name: 'Block Strike',
           description: t('settings.appearance.themes.blockStrike.description'),
           accent: 'orange' as AccentColor,
+          secondaryAccent: 'red' as AccentColor, // Враги
+          tertiaryAccent: 'lime' as AccentColor, // Союзники
           surface: 'minecraft' as SurfaceStyle,
-          radius: 0,
-          typography: 'compact' as TypographyScale,
+          radius: 0.25,
+          typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 0.95,
-          depth: 'flat' as DepthStyle,
+          density: 1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2983,35 +3040,9 @@ function AppearanceSettings() {
           name: 'SCP Foundation',
           description: t('settings.appearance.themes.scp.description'),
           accent: 'red' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Предупреждение
+          tertiaryAccent: 'crimson' as AccentColor, // Опасность
           surface: 'noir' as SurfaceStyle,
-          radius: 0.25,
-          typography: 'compact' as TypographyScale,
-          contrast: 'bold' as ContrastMode,
-          density: 0.95,
-          depth: 'flat' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'backrooms',
-          name: t('settings.appearance.themes.backrooms.name'),
-          description: t('settings.appearance.themes.backrooms.description'),
-          accent: 'yellow' as AccentColor,
-          surface: 'ivory' as SurfaceStyle,
-          radius: 0,
-          typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'flat' as DepthStyle,
-          motion: 'reduced' as MotionPreference,
-          official: true,
-        },
-        {
-          id: 'ussr',
-          name: t('settings.appearance.themes.ussr.name'),
-          description: t('settings.appearance.themes.ussr.description'),
-          accent: 'red' as AccentColor,
-          surface: 'charcoal' as SurfaceStyle,
           radius: 0.5,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
@@ -3021,15 +3052,48 @@ function AppearanceSettings() {
           official: true,
         },
         {
+          id: 'backrooms',
+          name: t('settings.appearance.themes.backrooms.name'),
+          description: t('settings.appearance.themes.backrooms.description'),
+          accent: 'yellow' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Тусклый свет
+          surface: 'ivory' as SurfaceStyle,
+          radius: 0.25,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'soft' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'ussr',
+          name: t('settings.appearance.themes.ussr.name'),
+          description: t('settings.appearance.themes.ussr.description'),
+          accent: 'red' as AccentColor,
+          secondaryAccent: 'gold' as AccentColor, // Звезда
+          tertiaryAccent: 'amber' as AccentColor, // Серп и молот
+          surface: 'charcoal' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
           id: 'china',
           name: t('settings.appearance.themes.china.name'),
           description: t('settings.appearance.themes.china.description'),
           accent: 'crimson' as AccentColor,
+          secondaryAccent: 'gold' as AccentColor, // Императорское золото
+          tertiaryAccent: 'amber' as AccentColor, // Драконье золото
           surface: 'midnight' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.1,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3039,12 +3103,14 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.banana.name'),
           description: t('settings.appearance.themes.banana.description'),
           accent: 'yellow' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Зрелый банан
+          tertiaryAccent: 'saffron' as AccentColor, // Яркий желтый
           surface: 'daylight' as SurfaceStyle,
-          radius: 1,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1.05,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3067,11 +3133,13 @@ function AppearanceSettings() {
           name: 'Arasaka Inc.',
           description: t('settings.appearance.themes.arasaka.description'),
           accent: 'red' as AccentColor,
+          secondaryAccent: 'crimson' as AccentColor, // Корпоративный красный
+          tertiaryAccent: 'amber' as AccentColor, // Золотой акцент
           surface: 'obsidian' as SurfaceStyle,
-          radius: 0.25,
-          typography: 'compact' as TypographyScale,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 0.95,
+          density: 1,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3081,12 +3149,14 @@ function AppearanceSettings() {
           name: 'Aliexpress',
           description: t('settings.appearance.themes.aliexpress.description'),
           accent: 'orange' as AccentColor,
+          secondaryAccent: 'red' as AccentColor, // Брендовый красный
+          tertiaryAccent: 'amber' as AccentColor, // Золотой акцент
           surface: 'daylight' as SurfaceStyle,
-          radius: 0.5,
-          typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3095,11 +3165,13 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.alien.name'),
           description: t('settings.appearance.themes.alien.description'),
           accent: 'emerald' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor, // Инопланетный синий
+          tertiaryAccent: 'lime' as AccentColor, // Яркий зеленый
           surface: 'void' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3109,12 +3181,14 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.predator.name'),
           description: t('settings.appearance.themes.predator.description'),
           accent: 'red' as AccentColor,
+          secondaryAccent: 'emerald' as AccentColor, // Камуфляж
+          tertiaryAccent: 'crimson' as AccentColor, // Кровь
           surface: 'moss' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3123,11 +3197,13 @@ function AppearanceSettings() {
           name: 'Anime',
           description: t('settings.appearance.themes.anime.description'),
           accent: 'magenta' as AccentColor,
+          secondaryAccent: 'fuchsia' as AccentColor, // Яркая фуксия
+          tertiaryAccent: 'pink' as AccentColor, // Розовый акцент
           surface: 'twilight' as SurfaceStyle,
-          radius: 1,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1.05,
+          contrast: 'bold' as ContrastMode,
+          density: 1.1,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3137,11 +3213,13 @@ function AppearanceSettings() {
           name: 'Demon Slayer',
           description: t('settings.appearance.themes.demonSlayer.description'),
           accent: 'azure' as AccentColor,
+          secondaryAccent: 'crimson' as AccentColor, // Кровь
+          tertiaryAccent: 'cyan' as AccentColor, // Водное дыхание
           surface: 'nightfall' as SurfaceStyle,
-          radius: 0.75,
-          typography: 'default' as TypographyScale,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3151,26 +3229,30 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.onePiece.name'),
           description: t('settings.appearance.themes.onePiece.description'),
           accent: 'blue' as AccentColor,
+          secondaryAccent: 'red' as AccentColor, // Флаг пиратов
+          tertiaryAccent: 'yellow' as AccentColor, // Золото
           surface: 'harbor' as SurfaceStyle,
           radius: 1,
           typography: 'comfortable' as TypographyScale,
           contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
         {
           id: 'truffle',
           name: t('settings.appearance.themes.truffle.name'),
           description: t('settings.appearance.themes.truffle.description'),
           accent: 'brown' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor, // Золотой трюфель
+          tertiaryAccent: 'coral' as AccentColor, // Розовый оттенок
           surface: 'sand' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3179,11 +3261,13 @@ function AppearanceSettings() {
           name: 'Calamity',
           description: t('settings.appearance.themes.calamity.description'),
           accent: 'violet' as AccentColor,
+          secondaryAccent: 'magenta' as AccentColor, // Катастрофический розовый
+          tertiaryAccent: 'plum' as AccentColor, // Темный фиолетовый
           surface: 'cosmos' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3193,11 +3277,13 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.berserk.name'),
           description: t('settings.appearance.themes.berserk.description'),
           accent: 'red' as AccentColor,
+          secondaryAccent: 'crimson' as AccentColor, // Кровь
+          tertiaryAccent: 'amber' as AccentColor, // Огонь
           surface: 'obsidian' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3206,11 +3292,11 @@ function AppearanceSettings() {
           id: 'vagabond',
           name: t('settings.appearance.themes.vagabond.name'),
           description: t('settings.appearance.themes.vagabond.description'),
-          accent: 'mono' as AccentColor,
+        accent: 'mono' as AccentColor,
           surface: 'noir' as SurfaceStyle,
           radius: 0.75,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
           density: 1,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
@@ -3221,11 +3307,13 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.chainsawMan.name'),
           description: t('settings.appearance.themes.chainsawMan.description'),
           accent: 'crimson' as AccentColor,
+          secondaryAccent: 'yellow' as AccentColor, // Огонь цепной пилы
+          tertiaryAccent: 'orange' as AccentColor, // Яркий огонь
           surface: 'void' as SurfaceStyle,
-          radius: 0.5,
+          radius: 0.75,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3235,10 +3323,11 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.hunterXHunter.name'),
           description: t('settings.appearance.themes.hunterXHunter.description'),
           accent: 'azure' as AccentColor,
-          surface: 'daylight' as SurfaceStyle,
+          secondaryAccent: 'emerald' as AccentColor, // Природа
+        surface: 'daylight' as SurfaceStyle,
           radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
+        contrast: 'standard' as ContrastMode,
           density: 1.05,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
@@ -3254,25 +3343,25 @@ function AppearanceSettings() {
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
           density: 1,
-          depth: 'flat' as DepthStyle,
-          motion: 'reduced' as MotionPreference,
-          official: true,
-        },
-        {
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
           id: 'made-in-abyss',
           name: t('settings.appearance.themes.madeInAbyss.name'),
           description: t('settings.appearance.themes.madeInAbyss.description'),
-          accent: 'violet' as AccentColor,
+        accent: 'violet' as AccentColor,
           surface: 'midnight' as SurfaceStyle,
           radius: 0.75,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
           density: 1,
-          depth: 'elevated' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
-      ],
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
     }),
     [t]
   )
@@ -4360,249 +4449,276 @@ function AppearanceSettings() {
                       {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
                   </p>
                   </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {customThemes.map((theme) => {
-                  const themeAccent = accentOptionsByValue[theme.accent]
-                  const themeSurface = surfaceOptionsByValue[theme.surface]
-                  const isActive =
-                    accent === theme.accent &&
-                    surface === theme.surface &&
-                    Math.abs(radius - theme.radius) < 0.01 &&
-                    typography === theme.typography &&
-                    contrast === theme.contrast &&
-                    depth === theme.depth &&
-                    motion === theme.motion
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
+                      const themeSurface = surfaceOptionsByValue[theme.surface]
+                      // Собираем все акцентные цвета для отображения
+                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
+                      const isActive =
+                        accent === theme.accent &&
+                        secondaryAccent === themeWithAccents.secondaryAccent &&
+                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
 
-                  return (
-                    <Card
-                      key={theme.id}
-                      className={cn(
-                        'relative border transition-all hover:border-primary/60 flex flex-col h-full',
-                        isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                      )}
-                    >
-                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                        <div className="flex items-start justify-between gap-2 h-full">
-                          <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <CardTitle className="text-sm font-semibold">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                      </div>
-                            </CardTitle>
-                        </div>
-                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col">
-                        <div className="flex flex-col space-y-3 mt-auto">
-                        <div 
-                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
-                          style={{ 
-                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
-                          }}
+                      return (
+                        <Card
+                          key={theme.id}
+                          className={cn(
+                            'relative border transition-all hover:border-primary/60 flex flex-col h-full',
+                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                          )}
                         >
-                          <div 
-                            className="absolute inset-0 opacity-5"
-                            style={{
-                              background: themeAccent 
-                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                : 'transparent'
-                            }}
-                          />
-                          
-                          <div className="relative z-10 h-full flex flex-col gap-2.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
+                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                            <div className="flex items-start justify-between gap-2 h-full">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <CardTitle className="text-sm font-semibold">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
+              </div>
+                                </CardTitle>
+                              </div>
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
+                                className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                                }}
+                              >
                                 <div 
-                                  className="size-6 rounded-full shrink-0"
+                                  className="absolute inset-0 opacity-5"
                                   style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
+                                    background: allAccents.length > 0
+                                      ? allAccents.length > 1
+                                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
+                                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
+                                      : 'transparent'
                                   }}
                                 />
-                                <div className="flex flex-col gap-0.5 min-w-0">
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      {/* Показываем все акцентные цвета */}
+                                      <div className="flex items-center gap-0.5">
+                                        {allAccents.map((acc, index) => (
+                                          <div
+                                            key={index}
+                                            className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
+                                            style={{
+                                              backgroundColor: `hsl(${acc.tone})`,
+                                              marginLeft: index > 0 ? '-8px' : '0',
+                                              zIndex: allAccents.length - index,
+                                            }}
+                                          />
+                                        ))}
+                                      </div>
+                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+                                        </div>
+                                        <div 
+                                          className="text-[10px] truncate opacity-70"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                              : 'hsl(var(--muted-foreground))'
+                                          }}
+                                        >
+                                          {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className="size-1.5 rounded-full shrink-0"
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+
                                   <div 
-                                    className="text-xs font-semibold truncate"
+                                    className="flex-1 p-2.5 border"
                                     style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                        : 'hsl(var(--foreground))'
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
                                     }}
                                   >
-                                    Theme Preview
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : `hsl(${allAccents[0]?.tone})`,
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : `hsl(${allAccents[0]?.tone})`,
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div className="flex flex-col gap-0.5 w-3">
+                                          {allAccents.map((acc, index) => (
+                                            <div
+                                              key={index}
+                                              className="h-1.5 rounded-sm flex-1"
+                                              style={{
+                                                backgroundColor: `hsl(${acc.tone})`,
+                                                opacity: 0.2,
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-0.5">
+                                        {allAccents.map((acc, index) => (
+                                          <div
+                                            key={index}
+                                            className="h-1.5 flex-1 rounded-full"
+                                            style={{
+                                              backgroundColor: `hsl(${acc.tone})`,
+                                              opacity: 0.6,
+                                            }}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div 
-                                    className="text-[10px] truncate opacity-70"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                        : 'hsl(var(--muted-foreground))'
-                                    }}
-                                  >
-                                    {themeAccent?.label ?? theme.accent}
+
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className="h-2 flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                              <div 
-                                className="size-1.5 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                }}
-                              />
-                            </div>
-
-                            <div 
-                              className="flex-1 p-2.5 border"
-                              style={{
-                                backgroundColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.card})`
-                                  : 'hsl(var(--card))',
-                                borderColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                  : 'hsl(var(--border))',
-                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                              }}
-                            >
-                              <div className="flex flex-col gap-1.5 h-full">
-                                <div className="flex items-center gap-1.5">
-                                  <div 
-                                    className="h-1.5 rounded-sm flex-1"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.3,
-                                    }}
-                                  />
-                                  <div 
-                                    className="h-1.5 w-4 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.5,
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex gap-1.5 flex-1">
-                                  <div 
-                                    className="flex-1 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.muted})`
-                                        : 'hsl(var(--muted))',
-                                      opacity: 0.4,
-                                    }}
-                                  />
-                                  <div 
-                                    className="w-3 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.2,
-                                    }}
-                                  />
-                                </div>
-                                <div 
-                                  className="h-1.5 rounded-full"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                    opacity: 0.6,
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3].map((i) => (
-                                  <div
-                                    key={i}
-                                    className="size-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                        : 'hsl(var(--secondary))',
-                                      opacity: 0.3 + (i * 0.1),
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <div 
-                                className="h-2 w-8 rounded-sm"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                  opacity: 0.4,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {Math.round(theme.radius * 16)}px
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                          </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                                </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                          <Button
-                            variant={isActive ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleApplyTheme(theme)}
-                          >
-                            {isActive ? (
-                              <>
-                                <Check className="mr-2 h-3 w-3" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-3 w-3" />
-                                Apply
-                              </>
-                            )}
-                          </Button>
-                          {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                      )}
-                    </div>
-                  </div>
-                      </CardContent>
-                    </Card>
-              )
-            })}
-          </div>
-        </section>
-              </>
-            )}
+                               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                   {Math.round(theme.radius * 16)}px
+                                 </Badge>
+                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                   {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                 </Badge>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                    {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                    {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                    {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
+                                  </Badge>
+                               </div>
+                               <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                                 <Button
+                                   variant={isActive ? 'default' : 'outline'}
+                                   size="sm"
+                                   className="flex-1"
+                                   onClick={() => handleApplyTheme(theme)}
+                                 >
+                                   {isActive ? (
+                                     <>
+                                       <Check className="mr-2 h-3 w-3" />
+                                       Active
+                                     </>
+                                   ) : (
+                                     <>
+                                       <Download className="mr-2 h-3 w-3" />
+                                       Apply
+                                     </>
+                                   )}
+                                 </Button>
+                                 {!theme.official && (
+                                   <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     className="h-8 w-8"
+                                     onClick={() => handleDeleteTheme(theme.id)}
+                                   >
+                                     <Trash2 className="h-3 w-3" />
+                                   </Button>
+                                 )}
+                               </div>
+                             </div>
+                           </CardContent>
+                         </Card>
+                       )
+                     })}
+                   </div>
+                 </section>
+                </>
+              )}
           </TabsContent>
 
           <TabsContent value="themes" className="space-y-6 mt-6">
@@ -4616,10 +4732,10 @@ function AppearanceSettings() {
                   >
                   <div>
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
-                <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {officialThemesGroups.basic.length} {officialThemesGroups.basic.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-              </p>
-            </div>
+                    </p>
+                  </div>
                     {collapsedGroups['basic'] ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -4629,18 +4745,21 @@ function AppearanceSettings() {
                   {!collapsedGroups['basic'] && (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {officialThemesGroups.basic.map((theme) => {
-                  const accents = getThemeAccents(theme)
-                  const themeAccent = accents.primary
-                  const themeSecondaryAccent = accents.secondary
-                  const themeTertiaryAccent = accents.tertiary
+                  const themeAccent = accentOptionsByValue[theme.accent]
+                  const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                  const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+                  const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
                   const themeSurface = surfaceOptionsByValue[theme.surface]
+                  // Собираем все акцентные цвета для отображения
+                  const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                   const isActive =
                     accent === theme.accent &&
+                    secondaryAccent === themeWithAccents.secondaryAccent &&
+                    tertiaryAccent === themeWithAccents.tertiaryAccent &&
                     surface === theme.surface &&
                     Math.abs(radius - theme.radius) < 0.01 &&
                     typography === theme.typography &&
                     contrast === theme.contrast &&
-                    Math.abs(density - theme.density) < 0.01 &&
                     depth === theme.depth &&
                     motion === theme.motion
 
@@ -4679,7 +4798,7 @@ function AppearanceSettings() {
                           {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                           </div>
                         </div>
-                </CardHeader>
+                      </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <div className="flex flex-col space-y-3 mt-auto">
                         <div 
@@ -4694,48 +4813,33 @@ function AppearanceSettings() {
                           <div 
                             className="absolute inset-0 opacity-5"
                             style={{
-                              background: themeAccent 
-                                ? themeSecondaryAccent
-                                  ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, hsl(${themeSecondaryAccent.tone}) 50%, transparent 100%)`
-                                  : `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                              background: allAccents.length > 0
+                                ? allAccents.length > 1
+                                  ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
+                                  : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
                                 : 'transparent'
                             }}
                           />
                           
                           <div className="relative z-10 h-full flex flex-col gap-2.5">
                             {/* Header section */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                {/* Показываем несколько цветов, если они есть */}
-                                <div className="flex items-center gap-1">
-                                  <div 
-                                    className="size-6 rounded-full shrink-0"
+                            <div className="flex items-center gap-2">
+                              {/* Показываем все акцентные цвета */}
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                {allAccents.map((acc, index) => (
+                                  <div
+                                    key={index}
+                                    className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
                                     style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
+                                      backgroundColor: `hsl(${acc.tone})`,
+                                      marginLeft: index > 0 ? '-8px' : '0',
+                                      zIndex: allAccents.length - index,
                                     }}
                                   />
-                                  {themeSecondaryAccent && (
-                                    <div 
-                                      className="size-4 rounded-full shrink-0 border-2 border-background"
-                                      style={{
-                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
-                                        marginLeft: '-8px',
-                                      }}
-                                    />
-                                  )}
-                                  {themeTertiaryAccent && (
-                                    <div 
-                                      className="size-3 rounded-full shrink-0 border-2 border-background"
-                                      style={{
-                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
-                                        marginLeft: '-6px',
-                                      }}
-                                    />
-                                  )}
-              </div>
-                                <div className="flex flex-col gap-0.5 min-w-0">
+                                ))}
+                              </div>
+                              <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
                                   <div 
                                     className="text-xs font-semibold truncate"
                                     style={{
@@ -4746,45 +4850,28 @@ function AppearanceSettings() {
                                   >
                                     Theme Preview
                                   </div>
-                                  <div 
-                                    className="text-[10px] truncate opacity-70"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                        : 'hsl(var(--muted-foreground))'
-                                    }}
-                                  >
-                                    {themeAccent?.label ?? theme.accent}
-                                    {themeSecondaryAccent && ` + ${themeSecondaryAccent.label}`}
-                                    {themeTertiaryAccent && ` + ${themeTertiaryAccent.label}`}
+                                  <div className="flex items-center gap-0.5 shrink-0">
+                                    {allAccents.map((acc, index) => (
+                                      <div
+                                        key={index}
+                                        className="size-1.5 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: `hsl(${acc.tone})`,
+                                        }}
+                                      />
+                                    ))}
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-1">
                                 <div 
-                                  className="size-1.5 rounded-full shrink-0"
+                                  className="text-[10px] truncate opacity-70"
                                   style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
+                                    color: themeSurface 
+                                      ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                      : 'hsl(var(--muted-foreground))'
                                   }}
-                                />
-                                {themeSecondaryAccent && (
-                                  <div 
-                                    className="size-1.5 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
-                                    }}
-                                  />
-                                )}
-                                {themeTertiaryAccent && (
-                                  <div 
-                                    className="size-1.5 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
-                                    }}
-                                  />
-                                )}
+                                >
+                                  {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
+                                </div>
                               </div>
                             </div>
 
@@ -4806,31 +4893,21 @@ function AppearanceSettings() {
                                   <div 
                                     className="h-1.5 rounded-sm flex-1"
                                     style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
+                                      background: allAccents.length > 1
+                                        ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                        : `hsl(${allAccents[0]?.tone})`,
                                       opacity: 0.3,
                                     }}
                                   />
-                                  {themeSecondaryAccent ? (
-                                    <div 
-                                      className="h-1.5 w-4 rounded-sm"
-                                      style={{
-                                        background: `linear-gradient(90deg, hsl(${themeAccent?.tone || 'var(--primary)'}) 0%, hsl(${themeSecondaryAccent.tone}) 100%)`,
-                                        opacity: 0.5,
-                                      }}
-                                    />
-                                  ) : (
-                                    <div 
-                                      className="h-1.5 w-4 rounded-sm"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.5,
-                                      }}
-                                    />
-                                  )}
+                                  <div 
+                                    className="h-1.5 w-4 rounded-sm"
+                                    style={{
+                                      background: allAccents.length > 1
+                                        ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                        : `hsl(${allAccents[0]?.tone})`,
+                                      opacity: 0.5,
+                                    }}
+                                  />
                                 </div>
                                 <div className="flex gap-1.5 flex-1">
                                   <div 
@@ -4843,54 +4920,29 @@ function AppearanceSettings() {
                                     }}
                                   />
                                   <div className="flex flex-col gap-0.5 w-3">
-                                    <div 
-                                      className="h-1.5 rounded-sm flex-1"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.2,
-                                      }}
-                                    />
-                                    {themeSecondaryAccent && (
-                                      <div 
+                                    {allAccents.map((acc, index) => (
+                                      <div
+                                        key={index}
                                         className="h-1.5 rounded-sm flex-1"
                                         style={{
-                                          backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                          backgroundColor: `hsl(${acc.tone})`,
                                           opacity: 0.2,
                                         }}
                                       />
-                                    )}
+                                    ))}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <div 
-                                    className="h-1.5 flex-1 rounded-full"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.6,
-                                    }}
-                                  />
-                                  {themeSecondaryAccent && (
-                                    <div 
+                                <div className="flex items-center gap-0.5">
+                                  {allAccents.map((acc, index) => (
+                                    <div
+                                      key={index}
                                       className="h-1.5 flex-1 rounded-full"
                                       style={{
-                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
+                                        backgroundColor: `hsl(${acc.tone})`,
                                         opacity: 0.6,
                                       }}
                                     />
-                                  )}
-                                  {themeTertiaryAccent && (
-                                    <div 
-                                      className="h-1.5 flex-1 rounded-full"
-                                      style={{
-                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
-                                        opacity: 0.6,
-                                      }}
-                                    />
-                                  )}
+                                  ))}
                                 </div>
                               </div>
                             </div>
@@ -4911,15 +4963,18 @@ function AppearanceSettings() {
                                   />
                                 ))}
                               </div>
-                              <div 
-                                className="h-2 w-8 rounded-sm"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                  opacity: 0.4,
-                                }}
-                              />
+                              <div className="flex items-center gap-0.5">
+                                {allAccents.map((acc, index) => (
+                                  <div
+                                    key={index}
+                                    className="h-2 flex-1 rounded-sm"
+                                    style={{
+                                      backgroundColor: `hsl(${acc.tone})`,
+                                      opacity: 0.4,
+                                    }}
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -4996,13 +5051,13 @@ function AppearanceSettings() {
                   <button
                     onClick={() => toggleGroup('games')}
                     className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
-                        >
-                          <div>
+                  >
+                  <div>
                       <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
-                            <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                         {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                            </p>
-                          </div>
+              </p>
+            </div>
                     {collapsedGroups['games'] ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -5012,13 +5067,17 @@ function AppearanceSettings() {
                   {!collapsedGroups['games'] && (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {officialThemesGroups.games.map((theme) => {
-                      const accents = getThemeAccents(theme)
-                      const themeAccent = accents.primary
-                      const themeSecondaryAccent = accents.secondary
-                      const themeTertiaryAccent = accents.tertiary
+                      const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
                       const themeSurface = surfaceOptionsByValue[theme.surface]
+                      // Собираем все акцентные цвета для отображения
+                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                       const isActive =
                         accent === theme.accent &&
+                        secondaryAccent === themeWithAccents.secondaryAccent &&
+                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&
@@ -5058,219 +5117,196 @@ function AppearanceSettings() {
                             </CardTitle>
                         </div>
                               <div className="flex items-center gap-1.5 shrink-0">
-                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                               </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col">
-                        <div className="flex flex-col space-y-3 mt-auto">
-                        <div 
+                            </div>
+                </CardHeader>
+                          <CardContent className="flex-1 flex flex-col">
+                            <div className="flex flex-col space-y-3 mt-auto">
+                              <div 
                                   className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
-                          style={{ 
-                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                                style={{ 
+                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
                                     backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
                                     transform: 'translateZ(20px)',
-                          }}
-                        >
-                          {/* Background gradient overlay */}
-                          <div 
-                            className="absolute inset-0 opacity-5"
-                            style={{
-                              background: themeAccent 
-                                ? themeSecondaryAccent
-                                  ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, hsl(${themeSecondaryAccent.tone}) 50%, transparent 100%)`
-                                  : `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                : 'transparent'
-                            }}
-                          />
-                          
-                          <div className="relative z-10 h-full flex flex-col gap-2.5">
-                            {/* Header section */}
-                            <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                                {/* Показываем несколько цветов, если они есть */}
-                                <div className="flex items-center gap-1">
-                                  <div 
-                                    className="size-6 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                    }}
-                                  />
-                                  {themeSecondaryAccent && (
-                                    <div 
-                                      className="size-4 rounded-full shrink-0 border-2 border-background"
-                                      style={{
-                                        backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
-                                        marginLeft: '-8px',
-                                      }}
-                                    />
-                                  )}
-                                  {themeTertiaryAccent && (
-                                    <div 
-                                      className="size-3 rounded-full shrink-0 border-2 border-background"
-                                      style={{
-                                        backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
-                                        marginLeft: '-6px',
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                  <div 
-                                    className="text-xs font-semibold truncate"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                        : 'hsl(var(--foreground))'
-                                    }}
-                                  >
-                                    Theme Preview
-                                  </div>
-                                  <div 
-                                    className="text-[10px] truncate opacity-70"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                        : 'hsl(var(--muted-foreground))'
-                                    }}
-                                  >
-                                    {themeAccent?.label ?? theme.accent}
-                                    {themeSecondaryAccent && ` + ${themeSecondaryAccent.label}`}
-                                    {themeTertiaryAccent && ` + ${themeTertiaryAccent.label}`}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <div 
-                                  className="size-1.5 rounded-full shrink-0"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                  }}
-                                />
-                                {themeSecondaryAccent && (
-                                  <div 
-                                    className="size-1.5 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: `hsl(${themeSecondaryAccent.tone})`,
-                                    }}
-                                  />
-                                )}
-                                {themeTertiaryAccent && (
-                                  <div 
-                                    className="size-1.5 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: `hsl(${themeTertiaryAccent.tone})`,
-                                    }}
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Card preview */}
-                            <div 
-                              className="flex-1 p-2.5 border"
-                              style={{
-                                backgroundColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.card})`
-                                  : 'hsl(var(--card))',
-                                borderColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                  : 'hsl(var(--border))',
-                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                              }}
-                            >
-                              <div className="flex flex-col gap-1.5 h-full">
-                                <div className="flex items-center gap-1.5">
-                                  <div 
-                                    className="h-1.5 rounded-sm flex-1"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.3,
-                                    }}
-                                  />
-                                  <div 
-                                    className="h-1.5 w-4 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.5,
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex gap-1.5 flex-1">
-                                  <div 
-                                    className="flex-1 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.muted})`
-                                        : 'hsl(var(--muted))',
-                                      opacity: 0.4,
-                                    }}
-                                  />
-                                  <div 
-                                    className="w-3 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.2,
-                                    }}
-                                  />
-                                </div>
-                                <div 
-                                  className="h-1.5 rounded-full"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                    opacity: 0.6,
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Bottom accent indicators */}
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3].map((i) => (
-                                  <div
-                                    key={i}
-                                    className="size-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                        : 'hsl(var(--secondary))',
-                                      opacity: 0.3 + (i * 0.1),
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <div 
-                                className="h-2 w-8 rounded-sm"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                  opacity: 0.4,
                                 }}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                              >
+                                {/* Background gradient overlay */}
+                                <div 
+                                  className="absolute inset-0 opacity-5"
+                                  style={{
+                                    background: allAccents.length > 0
+                                      ? allAccents.length > 1
+                                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
+                                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
+                                      : 'transparent'
+                                  }}
+                                />
+                                
+                                <div className="relative z-10 h-full flex flex-col gap-2.5">
+                                  {/* Header section */}
+                                  <div className="flex items-center gap-2">
+                                    {/* Показываем все акцентные цвета */}
+                                    <div className="flex items-center gap-0.5 shrink-0">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                            marginLeft: index > 0 ? '-8px' : '0',
+                                            zIndex: allAccents.length - index,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div 
+                                          className="text-xs font-semibold truncate"
+                                          style={{
+                                            color: themeSurface 
+                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                              : 'hsl(var(--foreground))'
+                                          }}
+                                        >
+                                          Theme Preview
+                                        </div>
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                          {allAccents.map((acc, index) => (
+                                            <div
+                                              key={index}
+                                              className="size-1.5 rounded-full shrink-0"
+                                              style={{
+                                                backgroundColor: `hsl(${acc.tone})`,
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div 
+                                        className="text-[10px] truncate opacity-70"
+                                        style={{
+                                          color: themeSurface 
+                                            ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                            : 'hsl(var(--muted-foreground))'
+                                        }}
+                                      >
+                                        {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Card preview */}
+                                  <div 
+                                    className="flex-1 p-2.5 border"
+                                    style={{
+                                      backgroundColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.card})`
+                                        : 'hsl(var(--card))',
+                                      borderColor: themeSurface 
+                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                        : 'hsl(var(--border))',
+                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-1.5 h-full">
+                                      <div className="flex items-center gap-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-sm flex-1"
+                                          style={{
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : `hsl(${allAccents[0]?.tone})`,
+                                            opacity: 0.3,
+                                          }}
+                                        />
+                                        <div 
+                                          className="h-1.5 w-4 rounded-sm"
+                                          style={{
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : `hsl(${allAccents[0]?.tone})`,
+                                            opacity: 0.5,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex gap-1.5 flex-1">
+                                        <div 
+                                          className="flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.muted})`
+                                              : 'hsl(var(--muted))',
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                        <div className="flex flex-col gap-0.5 w-3">
+                                          {allAccents.map((acc, index) => (
+                                            <div
+                                              key={index}
+                                              className="h-1.5 rounded-sm flex-1"
+                                              style={{
+                                                backgroundColor: `hsl(${acc.tone})`,
+                                                opacity: 0.2,
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-0.5">
+                                        {allAccents.map((acc, index) => (
+                                          <div
+                                            key={index}
+                                            className="h-1.5 flex-1 rounded-full"
+                                            style={{
+                                              backgroundColor: `hsl(${acc.tone})`,
+                                              opacity: 0.6,
+                                            }}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Bottom accent indicators */}
+                                  <div className="flex items-center gap-1.5 justify-between">
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3].map((i) => (
+                                        <div
+                                          key={i}
+                                          className="size-1.5 rounded-full"
+                                          style={{
+                                            backgroundColor: themeSurface
+                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                              : 'hsl(var(--secondary))',
+                                            opacity: 0.3 + (i * 0.1),
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className="h-2 flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {Math.round(theme.radius * 16)}px
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                          </Badge>
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                                </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
                                 </Badge>
@@ -5279,11 +5315,11 @@ function AppearanceSettings() {
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
                                 {theme.description && (
-                            <Button
+                                  <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
@@ -5292,41 +5328,41 @@ function AppearanceSettings() {
                                     <Info className="h-3 w-3" />
                                   </Button>
                                 )}
-                          <Button
-                            variant={isActive ? 'default' : 'outline'}
-                              size="sm"
-                            className="flex-1"
-                            onClick={() => handleApplyTheme(theme)}
-                          >
-                            {isActive ? (
-                              <>
-                                <Check className="mr-2 h-3 w-3" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-3 w-3" />
-                              Apply
-                              </>
-                            )}
-                </Button>
-                          {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                </Button>
-                      )}
-              </div>
-            </div>
-                      </CardContent>
-                    </Card>
-              )
-            })}
-          </div>
+                                <Button
+                                  variant={isActive ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleApplyTheme(theme)}
+                                >
+                                  {isActive ? (
+                                    <>
+                                      <Check className="mr-2 h-3 w-3" />
+                                      Active
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="mr-2 h-3 w-3" />
+                                      Apply
+                                    </>
+                                  )}
+                                </Button>
+                                {!theme.official && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleDeleteTheme(theme.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
                   )}
                 </div>
               )}
@@ -5340,10 +5376,10 @@ function AppearanceSettings() {
                         >
                           <div>
                       <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
-                <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                         {officialThemesGroups.extraordinary.length} {officialThemesGroups.extraordinary.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-              </p>
-            </div>
+                            </p>
+                          </div>
                     {collapsedGroups['extraordinary'] ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -5354,9 +5390,16 @@ function AppearanceSettings() {
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {officialThemesGroups.extraordinary.map((theme) => {
                       const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
                       const themeSurface = surfaceOptionsByValue[theme.surface]
+                      // Собираем все акцентные цвета для отображения
+                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                       const isActive =
                         accent === theme.accent &&
+                        secondaryAccent === themeWithAccents.secondaryAccent &&
+                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&
@@ -5399,7 +5442,7 @@ function AppearanceSettings() {
                               {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
                               </div>
                             </div>
-                </CardHeader>
+                          </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
                             <div className="flex flex-col space-y-3 mt-auto">
                               <div 
@@ -5414,25 +5457,33 @@ function AppearanceSettings() {
                                 <div 
                                   className="absolute inset-0 opacity-5"
                                   style={{
-                                    background: themeAccent 
-                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                    background: allAccents.length > 0
+                                      ? allAccents.length > 1
+                                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
+                                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
                                       : 'transparent'
                                   }}
                                 />
                                 
                                 <div className="relative z-10 h-full flex flex-col gap-2.5">
                                   {/* Header section */}
-                                  <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                                      <div 
-                                        className="size-6 rounded-full shrink-0"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                        }}
-                                      />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {/* Показываем все акцентные цвета */}
+                                    <div className="flex items-center gap-0.5 shrink-0">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                            marginLeft: index > 0 ? '-8px' : '0',
+                                            zIndex: allAccents.length - index,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                                      <div className="flex items-center justify-between gap-2">
                                         <div 
                                           className="text-xs font-semibold truncate"
                                           style={{
@@ -5442,27 +5493,30 @@ function AppearanceSettings() {
                                           }}
                                         >
                                           Theme Preview
-              </div>
-                                        <div 
-                                          className="text-[10px] truncate opacity-70"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                              : 'hsl(var(--muted-foreground))'
-                                          }}
-                                        >
-                                          {themeAccent?.label ?? theme.accent}
-                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                          {allAccents.map((acc, index) => (
+                                            <div
+                                              key={index}
+                                              className="size-1.5 rounded-full shrink-0"
+                                              style={{
+                                                backgroundColor: `hsl(${acc.tone})`,
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div 
+                                        className="text-[10px] truncate opacity-70"
+                                        style={{
+                                          color: themeSurface 
+                                            ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                            : 'hsl(var(--muted-foreground))'
+                                        }}
+                                      >
+                                        {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
                                       </div>
                                     </div>
-                                    <div 
-                                      className="size-1.5 rounded-full shrink-0"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                      }}
-                                    />
                                   </div>
 
                                   {/* Card preview */}
@@ -5483,8 +5537,10 @@ function AppearanceSettings() {
                                         <div 
                                           className="h-1.5 rounded-sm flex-1"
                                           style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : allAccents.length > 0
+                                              ? `hsl(${allAccents[0].tone})`
                                               : 'hsl(var(--primary))',
                                             opacity: 0.3,
                                           }}
@@ -5492,8 +5548,10 @@ function AppearanceSettings() {
                                         <div 
                                           className="h-1.5 w-4 rounded-sm"
                                           style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
+                                            background: allAccents.length > 1
+                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                              : allAccents.length > 0
+                                              ? `hsl(${allAccents[0].tone})`
                                               : 'hsl(var(--primary))',
                                             opacity: 0.5,
                                           }}
@@ -5509,21 +5567,26 @@ function AppearanceSettings() {
                                             opacity: 0.4,
                                           }}
                                         />
-                                        <div 
-                                          className="w-3 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.2,
-                                          }}
-                                        />
+                                        <div className="flex flex-col gap-0.5 w-3">
+                                          {allAccents.map((acc, index) => (
+                                            <div
+                                              key={index}
+                                              className="h-1.5 rounded-sm flex-1"
+                                              style={{
+                                                backgroundColor: `hsl(${acc.tone})`,
+                                                opacity: 0.2 + (index * 0.1),
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
                                       </div>
                                       <div 
                                         className="h-1.5 rounded-full"
                                         style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
+                                          background: allAccents.length > 1
+                                            ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                                            : allAccents.length > 0
+                                            ? `hsl(${allAccents[0].tone})`
                                             : 'hsl(var(--primary))',
                                           opacity: 0.6,
                                         }}
@@ -5545,17 +5608,20 @@ function AppearanceSettings() {
                                             opacity: 0.3 + (i * 0.1),
                                           }}
                                         />
-                      ))}
-            </div>
-                                    <div 
-                                      className="h-2 w-8 rounded-sm"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.4,
-                                      }}
-                                    />
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {allAccents.map((acc, index) => (
+                                        <div
+                                          key={index}
+                                          className="h-2 flex-1 rounded-sm"
+                                          style={{
+                                            backgroundColor: `hsl(${acc.tone})`,
+                                            opacity: 0.4,
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -5665,174 +5731,174 @@ function AppearanceSettings() {
                                   </div>
                                 </CardTitle>
                               </div>
-                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                            </div>
-                </CardHeader>
-                          <CardContent className="flex-1 flex flex-col">
-                            <div className="flex flex-col space-y-3 mt-auto">
-                              <div 
-                                className="border border-border/60 p-4 aspect-video relative overflow-hidden"
-                                style={{ 
-                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
-                                }}
-                              >
-                                {/* Background gradient overlay */}
+                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <div className="flex flex-col space-y-3 mt-auto">
+                        <div 
+                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
+                          style={{ 
+                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
+                          }}
+                        >
+                          {/* Background gradient overlay */}
+                          <div 
+                            className="absolute inset-0 opacity-5"
+                            style={{
+                              background: themeAccent 
+                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
+                                : 'transparent'
+                            }}
+                          />
+                          
+                          <div className="relative z-10 h-full flex flex-col gap-2.5">
+                            {/* Header section */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
                                 <div 
-                                  className="absolute inset-0 opacity-5"
+                                  className="size-6 rounded-full shrink-0"
                                   style={{
-                                    background: themeAccent 
-                                      ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                      : 'transparent'
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
                                   }}
                                 />
-                                
-                                <div className="relative z-10 h-full flex flex-col gap-2.5">
-                                  {/* Header section */}
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <div 
-                                        className="size-6 rounded-full shrink-0"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                        }}
-                                      />
-                                      <div className="flex flex-col gap-0.5 min-w-0">
-                                        <div 
-                                          className="text-xs font-semibold truncate"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                              : 'hsl(var(--foreground))'
-                                          }}
-                                        >
-                                          Theme Preview
-              </div>
-                                        <div 
-                                          className="text-[10px] truncate opacity-70"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                              : 'hsl(var(--muted-foreground))'
-                                          }}
-                                        >
-                                          {themeAccent?.label ?? theme.accent}
-                          </div>
-                                      </div>
-                                    </div>
-                                    <div 
-                                      className="size-1.5 rounded-full shrink-0"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                      }}
-                                    />
-                                  </div>
-
-                                  {/* Card preview */}
+                                <div className="flex flex-col gap-0.5 min-w-0">
                                   <div 
-                                    className="flex-1 p-2.5 border"
+                                    className="text-xs font-semibold truncate"
                                     style={{
-                                      backgroundColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.card})`
-                                        : 'hsl(var(--card))',
-                                      borderColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                        : 'hsl(var(--border))',
-                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
+                                        : 'hsl(var(--foreground))'
                                     }}
                                   >
-                                    <div className="flex flex-col gap-1.5 h-full">
-                                      <div className="flex items-center gap-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-sm flex-1"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.3,
-                                          }}
-                                        />
-                                        <div 
-                                          className="h-1.5 w-4 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.5,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="flex gap-1.5 flex-1">
-                                        <div 
-                                          className="flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.muted})`
-                                              : 'hsl(var(--muted))',
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                        <div 
-                                          className="w-3 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeAccent
-                                              ? `hsl(${themeAccent.tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.2,
-                                          }}
-                                        />
-                                      </div>
-                                      <div 
-                                        className="h-1.5 rounded-full"
-                                        style={{
-                                          backgroundColor: themeAccent
-                                            ? `hsl(${themeAccent.tone})`
-                                            : 'hsl(var(--primary))',
-                                          opacity: 0.6,
-                                        }}
-                                      />
-                                    </div>
+                                    Theme Preview
                                   </div>
-
-                                  {/* Bottom accent indicators */}
-                                  <div className="flex items-center gap-1.5 justify-between">
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3].map((i) => (
-                                        <div
-                                          key={i}
-                                          className="size-1.5 rounded-full"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                              : 'hsl(var(--secondary))',
-                                            opacity: 0.3 + (i * 0.1),
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div 
-                                      className="h-2 w-8 rounded-sm"
-                                      style={{
-                                        backgroundColor: themeAccent
-                                          ? `hsl(${themeAccent.tone})`
-                                          : 'hsl(var(--primary))',
-                                        opacity: 0.4,
-                                      }}
-                                    />
+                                  <div 
+                                    className="text-[10px] truncate opacity-70"
+                                    style={{
+                                      color: themeSurface 
+                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
+                                        : 'hsl(var(--muted-foreground))'
+                                    }}
+                                  >
+                                    {themeAccent?.label ?? theme.accent}
                                   </div>
                                 </div>
                               </div>
+                              <div 
+                                className="size-1.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                }}
+                              />
+                            </div>
+
+                            {/* Card preview */}
+                            <div 
+                              className="flex-1 p-2.5 border"
+                              style={{
+                                backgroundColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.card})`
+                                  : 'hsl(var(--card))',
+                                borderColor: themeSurface 
+                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
+                                  : 'hsl(var(--border))',
+                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                              }}
+                            >
+                              <div className="flex flex-col gap-1.5 h-full">
+                                <div className="flex items-center gap-1.5">
+                                  <div 
+                                    className="h-1.5 rounded-sm flex-1"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.3,
+                                    }}
+                                  />
+                                  <div 
+                                    className="h-1.5 w-4 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.5,
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex gap-1.5 flex-1">
+                                  <div 
+                                    className="flex-1 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.muted})`
+                                        : 'hsl(var(--muted))',
+                                      opacity: 0.4,
+                                    }}
+                                  />
+                                  <div 
+                                    className="w-3 rounded-sm"
+                                    style={{
+                                      backgroundColor: themeAccent
+                                        ? `hsl(${themeAccent.tone})`
+                                        : 'hsl(var(--primary))',
+                                      opacity: 0.2,
+                                    }}
+                                  />
+                                </div>
+                                <div 
+                                  className="h-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor: themeAccent
+                                      ? `hsl(${themeAccent.tone})`
+                                      : 'hsl(var(--primary))',
+                                    opacity: 0.6,
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Bottom accent indicators */}
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="size-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor: themeSurface
+                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                                        : 'hsl(var(--secondary))',
+                                      opacity: 0.3 + (i * 0.1),
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <div 
+                                className="h-2 w-8 rounded-sm"
+                                style={{
+                                  backgroundColor: themeAccent
+                                    ? `hsl(${themeAccent.tone})`
+                                    : 'hsl(var(--primary))',
+                                  opacity: 0.4,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
                               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {Math.round(theme.radius * 16)}px
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                                </Badge>
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+                          </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
                                 </Badge>
@@ -5841,45 +5907,45 @@ function AppearanceSettings() {
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                            <Button
-                                  variant={isActive ? 'default' : 'outline'}
-                              size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleApplyTheme(theme)}
-                                >
-                                  {isActive ? (
-                                    <>
-                                      <Check className="mr-2 h-3 w-3" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Download className="mr-2 h-3 w-3" />
-                              Apply
-                                    </>
-                                  )}
-                </Button>
-                                {!theme.official && (
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleApplyTheme(theme)}
+                          >
+                            {isActive ? (
+                              <>
+                                <Check className="mr-2 h-3 w-3" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-3 w-3" />
+                                Apply
+                              </>
+                            )}
+                          </Button>
+                          {!theme.official && (
                             <Button
                               variant="ghost"
                               size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleDeleteTheme(theme.id)}
+                              className="h-8 w-8"
+                              onClick={() => handleDeleteTheme(theme.id)}
                             >
-                                    <Trash2 className="h-3 w-3" />
-                </Button>
-                                )}
-              </div>
-            </div>
-                </CardContent>
-              </Card>
-                      )
-                    })}
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                      </CardContent>
+                    </Card>
+              )
+            })}
+          </div>
+            </div>
               )}
         </section>
 

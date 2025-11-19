@@ -391,28 +391,28 @@ export default function NetworkingPage() {
             <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
+              <Input
                         placeholder={t('networking.search.placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9"
                       />
                     </div>
-                    <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-                      {keywordModes.map((mode) => {
-                        const isActive = keywordMode === mode.id
-                        return (
-                          <Button
-                            key={mode.id}
-                            variant={isActive ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className={cn('text-xs', isActive && 'shadow-sm')}
-                            onClick={() => setKeywordMode(mode.id)}
-                          >
+              <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+                {keywordModes.map((mode) => {
+                  const isActive = keywordMode === mode.id
+                  return (
+                    <Button
+                      key={mode.id}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn('text-xs', isActive && 'shadow-sm')}
+                      onClick={() => setKeywordMode(mode.id)}
+                    >
                             {t(mode.labelKey)}
-                          </Button>
-                        )
-                      })}
+                    </Button>
+                  )
+                })}
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -505,7 +505,7 @@ export default function NetworkingPage() {
               </Button>
             </div>
           </div>
-                    
+
                     <Separator />
                     
                     {/* Compensation */}
@@ -963,8 +963,8 @@ export default function NetworkingPage() {
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {t('networking.sidebar.boostDescription')}
-                </CardDescription>
-              </CardHeader>
+                    </CardDescription>
+                  </CardHeader>
               <CardContent className="space-y-3">
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
@@ -983,27 +983,27 @@ export default function NetworkingPage() {
                 <Button className="w-full gap-2">
                   <Zap className="h-4 w-4" />
                   {t('networking.sidebar.boostButton')}
-                </Button>
-              </CardContent>
-            </Card>
-            
+                    </Button>
+            </CardContent>
+          </Card>
+
             {/* Help */}
             <Card>
-              <CardHeader>
+            <CardHeader>
                 <CardTitle className="text-base">{t('networking.sidebar.needHelp')}</CardTitle>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="space-y-2">
                 <Button variant="outline" className="w-full justify-start" size="sm">
                   {t('networking.sidebar.howToPost')}
-                </Button>
+                  </Button>
                 <Button variant="outline" className="w-full justify-start" size="sm">
                   {t('networking.sidebar.pricing')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start" size="sm">
                   {t('networking.sidebar.safety')}
                 </Button>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           </aside>
         </div>
       </main>
@@ -1208,7 +1208,7 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
                   <Badge className="gap-1 bg-primary text-xs">
                     <Zap className="h-3 w-3 fill-current" />
                     {t('networking.requestCard.boosted')}
-                  </Badge>
+          </Badge>
                 )}
         </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1266,11 +1266,11 @@ function ClientRequestCard({ request }: { request: ClientRequest }) {
             <div className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
               <span>{request.viewsCount} {t('networking.requestCard.views')}</span>
-            </div>
+        </div>
             <div className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
               <span>{request.proposalsCount} {t('networking.requestCard.proposals')}</span>
-            </div>
+        </div>
           </div>
           <Button size="sm">{t('networking.requestCard.submitProposal')}</Button>
         </div>

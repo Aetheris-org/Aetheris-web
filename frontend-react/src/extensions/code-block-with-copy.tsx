@@ -131,6 +131,66 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
     }
   },
 
+  parseHTML() {
+    return [
+      {
+        tag: 'div.code-block-wrapper',
+        getAttrs: (node) => {
+          const element = node as HTMLElement
+          // Извлекаем язык из data-language атрибута
+          const language = element.getAttribute('data-language') || 'plaintext'
+          return { language }
+        },
+        // Извлекаем содержимое из code элемента внутри .code-block-content > pre > code
+        contentElement: (node) => {
+          const wrapper = node as HTMLElement
+          // Ищем структуру: .code-block-content > pre > code
+          const codeContent = wrapper.querySelector('.code-block-content')
+          if (codeContent) {
+            const preElement = codeContent.querySelector('pre')
+            if (preElement) {
+              const codeElement = preElement.querySelector('code')
+              if (codeElement) {
+                return codeElement
+              }
+              // Если code нет, используем pre
+              return preElement
+            }
+          }
+          // Fallback: ищем code напрямую в wrapper
+          const codeElement = wrapper.querySelector('code')
+          if (codeElement) {
+            return codeElement
+          }
+          // Fallback: ищем pre напрямую
+          const preElement = wrapper.querySelector('pre')
+          if (preElement) {
+            return preElement
+          }
+          return null
+        },
+      },
+      {
+        tag: 'pre',
+        getAttrs: (node) => {
+          const element = node as HTMLElement
+          const codeElement = element.querySelector('code')
+          if (codeElement) {
+            const classList = codeElement.classList
+            // Извлекаем язык из класса language-xxx
+            for (const className of classList) {
+              if (className.startsWith('language-')) {
+                const language = className.replace('language-', '')
+                return { language }
+              }
+            }
+          }
+          return { language: 'plaintext' }
+        },
+      },
+    ]
+  },
+
   renderHTML({ HTMLAttributes, node }) {
     const language = node.attrs.language || 'plaintext'
     
@@ -202,6 +262,10 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
 
   addNodeView() {
     return ({ node, HTMLAttributes, editor }) => {
+      if (import.meta.env.DEV) {
+        console.log('[CodeBlockWithCopy] addNodeView called, language:', node.attrs.language)
+      }
+      
       const dom = document.createElement('div')
       dom.className = 'relative group mb-6 rounded-lg overflow-hidden code-block-wrapper'
       
@@ -216,11 +280,10 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
       
       const pre = document.createElement('pre')
       pre.className = 'overflow-x-auto p-4 text-sm m-0'
+      pre.setAttribute('spellcheck', 'false') // Отключаем проверку орфографии
+      pre.setAttribute('autocorrect', 'off')
+      pre.setAttribute('autocapitalize', 'off')
       
-      const code = document.createElement('code')
-      code.setAttribute('spellcheck', 'false') // Отключаем проверку орфографии
-      code.setAttribute('autocorrect', 'off')
-      code.setAttribute('autocapitalize', 'off')
       let currentLanguage = node.attrs.language || 'plaintext'
       let detectedLang: string | null = null
       
@@ -234,9 +297,12 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
         }
       }
       
-      code.className = `language-${currentLanguage}`
-      
-      pre.appendChild(code)
+      // ВАЖНО: ProseMirror ожидает, что contentDOM будет прямым дочерним элементом dom
+      // Но нам нужна структура: dom > headerContainer + codeContainer > pre
+      // CodeBlockLowlight обычно использует pre как contentDOM
+      // Мы используем pre как contentDOM напрямую - ProseMirror будет вставлять текст в pre
+      // Подсветка синтаксиса будет применяться к содержимому pre через lowlight
+      // Lowlight автоматически создаст code элемент внутри pre для подсветки
       codeContainer.appendChild(pre)
       dom.appendChild(codeContainer)
       
@@ -257,14 +323,31 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
       
       updateHeader(node, currentDetectedLang)
       
-      // Предотвращаем клики на шапке от всплытия
+      // Предотвращаем клики на шапке от всплытия, но НЕ блокируем pointer-events
       headerContainer.addEventListener('click', (e) => {
+        // Останавливаем всплытие только для элементов внутри header (кнопка копирования и т.д.)
+        if (e.target !== headerContainer && !headerContainer.contains(e.target as Node)) {
+          return
+        }
         e.stopPropagation()
       }, true)
       
+      // Убеждаемся, что pre элемент может получать клики и фокус
+      // ProseMirror автоматически установит contenteditable на contentDOM (pre)
+      pre.style.pointerEvents = 'auto'
+      codeContainer.style.pointerEvents = 'auto'
+      
+      // Убеждаемся, что header не блокирует клики на pre
+      headerContainer.style.pointerEvents = 'auto'
+      
+      // ВАЖНО: ProseMirror требует, чтобы contentDOM был прямым дочерним элементом dom
+      // Но у нас структура: dom > [headerContainer, codeContainer > pre]
+      // Мы используем pre как contentDOM (стандартный подход для CodeBlockLowlight)
+      // ProseMirror будет вставлять текст в pre, а lowlight автоматически применит подсветку синтаксиса
+      
       return {
         dom,
-        contentDOM: code, // Используем contentDOM для редактирования, CodeBlockLowlight автоматически применит подсветку
+        contentDOM: pre, // Используем pre как contentDOM - это стандартный подход для CodeBlockLowlight
         update: (updatedNode) => {
           if (updatedNode.type !== this.type) {
             return false
@@ -298,8 +381,10 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
             updatedLanguage = updatedNode.attrs.language || 'plaintext'
           }
           
+          // Обновляем класс языка на pre (lowlight будет использовать его для подсветки)
           if (updatedLanguage !== currentLanguage) {
-            code.className = `language-${updatedLanguage}`
+            // Lowlight автоматически создаст code элемент с нужным классом
+            // Нам нужно только убедиться, что pre имеет правильный класс для lowlight
             currentLanguage = updatedLanguage
           }
           

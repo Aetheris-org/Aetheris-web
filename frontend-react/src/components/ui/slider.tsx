@@ -21,12 +21,12 @@ const Slider = React.forwardRef<
       {...props}
     >
       <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted">
-        <SliderPrimitive.Range className="absolute h-full bg-primary" />
+        <SliderPrimitive.Range className="absolute h-full bg-gradient-to-r from-[hsl(var(--accent-secondary,var(--primary)))] to-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--primary))))]" />
       </SliderPrimitive.Track>
       {thumbValues.map((_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className="block h-4 w-4 rounded-full border-2 border-primary/70 bg-background shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50"
+          className="block h-4 w-4 rounded-full border-2 border-[hsl(var(--accent-secondary,var(--primary)))]/70 bg-background shadow-sm transition hover:border-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--primary))))]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

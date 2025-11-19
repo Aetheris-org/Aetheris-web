@@ -6,14 +6,16 @@ import { query, mutate } from '@/lib/graphql';
 import type { Article } from '@/types/article';
 import { logger } from '@/lib/logger';
 import { slateToHtml } from '@/lib/slate-to-html';
+import { slateToProseMirror } from '@/lib/slate-to-prosemirror';
 
 function transformArticle(raw: any): Article {
   const numericId = typeof raw.id === 'number' ? raw.id : Number.parseInt(raw.id, 10) || 0;
 
-  // KeystoneJS document field возвращает объект с полем `document` в формате Slate
-  // Преобразуем Slate JSON в HTML для отображения
-  let content = '';
-  if (raw.content) {
+      // KeystoneJS document field возвращает объект с полем `document` в формате Slate
+      // Сохраняем Slate JSON для использования с TipTap, и конвертируем в HTML для обратной совместимости
+      let content = '';
+      let contentJSON: any = null;
+      if (raw.content) {
     try {
       // Логируем формат данных для отладки (только в development)
       if (import.meta.env.DEV) {
@@ -79,7 +81,9 @@ function transformArticle(raw: any): Article {
               : 'N/A',
           });
         }
-        // Передаем весь объект raw.content в slateToHtml, он сам разберется с форматом
+        // Сохраняем Slate JSON для использования с TipTap
+        contentJSON = raw.content;
+        // Конвертируем в HTML для обратной совместимости
         content = slateToHtml(raw.content);
         
         if (import.meta.env.DEV) {
@@ -97,6 +101,7 @@ function transformArticle(raw: any): Article {
             firstBlock: JSON.stringify(raw.content[0]).substring(0, 200),
           });
         }
+        contentJSON = raw.content;
         content = slateToHtml(raw.content);
       } else if (typeof raw.content === 'object' && raw.content !== null) {
         // Попытка преобразовать объект в HTML
@@ -106,6 +111,7 @@ function transformArticle(raw: any): Article {
             objectPreview: JSON.stringify(raw.content).substring(0, 300),
           });
         }
+        contentJSON = raw.content;
         content = slateToHtml(raw.content);
       }
     } catch (error) {
@@ -124,6 +130,7 @@ function transformArticle(raw: any): Article {
     id: String(numericId),
     title: raw.title || '',
     content: content,
+    contentJSON: contentJSON, // Slate JSON для использования с TipTap
     excerpt: raw.excerpt || undefined,
     author: {
       id: raw.author?.id || 0,
@@ -416,6 +423,7 @@ export async function getArticle(id: string): Promise<Article | null> {
         comments {
           id
         }
+        userReaction
       }
     }
   `;
@@ -467,6 +475,7 @@ export async function reactArticle(
         publishedAt
         createdAt
         updatedAt
+        userReaction
       }
     }
   `;
@@ -478,9 +487,7 @@ export async function reactArticle(
     });
 
     const article = transformArticle(response.reactToArticle);
-    // userReaction добавляется в кастомной mutation
-    article.userReaction = (response.reactToArticle as any).userReaction || null;
-
+    // userReaction теперь виртуальное поле, оно автоматически разрешается KeystoneJS
     return article;
   } catch (error) {
     logger.error(`Failed to react to article ${articleId}:`, error);

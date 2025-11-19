@@ -112,6 +112,7 @@ export async function getArticleComments(
         dislikes_count
         createdAt
         updatedAt
+        userReaction
       }
     }
   `;
@@ -287,6 +288,7 @@ export async function reactToComment(
         dislikes_count
         createdAt
         updatedAt
+        userReaction
       }
     }
   `;
@@ -298,9 +300,7 @@ export async function reactToComment(
     });
 
     const comment = transformComment(response.reactToComment);
-    // userReaction добавляется в кастомной mutation
-    comment.userReaction = (response.reactToComment as any).userReaction || null;
-
+    // userReaction теперь виртуальное поле, оно автоматически разрешается KeystoneJS
     return comment;
   } catch (error) {
     logger.error(`Failed to react to comment ${commentId}:`, error);

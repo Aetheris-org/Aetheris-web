@@ -7,7 +7,8 @@ export interface Article {
   // id - это строковое представление числового Strapi id (для роутов)
   id: string
   title: string
-  content: string
+  content: string // HTML для обратной совместимости
+  contentJSON?: any // Slate JSON для использования с TipTap
   excerpt?: string
   author: {
     id: number

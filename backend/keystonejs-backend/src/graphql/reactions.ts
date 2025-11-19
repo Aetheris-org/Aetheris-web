@@ -134,12 +134,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               publishedAt
               createdAt
               updatedAt
+              userReaction
             `,
           });
 
-          // Добавляем userReaction в ответ (кастомное поле)
-          (updatedArticle as any).userReaction = finalUserReaction;
-
+          // userReaction теперь виртуальное поле, его не нужно добавлять вручную
           logger.info(`Article reaction: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
           
           return updatedArticle;
@@ -265,12 +264,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               dislikes_count
               createdAt
               updatedAt
+              userReaction
             `,
           });
 
-          // Добавляем userReaction в ответ (кастомное поле)
-          (updatedComment as any).userReaction = finalUserReaction;
-
+          // userReaction теперь виртуальное поле, его не нужно добавлять вручную
           logger.info(`Comment reaction: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
           
           return updatedComment;

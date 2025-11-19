@@ -422,8 +422,8 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
                   minute: '2-digit',
                 })}
               </p>
+        </div>
               </div>
-            </div>
         ))}
       </CardContent>
     </Card>
@@ -454,18 +454,18 @@ function CreatorGoalsCard({ goals }: { goals: MockCreatorGoal[] }) {
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
                   <span className="font-medium">{goal.title}</span>
-                  </div>
+            </div>
                 <span className="text-muted-foreground text-xs">
                   {goal.progress} / {goal.target}
                 </span>
-                </div>
+            </div>
               <Progress value={progressPercent} className="h-2" />
               <p className="text-xs text-muted-foreground">{goal.description}</p>
-            </div>
+          </div>
             )
           })}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
   )
 }
 
@@ -549,9 +549,9 @@ function PinnedCollectionsCard({
                   <p className="text-xs text-muted-foreground">
                     {t('profile.articlesCountShort', { count: collection.articleCount })}
                   </p>
-            </div>
+        </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
-            </div>
+      </div>
           </CardContent>
         </Card>
       ))}
@@ -680,9 +680,9 @@ export default function ProfilePage() {
           <div className="container flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
                 {t('common.back')}
-              </Button>
+            </Button>
               <Separator orientation="vertical" className="h-6" />
               <h1 className="text-lg font-semibold">{t('profile.pageTitle')}</h1>
             </div>

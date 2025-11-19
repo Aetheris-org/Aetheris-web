@@ -23,7 +23,7 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         {...props}
       >
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--accent-secondary,var(--primary)))] to-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--primary))))] transition-all"
           style={{ 
             width: percentage === 0 ? '0%' : '100%',
             transform: percentage === 0 ? 'none' : `translateX(-${100 - percentage}%)`

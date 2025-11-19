@@ -338,33 +338,74 @@ function renderBlock(node: SlateNode): string {
       const blockquoteAttrs = getBlockIdAttrs(node, children);
       return `<blockquote${blockquoteAttrs}>${blockquoteContent}</blockquote>`;
 
-    case 'code-block':
-    case 'code': // KeystoneJS использует 'code', а не 'code-block'
-    case 'codeBlock': // TipTap формат
-      // Code block может содержать текст напрямую или через children
-      let codeContent = '';
-      if (children.length > 0) {
-        // Если children содержат текст напрямую (без paragraph)
-        const hasDirectText = children.some((child: any) => child.text !== undefined && !child.type);
-        if (hasDirectText) {
-          codeContent = children
-            .map((child: any) => {
-              if (child.text !== undefined) {
-                return escapeHtml(child.text);
+          case 'code-block':
+          case 'code': // KeystoneJS использует 'code', а не 'code-block'
+          case 'codeBlock': // TipTap формат
+            // Code block может содержать текст напрямую или через children
+            let codeContent = '';
+            let detectedLanguage = node.language || node.attrs?.language || 'plaintext';
+            
+            if (children.length > 0) {
+              // Если children содержат текст напрямую (без paragraph)
+              const hasDirectText = children.some((child: any) => child.text !== undefined && !child.type);
+              if (hasDirectText) {
+                // Извлекаем язык из маркера в первом текстовом узле
+                const firstTextNode = children.find((child: any) => 
+                  child && typeof child === 'object' && child.text !== undefined && !child.type
+                );
+                if (firstTextNode && firstTextNode.text) {
+                  // Ищем маркер языка: \u200B\u200B\u200B[LANGUAGE:language]\u200B\u200B\u200B
+                  const languageMatch = firstTextNode.text.match(/^\u200B\u200B\u200B\[LANGUAGE:([^\]]+)\]\u200B\u200B\u200B/);
+                  if (languageMatch) {
+                    detectedLanguage = languageMatch[1];
+                  }
+                }
+                
+                codeContent = children
+                  .map((child: any) => {
+                    if (child.text !== undefined) {
+                      // Удаляем маркер языка из текста перед рендерингом
+                      let text = child.text;
+                      text = text.replace(/^\u200B\u200B\u200B\[LANGUAGE:[^\]]+\]\u200B\u200B\u200B\s?/, '');
+                      return escapeHtml(text);
+                    }
+                    return '';
+                  })
+                  .join('\n');
+              } else {
+                // Если children содержат другие блоки (например, paragraph), рекурсивно рендерим их
+                // и также ищем маркер языка в первом текстовом узле внутри этих блоков
+                const firstChild = children[0];
+                if (firstChild && firstChild.type === 'paragraph' && firstChild.children) {
+                  for (const child of firstChild.children) {
+                    if (child && typeof child === 'object' && child.text) {
+                      const languageMatch = child.text.match(/^\u200B\u200B\u200B\[LANGUAGE:([^\]]+)\]\u200B\u200B\u200B/);
+                      if (languageMatch) {
+                        detectedLanguage = languageMatch[1];
+                        // Удаляем маркер из текста
+                        child.text = child.text.replace(/^\u200B\u200B\u200B\[LANGUAGE:[^\]]+\]\u200B\u200B\u200B\s?/, '');
+                        break;
+                      }
+                    }
+                  }
+                }
+                codeContent = renderChildren(children, { preserveWhitespace: true });
               }
-              return '';
-            })
-            .join('\n');
-        } else {
-          codeContent = renderChildren(children, { preserveWhitespace: true });
-        }
-      } else if (node.text !== undefined) {
-        codeContent = escapeHtml(node.text);
-      }
-      
-      // Получаем язык программирования
-      const language = node.language || node.attrs?.language || 'plaintext';
-      const languageLabel = getLanguageLabel(language);
+            } else if (node.text !== undefined) {
+              // Извлекаем язык из маркера в тексте
+              const languageMatch = node.text.match(/^\u200B\u200B\u200B\[LANGUAGE:([^\]]+)\]\u200B\u200B\u200B/);
+              if (languageMatch) {
+                detectedLanguage = languageMatch[1];
+              }
+              // Удаляем маркер языка из текста перед рендерингом
+              let text = node.text;
+              text = text.replace(/^\u200B\u200B\u200B\[LANGUAGE:[^\]]+\]\u200B\u200B\u200B\s?/, '');
+              codeContent = escapeHtml(text);
+            }
+            
+            // Получаем язык программирования
+            const language = detectedLanguage;
+            const languageLabel = getLanguageLabel(language);
       
       // Генерируем уникальный ID для кнопки копирования
       const codeBlockId = `code-block-${Math.random().toString(36).substring(2, 9)}`;
@@ -569,6 +610,11 @@ function renderChildren(
         // Также удаляем пробел после маркера, если текст состоит только из маркера и пробела
         const anchorMarkerRegex = /^\u200B\u200B\u200B\[ANCHOR:[^\]]+\]\u200B\u200B\u200B\s?/
         text = text.replace(anchorMarkerRegex, '')
+        
+        // Удаляем маркер LANGUAGE из текста (он уже использован для определения языка code блока)
+        // Также удаляем пробел после маркера, если текст состоит только из маркера и пробела
+        const languageMarkerRegex = /^\u200B\u200B\u200B\[LANGUAGE:[^\]]+\]\u200B\u200B\u200B\s?/
+        text = text.replace(languageMarkerRegex, '')
         
         // Экранируем HTML для безопасности
         text = escapeHtml(text);

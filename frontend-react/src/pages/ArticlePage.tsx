@@ -81,6 +81,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 import { logger } from '@/lib/logger'
+import { ArticleContent } from '@/components/ArticleContent'
 
 function DiscordIcon(props: LucideProps) {
   return (
@@ -190,6 +191,7 @@ export default function ArticlePage() {
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const articleContentRef = useRef<HTMLDivElement | null>(null)
   const [readingProgress, setReadingProgress] = useState(0)
+  const [smoothedProgress, setSmoothedProgress] = useState(0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -385,7 +387,7 @@ export default function ArticlePage() {
         progress = Math.min(100, Math.max(0, (scrolledIntoArticle / totalScrollable) * 100))
       }
       
-      setReadingProgress(Math.round(progress))
+      setReadingProgress(progress)
     }
 
     // Use requestAnimationFrame for smoother updates
@@ -415,6 +417,49 @@ export default function ArticlePage() {
       clearTimeout(timeoutId)
     }
   }, [article])
+
+  // Smooth progress animation
+  useEffect(() => {
+    const targetProgress = readingProgress
+    const currentProgress = smoothedProgress
+    const difference = targetProgress - currentProgress
+    
+    // If difference is small, update immediately
+    if (Math.abs(difference) < 0.1) {
+      setSmoothedProgress(targetProgress)
+      return
+    }
+    
+    // Smooth interpolation using requestAnimationFrame
+    let animationFrameId: number
+    const startTime = performance.now()
+    const duration = 150 // 150ms for smooth transition
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Ease-out function for smooth deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 3)
+      const newProgress = currentProgress + difference * easeOut
+      
+      setSmoothedProgress(newProgress)
+      
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate)
+      } else {
+        setSmoothedProgress(targetProgress)
+      }
+    }
+    
+    animationFrameId = requestAnimationFrame(animate)
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+    }
+  }, [readingProgress, smoothedProgress])
 
   const {
     data: commentsResponse,
@@ -1189,20 +1234,20 @@ export default function ArticlePage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <div className="flex items-center gap-1 rounded-[calc(var(--radius)*1.4)] bg-background/35 px-1.5 py-1 shadow-sm ring-1 ring-border/60 backdrop-blur-sm">
-                        <Button
+                    <Button
                           variant="ghost"
-                          size="icon"
+                      size="icon"
                           className={cn(
                             'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
                             node.userReaction === 'like' &&
                               'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
-                          onClick={() => handleCommentReaction(node.id, 'up')}
+                      onClick={() => handleCommentReaction(node.id, 'up')}
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.support')}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </Button>
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
                         <span
                           className={cn(
                             'min-w-[36px] px-2 py-1 text-center text-xs font-semibold tabular-nums',
@@ -1212,22 +1257,22 @@ export default function ArticlePage() {
                           )}
                         >
                           {(node.likes || 0) - (node.dislikes || 0)}
-                        </span>
-                        <Button
+                          </span>
+                    <Button
                           variant="ghost"
-                          size="icon"
+                      size="icon"
                           className={cn(
                             'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
                             node.userReaction === 'dislike' &&
                               'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                           )}
-                          onClick={() => handleCommentReaction(node.id, 'down')}
+                      onClick={() => handleCommentReaction(node.id, 'down')}
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.against')}
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
@@ -1529,7 +1574,7 @@ export default function ArticlePage() {
   }
 
   if (!article) {
-    return (
+  return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
@@ -1542,11 +1587,17 @@ export default function ArticlePage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Reading Progress Bar */}
-        {readingProgress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-70">
-            <Progress value={readingProgress} className="h-0.5 rounded-none" />
-          </div>
-        )}
+        <div 
+          className={cn(
+            "absolute bottom-0 left-0 right-0 h-[1px] transition-opacity duration-300 ease-in-out",
+            smoothedProgress > 0 && smoothedProgress < 100 ? "opacity-30" : "opacity-0"
+          )}
+        >
+          <Progress 
+            value={smoothedProgress} 
+            className="h-[1px] rounded-none transition-all duration-150 ease-out" 
+          />
+        </div>
         <div className="container flex h-16 items-center justify-between">
           <Button
             variant="ghost"
@@ -1677,24 +1728,32 @@ export default function ArticlePage() {
           <Separator className="my-8" />
 
           {/* Article Content */}
-          <div className="prose prose-neutral dark:prose-invert max-w-none" ref={articleContentRef}>
-            {import.meta.env.DEV && (
-              <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
-                <p className="font-semibold text-yellow-600 dark:text-yellow-400">Debug Info:</p>
-                <p className="text-yellow-700 dark:text-yellow-300">Content length: {article.content.length}</p>
-                <p className="text-yellow-700 dark:text-yellow-300">Content preview: {article.content.substring(0, 200)}...</p>
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full HTML</summary>
-                  <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
-                    {article.content}
-                  </pre>
-                </details>
+          <div ref={articleContentRef}>
+            {article.contentJSON ? (
+              // Используем TipTap для отображения (сохраняет все атрибуты узлов)
+              <ArticleContent content={article.contentJSON} />
+            ) : (
+              // Fallback на HTML для обратной совместимости
+              <div className="prose prose-neutral dark:prose-invert max-w-none">
+                {import.meta.env.DEV && (
+                  <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
+                    <p className="font-semibold text-yellow-600 dark:text-yellow-400">Debug Info:</p>
+                    <p className="text-yellow-700 dark:text-yellow-300">Content length: {article.content.length}</p>
+                    <p className="text-yellow-700 dark:text-yellow-300">Content preview: {article.content.substring(0, 200)}...</p>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full HTML</summary>
+                      <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
+                        {article.content}
+                      </pre>
+                    </details>
+                  </div>
+                )}
+                <div
+                  className="text-foreground leading-relaxed break-words"
+                  dangerouslySetInnerHTML={{ __html: article.content }}
+                />
               </div>
             )}
-            <div
-              className="text-foreground leading-relaxed break-words"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
           </div>
 
           <Separator className="my-8" />
@@ -1808,22 +1867,22 @@ export default function ArticlePage() {
                       </div>
                     ))}
                   </div>
-              ) : combinedComments.length === 0 ? (
+            ) : combinedComments.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">
                   {t('article.noComments')} {t('article.beFirst')}
                   </div>
             ) : (
               <div className="space-y-4">
-                  {renderCommentThread(
-                    threadRootId && nodeLookup.has(threadRootId)
-                      ? [nodeLookup.get(threadRootId)!]
-                      : commentTree,
-                    0,
-                    {
+                {renderCommentThread(
+                  threadRootId && nodeLookup.has(threadRootId)
+                    ? [nodeLookup.get(threadRootId)!]
+                    : commentTree,
+                  0,
+                  {
                         showConnectors: !(threadRootId && nodeLookup.has(threadRootId)),
-                      threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
-                    }
-                  )}
+                    threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
+                  }
+                )}
               </div>
             )}
             </div>
@@ -1988,7 +2047,7 @@ export default function ArticlePage() {
                     </>
                   )}
                 </Button>
-    </div>
+              </div>
             </div>
 
             {/* Social sharing buttons */}
@@ -2076,7 +2135,7 @@ export default function ArticlePage() {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
+    </div>
     </TooltipProvider>
   )
 }

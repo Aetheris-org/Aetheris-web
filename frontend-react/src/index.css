@@ -322,12 +322,16 @@
   /* Стили для блока кода с шапкой */
   .tiptap .code-block-content {
     @apply overflow-hidden;
+    /* Убеждаемся, что контейнер не блокирует клики */
+    pointer-events: auto !important;
   }
 
   .tiptap .code-block-content pre {
     @apply m-0;
     background: hsl(var(--card));
     line-height: 1.65;
+    /* Убеждаемся, что pre не блокирует клики и может получать фокус */
+    pointer-events: auto !important;
   }
 
   /* Подсветка синтаксиса для блоков кода */
@@ -921,6 +925,71 @@
 
   .prose-callout-success {
     @apply bg-green-50 dark:bg-green-950/20 border-green-500 text-green-900 dark:text-green-100;
+  }
+
+  /* Стили для якорей ТОЛЬКО в редактируемом редакторе */
+  /* Используем [contenteditable="true"] чтобы стили применялись только к редактируемому редактору, а не к read-only */
+  /* Используем только data-block-id, чтобы не ловить случайные id от браузера или TipTap */
+  /* Плагин BlockAnchor автоматически очищает blockId у пустых параграфов, поэтому здесь просто применяем стили */
+  .tiptap[contenteditable="true"] [data-block-id] {
+    position: relative;
+    padding-left: 1.75rem;
+    border-left: 2px solid hsl(var(--primary) / 0.2);
+    margin-left: 0;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .tiptap[contenteditable="true"] [data-block-id]::before {
+    content: '#';
+    position: absolute;
+    left: 0.25rem;
+    top: 0.125rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary));
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    line-height: 1.5;
+  }
+
+  .tiptap[contenteditable="true"] [data-block-id]:hover {
+    border-left-color: hsl(var(--primary) / 0.5);
+    background-color: hsl(var(--primary) / 0.05);
+  }
+
+  .tiptap[contenteditable="true"] [data-block-id]:hover::before {
+    opacity: 1;
+  }
+
+  /* Стили для якорей в опубликованных статьях (.prose) */
+  /* Используем data-block-id и id, но только если id не пустой и не является автоматически сгенерированным */
+  .prose [data-block-id],
+  .prose [id]:not([id=""]):not([id^="__"]):not([id^="tiptap-"]) {
+    position: relative;
+    scroll-margin-top: 2rem;
+  }
+
+  /* Красивая подсветка при клике на якорную ссылку */
+  .prose [data-block-id].anchor-highlight,
+  .prose [id]:not([id=""]):not([id^="__"]):not([id^="tiptap-"]).anchor-highlight {
+    animation: anchorPulse 2s ease-out;
+  }
+
+  @keyframes anchorPulse {
+    0% {
+      background-color: hsl(var(--primary) / 0.2);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+      border-radius: 0.375rem;
+    }
+    50% {
+      background-color: hsl(var(--primary) / 0.15);
+      box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    }
   }
 }
 

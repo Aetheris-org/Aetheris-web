@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
 import { RichTextEditor, type RichTextEditorRef } from '@/components/RichTextEditor'
+import { ArticleContent } from '@/components/ArticleContent'
 import { useAuthStore } from '@/stores/authStore'
 import {
   Dialog,
@@ -720,6 +721,21 @@ export default function CreateArticlePage() {
         try {
           editorJSON = editorRef.current.getJSON()
           logger.debug('[CreateArticlePage] Got JSON from editor ref')
+          
+          // Проверяем наличие blockId в узлах
+          if (import.meta.env.DEV && editorJSON && editorJSON.content) {
+            const nodesWithBlockId = editorJSON.content.filter((node: any) => 
+              node.attrs && node.attrs.blockId
+            )
+            if (nodesWithBlockId.length > 0) {
+              logger.debug('[CreateArticlePage] Nodes with blockId found:', nodesWithBlockId.map((n: any) => ({
+                type: n.type,
+                blockId: n.attrs.blockId,
+              })))
+            } else {
+              logger.warn('[CreateArticlePage] No nodes with blockId found in editor JSON')
+            }
+          }
         } catch (error) {
           logger.warn('[CreateArticlePage] Failed to get JSON from editor ref:', error)
         }
@@ -740,14 +756,14 @@ export default function CreateArticlePage() {
       
       if (!finalContentJSON) {
         logger.error('[CreateArticlePage] No content JSON available - editor not initialized and no saved JSON')
-        toast({
+          toast({
           title: t('createArticle.missingInformation'),
           description: 'Editor is not ready or content is empty. Please add content and try again.',
-          variant: 'destructive',
-        })
-        setIsPublishing(false)
-        return
-      }
+            variant: 'destructive',
+          })
+          setIsPublishing(false)
+          return
+        }
       
       // Проверяем, что это валидный ProseMirror документ
       if (finalContentJSON.type !== 'doc') {
@@ -802,9 +818,25 @@ export default function CreateArticlePage() {
             if (hasItalic) result.italic = true
             if (hasCode) result.code = true
             
-            // НЕ добавляем url в текстовый узел - KeystoneJS не поддерживает это поле
-            // Ссылки должны быть обработаны как отдельные узлы типа 'link' на уровне paragraph
-            // Это будет обработано позже при нормализации структуры
+            // Обрабатываем ссылки (включая якорные ссылки href="#anchor-id")
+            // KeystoneJS не поддерживает url в текстовых узлах напрямую
+            // Для якорных ссылок (href="#...") сохраняем href в тексте через маркер
+            // Для внешних ссылок можно было бы создать отдельный link узел,
+            // но для простоты сохраняем href в тексте через маркер
+            const linkMark = node.marks.find((m: any) => m.type === 'link')
+            if (linkMark && linkMark.attrs && linkMark.attrs.href) {
+              const href = linkMark.attrs.href
+              // Для якорных ссылок сохраняем href в тексте через маркер
+              // Формат: \u200B\u200B\u200B[LINK:href]\u200B\u200B\u200B
+              if (href.startsWith('#')) {
+                const linkMarker = `\u200B\u200B\u200B[LINK:${href}]\u200B\u200B\u200B`
+                result.text = linkMarker + (result.text || '')
+              } else {
+                // Для внешних ссылок также сохраняем через маркер
+                const linkMarker = `\u200B\u200B\u200B[LINK:${href}]\u200B\u200B\u200B`
+                result.text = linkMarker + (result.text || '')
+              }
+            }
           }
           
           return result
@@ -979,10 +1011,11 @@ export default function CreateArticlePage() {
             if (node.attrs.textAlign) {
               result.textAlign = node.attrs.textAlign
             }
-            // Сохраняем язык для code blocks
-            if ((node.type === 'codeBlock' || slateType === 'code') && node.attrs.language) {
-              result.language = node.attrs.language
-            }
+            // Сохраняем язык для code blocks (будет сохранен через маркер в тексте)
+            // KeystoneJS не поддерживает кастомные поля, поэтому language будет сохранен через маркер
+            // if ((node.type === 'codeBlock' || slateType === 'code') && node.attrs.language) {
+            //   result.language = node.attrs.language
+            // }
             // Сохраняем blockId для anchor блоков (BlockAnchor extension)
             if (node.attrs.blockId) {
               result.blockId = node.attrs.blockId
@@ -1218,11 +1251,6 @@ export default function CreateArticlePage() {
         // Для code убеждаемся, что children содержат текст
         // KeystoneJS использует 'code', а не 'code-block'
         if (block.type === 'code' || block.type === 'code-block') {
-          // Сохраняем кастомные поля (language и т.д.)
-          const customFields: any = {}
-          if (block.language) customFields.language = block.language
-          if (block['data-callout-variant']) customFields['data-callout-variant'] = block['data-callout-variant']
-          
           // Нормализуем тип
           if (block.type === 'code-block') {
             block.type = 'code'
@@ -1230,6 +1258,33 @@ export default function CreateArticlePage() {
           if (block.children.length === 0) {
             block.children = [{ text: '' }]
           }
+          
+          // Сохраняем language через маркер в тексте (KeystoneJS не поддерживает кастомные поля)
+          // Формат: \u200B\u200B\u200B[LANGUAGE:language]\u200B\u200B\u200B
+          const language = block.language || 'plaintext'
+          if (block.children && block.children.length > 0) {
+            const firstTextNode = block.children.find((child: any) => 
+              child && typeof child === 'object' && child.text !== undefined && !child.type
+            )
+            
+            if (firstTextNode) {
+              // Добавляем маркер языка в начало текста
+              const marker = `\u200B\u200B\u200B[LANGUAGE:${language}]\u200B\u200B\u200B`
+              if (!firstTextNode.text.includes(`[LANGUAGE:${language}]`)) {
+                const existingText = firstTextNode.text || ''
+                firstTextNode.text = marker + (existingText.trim() === '' ? ' ' : existingText)
+              }
+            } else {
+              // Если нет текстового узла, создаем его с маркером
+              const marker = `\u200B\u200B\u200B[LANGUAGE:${language}]\u200B\u200B\u200B `
+              block.children.unshift({ text: marker })
+            }
+          } else {
+            // Если нет children, создаем текстовый узел с маркером
+            const marker = `\u200B\u200B\u200B[LANGUAGE:${language}]\u200B\u200B\u200B `
+            block.children = [{ text: marker }]
+          }
+          
           // Убеждаемся, что все children - это текстовые узлы
           block.children = block.children.map((child: any) => {
             if (typeof child === 'string') {
@@ -1241,14 +1296,17 @@ export default function CreateArticlePage() {
             return { text: String(child || '') }
           })
           
-          // Восстанавливаем кастомные поля
-          Object.assign(block, customFields)
+          // Удаляем language из блока - KeystoneJS не поддерживает это поле
+          delete block.language
         }
 
         // Обрабатываем blockId (для anchor блоков)
         // KeystoneJS не принимает кастомные поля, поэтому сохраняем blockId через специальный маркер в тексте
         if (block.blockId) {
           const blockId = block.blockId
+          if (import.meta.env.DEV) {
+            logger.debug('[validateAndNormalizeBlock] Processing blockId:', { blockId, blockType: block.type })
+          }
           if (block.children && block.children.length > 0) {
             // Ищем первый текстовый узел (может быть напрямую в children или в paragraph)
             let firstTextNode: any = null
@@ -1388,10 +1446,8 @@ export default function CreateArticlePage() {
               if (child.code === true) cleanedChild.code = true
               if (child.underline === true) cleanedChild.underline = true
               if (child.strikethrough === true) cleanedChild.strikethrough = true
-              // Явно НЕ копируем url - KeystoneJS не поддерживает поле url в текстовых узлах
-              // Ссылки должны быть обработаны отдельно как узлы типа 'link'
-              // Если url присутствует, просто игнорируем его (ссылка будет потеряна, но структура будет валидной)
-              // TODO: Преобразовать ссылки в узлы типа 'link' на этапе convertProseMirrorToSlate
+              // НЕ сохраняем url в текстовых узлах - KeystoneJS не поддерживает это поле
+              // Ссылки сохраняются через маркеры в тексте (см. convertProseMirrorToSlate)
               return cleanedChild
             }
             return child
@@ -1422,6 +1478,10 @@ export default function CreateArticlePage() {
             if (block.type === 'paragraph' && key === 'data-callout-variant') {
               return // Пропускаем это поле, так как variant сохранен через маркер в тексте
             }
+            // Для code НЕ сохраняем language (используем маркер в тексте)
+            if (block.type === 'code' && key === 'language') {
+              return // Пропускаем это поле, так как language сохранен через маркер в тексте
+            }
             // Для остальных типов копируем все поля
             result[key] = block[key]
           }
@@ -1435,29 +1495,8 @@ export default function CreateArticlePage() {
         .map(validateAndNormalizeBlock)
         .filter((block: any) => block !== null)
 
-      // Финальная очистка: удаляем url из всех текстовых узлов (KeystoneJS не поддерживает это поле)
-      const removeUrlFromTextNodes = (node: any): any => {
-        if (!node || typeof node !== 'object') return node
-        
-        // Если это текстовый узел, удаляем url
-        if (node.text !== undefined && !node.type) {
-          const cleaned = { ...node }
-          delete cleaned.url
-          return cleaned
-        }
-        
-        // Рекурсивно обрабатываем children
-        if (Array.isArray(node.children)) {
-          return {
-            ...node,
-            children: node.children.map(removeUrlFromTextNodes),
-          }
-        }
-        
-        return node
-      }
-      
-      contentDocument = contentDocument.map(removeUrlFromTextNodes)
+      // Ссылки (включая якорные ссылки href="#anchor-id") сохраняются в поле url текстовых узлов
+      // KeystoneJS Slate поддерживает url в текстовых узлах
 
       // Логируем преобразованный контент для отладки
       logger.debug('[CreateArticlePage] Converted content document:', {
@@ -1490,7 +1529,7 @@ export default function CreateArticlePage() {
             childrenType: typeof block?.children,
           })),
         })
-        toast({
+      toast({
           title: t('createArticle.missingInformation'),
           description: 'Invalid content structure. Please try again.',
           variant: 'destructive',
@@ -1886,20 +1925,33 @@ export default function CreateArticlePage() {
                   ref={editorRef}
                   id="content-editor"
                   value={content}
+                  jsonValue={contentJSON}
                   onChange={(html) => {
                     setContent(html)
                     // Сохраняем JSON контент при каждом изменении, чтобы он был доступен при публикации
                     // даже если редактор размонтирован на других шагах
-                    if (editorRef.current) {
-                      try {
-                        const json = editorRef.current.getJSON()
-                        if (json && json.type === 'doc') {
-                          setContentJSON(json)
+                    // Используем requestAnimationFrame для более плавного обновления
+                    requestAnimationFrame(() => {
+                      if (editorRef.current) {
+                        try {
+                          const json = editorRef.current.getJSON()
+                          if (json && json.type === 'doc') {
+                            setContentJSON(json)
+                            if (import.meta.env.DEV) {
+                              const codeBlocks = json.content?.filter((node: any) => node.type === 'codeBlock') || []
+                              if (codeBlocks.length > 0) {
+                                logger.debug('[CreateArticlePage] Saved JSON with code blocks:', {
+                                  count: codeBlocks.length,
+                                  languages: codeBlocks.map((cb: any) => cb.attrs?.language || 'plaintext'),
+                                })
+                              }
+                            }
+                          }
+                        } catch (error) {
+                          logger.warn('[CreateArticlePage] Failed to get JSON on change:', error)
                         }
-                      } catch (error) {
-                        logger.warn('[CreateArticlePage] Failed to get JSON on change:', error)
                       }
-                    }
+                    })
                   }}
                   placeholder={t('createArticle.contentPlaceholder')}
                   characterLimit={20000}
@@ -2126,7 +2178,6 @@ export default function CreateArticlePage() {
 
                 {/* Article Content - Collapsible */}
                 <div className="space-y-4">
-                  <div className="prose prose-neutral dark:prose-invert max-w-none">
                     {content.trim() ? (
                       <div className="relative">
                         <div
@@ -2136,7 +2187,15 @@ export default function CreateArticlePage() {
                             !isContentExpanded && shouldShowExpandButton && 'max-h-[600px] overflow-hidden'
                           )}
                         >
+                        {contentJSON ? (
+                          // Используем TipTap для отображения (сохраняет все атрибуты узлов)
+                          <ArticleContent content={contentJSON} />
+                        ) : (
+                          // Fallback на HTML
+                          <div className="prose prose-neutral dark:prose-invert max-w-none">
                           <div dangerouslySetInnerHTML={{ __html: content }} />
+                          </div>
+                        )}
                         </div>
                         {!isContentExpanded && shouldShowExpandButton && (
                           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
@@ -2145,7 +2204,6 @@ export default function CreateArticlePage() {
                     ) : (
                       <p className="text-muted-foreground italic">{t('createArticle.noContentYet')}</p>
                     )}
-                  </div>
                   {shouldShowExpandButton && (
                     <div className="flex justify-center -mt-2">
                       <Button

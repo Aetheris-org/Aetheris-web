@@ -2316,414 +2316,543 @@
     "pageTitle": "Dashboard"
   },
   "pricing": {
-    "pageTitle": "Pricing"
-  }
-}
-    },
-    "noResults": {
-      "companies": "No companies found",
-      "companiesDescription": "Try adjusting your filters or search query",
-      "clientRequests": "No client requests found",
-      "clientRequestsDescription": "Try adjusting your filters or search query",
-      "freelancerOffers": "No freelancer offers found",
-      "freelancerOffersDescription": "Try adjusting your filters or search query"
-    },
-    "sidebar": {
-      "popularSkills": "Popular Skills",
-      "popularSkillsDescription": "Filter by trending technologies",
-      "boostListing": "Boost Your Listing",
-      "boostDescription": "Get 10x more visibility",
-      "boostBenefits": {
-        "top": "Appear at the top of search results",
-        "badge": "Highlighted with premium badge",
-        "duration": "30-day boost duration"
+    "pageTitle": "Pricing",
+    "chooseYourPath": "Choose your path",
+    "title": "Pricing",
+    "forEveryone": "for everyone",
+    "subtitle": "From a free start to premium features. Choose the plan that's right for you.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Perfect for getting started",
+        "price": "$0",
+        "period": "forever",
+        "cta": "Start free",
+        "mainFeatures": {
+          "forum": "Access to forum and discussions",
+          "achievements": "Basic achievements and levels",
+          "articles": "Create up to 5 articles per month",
+          "stats": "Basic profile statistics",
+          "clans": "Join clans",
+          "reading": "Read all publications"
+        },
+        "featureCategories": {
+          "content": {
+            "title": "Content and interaction",
+            "features": {
+              "comments": "Comment on articles",
+              "reactions": "React to content (likes)",
+              "bookmarks": "Add to bookmarks",
+              "trending": "View trending publications"
+            }
+          },
+          "personalization": {
+            "title": "Personalization",
+            "features": {
+              "themes": "Basic themes",
+              "profile": "Profile with basic information",
+              "settings": "Basic profile settings"
+            }
+          },
+          "learning": {
+            "title": "Learning and community",
+            "features": {
+              "courses": "Access to courses and materials",
+              "communities": "Join communities",
+              "docs": "Access to documentation",
+              "voting": "Participate in voting"
+            }
+          },
+          "search": {
+            "title": "Search and navigation",
+            "features": {
+              "contentSearch": "Search content",
+              "filtering": "Filter articles"
+            }
+          },
+          "notifications": {
+            "title": "Notifications",
+            "features": {
+              "basic": "Basic notifications"
+            }
+          }
+        }
       },
-      "boostButton": "Boost Listing",
-      "needHelp": "Need Help?",
-      "howToPost": "How to post a job",
-      "pricing": "Pricing & payments",
-      "safety": "Safety guidelines"
+      "voyager": {
+        "name": "Voyager",
+        "description": "For those exploring new horizons",
+        "price": "$5",
+        "period": "per month",
+        "badge": "Popular",
+        "cta": "Start journey",
+        "mainFeatures": {
+          "allFree": "Everything from Free plan",
+          "unlimited": "Unlimited article creation",
+          "analytics": "Advanced analytics and statistics",
+          "support": "Priority support",
+          "exclusive": "Exclusive achievements",
+          "early": "Early access to new features",
+          "monetization": "Content monetization",
+          "themes": "Custom profile themes"
+        },
+        "featureCategories": {
+          "editor": {
+            "title": "Editor and content",
+            "features": {
+              "advancedEditor": "Advanced article editor",
+              "unlimitedDrafts": "Unlimited drafts",
+              "customPreview": "Custom article previews",
+              "exclusiveTemplates": "Exclusive article templates",
+              "formatting": "Extended formatting options",
+              "customUrls": "Custom URLs for articles",
+              "scheduling": "Publication scheduling"
+            }
+          },
+          "analytics": {
+            "title": "Analytics and statistics",
+            "features": {
+              "views": "Advanced view analytics",
+              "articleStats": "Detailed article statistics",
+              "audience": "Audience and engagement analysis",
+              "conversions": "Built-in conversion analytics",
+              "comments": "Extended comment statistics",
+              "export": "Export data to CSV/JSON"
+            }
+          },
+          "personalization": {
+            "title": "Personalization",
+            "features": {
+              "profileSettings": "Extended profile settings",
+              "badges": "Custom profile badges",
+              "themes": "Extended themes",
+              "privacy": "Extended privacy settings",
+              "notifications": "Extended notification settings"
+            }
+          },
+          "organization": {
+            "title": "Organization and management",
+            "features": {
+              "bookmarks": "Unlimited bookmarks",
+              "collections": "Create article collections",
+              "backup": "Automatic backup"
+            }
+          },
+          "integrations": {
+            "title": "Integrations and SEO",
+            "features": {
+              "metaTags": "Custom meta tags for SEO",
+              "social": "Social media integration"
+            }
+          },
+          "privileges": {
+            "title": "Privileges",
+            "features": {
+              "search": "Priority in search",
+              "moderation": "Priority in content moderation",
+              "beta": "Access to beta features"
+            }
+          }
+        }
+      },
+      "architect": {
+        "name": "Architect",
+        "description": "For those building the future",
+        "price": "$15",
+        "period": "per month",
+        "badge": "Premium",
+        "cta": "Become an architect",
+        "mainFeatures": {
+          "allVoyager": "Everything from Voyager plan",
+          "privateClans": "Private clans and communities",
+          "advanced": "Advanced analytics with AI insights",
+          "manager": "Personal account manager",
+          "events": "Exclusive events and meetups",
+          "api": "API access for integrations",
+          "badges": "Custom badges and rewards",
+          "whitelabel": "White label for organizations"
+        },
+        "featureCategories": {
+          "analytics": {
+            "title": "Analytics and insights",
+            "features": {
+              "trends": "Trend forecasting",
+              "audience": "Detailed audience analytics",
+              "abTesting": "A/B content testing",
+              "multiChannel": "Multi-channel analytics",
+              "dashboards": "Custom dashboards",
+              "reports": "Private analytics reports",
+              "export": "Export data in any format"
+            }
+          },
+          "api": {
+            "title": "API and integrations",
+            "features": {
+              "automation": "API for automation",
+              "webhooks": "Webhook integrations",
+              "external": "Integration with external services",
+              "custom": "Custom integrations on request"
+            }
+          },
+          "content": {
+            "title": "Content and editor",
+            "features": {
+              "editor": "Extended editor capabilities",
+              "collaborations": "Collaborations with other authors",
+              "drafts": "Private drafts with access control",
+              "domains": "Custom domains for articles",
+              "seo": "Extended SEO settings"
+            }
+          },
+          "monetization": {
+            "title": "Monetization",
+            "features": {
+              "subscriptions": "Monetization through subscriptions",
+              "settings": "Extended monetization settings",
+              "partnership": "Priority in partnership program"
+            }
+          },
+          "personalization": {
+            "title": "Personalization",
+            "features": {
+              "themes": "Exclusive themes",
+              "colors": "Custom color schemes",
+              "widgets": "Custom profile widgets",
+              "notifications": "Extended notification settings",
+              "interface": "Personal interface settings",
+              "customization": "Extended customization options"
+            }
+          },
+          "learning": {
+            "title": "Learning and community",
+            "features": {
+              "privateCourses": "Create private courses",
+              "masterclasses": "Exclusive masterclasses",
+              "channels": "Private communication channels"
+            }
+          },
+          "storage": {
+            "title": "Storage and support",
+            "features": {
+              "media": "Unlimited media storage",
+              "support": "Priority technical support 24/7",
+              "consultations": "Personal consultations"
+            }
+          },
+          "privileges": {
+            "title": "Exclusive privileges",
+            "features": {
+              "recommendations": "Priority in recommendations",
+              "moderation": "Extended moderation rights",
+              "tools": "Exclusive author tools",
+              "support": "Priority in technical support",
+              "content": "Personal content recommendations",
+              "search": "Extended search capabilities",
+              "filters": "Custom filters and sorting",
+              "development": "Priority in feature development",
+              "roadmap": "Influence on platform roadmap",
+              "features": "Exclusive access to new features",
+              "early": "Early access to features (2 weeks ahead)"
+            }
+          }
+        }
+      }
     },
-    "jobCard": {
-      "verified": "Verified",
-      "boosted": "Boosted",
-      "views": "views",
-      "applicants": "applicants",
-      "viewDetails": "View Details",
-      "competitiveSalary": "Competitive salary",
-      "from": "From {amount}",
-      "upTo": "Up to {amount}",
-      "range": "{min} - {max}"
+    "whatYouGet": {
+      "title": "What you get",
+      "subtitle": "All plans include basic features, and premium opens new horizons",
+      "security": {
+        "title": "Security",
+        "description": "OAuth2 authentication, data protection"
+      },
+      "access": {
+        "title": "Access everywhere",
+        "description": "Sync across all devices"
+      },
+      "community": {
+        "title": "Community",
+        "description": "Connect with like-minded people"
+      },
+      "learning": {
+        "title": "Learning",
+        "description": "Courses, tutorials, materials"
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Statistics and insights"
+      },
+      "monetization": {
+        "title": "Monetization",
+        "description": "Earn from your content"
+      }
     },
-    "requestCard": {
-      "boosted": "Boosted",
-      "views": "views",
-      "proposals": "proposals",
-      "submitProposal": "Submit Proposal"
+    "faq": {
+      "title": "Frequently asked questions",
+      "changePlan": {
+        "question": "Can I change my plan later?",
+        "answer": "Yes, you can switch to another plan at any time. Changes take effect immediately."
+      },
+      "cancel": {
+        "question": "What happens when I cancel my subscription?",
+        "answer": "You keep access to features until the end of the paid period, then switch to the Free plan."
+      },
+      "student": {
+        "question": "Are there student discounts?",
+        "answer": "Yes, we offer special conditions for students. Contact us to get a discount."
+      },
+      "yearly": {
+        "question": "Can I pay yearly?",
+        "answer": "Yes, with annual payment you get 2 months free. That's a 16% savings."
+      }
     },
-    "offerCard": {
-      "verified": "Verified",
-      "boosted": "Boosted",
-      "projects": "projects",
-      "responds": "Responds {time}",
-      "views": "views",
-      "contacts": "contacts",
-      "viewProfile": "View Profile",
-      "contactForPricing": "Contact for pricing"
-    }
+    "cta": {
+      "title": "Ready to start?",
+      "subtitle": "Join thousands of users who are already building the future on Aetheris",
+      "startFree": "Start free",
+      "viewForum": "View forum"
+    },
+    "moreFeatures": "additional features",
+    "viewAllFeatures": "Additional features",
+    "allFeatures": "All features",
+    "mainFeatures": "Main features",
+    "additionalFeatures": "Additional features"
   },
-  "achievements": {
-    "title": "Achievements",
-    "pageTitle": "Achievements",
-    "description": "Track your progress and unlock rewards",
+  "forumLanding": {
     "hero": {
-      "badge": "Gamification",
-      "title": "Your achievements",
-      "description": "Track milestones, unlock rewards, and showcase your progress.",
-      "expand": "Expand hero section",
-      "collapse": "Collapse hero section"
+      "title": "Aetheris",
+      "subtitle": "Where ideas are born",
+      "description": "If Reddit, Discord, Coursera, and Steam had a baby, and then added WoW game mechanics to it - that would be Aetheris",
+      "audience": "For scientists • developers • gamers • students • freelancers",
+      "startFree": "Start free",
+      "pricing": "Pricing",
+      "noCard": "No credit card required",
+      "privacy": "100% confidential",
+      "freeForever": "Free forever"
     },
     "stats": {
-      "unlocked": "Unlocked",
-      "available": "Available",
-      "completionRate": "Completion rate",
-      "recentUnlocks": "Recent unlocks"
+      "title": "In numbers",
+      "possibilities": "Possibilities",
+      "privacy": "Privacy",
+      "community": "Community",
+      "forever": "Forever"
+    },
+    "gamification": {
+      "badge": "Game mechanics",
+      "title": "Level up",
+      "titleHighlight": "just like in your favorite MMORPG",
+      "description": "Remember that feeling when you got a new level in WoW? That's what we have here at every step.",
+      "achievements": "500+ Achievements",
+      "levels": "50 Levels",
+      "clans": "Clans",
+      "achievementsCount": "500+",
+      "achievementsLabel": "Achievements",
+      "levelsCount": "50",
+      "levelsLabel": "Levels",
+      "clansCount": "∞",
+      "clansLabel": "Clans",
+      "seasons": "4",
+      "seasonsLabel": "Seasons/year"
+    },
+    "monetization": {
+      "badge": "Monetization",
+      "title": "Money for what",
+      "titleHighlight": "you're already doing",
+      "description": "Writing posts? Making tutorials? Streaming code? You can monetize all of this.",
+      "ads": {
+        "title": "Ads",
+        "description": "Ad revenue goes directly to you"
+      },
+      "donations": {
+        "title": "Donations",
+        "description": "Fans support you directly"
+      },
+      "currency": {
+        "title": "Currency",
+        "description": "Convert to real money"
+      },
+      "partnerships": {
+        "title": "Partnerships",
+        "description": "Collaborations with brands"
+      }
+    },
+    "privacy": {
+      "title": "We don't know your email. Seriously.",
+      "description": "Only OAuth2 - sign in through Google, GitHub, Discord, etc. Instead of email, we store a hash. Even if we get hacked - there's nothing to take.",
+      "oauth2": "OAuth2",
+      "hash": "Hash instead of email",
+      "zeroData": "0 data"
+    },
+    "features": {
+      "badge": "What's inside",
+      "title": "Your new home",
+      "titleHighlight": "on the internet",
+      "subtitle": "Seriously, we packed everything in here. Even more than needed",
+      "gameLevels": {
+        "title": "Levels like in a game",
+        "description": "Clans, PvP rating, seasonal passes. Like playing, but leveling up real skills."
+      },
+      "ai": {
+        "title": "AI understands everything",
+        "description": "A smart assistant that actually helps, not just chats. And suggests content."
+      },
+      "store": {
+        "title": "Your own store",
+        "description": "Trade cards, decorations, NFTs. Run a business on internal currency or crypto."
+      },
+      "network": {
+        "title": "Hangout by interests",
+        "description": "Country chats and global ones. Groups, channels - like Telegram, but better."
+      },
+      "learning": {
+        "title": "Learn whatever you want",
+        "description": "Courses from pros, interactive articles with choices, tutorials. Everything in one place."
+      },
+      "money": {
+        "title": "Money keeps coming",
+        "description": "Making content? Donations, ads, premium, partnerships - everything works right away."
+      },
+      "code": {
+        "title": "Paradise for coders",
+        "description": "Q&A better than SO, code sharing, collaborative development. Everything a developer needs."
+      },
+      "blog": {
+        "title": "Your blog is here",
+        "description": "Post, blog, create channels. Like VK met Reddit and added gamification."
+      },
+      "jobs": {
+        "title": "Find work/project",
+        "description": "Job board where you can find everything: work, freelance, candidates, partners."
+      },
+      "editor": {
+        "title": "Monster editor",
+        "description": "Seriously, there's a ton of stuff. Markdown, media, embeds - make beauty without workarounds."
+      },
+      "tokens": {
+        "title": "Your own tokens",
+        "description": "Internal currency just like stars in TG. Earn, spend, convert."
+      },
+      "anonymity": {
+        "title": "Maximum anonymity",
+        "description": "We don't even know your email. Only OAuth2 and hash. Leak? There's nothing to take."
+      }
+    },
+    "finalCta": {
+      "badge": "Start now",
+      "title": "So, are you in?",
+      "titleHighlight": "Registration in 10 seconds",
+      "description": "Click the button, choose Google/GitHub/Discord, done. Welcome to Aetheris. Seriously, you don't even need to enter an email.",
+      "registerFree": "Register free",
+      "watchDemo": "Watch demo"
+    },
+    "footer": {
+      "text": "© 2025 Aetheris. Made with ❤️ for the community."
+    }
+  },
+  "developers": {
+    "hero": {
+      "badge": "Development Hub",
+      "title": "Startup Development Journal",
+      "description": "Follow the development of innovative projects, support teams and stay up to date with the latest updates from the startup world.",
+      "collapsedTitle": "Startup Development Journal"
+    },
+    "featured": {
+      "title": "Featured Startups",
+      "description": "Projects recommended by the community",
+      "viewAll": "All featured"
+    },
+    "tabs": {
+      "startups": "Startups",
+      "journal": "Development Journal"
+    },
+    "search": {
+      "placeholder": "Search..."
     },
     "filters": {
+      "allCategories": "All categories",
+      "allStages": "All stages",
+      "allTypes": "All",
+      "reset": "Reset"
+    },
+    "empty": {
+      "startups": "No startups found",
+      "startupsDescription": "Try changing filters",
+      "journal": "No entries found",
+      "journalDescription": "Try changing filters"
+    },
+    "tools": {
+      "title": "Development Tools",
+      "description": "Monetization, analytics and integrations to promote your startup",
+      "allTools": "All tools",
+      "popular": "Popular",
+      "free": "Free",
+      "learnMore": "Learn more",
+      "teamsUse": "teams use"
+    },
+    "stats": {
+      "activeStartups": "Active startups",
+      "publications": "Publications",
+      "followers": "Followers",
+      "donations": "Donations raised"
+    }
+  },
+  "courses": {
+    "hero": {
+      "badge": "Educational Platform",
+      "title": "Learn from the best community creators",
+      "description": "Verified courses from moderation and original materials from experienced developers. Grow, earn reputation and share knowledge.",
+      "createCourse": "Create course",
+      "viewVerified": "Verified courses",
+      "collapsedTitle": "Learn from the best community creators"
+    },
+    "filters": {
+      "title": "Find your course",
+      "description": "Use filters to find the right course",
+      "reset": "Reset filters",
+      "searchPlaceholder": "Search by title, author, tags...",
+      "category": "Category",
       "all": "All",
       "level": "Level",
-      "streak": "Streak",
-      "activity": "Activity",
-      "milestone": "Milestone",
-      "social": "Social",
-      "sortBy": "Sort by",
-      "default": "Default",
-      "rarity": "Rarity",
-      "newest": "Newest first",
-      "xpReward": "XP reward"
+      "access": "Access",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "free": "Free",
+      "paid": "Paid",
+      "subscription": "Subscription",
+      "levelGated": "By level"
     },
-    "rarity": {
-      "common": "Common",
-      "rare": "Rare",
-      "epic": "Epic",
-      "legendary": "Legendary"
+    "tabs": {
+      "all": "All",
+      "verified": "Verified",
+      "community": "Community"
     },
-    "breakdown": {
-      "title": "Rarity breakdown",
-      "description": "Distribution of achievements by rarity tier"
-    },
-    "noAchievements": "No achievements found",
-    "noAchievementsDescription": "Try selecting a different category.",
-    "unlocked": "Unlocked",
-    "locked": "Locked",
-    "xpReward": "{xp} XP reward"
-  },
-  "help": {
-    "title": "Help Center",
-    "back": "Back",
-    "knowledgeBase": "Knowledge base",
-    "howCanWeHelp": "How can we help?",
-    "description": "Browse guides, best practices, and release notes. Our support team is one click away if you get stuck.",
-    "categories": {
-      "gettingStarted": "Getting started",
-      "gettingStartedDescription": "Set up your account and publish your first story.",
-      "writing": "Writing & Publishing",
-      "writingDescription": "Draft, review, and ship stories your readers love.",
-      "account": "Account & billing",
-      "accountDescription": "Manage seats, invoices, and security options."
-    },
-    "articles": {
-      "inviteTeammates": "Invite teammates to collaborate",
-      "inviteTeammatesSummary": "Tips for running shared workspaces with unified permissions.",
-      "createFirstStory": "Create your first story",
-      "createFirstStorySummary": "A walkthrough of the editor, markdown shortcuts, and preview.",
-      "personalizeProfile": "Personalize your profile",
-      "personalizeProfileSummary": "Customize bio, cover image, and external profiles.",
-      "structuringArticles": "Structuring long-form articles",
-      "structuringArticlesSummary": "Use sections, call-outs, and embeds to keep readers engaged.",
-      "collaborativeEditing": "Collaborative editing flow",
-      "collaborativeEditingSummary": "Assign reviewers, leave inline comments, and resolve feedback.",
-      "schedulingReleases": "Scheduling releases",
-      "schedulingReleasesSummary": "Set publish windows, configure RSS, and notify subscribers.",
-      "upgradePro": "Upgrade to Creator Pro",
-      "upgradeProSummary": "Unlock advanced analytics, custom domains, and priority support.",
-      "twoFactor": "Two-factor authentication",
-      "twoFactorSummary": "Secure your workspace with OTP apps and backup codes.",
-      "viewInvoices": "View invoices and receipts",
-      "viewInvoicesSummary": "Download receipts and update billing contacts."
-    },
-    "readGuide": "Read guide",
-    "contactUs": "Contact us",
-    "contactDescription": "Prefer a human? Our team is on-call 7 days a week with escalations for production incidents.",
-    "contactOptions": {
-      "chat": "Chat with support",
-      "chatDescription": "Average response under 5 minutes during business hours.",
-      "chatAction": "Open chat",
-      "email": "Email hello@aetheris.dev",
-      "emailDescription": "Detailed requests, billing questions, or roadmap feedback.",
-      "emailAction": "Send email",
-      "escalate": "Escalate priority incident",
-      "escalateDescription": "Critical outages affecting your publication.",
-      "escalateAction": "Escalate",
-      "proBadge": "Pro"
-    },
-    "releaseHighlights": "Release highlights",
-    "releaseDescription": "Recent improvements that may answer your question before contacting support.",
-    "releases": {
-      "readingList": {
-        "title": "Reading list sync",
-        "description": "Saved articles now sync across web and mobile, with offline mode shipping next."
+    "sections": {
+      "verified": {
+        "title": "Verified courses",
+        "description": "Verified by moderation and meet high quality standards"
       },
-      "appearancePresets": {
-        "title": "Appearance presets",
-        "description": "Create and share workspace visual presets across editorial teams."
-      },
-      "oauthUpdates": {
-        "title": "OAuth updates",
-        "description": "Additional providers are in beta. Follow the release notes for Discord and Slack support."
+      "community": {
+        "title": "Community courses",
+        "description": "Original materials from experienced developers"
       }
+    },
+    "empty": {
+      "title": "No courses found",
+      "description": "Try changing filters or search query",
+      "verifiedTitle": "No verified courses found",
+      "verifiedDescription": "Try changing filters",
+      "communityTitle": "No community courses found",
+      "communityDescription": "Try changing filters"
+    },
+    "card": {
+      "startLearning": "Start learning",
+      "certificate": "Certificate issued"
+    },
+    "stats": {
+      "courses": "Courses",
+      "students": "Students",
+      "verified": "Verified",
+      "avgRating": "Average rating"
     }
-  },
-  "notifications": {
-    "title": "Notifications",
-    "back": "Back",
-    "description": "Stay up to date with reactions, comments, and editorial updates.",
-    "markAllAsRead": "Mark all as read",
-    "inboxOverview": "Inbox overview",
-    "unreadCount": "You have {count} unread {count, plural, one {notification} other {notifications}}.",
-    "allCaughtUp": "You are all caught up for now.",
-    "new": "{count} new",
-    "zeroNew": "0 new",
-    "categories": {
-      "comments": "Comments",
-      "reactions": "Reactions",
-      "editorial": "Editorial",
-      "followers": "Followers"
-    },
-    "groups": {
-      "today": "Today",
-      "thisWeek": "This week",
-      "earlier": "Earlier"
-    },
-    "noNotifications": "No notifications yet",
-    "noNotificationsDescription": "Once notifications are enabled, you'll receive updates from the community and editorial team.",
-    "browseArticles": "Browse articles",
-    "view": "View",
-    "markAsRead": "Mark notification as read",
-    "alreadyRead": "Notification already read"
-  },
-  "accountSheet": {
-    "openMenu": "Open account menu",
-    "workspaceHub": "Workspace hub",
-    "workspaceDescription": "Review your profile at a glance, jump back into writing, and manage your account.",
-    "signedInAs": "Signed in as",
-    "level": "Level {level}",
-    "progressToNextLevel": "Progress to next level",
-    "xpProgress": "{current} / {total} XP",
-    "xpRemaining": "Remaining: {xp} XP",
-    "dailyStreak": "Daily streak",
-    "days": "{count} {count, plural, one {day} other {days}}",
-    "streakDescription": "Stay consistent to keep rewards flowing.",
-    "notifications": "Notifications",
-    "reviewInbox": "Review inbox",
-    "lifetimeExperience": "Lifetime experience:",
-    "xpEarned": "{xp} XP earned across Aetheris.",
-    "quickActions": "Quick actions",
-    "viewProfile": "View profile",
-    "writeStory": "Write a story",
-    "friends": "Friends",
-    "achievements": "Achievements",
-    "settings": "Settings",
-    "keepExploring": "Keep exploring",
-    "readingList": "Reading list",
-    "drafts": "Drafts",
-    "helpCenter": "Help center",
-    "feedback": "Feedback",
-    "stats": "Statistics",
-    "viewStats": "View statistics",
-    "viewAchievements": "View achievements",
-    "signOut": "Sign out",
-    "signIn": "Sign In"
-  },
-  "readingList": {
-    "title": "Reading list",
-    "back": "Back",
-    "noSavedArticles": "No saved articles yet",
-    "noSavedArticlesDescription": "Use the \"Read later\" button on any article to add it to your personal reading queue.",
-    "browseArticles": "Browse articles",
-    "savedForLater": "Saved for later",
-    "oneArticleInQueue": "1 article in your queue",
-    "articlesReadyToRead": "{count} articles ready to read",
-    "clearAll": "Clear all",
-    "savedOn": "Saved on {date}",
-    "continueReading": "Continue reading",
-    "remove": "Remove",
-    "minRead": "{minutes} min read"
-  },
-  "feedback": {
-    "title": "Feedback",
-    "pageTitle": "Feedback",
-    "description": "Report bugs, share ideas, and help improve the platform",
-    "bugs": "Bugs",
-    "features": "Features",
-    "resolved": "Resolved",
-    "inProgress": "In Progress",
-    "createNew": "Create New",
-    "search": "Search...",
-    "noResults": "No results found",
-    "noResultsDescription": "Try adjusting your filters or search query",
-    "createBug": "Report a Bug",
-    "createFeature": "Suggest a Feature",
-    "createDescription": "Describe the issue or your suggestion in as much detail as possible",
-    "form": {
-      "type": "Type",
-      "bugDescription": "Report a bug or issue",
-      "featureDescription": "Suggest a new feature or improvement",
-      "title": "Title",
-      "titlePlaceholder": "Brief description of the issue or suggestion",
-      "description": "Description",
-      "descriptionPlaceholder": "Detailed description of the issue or details of your suggestion",
-      "stepsToReproduce": "Steps to Reproduce",
-      "stepsToReproducePlaceholder": "1. Open...\n2. Click on...\n3. Observe error...",
-      "stepsToReproduceHint": "Describe step-by-step actions that lead to the problem",
-      "priority": "Priority",
-      "tags": "Tags",
-      "tagsPlaceholder": "Enter a tag and press Enter",
-      "addTag": "Add",
-      "submit": "Submit",
-      "submitBug": "Submit Report",
-      "submitFeature": "Submit Suggestion"
-    },
-    "stepsToReproduce": "Steps to Reproduce",
-    "filters": {
-      "allStatuses": "All Statuses",
-      "allPriorities": "All Priorities"
-    },
-    "status": {
-      "open": "Open",
-      "inProgress": "In Progress",
-      "resolved": "Resolved",
-      "rejected": "Rejected"
-    },
-    "priority": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High",
-      "critical": "Critical"
-    },
-    "sort": {
-      "newest": "Newest First",
-      "oldest": "Oldest First",
-      "mostVoted": "Most Voted",
-      "priority": "By Priority"
-    },
-    "reactions": {
-      "upvote": "Upvote",
-      "downvote": "Downvote",
-      "important": "Important",
-      "duplicate": "Duplicate",
-      "wontfix": "Won't Fix"
-    }
-  },
-  "legal": {
-    "termsOfService": {
-      "title": "Terms of Service",
-      "lastUpdated": "Last updated",
-      "section1": {
-        "title": "1. Acceptance of Terms",
-        "content": "Welcome to Aetheris! By using our service, you agree to comply with these Terms of Service. If you do not agree with any of these terms, please do not use our service."
-      },
-      "section2": {
-        "title": "2. Use of Service",
-        "content": "You agree to use Aetheris only for lawful purposes and in accordance with these Terms. In particular, you agree:",
-        "item1": "Not to infringe on the intellectual property rights of other users",
-        "item2": "Not to post content that is illegal, offensive, or violates the rights of others",
-        "item3": "Not to use the service for spam or unsolicited messages",
-        "item4": "Not to attempt to gain unauthorized access to systems or data"
-      },
-      "section3": {
-        "title": "3. User Content",
-        "content": "You retain all rights to the content you post on Aetheris. However, by posting content, you grant us a license to use, display, and distribute it within our service. You are solely responsible for all content you post.",
-        "item1": "You warrant that you have all necessary rights to the content you post",
-        "item2": "You agree not to post content that infringes on third-party rights",
-        "item3": "We reserve the right to remove any content that violates our rules",
-        "item4": "You may delete your content at any time"
-      },
-      "section4": {
-        "title": "4. Intellectual Property",
-        "content": "All materials, including design, logos, text, and software of Aetheris, are protected by copyright and other intellectual property laws. You may not copy, modify, or distribute these materials without our written permission."
-      },
-      "section5": {
-        "title": "5. Termination",
-        "content": "We reserve the right to suspend or terminate your access to the service at any time if you violate these Terms of Service or for any other reason at our discretion."
-      },
-      "section6": {
-        "title": "6. Disclaimer",
-        "content": "Aetheris is provided \"as is\" without any warranties. We do not guarantee that the service will operate without interruption or errors. We are not liable for any damages arising from the use or inability to use our service."
-      },
-      "section7": {
-        "title": "7. Changes to Terms",
-        "content": "We reserve the right to modify these Terms of Service at any time. We will notify you of significant changes by posting a new version on this page. Continued use of the service after changes constitutes your acceptance of the new terms."
-      },
-      "section8": {
-        "title": "8. Contact Information",
-        "content": "If you have any questions about these Terms of Service, please contact us at hello@aetheris.dev."
-      },
-      "contact": "For questions regarding these Terms of Service, please contact us at hello@aetheris.dev"
-    },
-    "privacyPolicy": {
-      "title": "Privacy Policy",
-      "lastUpdated": "Last updated",
-      "section1": {
-        "title": "1. Introduction",
-        "content": "We at Aetheris take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our service."
-      },
-      "section2": {
-        "title": "2. Information We Collect",
-        "content": "We collect the following information:",
-        "item1": "Authentication information: we use OAuth2 for Google sign-in. We only store a hash of your email address, not the address itself, to ensure maximum security",
-        "item2": "Profile information: name, bio, avatar, and other information you voluntarily provide",
-        "item3": "Content: articles, comments, and other content you post",
-        "item4": "Technical information: IP address, browser type, service usage data"
-      },
-      "section3": {
-        "title": "3. How We Use Information",
-        "content": "We use the collected information to:",
-        "item1": "Provide and improve our services",
-        "item2": "Personalize your experience",
-        "item3": "Process transactions and send notifications",
-        "item4": "Ensure security and prevent fraud"
-      },
-      "section4": {
-        "title": "4. Data Protection",
-        "content": "We employ modern encryption and security methods to protect your data. Your email address is stored only as a hash, making it impossible to recover even in the event of a data breach."
-      },
-      "section5": {
-        "title": "5. Information Sharing",
-        "content": "We do not sell or share your personal information with third parties, except when necessary to provide services, required by law, or with your explicit consent."
-      },
-      "section6": {
-        "title": "6. Your Rights",
-        "content": "You have the right to request access, correction, or deletion of your personal data at any time. You may also opt out of receiving marketing messages."
-      },
-      "section7": {
-        "title": "7. Cookies",
-        "content": "We use cookies and similar technologies to improve service functionality, analyze usage, and personalize content. You can manage cookie settings in your browser."
-      },
-      "section8": {
-        "title": "8. Policy Changes",
-        "content": "We may periodically update this Privacy Policy. We will notify you of significant changes by posting a new version on this page."
-      },
-      "contact": "For privacy-related questions, please contact us at hello@aetheris.dev"
-    }
-  },
-  "friends": {
-    "pageTitle": "Friends"
-  },
-  "dashboard": {
-    "pageTitle": "Dashboard"
-  },
-  "pricing": {
-    "pageTitle": "Pricing"
   }
 }

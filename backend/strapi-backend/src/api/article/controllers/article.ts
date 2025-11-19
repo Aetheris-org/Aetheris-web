@@ -782,8 +782,8 @@ export default factories.createCoreController('api::article.article', ({ strapi 
           const publishedDocs = await strapi.documents('api::article.article').findMany({
             filters: { id: { $eq: articleId } },
             status: 'published',
-            limit: 1,
-          });
+      limit: 1,
+    });
 
           if (!publishedDocs || publishedDocs.length === 0) {
             strapi.log.error(`[react] Published document not found for article: ${articleId}`);

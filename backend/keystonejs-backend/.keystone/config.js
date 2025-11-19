@@ -34,7 +34,7 @@ __export(keystone_exports, {
 });
 module.exports = __toCommonJS(keystone_exports);
 var import_config = require("dotenv/config");
-var import_core7 = require("@keystone-6/core");
+var import_core9 = require("@keystone-6/core");
 
 // schemas/User.ts
 var import_core = require("@keystone-6/core");
@@ -265,7 +265,9 @@ var User = (0, import_core.list)({
 // schemas/Article.ts
 var import_core2 = require("@keystone-6/core");
 var import_fields2 = require("@keystone-6/core/fields");
+var import_core3 = require("@keystone-6/core");
 var import_fields_document = require("@keystone-6/fields-document");
+var import_meta = {};
 var Article = (0, import_core2.list)({
   access: accessControl.Article,
   fields: {
@@ -323,6 +325,38 @@ var Article = (0, import_core2.list)({
       ref: "ArticleReaction.article",
       many: true
     }),
+    userReaction: (0, import_fields2.virtual)({
+      field: import_core3.graphql.field({
+        type: import_core3.graphql.String,
+        async resolve(item, args, context) {
+          const session2 = context.session;
+          if (!session2?.itemId) {
+            return null;
+          }
+          const userId = session2.itemId;
+          const articleId = item.id;
+          if (!articleId) {
+            return null;
+          }
+          try {
+            const reaction = await context.query.ArticleReaction.findMany({
+              where: {
+                article: { id: { equals: String(articleId) } },
+                user: { id: { equals: userId } }
+              },
+              query: "reaction",
+              take: 1
+            });
+            return reaction.length > 0 ? reaction[0].reaction : null;
+          } catch (error) {
+            if (import_meta.env?.DEV || process.env.NODE_ENV === "development") {
+              console.error("Failed to get userReaction for article:", error);
+            }
+            return null;
+          }
+        }
+      })
+    }),
     publishedAt: (0, import_fields2.timestamp)(),
     createdAt: (0, import_fields2.timestamp)({
       defaultValue: { kind: "now" }
@@ -334,9 +368,11 @@ var Article = (0, import_core2.list)({
 });
 
 // schemas/Comment.ts
-var import_core3 = require("@keystone-6/core");
+var import_core4 = require("@keystone-6/core");
 var import_fields3 = require("@keystone-6/core/fields");
-var Comment = (0, import_core3.list)({
+var import_core5 = require("@keystone-6/core");
+var import_meta2 = {};
+var Comment = (0, import_core4.list)({
   access: accessControl.Comment,
   fields: {
     text: (0, import_fields3.text)({
@@ -368,6 +404,38 @@ var Comment = (0, import_core3.list)({
       ref: "CommentReaction.comment",
       many: true
     }),
+    userReaction: (0, import_fields3.virtual)({
+      field: import_core5.graphql.field({
+        type: import_core5.graphql.String,
+        async resolve(item, args, context) {
+          const session2 = context.session;
+          if (!session2?.itemId) {
+            return null;
+          }
+          const userId = session2.itemId;
+          const commentId = item.id;
+          if (!commentId) {
+            return null;
+          }
+          try {
+            const reaction = await context.query.CommentReaction.findMany({
+              where: {
+                comment: { id: { equals: String(commentId) } },
+                user: { id: { equals: userId } }
+              },
+              query: "reaction",
+              take: 1
+            });
+            return reaction.length > 0 ? reaction[0].reaction : null;
+          } catch (error) {
+            if (import_meta2.env?.DEV || process.env.NODE_ENV === "development") {
+              console.error("Failed to get userReaction for comment:", error);
+            }
+            return null;
+          }
+        }
+      })
+    }),
     createdAt: (0, import_fields3.timestamp)({
       defaultValue: { kind: "now" }
     }),
@@ -378,9 +446,9 @@ var Comment = (0, import_core3.list)({
 });
 
 // schemas/ArticleReaction.ts
-var import_core4 = require("@keystone-6/core");
+var import_core6 = require("@keystone-6/core");
 var import_fields4 = require("@keystone-6/core/fields");
-var ArticleReaction = (0, import_core4.list)({
+var ArticleReaction = (0, import_core6.list)({
   access: accessControl.ArticleReaction,
   fields: {
     article: (0, import_fields4.relationship)({
@@ -408,9 +476,9 @@ var ArticleReaction = (0, import_core4.list)({
 });
 
 // schemas/CommentReaction.ts
-var import_core5 = require("@keystone-6/core");
+var import_core7 = require("@keystone-6/core");
 var import_fields5 = require("@keystone-6/core/fields");
-var CommentReaction = (0, import_core5.list)({
+var CommentReaction = (0, import_core7.list)({
   access: accessControl.CommentReaction,
   fields: {
     comment: (0, import_fields5.relationship)({
@@ -1804,20 +1872,20 @@ async function extendExpressApp(app, context) {
 }
 
 // src/graphql/reactions.ts
-var import_core6 = require("@keystone-6/core");
-var extendGraphqlSchema = import_core6.graphql.extend((base) => {
-  const ReactionType = import_core6.graphql.enum({
+var import_core8 = require("@keystone-6/core");
+var extendGraphqlSchema = import_core8.graphql.extend((base) => {
+  const ReactionType = import_core8.graphql.enum({
     name: "ReactionType",
-    values: import_core6.graphql.enumValues(["like", "dislike"])
+    values: import_core8.graphql.enumValues(["like", "dislike"])
   });
   return {
     mutation: {
-      reactToArticle: import_core6.graphql.field({
+      reactToArticle: import_core8.graphql.field({
         type: base.object("Article"),
         args: {
-          articleId: import_core6.graphql.arg({ type: import_core6.graphql.nonNull(import_core6.graphql.ID) }),
-          reaction: import_core6.graphql.arg({
-            type: import_core6.graphql.nonNull(ReactionType)
+          articleId: import_core8.graphql.arg({ type: import_core8.graphql.nonNull(import_core8.graphql.ID) }),
+          reaction: import_core8.graphql.arg({
+            type: import_core8.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { articleId, reaction }, context) {
@@ -1913,19 +1981,19 @@ var extendGraphqlSchema = import_core6.graphql.extend((base) => {
               publishedAt
               createdAt
               updatedAt
+              userReaction
             `
           });
-          updatedArticle.userReaction = finalUserReaction;
           logger_default.info(`Article reaction: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
           return updatedArticle;
         }
       }),
-      reactToComment: import_core6.graphql.field({
+      reactToComment: import_core8.graphql.field({
         type: base.object("Comment"),
         args: {
-          commentId: import_core6.graphql.arg({ type: import_core6.graphql.nonNull(import_core6.graphql.ID) }),
-          reaction: import_core6.graphql.arg({
-            type: import_core6.graphql.nonNull(ReactionType)
+          commentId: import_core8.graphql.arg({ type: import_core8.graphql.nonNull(import_core8.graphql.ID) }),
+          reaction: import_core8.graphql.arg({
+            type: import_core8.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { commentId, reaction }, context) {
@@ -2020,9 +2088,9 @@ var extendGraphqlSchema = import_core6.graphql.extend((base) => {
               dislikes_count
               createdAt
               updatedAt
+              userReaction
             `
           });
-          updatedComment.userReaction = finalUserReaction;
           logger_default.info(`Comment reaction: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
           return updatedComment;
         }
@@ -2048,7 +2116,7 @@ if (!sessionSecret || sessionSecret.length < 32) {
   logger_default.info("\u2705 SESSION_SECRET is secure (length: " + sessionSecret.length + " characters)");
 }
 var keystone_default = withAuth(
-  (0, import_core7.config)({
+  (0, import_core9.config)({
     db: {
       provider: "sqlite",
       url: databaseURL,
