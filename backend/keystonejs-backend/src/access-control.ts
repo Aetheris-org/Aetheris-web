@@ -2,7 +2,6 @@
  * Access control rules (RBAC) для всех схем
  * Определяет кто может читать, создавать, обновлять и удалять данные
  */
-import logger from '../lib/logger';
 
 /**
  * Проверка, является ли пользователь владельцем записи
@@ -17,6 +16,7 @@ function isOwner({ session, item }: { session?: any; item: any }) {
  */
 function isReactionOwner({ session, item }: { session?: any; item: any }) {
   if (!session?.itemId) return false;
+  if (!item) return false; // Защита от undefined
   return String(item.user?.id || item.user) === String(session.itemId);
 }
 
@@ -24,8 +24,25 @@ function isReactionOwner({ session, item }: { session?: any; item: any }) {
  * Проверка, является ли пользователь владельцем комментария
  */
 function isCommentOwner({ session, item }: { session?: any; item: any }) {
-  if (!session?.itemId) return false;
-  return String(item.author?.id || item.author) === String(session.itemId);
+  if (!session?.itemId) {
+    return false;
+  }
+  if (!item) {
+    return false; // Защита от undefined
+  }
+  
+  try {
+    // Используем authorId напрямую из Prisma (быстрее и надежнее)
+    // Fallback на item.author?.id или item.author если authorId недоступно
+    const authorId = item.authorId ?? item.author?.id ?? item.author;
+    if (!authorId) {
+      return false;
+    }
+    
+    return String(authorId) === String(session.itemId);
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
@@ -33,7 +50,16 @@ function isCommentOwner({ session, item }: { session?: any; item: any }) {
  */
 function isArticleOwner({ session, item }: { session?: any; item: any }) {
   if (!session?.itemId) return false;
-  return String(item.author?.id || item.author) === String(session.itemId);
+  if (!item) return false; // Защита от undefined
+  
+  // Используем authorId напрямую из Prisma (быстрее и надежнее)
+  // Fallback на item.author?.id или item.author если authorId недоступно
+  const authorId = item.authorId ?? item.author?.id ?? item.author;
+  if (!authorId) {
+    return false;
+  }
+  
+  return String(authorId) === String(session.itemId);
 }
 
 export const accessControl = {
@@ -87,13 +113,13 @@ export const accessControl = {
         // Создавать статьи могут только авторизованные
         return !!session?.itemId;
       },
-      update: ({ session, item }: { session?: any; item: any }) => {
-        // Обновлять может только автор
-        return isArticleOwner({ session, item });
+      update: ({ session }: { session?: any }) => {
+        // Упрощено: проверяем только авторизацию, владельца проверяем через filter
+        return !!session?.itemId;
       },
-      delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только автор
-        return isArticleOwner({ session, item });
+      delete: ({ session }: { session?: any }) => {
+        // Упрощено: проверяем только авторизацию, владельца проверяем через filter
+        return !!session?.itemId;
       },
     },
     filter: {
@@ -112,6 +138,20 @@ export const accessControl = {
           ],
         };
       },
+      update: ({ session }: { session?: any }) => {
+        // Обновлять может только автор статьи
+        if (!session?.itemId) return false;
+        return {
+          author: { id: { equals: session.itemId } },
+        };
+      },
+      delete: ({ session }: { session?: any }) => {
+        // Удалять может только автор статьи
+        if (!session?.itemId) return false;
+        return {
+          author: { id: { equals: session.itemId } },
+        };
+      },
     },
   },
 
@@ -122,17 +162,31 @@ export const accessControl = {
         // Создавать комментарии могут только авторизованные
         return !!session?.itemId;
       },
-      update: ({ session, item }: { session?: any; item: any }) => {
-        // Обновлять может только автор
-        return isCommentOwner({ session, item });
+      update: ({ session }: { session?: any }) => {
+        // Разрешаем обновление, но фильтр ограничит доступ только к своим комментариям
+        return !!session?.itemId;
       },
-      delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только автор
-        return isCommentOwner({ session, item });
+      delete: ({ session }: { session?: any }) => {
+        // Разрешаем удаление, но фильтр ограничит доступ только к своим комментариям
+        return !!session?.itemId;
       },
     },
     filter: {
       query: () => true, // Все видят все комментарии
+      update: ({ session }: { session?: any }) => {
+        // Обновлять можно только свои комментарии
+        if (!session?.itemId) return false;
+        return {
+          author: { id: { equals: session.itemId } },
+        };
+      },
+      delete: ({ session }: { session?: any }) => {
+        // Удалять можно только свои комментарии
+        if (!session?.itemId) return false;
+        return {
+          author: { id: { equals: session.itemId } },
+        };
+      },
     },
   },
 
@@ -175,6 +229,99 @@ export const accessControl = {
     },
     filter: {
       query: () => true, // Все видят все реакции
+    },
+  },
+
+  Bookmark: {
+    operation: {
+      query: ({ session }: { session?: any }) => {
+        // Читать закладки может только владелец
+        return !!session?.itemId;
+      },
+      create: ({ session }: { session?: any }) => {
+        // Создавать закладки могут только авторизованные
+        return !!session?.itemId;
+      },
+      update: () => false, // Закладки нельзя обновлять
+      delete: ({ session, item }: { session?: any; item: any }) => {
+        // Удалять может только владелец закладки
+        if (!session?.itemId) return false;
+        if (!item) return false;
+        return String(item.user?.id || item.user) === String(session.itemId);
+      },
+    },
+    filter: {
+      query: ({ session }: { session?: any }) => {
+        // Пользователь видит только свои закладки
+        if (!session?.itemId) return false;
+        return {
+          user: { id: { equals: session.itemId } },
+        };
+      },
+    },
+  },
+
+  Follow: {
+    operation: {
+      query: () => true, // Чтение подписок - публично
+      create: ({ session }: { session?: any }) => {
+        // Создавать подписки могут только авторизованные
+        return !!session?.itemId;
+      },
+      update: () => false, // Подписки нельзя обновлять
+      delete: ({ session, item }: { session?: any; item: any }) => {
+        // Удалять может только владелец подписки (follower)
+        if (!session?.itemId) return false;
+        if (!item) return false;
+        return String(item.follower?.id || item.follower) === String(session.itemId);
+      },
+    },
+    filter: {
+      query: () => true, // Все видят все подписки
+    },
+  },
+
+  Notification: {
+    operation: {
+      query: ({ session }: { session?: any }) => {
+        // Читать уведомления могут только авторизованные
+        return !!session?.itemId;
+      },
+      create: () => false, // Уведомления создаются только системой через hooks
+      update: ({ session }: { session?: any }) => {
+        // Обновлять может только авторизованный пользователь
+        // filter.update уже гарантирует, что пользователь может обновлять только свои уведомления
+        // Разрешаем обновлять только isRead и readAt
+        return !!session?.itemId;
+      },
+      delete: ({ session }: { session?: any }) => {
+        // Удалять может только авторизованный пользователь
+        // filter.delete уже гарантирует, что пользователь может удалять только свои уведомления
+        return !!session?.itemId;
+      },
+    },
+    filter: {
+      query: ({ session }: { session?: any }) => {
+        // Пользователь видит только свои уведомления
+        if (!session?.itemId) return false;
+        return {
+          user: { id: { equals: session.itemId } },
+        };
+      },
+      update: ({ session }: { session?: any }) => {
+        // Обновлять можно только свои уведомления
+        if (!session?.itemId) return false;
+        return {
+          user: { id: { equals: session.itemId } },
+        };
+      },
+      delete: ({ session }: { session?: any }) => {
+        // Удалять можно только свои уведомления
+        if (!session?.itemId) return false;
+        return {
+          user: { id: { equals: session.itemId } },
+        };
+      },
     },
   },
 };

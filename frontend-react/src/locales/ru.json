@@ -1219,7 +1219,7 @@
     }
   },
   "article": {
-    "readTime": "мин чтения",
+    "readTime": "мин",
     "noComments": "Комментариев пока нет",
     "beFirst": "Будьте первым, кто прокомментирует",
     "writeComment": "Написать комментарий...",
@@ -1375,7 +1375,8 @@
     "shareTitleDefault": "Посмотрите эту статью на Aetheris",
     "thisArticle": "эту статью",
     "info": "Информация",
-    "replyTo": "Ответ на @{username}"
+    "replyTo": "Ответ на @{username}",
+    "viewProfile": "Посмотреть профиль"
   },
   "createArticle": {
     "title": "Создать статью",
@@ -1397,9 +1398,9 @@
     "difficulty": "Сложность статьи",
     "difficultyDescription": "Выберите уровень сложности вашей статьи",
     "difficultyOptions": {
-      "easy": "Легкая",
-      "medium": "Средняя",
-      "hard": "Сложная"
+      "beginner": "Начинающий",
+      "intermediate": "Средний",
+      "advanced": "Продвинутый"
     },
     "category": "Категория статьи",
     "categoryDescription": "Выберите категорию для вашей статьи",
@@ -1459,6 +1460,18 @@
     "unableToLoadDraftDescription": "Не удалось открыть этот черновик. Возможно, он был удален.",
     "missingInformation": "Недостаточно информации",
     "missingInformationDescription": "Добавьте заголовок и основной контент перед публикацией.",
+    "titleRequired": "Требуется заголовок",
+    "titleRequiredDescription": "Пожалуйста, добавьте заголовок для вашей статьи.",
+    "contentRequired": "Требуется содержание",
+    "contentRequiredDescription": "Пожалуйста, добавьте содержание в вашу статью.",
+    "excerptRequired": "Требуется описание",
+    "excerptRequiredDescription": "Пожалуйста, добавьте описание для вашей статьи.",
+    "maxTagsReached": "Достигнут лимит тегов",
+    "maxTagsReachedDescription": "Вы можете добавить до {max} тегов.",
+    "tagTooLong": "Тег слишком длинный",
+    "tagTooLongDescription": "Тег должен быть не более {max} символов.",
+    "saveCooldown": "Подождите",
+    "saveCooldownDescription": "Пожалуйста, подождите {seconds} секунд(ы) перед повторным сохранением.",
     "articlePublished": "Статья опубликована!",
     "articlePublishedDescription": "Ваша статья теперь доступна.",
     "publicationFailed": "Ошибка публикации",
@@ -1700,7 +1713,7 @@
     "settings": "Настройки",
     "drafts": "Черновики",
     "notifications": "Уведомления",
-    "readingList": "Список чтения",
+    "readingList": "Избранное",
     "friends": "Друзья",
     "pageTitle": "Профиль",
     "signOut": "Выйти",
@@ -2080,7 +2093,18 @@
     "browseArticles": "Просмотреть статьи",
     "view": "Посмотреть",
     "markAsRead": "Отметить уведомление как прочитанное",
-    "alreadyRead": "Уведомление уже прочитано"
+    "alreadyRead": "Уведомление уже прочитано",
+    "messages": {
+      "comment": "{actor} прокомментировал вашу статью",
+      "commentReply": "{actor} ответил на ваш комментарий",
+      "follow": "{actor} подписался на вас",
+      "articlePublished": "{actor} опубликовал новую статью",
+      "articleLikeFirst": "{actor} лайкнул вашу статью",
+      "articleLikeThreshold": "Ваша статья набрала {threshold} лайков",
+      "commentLikeFirst": "{actor} лайкнул ваш комментарий",
+      "commentLikeThreshold": "Ваш комментарий набрал {threshold} лайков",
+      "unknown": "Новое уведомление"
+    }
   },
   "accountSheet": {
     "openMenu": "Открыть меню аккаунта",
@@ -2105,7 +2129,7 @@
     "achievements": "Достижения",
     "settings": "Настройки",
     "keepExploring": "Продолжайте исследовать",
-    "readingList": "Список чтения",
+    "readingList": "Избранное",
     "drafts": "Черновики",
     "helpCenter": "Центр помощи",
     "feedback": "Обратная связь",
@@ -2116,7 +2140,7 @@
     "signIn": "Войти"
   },
   "readingList": {
-    "title": "Список чтения",
+    "title": "Избранное",
     "back": "Назад",
     "noSavedArticles": "Пока нет сохраненных статей",
     "noSavedArticlesDescription": "Используйте кнопку \"Прочитать позже\" на любой статье, чтобы добавить ее в вашу личную очередь чтения.",
@@ -2128,7 +2152,13 @@
     "savedOn": "Сохранено {date}",
     "continueReading": "Продолжить чтение",
     "remove": "Удалить",
-    "minRead": "{minutes} {minutes, plural, one {мин} few {мин} other {мин}} чтения"
+    "minRead": "{minutes} {minutes, plural, one {мин} few {мин} other {мин}} чтения",
+    "signInRequired": "Требуется вход",
+    "signInDescription": "Войдите, чтобы сохранять статьи в избранное и синхронизировать их между устройствами.",
+    "removedFromFavorites": "Статья удалена из избранного",
+    "removeError": "Не удалось удалить статью из избранного",
+    "allRemoved": "Все статьи удалены из избранного",
+    "clearError": "Не удалось очистить избранное"
   },
   "feedback": {
     "title": "Обратная связь",

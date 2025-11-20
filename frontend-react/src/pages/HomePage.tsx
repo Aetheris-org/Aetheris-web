@@ -60,6 +60,20 @@ export default function HomePage() {
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
+
+  // Map old difficulty values to new ones for backward compatibility
+  const getDifficultyKey = (difficulty: string | undefined): string => {
+    if (!difficulty) return ''
+    const difficultyMap: Record<string, string> = {
+      'easy': 'beginner',
+      'medium': 'intermediate',
+      'hard': 'advanced',
+      'beginner': 'beginner',
+      'intermediate': 'intermediate',
+      'advanced': 'advanced',
+    }
+    return difficultyMap[difficulty.toLowerCase()] || difficulty
+  }
   const viewModeOptions: Array<{
     id: 'default' | 'line' | 'square'
     label: string
@@ -401,7 +415,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="container space-y-8 sm:space-y-8 lg:space-y-10 pb-6 sm:pb-6 pt-6 sm:pt-6 px-4 sm:px-6">
+      <main className="container space-y-6 sm:space-y-8 lg:space-y-10 pb-4 sm:pb-6 pt-4 sm:pt-6 px-4 sm:px-6">
         {/* HERO BLOCK DISABLED - Чтобы включить обратно, раскомментируйте код ниже и удалите этот комментарий */}
         {/* 
         {!isSpotlightDismissed && (
@@ -468,12 +482,12 @@ export default function HomePage() {
         )}
         */}
 
-        <section className="flex flex-col gap-6 sm:gap-8 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
-          <div className="space-y-6 sm:space-y-6 order-2 lg:order-1">
-            <div className="space-y-4 sm:space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative flex-1 w-full" ref={searchContainerRef}>
-                  <Search className="absolute left-3 top-1/2 h-5 w-5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground z-10" />
+        <section className="flex flex-col gap-4 sm:gap-6 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8 w-full max-w-full">
+          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1 min-w-0">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0" ref={searchContainerRef}>
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
                   <Input
                     type="text"
                     placeholder={t('home.search.placeholder')}
@@ -490,7 +504,7 @@ export default function HomePage() {
                         setSearchInputFocused(false)
                       }
                     }}
-                    className="pl-11 sm:pl-9 h-11 sm:h-10 text-base sm:text-sm"
+                    className="pl-10 sm:pl-9 h-10 text-sm"
                   />
                   {showSearchResults && (
                     <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
@@ -527,7 +541,7 @@ export default function HomePage() {
                                   />
                                 )}
                                 <div className="flex-1 min-w-0 space-y-1">
-                                  <p className="text-sm sm:text-base font-semibold text-foreground line-clamp-2">
+                                  <p className="text-sm sm:text-base font-semibold text-foreground break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                     {article.title}
                                   </p>
                                   {article.excerpt && (
@@ -566,12 +580,12 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <div className="relative shrink-0" data-view-mode-expander>
                     {/* Единый контейнер кнопки и меню */}
                     <div
                       className={cn(
-                        'flex flex-col bg-background border border-border rounded-md overflow-hidden transition-all duration-300 ease-in-out z-50',
+                        'flex flex-col bg-background border border-border rounded-md overflow-hidden transition-all duration-300 ease-in-out z-40',
                         isViewModeExpanded && 'shadow-lg'
                       )}
                       style={{
@@ -625,7 +639,7 @@ export default function HomePage() {
                       <div
                         className={cn(
                           'flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
-                          isViewModeExpanded 
+                          isViewModeExpanded
                             ? 'opacity-100' 
                             : 'opacity-0 pointer-events-none'
                         )}
@@ -690,37 +704,40 @@ export default function HomePage() {
                     {/* Невидимый placeholder для сохранения места в layout */}
                     <div className="w-10 h-10" aria-hidden="true" />
                   </div>
-                  <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
+                  <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)} className="h-10 w-10 shrink-0">
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
 
               {selectedTags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-                  <span className="text-sm sm:text-sm text-muted-foreground">{t('home.filters.label')}</span>
+                <div className="flex flex-wrap items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">{t('home.filters.label')}</span>
                   {selectedTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs sm:text-xs"
+                      className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs sm:text-xs break-words overflow-wrap-anywhere"
+                      style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                       onClick={() => handleTagClick(tag)}
                     >
                       {tag} ×
                     </Badge>
                   ))}
-                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 sm:h-7 text-xs sm:text-xs px-3">
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs px-2 sm:px-3">
                     {t('home.filters.clearAll')}
                   </Button>
                 </div>
               )}
               {difficultyFilter !== 'all' && (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2 text-sm sm:text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                   <span className="text-muted-foreground">{t('home.filters.difficulty')}</span>
-                  <Badge variant="outline" className="capitalize text-xs sm:text-xs">
-                    {difficultyFilter}
+                  <Badge variant="outline" className="capitalize text-xs">
+                    {difficultyFilter === 'all' 
+                      ? t('home.filtersDrawer.all')
+                      : t(`home.filtersDrawer.${getDifficultyKey(difficultyFilter)}`)}
                   </Badge>
-                  <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-8 sm:h-7 px-3 text-xs sm:text-xs">
+                  <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-7 px-2 sm:px-3 text-xs">
                     {t('home.filters.reset')}
                   </Button>
                 </div>
@@ -876,28 +893,23 @@ export default function HomePage() {
             )}
           </div>
 
-          <aside className="space-y-6 sm:space-y-6 order-1 lg:order-2">
+          <aside className="space-y-4 sm:space-y-6 order-1 lg:order-2 min-w-0 max-w-full">
             <Card>
-              <CardHeader className="space-y-3">
-                <div className="space-y-1">
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-lg">
-                    <Flame className="h-5 w-5 sm:h-5 sm:w-5 text-primary" />
-                    {t('home.trending.title')}
+              <CardHeader className="space-y-3 pb-3 sm:pb-4 p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  {t('home.trending.title')}
                 </CardTitle>
-                  <CardDescription className="text-xs sm:text-xs text-muted-foreground">
-                    {t('home.trending.description')}
-                  </CardDescription>
-                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1 text-xs sm:text-xs h-9 sm:h-8 w-full sm:w-auto"
+                  className="w-full sm:w-auto text-xs h-8 sm:h-8"
                   onClick={() => navigate('/trending')}
                 >
                   {t('home.trending.viewLeaderboard')}
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-3">
+              <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0">
                 {loadingTrending ? (
                   <div className="space-y-3 sm:space-y-3">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -913,19 +925,19 @@ export default function HomePage() {
                     <button
                       key={article.id}
                       type="button"
-                      className="w-full rounded-xl sm:rounded-xl border border-border/40 bg-background/70 px-3 sm:px-3 py-3 sm:py-3 text-left transition hover:border-primary/50 hover:bg-muted/40"
+                      className="w-full rounded-lg sm:rounded-xl border border-border/40 bg-background/70 px-2.5 sm:px-3 py-2.5 sm:py-3 text-left transition hover:border-primary/50 hover:bg-muted/40"
                       onClick={() => navigate(`/article/${article.id}`)}
                     >
-                      <div className="flex items-start gap-3 sm:gap-3">
-                        <span className="flex h-8 w-8 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 text-sm sm:text-sm font-semibold text-primary shrink-0">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-md sm:rounded-lg bg-primary/10 text-xs sm:text-sm font-semibold text-primary shrink-0">
                           #{index + 1}
                         </span>
-                        <div className="flex-1 space-y-1 sm:space-y-1 min-w-0">
-                          <p className="text-sm sm:text-sm font-semibold text-foreground line-clamp-2">{article.title}</p>
-                          <p className="text-xs sm:text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
+                        <div className="flex-1 space-y-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-semibold text-foreground break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{article.title}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
                         </div>
                       </div>
-                      <div className="mt-2 sm:mt-2 flex items-center gap-3 sm:gap-3 text-xs sm:text-xs text-muted-foreground">
+                      <div className="mt-1.5 sm:mt-2 flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
                         <span>{article.views?.toLocaleString?.() ?? '—'} {t('home.trending.views')}</span>
                         <span>•</span>
                         <span>{(article.likes || 0) + (article.dislikes || 0)} {t('home.trending.reactions')}</span>
@@ -937,15 +949,15 @@ export default function HomePage() {
             </Card>
 
             <Card className="border-border/70">
-              <CardHeader className="space-y-1">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-base font-semibold">
-                  <Hash className="h-4 w-4 sm:h-4 sm:w-4" />
+              <CardHeader className="space-y-1 p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base font-semibold">
+                  <Hash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('home.tags.title')}
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-xs">{t('home.tags.description')}</CardDescription>
+                <CardDescription className="text-xs">{t('home.tags.description')}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2 sm:gap-2">
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="flex flex-wrap items-start gap-1.5 sm:gap-2">
                   {popularTags.map((tag) => {
                     const isActive = selectedTags.includes(tag)
 
@@ -954,9 +966,10 @@ export default function HomePage() {
                       key={tag}
                         variant="secondary"
                         className={cn(
-                          'cursor-pointer rounded-md text-xs sm:text-xs transition-colors bg-primary/10 text-primary',
+                          'cursor-pointer rounded-md text-[10px] sm:text-xs transition-colors bg-primary/10 text-primary break-words overflow-wrap-anywhere px-2 py-0.5',
                           isActive ? 'shadow-sm bg-primary/15' : 'hover:bg-primary/15'
                         )}
+                        style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                       onClick={() => handleTagClick(tag)}
                         aria-pressed={isActive}
                     >
@@ -1100,9 +1113,9 @@ function FiltersDrawer({
 
   const difficultyOptions: Array<{ label: string; value: ArticleDifficulty | 'all' }> = [
     { label: t('home.filtersDrawer.all'), value: 'all' },
-    { label: t('home.filtersDrawer.beginner'), value: 'easy' },
-    { label: t('home.filtersDrawer.intermediate'), value: 'medium' },
-    { label: t('home.filtersDrawer.advanced'), value: 'hard' },
+    { label: t('home.filtersDrawer.beginner'), value: 'beginner' },
+    { label: t('home.filtersDrawer.intermediate'), value: 'intermediate' },
+    { label: t('home.filtersDrawer.advanced'), value: 'advanced' },
   ]
 
   const sortOptions: Array<{ label: string; value: ArticleSortOption; description: string }> = [
@@ -1180,12 +1193,13 @@ function FiltersDrawer({
               </Button>
             </div>
             {localTags.length > 0 ? (
-              <div className="flex flex-wrap gap-2 sm:gap-2">
+              <div className="flex flex-wrap items-start gap-2 sm:gap-2">
                 {localTags.map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="cursor-pointer text-xs sm:text-xs"
+                    className="cursor-pointer text-xs sm:text-xs break-words overflow-wrap-anywhere"
+                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                     onClick={() => handleRemoveTag(tag)}
                   >
                     {tag} ×
@@ -1198,12 +1212,13 @@ function FiltersDrawer({
 
             <div className="space-y-2 sm:space-y-2">
               <p className="text-xs sm:text-xs font-medium text-muted-foreground">{t('home.filtersDrawer.quickPick')}</p>
-              <div className="flex flex-wrap gap-2 sm:gap-2">
+              <div className="flex flex-wrap items-start gap-2 sm:gap-2">
                 {allTags.map((tag) => (
                   <Badge
                     key={tag}
                     variant={localTags.includes(tag) ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs sm:text-xs"
+                    className="cursor-pointer text-xs sm:text-xs break-words overflow-wrap-anywhere"
+                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                     onClick={() =>
                       setLocalTags((prev) =>
                         prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]

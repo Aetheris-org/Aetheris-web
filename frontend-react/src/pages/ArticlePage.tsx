@@ -56,7 +56,7 @@ import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
-import { useReadingListStore } from '@/stores/readingListStore'
+import { addBookmark, removeBookmark, isBookmarked } from '@/api/bookmarks-graphql'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -153,6 +153,7 @@ const MAX_VISIBLE_STRIPE_DEPTH = 6
 const STRIPE_WIDTH = 2
 const STRIPE_GAP = 4
 const BASE_COMMENT_PADDING = 16
+const BASE_COMMENT_PADDING_MOBILE = 12
 const STRIPE_CLASSNAMES = [
   'bg-border/80',
   'bg-border/70',
@@ -179,15 +180,18 @@ export default function ArticlePage() {
     null
   )
   const [replyText, setReplyText] = useState('')
-  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null)
   const [highlightDepth, setHighlightDepth] = useState<number | null>(null)
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({})
   const [threadRootId, setThreadRootId] = useState<string | null>(null)
   const replyHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [infoComment, setInfoComment] = useState<CommentNode | null>(null)
   const [isInfoOpen, setIsInfoOpen] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingText, setEditingText] = useState('')
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
   const replyInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
+  const editInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const articleContentRef = useRef<HTMLDivElement | null>(null)
   const [readingProgress, setReadingProgress] = useState(0)
@@ -494,9 +498,15 @@ export default function ArticlePage() {
     },
     onSuccess: (updatedArticle) => {
       // Обновляем кэш статьи с новыми данными (включая userReaction)
-      // Не используем invalidateQueries, так как это вызывает повторный запрос,
-      // который может не найти статью из-за синхронизации между entityService и documentService
-      queryClient.setQueryData(['article', id, user?.id], updatedArticle)
+      // Сохраняем author, content и contentJSON из текущей статьи, так как мутация не возвращает эти поля
+      const currentArticle = queryClient.getQueryData<Article>(['article', id, user?.id])
+      const articleWithPreservedFields = {
+        ...updatedArticle,
+        author: currentArticle?.author || updatedArticle.author,
+        content: currentArticle?.content || updatedArticle.content || '',
+        contentJSON: currentArticle?.contentJSON || updatedArticle.contentJSON,
+      }
+      queryClient.setQueryData(['article', id, user?.id], articleWithPreservedFields)
       // Не показываем toast для toggle действий, чтобы не спамить
     },
     // Не делать автоматический refetch связанных queries после мутации
@@ -533,10 +543,28 @@ export default function ArticlePage() {
     reactMutation.mutate({ reaction })
   }
 
-  const readingListToggle = useReadingListStore((state) => state.toggle)
-  const isSaved = useReadingListStore((state) =>
-    article ? state.items.some((item) => item.id === article.id) : false
-  )
+  // Check if article is bookmarked
+  const { data: isSaved = false } = useQuery({
+    queryKey: ['bookmark', article?.id],
+    queryFn: () => article?.id ? isBookmarked(article.id) : Promise.resolve(false),
+    enabled: !!article?.id && !!user,
+    staleTime: 1 * 60 * 1000, // 1 минута
+  })
+
+  // Bookmark mutation
+  const bookmarkMutation = useMutation({
+    mutationFn: async ({ articleId, currentlySaved }: { articleId: string; currentlySaved: boolean }) => {
+      if (currentlySaved) {
+        return await removeBookmark(articleId)
+      } else {
+        return await addBookmark(articleId)
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookmark', article?.id] })
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+    },
+  })
   const articleCommentKey = useMemo(() => {
     if (article?.id) {
       // id - это строковое представление числового Strapi id
@@ -559,11 +587,12 @@ export default function ArticlePage() {
         description: t('article.authRequiredToBookmark'),
         variant: 'destructive',
       })
+      navigate('/auth')
       return
     }
 
-    if (!article) {
-    toast({
+    if (!article?.id) {
+      toast({
         title: t('article.wait'),
         description: t('article.waitDescription'),
         variant: 'destructive',
@@ -572,12 +601,23 @@ export default function ArticlePage() {
     }
 
     const wasSaved = isSaved
-    readingListToggle(article)
-    toast({
-      title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
-      description: wasSaved
-        ? t('article.removedFromReadingListDescription')
-        : t('article.savedForLaterDescription'),
+    bookmarkMutation.mutate({ articleId: article.id, currentlySaved: isSaved }, {
+      onSuccess: () => {
+        toast({
+          title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
+          description: wasSaved
+            ? t('article.removedFromReadingListDescription')
+            : t('article.savedForLaterDescription'),
+        })
+      },
+      onError: (error) => {
+        logger.error('Failed to toggle bookmark:', error)
+        toast({
+          title: t('common.error'),
+          description: t('article.bookmarkError'),
+          variant: 'destructive',
+        })
+      },
     })
   }
 
@@ -674,13 +714,21 @@ export default function ArticlePage() {
     },
     onSuccess: (updatedComment) => {
       // Обновляем кэш комментариев (включая userReaction)
-      // parentId должен приходить с сервера в populate, но на всякий случай сохраняем из старого
+      // Сохраняем author и parentId из существующего комментария, так как мутация не возвращает эти поля
+      // Важно: сохраняем parentId (строка), а не parent (объект), так как commentGraph использует parentId для построения дерева
       queryClient.setQueryData(['article-comments', id, user?.id], (old: any) => {
         if (!old) return old
         const updateCommentInList = (comments: RemoteComment[]): RemoteComment[] => {
           return comments.map((comment) => {
             if (comment.id === updatedComment.id) {
-              return updatedComment
+              // Сохраняем все критичные поля для иерархии из существующего комментария
+              const existingParentId = comment.parentId !== undefined ? comment.parentId : null
+              return {
+                ...updatedComment,
+                author: comment.author || updatedComment.author, // Сохраняем author из существующего комментария
+                parentId: existingParentId, // Критично: всегда используем parentId из существующего комментария для сохранения иерархии
+                createdAt: comment.createdAt || updatedComment.createdAt, // Сохраняем createdAt для правильной сортировки
+              }
             }
             return comment
           })
@@ -906,35 +954,6 @@ export default function ArticlePage() {
   } : undefined
   const infoParent = infoComment?.parentId ? nodeLookup.get(infoComment.parentId) : undefined
 
-  const hoverContext = useMemo(() => {
-    if (!hoveredCommentId || !nodeLookup.has(hoveredCommentId)) {
-      return {
-        ancestors: new Set<string>(),
-        descendants: new Set<string>(),
-      }
-    }
-
-    const ancestors = new Set<string>()
-    let cursor: string | null = hoveredCommentId
-    while (cursor) {
-      const parentId: string | null = parentById.get(cursor) ?? null
-      if (!parentId) break
-      ancestors.add(parentId)
-      cursor = parentId
-    }
-
-    const descendants = new Set<string>()
-    const collect = (node: CommentNode) => {
-      node.replies.forEach((child) => {
-        descendants.add(child.id)
-        collect(child)
-      })
-    }
-    collect(nodeLookup.get(hoveredCommentId)!)
-
-    return { ancestors, descendants }
-  }, [hoveredCommentId, nodeLookup, parentById])
-
   useEffect(() => {
     setCollapsedMap((prev) => {
       const next: Record<string, boolean> = {}
@@ -1004,21 +1023,60 @@ export default function ArticlePage() {
         })
         break
       case 'edit':
-        // TODO: Реализовать редактирование комментария
-        toast({
-          title: t('article.editing'),
-          description: t('article.editingNotImplemented'),
-        })
+        setEditingCommentId(comment.id)
+        setEditingText(comment.text)
+        // Фокус на textarea после рендера
+        setTimeout(() => {
+          const textarea = editInputRefs.current.get(comment.id)
+          if (textarea) {
+            textarea.focus()
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+          }
+        }, 0)
         break
       case 'delete':
-        if (confirm(t('article.confirmDelete') || 'Вы уверены, что хотите удалить этот комментарий?')) {
-          deleteCommentMutation.mutate(comment.id)
-        }
+        setDeletingCommentId(comment.id)
         break
       case 'info':
         setInfoComment(comment)
         setIsInfoOpen(true)
         break
+    }
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingCommentId || !editingText.trim()) {
+      toast({
+        title: t('article.commentError') || 'Ошибка',
+        description: t('article.commentEmpty') || 'Комментарий не может быть пустым',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    updateCommentMutation.mutate(
+      { commentId: editingCommentId, text: editingText.trim() },
+      {
+        onSuccess: () => {
+          setEditingCommentId(null)
+          setEditingText('')
+        },
+      }
+    )
+  }
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null)
+    setEditingText('')
+  }
+
+  const handleConfirmDelete = () => {
+    if (deletingCommentId) {
+      deleteCommentMutation.mutate(deletingCommentId, {
+        onSuccess: () => {
+          setDeletingCommentId(null)
+        },
+      })
     }
   }
 
@@ -1038,10 +1096,10 @@ export default function ArticlePage() {
       const gutterWidth = stripeCount * (STRIPE_WIDTH + STRIPE_GAP)
       const paddingLeft = showConnectors
         ? depth > 0
-          ? BASE_COMMENT_PADDING + gutterWidth
+          ? BASE_COMMENT_PADDING_MOBILE + gutterWidth
           : 0
         : depth > 0
-          ? BASE_COMMENT_PADDING + depth * 10
+          ? BASE_COMMENT_PADDING_MOBILE + depth * 8
           : 0
 
       const containerStyle: CSSProperties = {
@@ -1049,9 +1107,6 @@ export default function ArticlePage() {
         boxSizing: 'border-box',
       }
 
-      const isHoverTarget = hoveredCommentId === node.id
-      const isInHoverPath =
-        hoverContext.ancestors.has(node.id) || hoverContext.descendants.has(node.id)
       const matchesHighlightDepth =
         highlightDepth !== null ? commentDepth >= highlightDepth : false
       const isCollapsed = collapsedMap[node.id] ?? false
@@ -1059,13 +1114,10 @@ export default function ArticlePage() {
       const parentNode = parentId ? nodeLookup.get(parentId) : undefined
       const replyDescendants = descendantCountById.get(node.id) ?? node.replies.length
       const isOwnComment = user ? String(node.author.id) === String(user.id) : false
-      const isDimmedByHover = hoveredCommentId !== null && !isHoverTarget && !isInHoverPath
       const isDimmedByDepth =
         highlightDepth !== null &&
-        commentDepth < highlightDepth &&
-        !isHoverTarget &&
-        !isInHoverPath
-      const dimClass = isDimmedByHover ? 'opacity-35' : isDimmedByDepth ? 'opacity-60' : undefined
+        commentDepth < highlightDepth
+      const dimClass = isDimmedByDepth ? 'opacity-60' : undefined
 
       const commentElement = (
         <div
@@ -1073,8 +1125,6 @@ export default function ArticlePage() {
           id={`comment-${node.id}`}
           className="relative space-y-3"
           style={containerStyle}
-          onMouseEnter={() => setHoveredCommentId(node.id)}
-          onMouseLeave={() => setHoveredCommentId((prev) => (prev === node.id ? null : prev))}
         >
           {showConnectors && stripeCount > 0 && (
             <>
@@ -1116,77 +1166,140 @@ export default function ArticlePage() {
           <Card
             className={cn(
               'border-none bg-transparent shadow-none transition-all duration-[800ms]',
-              isHoverTarget && 'border border-border/60 bg-muted/25 shadow-md backdrop-blur-sm',
               dimClass
             )}
           >
-            <CardContent className="pt-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <Avatar className="h-9 w-9">
-                  {node.author.avatar ? (
-                    <AvatarImage src={node.author.avatar} alt={node.author.username} />
-                  ) : null}
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">
+            <CardContent className="pt-3 sm:pt-4 space-y-2 sm:space-y-3 p-3 sm:p-6">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <button
+                  onClick={() => navigate(`/profile/${node.author.id}`)}
+                  className="hover:opacity-80 transition-opacity shrink-0"
+                >
+                  <Avatar className="h-7 w-7 sm:h-9 sm:w-9">
+                    {node.author.avatar ? (
+                      <AvatarImage src={node.author.avatar} alt={node.author.username} />
+                    ) : null}
+                    <AvatarFallback className="text-xs sm:text-sm">{initials}</AvatarFallback>
+                  </Avatar>
+                </button>
+                <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button
+                      onClick={() => navigate(`/profile/${node.author.id}`)}
+                      className="text-xs sm:text-sm font-semibold text-foreground hover:underline"
+                    >
                       {node.author.username}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
+                    </button>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">
                       {formatCommentTimestamp(node.createdAt)}
                     </span>
                     {matchesHighlightDepth && (
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                      <Badge variant="outline" className="text-[9px] sm:text-[10px] uppercase tracking-wide px-1 py-0">
                         {t('article.depth')} {commentDepth}
                       </Badge>
                     )}
                   </div>
                   {parentNode && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const anchor = document.getElementById(`comment-${parentNode.id}`)
-                        if (anchor) {
-                          anchor.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                          if (replyHighlightTimeoutRef.current) {
-                            clearTimeout(replyHighlightTimeoutRef.current)
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const anchor = document.getElementById(`comment-${parentNode.id}`)
+                          if (anchor) {
+                            anchor.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            if (replyHighlightTimeoutRef.current) {
+                              clearTimeout(replyHighlightTimeoutRef.current)
+                            }
+                            const parentDepth = depthById.get(parentNode.id) ?? null
+                            setHighlightDepth(parentDepth)
+                            replyHighlightTimeoutRef.current = setTimeout(() => {
+                              setHighlightDepth((prev) =>
+                                prev === parentDepth ? null : prev
+                              )
+                            }, 2500)
                           }
-                          const parentDepth = depthById.get(parentNode.id) ?? null
-                          setHighlightDepth(parentDepth)
-                          replyHighlightTimeoutRef.current = setTimeout(() => {
-                            setHighlightDepth((prev) =>
-                              prev === parentDepth ? null : prev
-                            )
-                          }, 2500)
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/60 px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted hover:text-foreground"
-                    >
-                      <CornerUpLeft className="h-3 w-3" />
-                      {t('article.inReplyTo', { username: parentNode.author.username })}
-                    </button>
+                        }}
+                        className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full border border-border/60 bg-muted/60 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-medium transition hover:bg-muted hover:text-foreground"
+                      >
+                        <CornerUpLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="hidden xs:inline">{t('article.inReplyTo', { username: '' })}</span>
+                      </button>
+                      <button
+                        onClick={() => navigate(`/profile/${parentNode.author.id}`)}
+                        className="text-[10px] sm:text-[11px] font-medium hover:underline"
+                      >
+                        {parentNode.author.username}
+                      </button>
+                    </div>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
-                    {node.text}
-                  </p>
+                  {editingCommentId === node.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        ref={(el) => {
+                          if (el) {
+                            editInputRefs.current.set(node.id, el)
+                          } else {
+                            editInputRefs.current.delete(node.id)
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            handleCancelEdit()
+                          } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault()
+                            handleSaveEdit()
+                          }
+                        }}
+                        className="w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                        placeholder={t('article.editComment') || 'Редактировать комментарий...'}
+                      />
+                      <div className="flex justify-end gap-1.5 sm:gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          disabled={updateCommentMutation.isPending}
+                          className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                        >
+                          {t('common.cancel') || 'Отмена'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveEdit}
+                          disabled={updateCommentMutation.isPending || !editingText.trim()}
+                          className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                        >
+                          {updateCommentMutation.isPending
+                            ? t('common.saving') || 'Сохранение...'
+                            : t('common.save') || 'Сохранить'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
+                      {node.text}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1 text-xs"
+                    className="gap-1 h-7 sm:h-9 px-2 sm:px-3 text-[10px] sm:text-xs"
                     onClick={() => handleReplyClick(node.id, node.author.username)}
                   >
-                    {t('article.reply')}
+                    <CornerUpLeft className="h-3 w-3 shrink-0" />
+                    <span className="hidden sm:inline">{t('article.reply')}</span>
                   </Button>
                   {node.replies.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-xs"
+                      className="gap-1 h-7 sm:h-9 px-2 sm:px-3 text-[10px] sm:text-xs"
                       onClick={() =>
                         setCollapsedMap((prev) => ({
                           ...prev,
@@ -1197,12 +1310,14 @@ export default function ArticlePage() {
                       {isCollapsed ? (
                         <>
                           <ChevronRight className="h-3 w-3" />
-                          {t('article.showReplies', { count: replyDescendants })}
+                          <span className="hidden sm:inline">{t('article.showReplies', { count: replyDescendants })}</span>
+                          <span className="sm:hidden">{replyDescendants}</span>
                         </>
                       ) : (
                         <>
                           <ChevronDown className="h-3 w-3" />
-                          {t('article.collapse', { count: replyDescendants })}
+                          <span className="hidden sm:inline">{t('article.collapse', { count: replyDescendants })}</span>
+                          <span className="sm:hidden">{replyDescendants}</span>
                         </>
                       )}
                     </Button>
@@ -1211,34 +1326,34 @@ export default function ArticlePage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-xs"
+                      className="gap-1 h-7 sm:h-9 px-2 sm:px-3 text-[10px] sm:text-xs"
                       onClick={() => setThreadRootId(node.id)}
                     >
                       <CornerDownRight className="h-3 w-3" />
-                      {t('article.openThread')}
+                      <span className="hidden sm:inline">{t('article.openThread')}</span>
                     </Button>
                   )}
                   {threadMode && threadRootId === node.id && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-xs"
+                      className="gap-1 h-7 sm:h-9 px-2 sm:px-3 text-[10px] sm:text-xs"
                       onClick={() => setThreadRootId(null)}
                     >
                       <Minimize2 className="h-3 w-3" />
-                      {t('article.exit')}
+                      <span className="hidden sm:inline">{t('article.exit')}</span>
                     </Button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className="flex items-center gap-1 rounded-[calc(var(--radius)*1.4)] bg-background/35 px-1.5 py-1 shadow-sm ring-1 ring-border/60 backdrop-blur-sm">
+                      <div className="flex items-center gap-0 rounded-[calc(var(--radius)*1.2)] bg-background/35 shadow-sm ring-1 ring-border/60 backdrop-blur-sm overflow-hidden">
                     <Button
                           variant="ghost"
                       size="icon"
                           className={cn(
-                            'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
+                            'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
                             node.userReaction === 'like' &&
                               'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
@@ -1246,11 +1361,11 @@ export default function ArticlePage() {
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.support')}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </Button>
                         <span
                           className={cn(
-                            'min-w-[36px] px-2 py-1 text-center text-xs font-semibold tabular-nums',
+                            'min-w-[28px] sm:min-w-[36px] px-1.5 sm:px-2 py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-semibold tabular-nums',
                             ((node.likes || 0) - (node.dislikes || 0)) > 0 && 'text-emerald-400',
                             ((node.likes || 0) - (node.dislikes || 0)) < 0 && 'text-destructive',
                             ((node.likes || 0) - (node.dislikes || 0)) === 0 && 'text-foreground/70'
@@ -1262,15 +1377,15 @@ export default function ArticlePage() {
                           variant="ghost"
                       size="icon"
                           className={cn(
-                            'h-7 w-7 rounded-[calc(var(--radius)*1.2)] text-foreground transition hover:bg-background/70',
+                            'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
                             node.userReaction === 'dislike' &&
-                              'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                              'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
                       onClick={() => handleCommentReaction(node.id, 'down')}
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.against')}
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </Button>
                   </div>
                     </TooltipTrigger>
@@ -1290,8 +1405,8 @@ export default function ArticlePage() {
                   </Tooltip>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('article.actions')}>
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" aria-label={t('article.actions')}>
+                        <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -1302,6 +1417,13 @@ export default function ArticlePage() {
                       <DropdownMenuLabel className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         @{node.author.username}
                       </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/profile/${node.author.id}`)}
+                        className="flex items-center gap-2 px-2 py-2 text-sm"
+                      >
+                        <User className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>{t('article.viewProfile')}</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="flex items-start gap-2 px-2 py-2 text-xs text-muted-foreground"
                         disabled
@@ -1349,13 +1471,13 @@ export default function ArticlePage() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
+                  </div>
               </div>
               {activeReply?.parentId === node.id && (
-                <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-3">
+                <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-2 sm:p-3">
                   <textarea
                     placeholder={t('article.writeReply', { username: node.author.username })}
-                    className="w-full min-h-[100px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                     value={replyText}
                     onChange={(event) => setReplyText(event.target.value)}
                     ref={(el) => {
@@ -1372,14 +1494,15 @@ export default function ArticlePage() {
                       }
                     }}
                   />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={handleCancelReply}>
+                  <div className="flex justify-end gap-1.5 sm:gap-2">
+                    <Button variant="ghost" size="sm" onClick={handleCancelReply} className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
                       {t('common.cancel')}
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleSubmitReply}
                       disabled={!replyText.trim()}
+                      className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                     >
                       {t('article.send')}
                     </Button>
@@ -1397,7 +1520,7 @@ export default function ArticlePage() {
             commentElement,
             <div
               key={`collapsed-${node.id}`}
-              className="ml-4 text-xs text-muted-foreground"
+              className="ml-3 sm:ml-4 text-[10px] sm:text-xs text-muted-foreground"
             >
               {t('article.repliesHidden')}
             </div>,
@@ -1428,6 +1551,20 @@ export default function ArticlePage() {
     const wordsPerMinute = 200
     const words = content.split(/\s+/).length
     return Math.ceil(words / wordsPerMinute)
+  }
+
+  // Map old difficulty values to new ones for backward compatibility
+  const getDifficultyKey = (difficulty: string | undefined): string => {
+    if (!difficulty) return ''
+    const difficultyMap: Record<string, string> = {
+      'easy': 'beginner',
+      'medium': 'intermediate',
+      'hard': 'advanced',
+      'beginner': 'beginner',
+      'intermediate': 'intermediate',
+      'advanced': 'advanced',
+    }
+    return difficultyMap[difficulty.toLowerCase()] || difficulty
   }
 
   const shareTitle = article ? t('article.shareTitle', { title: article.title }) : t('article.shareTitleDefault')
@@ -1598,63 +1735,88 @@ export default function ArticlePage() {
             className="h-[1px] rounded-none transition-all duration-150 ease-out" 
           />
         </div>
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(-1)}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4" />
-            {t('common.back')}
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">{t('common.back')}</span>
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <AccountSheet />
           </div>
         </div>
       </header>
 
-      <div className="container pt-8 pb-6">
+      <div className="container pt-4 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6">
         <article className="w-full">
           {article.previewImage && (
-            <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
+            <div className="mb-4 sm:mb-8 overflow-hidden rounded-xl sm:rounded-2xl border border-border/40">
               <img
                 src={article.previewImage}
                 alt={article.title}
+                onError={(e) => {
+                  // Скрываем изображение при ошибке загрузки
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                }}
                 className="w-full h-auto object-contain"
               />
             </div>
           )}
 
           {/* Article Header */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Title */}
-            <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               {article.title}
             </h1>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="font-medium">{article.author.username}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-muted-foreground">
+              <button
+                onClick={() => navigate(`/profile/${article.author.id}`)}
+                className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity"
+              >
+                <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
+                  {article.author.avatar ? (
+                    <AvatarImage src={article.author.avatar} alt={article.author.username} />
+                  ) : null}
+                  <AvatarFallback className="text-[10px] sm:text-xs">
+                    {article.author.username
+                      .split(' ')
+                      .map((word) => word[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium hover:underline text-xs sm:text-sm">{article.author.username}</span>
+              </button>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{formatDate(article.createdAt)}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{estimateReadTime(article.content)} {t('article.readTime')}</span>
               </div>
+              {article.difficulty && (
+                <Badge variant="outline" className="rounded-md font-normal capitalize text-[10px] sm:text-xs px-1.5 py-0.5">
+                  {t(`createArticle.difficultyOptions.${getDifficultyKey(article.difficulty)}`)}
+                </Badge>
+              )}
             </div>
 
             {/* Tags */}
             {article.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {article.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
+                  <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-[10px] sm:text-xs px-2 py-0.5 break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}>
                     {tag}
                   </Badge>
                 ))}
@@ -1662,21 +1824,21 @@ export default function ArticlePage() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <Button
                 variant={article.userReaction === 'like' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleReaction('like')}
                 disabled={reactMutation.isPending}
                 className={cn(
-                  "gap-2 transition-colors",
+                  "gap-1.5 sm:gap-2 transition-colors text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3",
                   article.userReaction === 'like' && "bg-primary hover:bg-primary/90"
                 )}
                 aria-pressed={article.userReaction === 'like'}
               >
                 <Heart
                   className={cn(
-                    "h-4 w-4 transition-all",
+                    "h-3.5 w-3.5 sm:h-4 sm:w-4 transition-all",
                     article.userReaction === 'like' && "fill-current text-primary-foreground"
                   )}
                 />
@@ -1688,15 +1850,15 @@ export default function ArticlePage() {
                 onClick={() => handleReaction('dislike')}
                 disabled={reactMutation.isPending}
                 className={cn(
-                  "gap-2 transition-colors",
-                  article.userReaction === 'dislike' && "bg-destructive hover:bg-destructive/90"
+                  "gap-1.5 sm:gap-2 transition-colors text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3",
+                  article.userReaction === 'dislike' && "bg-primary hover:bg-primary/90"
                 )}
                 aria-pressed={article.userReaction === 'dislike'}
               >
                 <ThumbsDown
                   className={cn(
-                    "h-4 w-4 transition-all",
-                    article.userReaction === 'dislike' && "fill-current text-destructive-foreground"
+                    "h-3.5 w-3.5 sm:h-4 sm:w-4 transition-all",
+                    article.userReaction === 'dislike' && "fill-current text-primary-foreground"
                   )}
                 />
                 <span>{article.dislikes || 0}</span>
@@ -1705,10 +1867,10 @@ export default function ArticlePage() {
                 variant={isSaved ? 'default' : 'outline'}
                 size="sm"
                 onClick={handleBookmark}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
                 aria-pressed={isSaved}
               >
-                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                <Bookmark className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isSaved ? 'fill-current' : ''}`} />
                 <span className="hidden sm:inline">
                   {isSaved ? t('article.saved') : t('article.readLater')}
                 </span>
@@ -1717,10 +1879,10 @@ export default function ArticlePage() {
                 variant="outline"
                 size="sm"
                 onClick={handleShare}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
               >
-                <Share2 className="h-4 w-4" />
-                {t('article.share')}
+                <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('article.share')}</span>
               </Button>
             </div>
           </div>
@@ -1759,12 +1921,12 @@ export default function ArticlePage() {
           <Separator className="my-8" />
 
           {/* Comments Section */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold tracking-tight">
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
                 {t('article.comments', { count: combinedComments.length })}
             </h2>
 
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
               {threadRootId && nodeLookup.has(threadRootId) && (
                 <div className="flex flex-1 flex-wrap items-center justify-end gap-2 text-xs">
                   <span className="text-muted-foreground">{t('article.threadFocus')}:</span>
@@ -1786,7 +1948,10 @@ export default function ArticlePage() {
                               'rounded-full border border-border/60 bg-background px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted hover:text-foreground',
                               node.id === threadRootId && 'border-primary/40 text-primary'
                             )}
-                            onClick={() => setThreadRootId(node.id)}
+                            onClick={() => {
+                              setThreadRootId(node.id)
+                              navigate(`/profile/${node.author.id}`)
+                            }}
                           >
                             @{node.author.username}
                           </button>
@@ -1809,12 +1974,12 @@ export default function ArticlePage() {
               )}
             </div>
 
-            <div className="rounded-lg border border-border/30 bg-muted/20 p-6 space-y-6">
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Comment Input Form */}
                 <div className="space-y-3">
                 <textarea
                   placeholder={user ? t('article.writeComment') : t('article.signInToComment')}
-                  className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full min-h-[100px] sm:min-h-[120px] rounded-lg border bg-background p-2.5 sm:p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
                   disabled={!user}
@@ -1826,15 +1991,16 @@ export default function ArticlePage() {
                     }
                   }}
                 />
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-1.5 sm:gap-2">
                   {!user && (
-                    <Button variant="outline" onClick={() => navigate('/auth')}>
+                    <Button variant="outline" onClick={() => navigate('/auth')} className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
                       {t('auth.signIn')}
                     </Button>
                   )}
                   <Button
                     onClick={handleSubmitComment}
                     disabled={!user || !commentText.trim()}
+                    className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                   >
                     {t('article.sendComment')}
                   </Button>
@@ -1846,21 +2012,21 @@ export default function ArticlePage() {
 
             {/* Comments List */}
             {isCommentsLoading || isCommentsRefetching ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <Skeleton className="h-9 w-9 rounded-full" />
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Skeleton className="h-4 w-24" />
-                              <Skeleton className="h-3 w-16" />
+                      <div key={i} className="space-y-2 sm:space-y-3">
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <Skeleton className="h-7 w-7 sm:h-9 sm:w-9 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                              <Skeleton className="h-3 sm:h-4 w-20 sm:w-24" />
+                              <Skeleton className="h-2.5 sm:h-3 w-12 sm:w-16" />
                             </div>
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
-                            <div className="flex items-center gap-4 pt-1">
-                              <Skeleton className="h-6 w-16" />
-                              <Skeleton className="h-6 w-20" />
+                            <Skeleton className="h-3 sm:h-4 w-full" />
+                            <Skeleton className="h-3 sm:h-4 w-3/4" />
+                            <div className="flex items-center gap-2 sm:gap-4 pt-1">
+                              <Skeleton className="h-5 sm:h-6 w-12 sm:w-16" />
+                              <Skeleton className="h-5 sm:h-6 w-16 sm:w-20" />
                             </div>
                           </div>
                         </div>
@@ -1868,11 +2034,11 @@ export default function ArticlePage() {
                     ))}
                   </div>
             ) : combinedComments.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground">
+                  <div className="py-8 sm:py-12 text-center text-xs sm:text-sm text-muted-foreground">
                   {t('article.noComments')} {t('article.beFirst')}
                   </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {renderCommentThread(
                   threadRootId && nodeLookup.has(threadRootId)
                     ? [nodeLookup.get(threadRootId)!]
@@ -1909,30 +2075,44 @@ export default function ArticlePage() {
           {infoComment && (
             <div className="space-y-5">
               <div className="flex items-start gap-3 rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/30 p-3">
-                <Avatar className="h-10 w-10">
-                  {infoComment.author.avatar ? (
-                    <AvatarImage src={infoComment.author.avatar} alt={infoComment.author.username} />
-                  ) : null}
-                  <AvatarFallback>
-                    {infoComment.author.username
-                      .split(' ')
-                      .map((word) => word[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <button
+                  onClick={() => navigate(`/profile/${infoComment.author.id}`)}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <Avatar className="h-10 w-10">
+                    {infoComment.author.avatar ? (
+                      <AvatarImage src={infoComment.author.avatar} alt={infoComment.author.username} />
+                    ) : null}
+                    <AvatarFallback>
+                      {infoComment.author.username
+                        .split(' ')
+                        .map((word) => word[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">
+                  <button
+                    onClick={() => navigate(`/profile/${infoComment.author.id}`)}
+                    className="text-sm font-semibold text-foreground hover:underline"
+                  >
                     @{infoComment.author.username}
-                  </p>
+                  </button>
                   <p className="text-xs text-muted-foreground">
                     {formatCommentTimestamp(infoComment.createdAt)} · ID {infoComment.id}
                   </p>
                   {infoParent && (
-                    <p className="text-xs text-muted-foreground">
-                      {t('article.replyTo', { username: infoParent.author.username })}
-                    </p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>{t('article.replyTo', { username: '' })}</span>
+                      <button
+                        onClick={() => navigate(`/profile/${infoParent.author.id}`)}
+                        className="hover:underline"
+                      >
+                        {infoParent.author.username}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1991,6 +2171,42 @@ export default function ArticlePage() {
           <DialogFooter className="sm:justify-end">
             <Button variant="ghost" onClick={() => setIsInfoOpen(false)}>
               {t('common.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deletingCommentId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingCommentId(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('article.deleteComment') || 'Удалить комментарий'}</DialogTitle>
+            <DialogDescription>
+              {t('article.deleteCommentDescription') || 'Вы уверены, что хотите удалить этот комментарий? Это действие нельзя отменить.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeletingCommentId(null)}
+              disabled={deleteCommentMutation.isPending}
+            >
+              {t('common.cancel') || 'Отмена'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteCommentMutation.isPending}
+            >
+              {deleteCommentMutation.isPending
+                ? t('common.deleting') || 'Удаление...'
+                : t('common.delete') || 'Удалить'}
             </Button>
           </DialogFooter>
         </DialogContent>

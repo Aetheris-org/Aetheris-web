@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
-import { createDraftArticle, updateDraftArticle, getDraftArticle } from '@/api/articles'
+import { createDraft, updateDraft, getDraft } from '@/api/drafts-graphql'
 import { createArticle, updateArticle } from '@/api/articles-graphql'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -39,6 +39,9 @@ const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 const EXCERPT_MAX_LENGTH = 500
 const TITLE_MAX_LENGTH = 200
 const CONTENT_MAX_LENGTH = 20000
+const TAG_MAX_LENGTH = 20
+const MAX_TAGS = 20
+const DRAFT_SAVE_COOLDOWN = 2000 // 2 секунды между сохранениями
 
 function normalizeRichText(value: string | null | undefined): string {
   if (!value) return ''
@@ -80,7 +83,7 @@ export default function CreateArticlePage() {
   const [excerpt, setExcerpt] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
+  const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate')
   const [isPublishing, setIsPublishing] = useState(false)
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
@@ -93,8 +96,10 @@ export default function CreateArticlePage() {
   const [isProcessingImage, setIsProcessingImage] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [isLoadingDraft, setIsLoadingDraft] = useState(false)
-  const [draftId, setDraftId] = useState<number | null>(null)
+  const [draftId, setDraftId] = useState<string | null>(null)
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<string | null>(null)
+  const [lastDraftSaveTime, setLastDraftSaveTime] = useState<number>(0)
   const [currentStep, setCurrentStep] = useState(0)
   const [isTitleFocused, setIsTitleFocused] = useState(false)
   const [isExcerptFocused, setIsExcerptFocused] = useState(false)
@@ -130,6 +135,7 @@ export default function CreateArticlePage() {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        logger.debug('[CreateArticlePage] Uploading preview image, attempt:', attempt)
         const uploadResponse = await apiClient.post('/upload/image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -137,27 +143,62 @@ export default function CreateArticlePage() {
           timeout: 90000, // 90 секунд таймаут (бэкенд использует 60 секунд + запас)
     })
 
-        const uploadedFile = uploadResponse.data?.[0]
-        if (!uploadedFile || !uploadedFile.url) {
-          throw new Error('Invalid response from upload service')
+        logger.debug('[CreateArticlePage] Upload response:', {
+          status: uploadResponse.status,
+          data: uploadResponse.data,
+          dataType: typeof uploadResponse.data,
+          isArray: Array.isArray(uploadResponse.data),
+        })
+
+        // Обрабатываем разные форматы ответа
+        let uploadedFile: any = null
+        if (Array.isArray(uploadResponse.data)) {
+          uploadedFile = uploadResponse.data[0]
+        } else if (uploadResponse.data && typeof uploadResponse.data === 'object') {
+          // Если ответ - объект, а не массив
+          uploadedFile = uploadResponse.data
+        }
+
+        if (!uploadedFile) {
+          logger.error('[CreateArticlePage] Invalid upload response format:', uploadResponse.data)
+          throw new Error('Invalid response format from upload service')
+        }
+
+        if (!uploadedFile.url) {
+          logger.error('[CreateArticlePage] Upload response missing URL:', uploadedFile)
+          throw new Error('Invalid response from upload service: missing URL')
         }
 
         // Сохраняем URL изображения (imgBB возвращает URL, а не ID)
         const imageUrl = uploadedFile.url
+        logger.debug('[CreateArticlePage] Preview image uploaded successfully:', { imageUrl })
         setExistingPreviewImageId(imageUrl)
     setCroppedImageBlob(null)
         return imageUrl
       } catch (error: any) {
         lastError = error
+        logger.error(`[CreateArticlePage] Upload attempt ${attempt} failed:`, {
+          error: error.message,
+          code: error.code,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          response: error.response?.data,
+          responseHeaders: error.response?.headers,
+          requestUrl: error.config?.url,
+          requestMethod: error.config?.method,
+        })
         
         // Если это не сетевая ошибка или таймаут, не повторяем
         if (error.code !== 'ECONNABORTED' && error.code !== 'ERR_NETWORK' && error.response?.status !== 408) {
+          logger.error('[CreateArticlePage] Non-retryable error, stopping retries')
           break
         }
         
         // Экспоненциальная задержка перед повтором
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+          const delay = 1000 * attempt
+          logger.debug(`[CreateArticlePage] Retrying after ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
       }
     }
@@ -167,8 +208,30 @@ export default function CreateArticlePage() {
   }, [croppedImageBlob, existingPreviewImageId])
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()])
+    const trimmedTag = tagInput.trim()
+    if (!trimmedTag) return
+    
+    // Проверяем лимит количества тегов
+    if (tags.length >= MAX_TAGS) {
+      toast({
+        title: t('createArticle.maxTagsReached') || 'Maximum tags reached',
+        description: t('createArticle.maxTagsReachedDescription', { max: MAX_TAGS }) || `You can add up to ${MAX_TAGS} tags`,
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    if (!tags.includes(trimmedTag)) {
+      // Ограничиваем длину тега
+      const limitedTag = trimmedTag.slice(0, TAG_MAX_LENGTH)
+      if (limitedTag.length < trimmedTag.length) {
+        toast({
+          title: t('createArticle.tagTooLong') || 'Tag too long',
+          description: t('createArticle.tagTooLongDescription', { max: TAG_MAX_LENGTH }) || `Tag must be no more than ${TAG_MAX_LENGTH} characters`,
+          variant: 'destructive',
+        })
+      }
+      setTags([...tags, limitedTag])
       setTagInput('')
     }
   }
@@ -327,6 +390,184 @@ export default function CreateArticlePage() {
     }
   }, [currentStep])
 
+  // Автоматическое сохранение черновика при изменении контента (debounced)
+  useEffect(() => {
+    // Очищаем предыдущий таймаут
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+
+    // Не сохраняем если:
+    // - Пользователь не авторизован
+    // - Нет контента (ни заголовка, ни текста)
+    // - Идет загрузка черновика
+    // - Идет сохранение черновика
+    if (!user || (title.trim().length === 0 && getPlainTextFromHtml(content).trim().length === 0) || isLoadingDraft || isSavingDraft) {
+      return
+    }
+
+    // Устанавливаем новый таймаут для автоматического сохранения (через 3 секунды после последнего изменения)
+    const timeout = setTimeout(async () => {
+      // Проверяем cooldown для предотвращения спама
+      const now = Date.now()
+      const timeSinceLastSave = now - lastDraftSaveTime
+      if (timeSinceLastSave < DRAFT_SAVE_COOLDOWN) {
+        logger.debug('[CreateArticlePage] Auto-save skipped due to cooldown:', {
+          timeSinceLastSave,
+          cooldown: DRAFT_SAVE_COOLDOWN,
+        })
+        return
+      }
+      
+      try {
+        // Получаем актуальные значения из refs и state
+        const currentTitle = title
+        const currentContent = content
+        const currentContentJSON = contentJSON
+        const currentExcerpt = excerpt
+        const currentTags = tags
+        const currentDifficulty = difficulty
+        const currentPreviewImage = existingPreviewImageId
+        const currentDraftId = draftId
+
+        // Получаем JSON из редактора
+        let editorJSON: any = null
+        if (editorRef.current) {
+          try {
+            editorJSON = editorRef.current.getJSON()
+          } catch (error) {
+            logger.warn('[CreateArticlePage] Failed to get JSON for auto-save:', error)
+          }
+        }
+        
+        const finalContentJSON = editorJSON || currentContentJSON
+        
+        // Если нет JSON контента, создаем минимальный документ
+        let contentDocument: any[] = []
+        if (finalContentJSON && finalContentJSON.type === 'doc' && Array.isArray(finalContentJSON.content)) {
+          // ProseMirror формат - преобразуем в Slate (упрощенная версия для автосохранения)
+          contentDocument = finalContentJSON.content.map((node: any) => {
+            if (node.type === 'paragraph' && Array.isArray(node.content)) {
+              const children = node.content
+                .filter((child: any) => child.type === 'text')
+                .map((child: any) => {
+                  const result: any = { text: child.text || '' }
+                  if (child.marks) {
+                    if (child.marks.some((m: any) => m.type === 'bold')) result.bold = true
+                    if (child.marks.some((m: any) => m.type === 'italic')) result.italic = true
+                    if (child.marks.some((m: any) => m.type === 'code')) result.code = true
+                  }
+                  return result
+                })
+              return {
+                type: 'paragraph',
+                children: children.length > 0 ? children : [{ text: '' }],
+              }
+            } else if (node.type === 'heading' && Array.isArray(node.content)) {
+              const children = node.content
+                .filter((child: any) => child.type === 'text')
+                .map((child: any) => ({ text: child.text || '' }))
+              return {
+                type: 'heading',
+                level: node.attrs?.level || 1,
+                children: children.length > 0 ? children : [{ text: '' }],
+              }
+            } else {
+              // Для других типов создаем простой paragraph
+              return {
+                type: 'paragraph',
+                children: [{ text: '' }],
+              }
+            }
+          }).filter((block: any) => block !== null)
+        } else if (Array.isArray(finalContentJSON)) {
+          // Уже массив блоков Slate
+          contentDocument = finalContentJSON
+        } else {
+          // Создаем минимальный документ из HTML
+          const plainText = getPlainTextFromHtml(currentContent)
+          if (plainText.trim().length === 0 && currentTitle.trim().length === 0) {
+            return // Не сохраняем пустой черновик
+          }
+          contentDocument = [
+            {
+              type: 'paragraph',
+              children: [{ text: plainText || '' }],
+            },
+          ]
+        }
+
+        // Убеждаемся, что contentDocument - это массив
+        if (!Array.isArray(contentDocument) || contentDocument.length === 0) {
+          contentDocument = [
+            {
+              type: 'paragraph',
+              children: [{ text: '' }],
+            },
+          ]
+        }
+
+        // Функция для преобразования difficulty из frontend в backend формат
+        const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+          const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+            beginner: 'easy',
+            intermediate: 'medium',
+            advanced: 'hard',
+          };
+          return mapping[diff] || 'medium';
+        };
+
+        // Формируем данные для сохранения (не передаем previewImage, если его нет)
+        // Для черновиков используем дефолтные значения если поля пустые, чтобы избежать ошибок валидации
+        const draftTitle = currentTitle.trim() || t('createArticle.untitledDraft');
+        // Убеждаемся, что title имеет минимум 10 символов для черновика (если меньше, добавляем пробелы)
+        const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle;
+        
+        const draftData: any = {
+          title: finalDraftTitle,
+          content: contentDocument,
+          excerpt: currentExcerpt.trim() || ' ', // Используем пробел вместо null для черновиков
+          tags: currentTags,
+          difficulty: mapDifficultyToBackend(currentDifficulty),
+        }
+
+        // Добавляем previewImage только если он есть
+        if (currentPreviewImage) {
+          draftData.previewImage = currentPreviewImage
+        }
+
+        // Сохраняем черновик
+        const saved = currentDraftId
+          ? await updateDraft(currentDraftId, draftData)
+          : await createDraft(draftData)
+
+        setDraftId(saved.id)
+        setLastDraftSaveTime(Date.now())
+        
+        // Обновляем URL в query params
+        const nextParams = new URLSearchParams(searchParams)
+        nextParams.set('draft', saved.id)
+        setSearchParams(nextParams, { replace: true })
+        loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
+
+        logger.debug('[CreateArticlePage] Auto-saved draft:', { id: saved.id })
+      } catch (error) {
+        logger.error('[CreateArticlePage] Failed to auto-save draft:', error)
+        // Не показываем toast при ошибке автосохранения, чтобы не раздражать пользователя
+      }
+    }, 3000) // 3 секунды задержка
+
+    setAutoSaveTimeout(timeout)
+
+    // Очищаем таймаут при размонтировании
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content, contentJSON, excerpt, tags, difficulty, existingPreviewImageId, draftId, user, isLoadingDraft, isSavingDraft])
+
 
   const estimateReadTime = (content: string) => {
     const wordsPerMinute = 200
@@ -347,15 +588,37 @@ export default function CreateArticlePage() {
       return
     }
 
+    // Проверяем cooldown для предотвращения спама
+    const now = Date.now()
+    const timeSinceLastSave = now - lastDraftSaveTime
+    if (timeSinceLastSave < DRAFT_SAVE_COOLDOWN) {
+      const remainingTime = Math.ceil((DRAFT_SAVE_COOLDOWN - timeSinceLastSave) / 1000)
+      toast({
+        title: t('createArticle.saveCooldown') || 'Please wait',
+        description: t('createArticle.saveCooldownDescription', { seconds: remainingTime }) || `Please wait ${remainingTime} second(s) before saving again`,
+        variant: 'destructive',
+      })
+      return
+    }
+
     const hasTitle = Boolean(title.trim())
     const plainText = getPlainTextFromHtml(content)
     const hasBody = plainText.length > 0
-    const sanitizedContent = content.trim()
+    const hasExcerpt = Boolean(excerpt.trim())
 
     if (!hasTitle && !hasBody) {
       toast({
         title: t('createArticle.addContentFirst'),
         description: t('createArticle.addContentFirstDescription'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!hasExcerpt) {
+      toast({
+        title: t('createArticle.excerptRequired') || 'Excerpt required',
+        description: t('createArticle.excerptRequiredDescription') || 'Please add a description for your article',
         variant: 'destructive',
       })
       return
@@ -368,33 +631,159 @@ export default function CreateArticlePage() {
 
       try {
         previewImageUrl = await uploadPreviewImageAsset()
-    } catch (error) {
-        logger.error('Preview upload failed', error)
-      toast({
+        logger.debug('[CreateArticlePage] Preview image uploaded for draft:', { previewImageUrl })
+      } catch (error) {
+        logger.error('[CreateArticlePage] Preview upload failed, continuing without image:', error)
+        // Продолжаем сохранение черновика даже если загрузка изображения не удалась
+        // Используем existingPreviewImageId если есть
+        previewImageUrl = existingPreviewImageId || null
+        toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedDescription'),
-        variant: 'destructive',
-      })
-        setIsSavingDraft(false)
-        return
+          variant: 'destructive',
+        })
+        // НЕ прерываем сохранение - продолжаем без изображения
       }
 
-      const payload = {
-        title: title.trim() || t('createArticle.untitledDraft'),
-        content: sanitizedContent || (hasBody ? content : ''),
-        excerpt: excerpt.trim() || null,
+      // Получаем JSON из редактора
+      let editorJSON: any = null
+      if (editorRef.current) {
+        try {
+          editorJSON = editorRef.current.getJSON()
+        } catch (error) {
+          logger.warn('[CreateArticlePage] Failed to get JSON for save draft:', error)
+        }
+      }
+      
+      const finalContentJSON = editorJSON || contentJSON
+      
+      // Если нет JSON контента, создаем минимальный документ
+      let contentDocument: any[] = []
+      if (finalContentJSON && finalContentJSON.type === 'doc' && Array.isArray(finalContentJSON.content)) {
+        // ProseMirror формат - преобразуем в Slate
+        // Используем упрощенную версию преобразования для черновиков
+        contentDocument = finalContentJSON.content.map((node: any) => {
+          if (node.type === 'paragraph' && Array.isArray(node.content)) {
+            const children = node.content
+              .filter((child: any) => child.type === 'text')
+              .map((child: any) => {
+                const result: any = { text: child.text || '' }
+                if (child.marks) {
+                  if (child.marks.some((m: any) => m.type === 'bold')) result.bold = true
+                  if (child.marks.some((m: any) => m.type === 'italic')) result.italic = true
+                  if (child.marks.some((m: any) => m.type === 'code')) result.code = true
+                }
+                return result
+              })
+            return {
+              type: 'paragraph',
+              children: children.length > 0 ? children : [{ text: '' }],
+            }
+          } else if (node.type === 'heading' && Array.isArray(node.content)) {
+            const children = node.content
+              .filter((child: any) => child.type === 'text')
+              .map((child: any) => ({ text: child.text || '' }))
+            return {
+              type: 'heading',
+              level: node.attrs?.level || 1,
+              children: children.length > 0 ? children : [{ text: '' }],
+            }
+          } else {
+            // Для других типов создаем простой paragraph
+            return {
+              type: 'paragraph',
+              children: [{ text: '' }],
+            }
+          }
+        }).filter((block: any) => block !== null)
+      } else if (Array.isArray(finalContentJSON)) {
+        // Уже массив блоков Slate
+        contentDocument = finalContentJSON
+      } else {
+        // Создаем минимальный документ из HTML
+        const plainText = getPlainTextFromHtml(content)
+        if (plainText.trim().length === 0 && title.trim().length === 0) {
+          toast({
+            title: t('createArticle.addContentFirst'),
+            description: t('createArticle.addContentFirstDescription'),
+          variant: 'destructive',
+        })
+        setIsSavingDraft(false)
+        return
+        }
+        contentDocument = [
+          {
+            type: 'paragraph',
+            children: [{ text: plainText || '' }],
+          },
+        ]
+      }
+      
+      // Убеждаемся, что contentDocument - это массив
+      if (!Array.isArray(contentDocument) || contentDocument.length === 0) {
+        contentDocument = [
+          {
+            type: 'paragraph',
+            children: [{ text: '' }],
+          },
+        ]
+      }
+
+      // Валидация структуры блоков
+      const validatedContent = contentDocument.map((block: any) => {
+        if (!block || typeof block !== 'object') {
+          return { type: 'paragraph', children: [{ text: '' }] }
+        }
+        if (!block.type) {
+          return { type: 'paragraph', children: block.children || [{ text: '' }] }
+        }
+        if (!Array.isArray(block.children)) {
+          return { ...block, children: [{ text: '' }] }
+        }
+        return block
+      })
+
+      logger.debug('[CreateArticlePage] Saving draft with content:', {
+        contentLength: validatedContent.length,
+        firstBlock: validatedContent[0],
+        allBlockTypes: validatedContent.map((b: any) => b.type),
+      })
+
+      // Функция для преобразования difficulty из frontend в backend формат
+      const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+        const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+          beginner: 'easy',
+          intermediate: 'medium',
+          advanced: 'hard',
+        };
+        return mapping[diff] || 'medium';
+      };
+
+      // Формируем данные для сохранения (не передаем previewImage, если его нет)
+      // Для черновиков используем дефолтные значения если поля пустые, чтобы избежать ошибок валидации
+      const draftTitle = title.trim() || t('createArticle.untitledDraft');
+      // Убеждаемся, что title имеет минимум 10 символов для черновика (если меньше, добавляем пробелы)
+      const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle;
+      
+      const draftData: any = {
+        title: finalDraftTitle,
+        content: validatedContent,
+        excerpt: excerpt.trim() || ' ', // Используем пробел вместо null для черновиков
         tags,
-        difficulty,
-        previewImageUrl,
+        difficulty: mapDifficultyToBackend(difficulty),
+      }
+
+      // Добавляем previewImage только если он есть
+      if (previewImageUrl) {
+        draftData.previewImage = previewImageUrl
       }
 
       const saved = draftId
-        ? await updateDraftArticle(draftId, payload)
-        : await createDraftArticle(payload)
+        ? await updateDraft(draftId, draftData)
+        : await createDraft(draftData)
 
-      // id - это строковое представление числового Strapi id
-      const numericId = Number.parseInt(saved.id, 10)
-      setDraftId(numericId)
+      setDraftId(saved.id)
+      setLastDraftSaveTime(Date.now())
       // Сохраняем URL изображения (теперь это строка, а не ID)
       setExistingPreviewImageId(saved.previewImage || null)
       if (saved.previewImage) {
@@ -403,9 +792,9 @@ export default function CreateArticlePage() {
       }
 
       const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('draft', String(numericId))
+      nextParams.set('draft', saved.id)
       setSearchParams(nextParams, { replace: true })
-      loadedDraftIdRef.current = numericId
+      loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
 
       toast({
         title: t('createArticle.draftSaved'),
@@ -528,14 +917,14 @@ export default function CreateArticlePage() {
     setIsProcessingImage(false)
     if (!croppedImageUrl && originalImageUrl) {
       if (originalImageUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(originalImageUrl)
+        URL.revokeObjectURL(originalImageUrl)
       }
       setOriginalImageUrl(null)
       setCroppedImageBlob(null)
     }
     if (selectedImageUrl && selectedImageUrl !== originalImageUrl) {
       if (selectedImageUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(selectedImageUrl)
+        URL.revokeObjectURL(selectedImageUrl)
       }
     }
     setSelectedImageUrl(null)
@@ -562,6 +951,7 @@ export default function CreateArticlePage() {
       return
     }
 
+    const draftIdStr = String(draftIdFromQuery)
     if (loadedDraftIdRef.current === draftIdFromQuery) {
       return
     }
@@ -571,20 +961,27 @@ export default function CreateArticlePage() {
     const loadDraft = async () => {
       setIsLoadingDraft(true)
       try {
-        const draft = await getDraftArticle(draftIdFromQuery)
-        if (cancelled) return
+        const draft = await getDraft(draftIdStr)
+        if (cancelled || !draft) return
 
         loadedDraftIdRef.current = draftIdFromQuery
-        const numericId = Number.parseInt(draft.id, 10)
-        setDraftId(numericId)
+        setDraftId(draft.id)
         setTitle(draft.title ?? '')
-        setContent(normalizeRichText(draft.content))
+        // Используем contentJSON если есть, иначе конвертируем HTML
+        if (draft.contentJSON) {
+          setContentJSON(draft.contentJSON)
+          // Конвертируем в HTML для отображения
+          const { slateToHtml } = await import('@/lib/slate-to-html')
+          setContent(slateToHtml(draft.contentJSON))
+        } else {
+          setContent(normalizeRichText(draft.content))
+        }
         setExcerpt(draft.excerpt ?? '')
         setTags(draft.tags ?? [])
         const nextDifficulty =
-          draft.difficulty && ['easy', 'medium', 'hard'].includes(draft.difficulty)
+          draft.difficulty && ['beginner', 'intermediate', 'advanced'].includes(draft.difficulty)
             ? (draft.difficulty as typeof difficulty)
-            : 'medium'
+            : 'intermediate'
         setDifficulty(nextDifficulty)
         setExistingPreviewImageId(draft.previewImage || null)
         setOriginalImageUrl(null)
@@ -672,20 +1069,42 @@ export default function CreateArticlePage() {
     const hasTitle = Boolean(title.trim())
     const plainText = getPlainTextFromHtml(content)
     const hasBody = plainText.length > 0
-    const sanitizedContent = content.trim()
+    const hasExcerpt = Boolean(excerpt.trim())
 
     logger.debug('[CreateArticlePage] Validation check:', {
       hasTitle,
       hasBody,
+      hasExcerpt,
       titleLength: title.trim().length,
       contentLength: plainText.length,
+      excerptLength: excerpt.trim().length,
     })
 
-    if (!hasTitle || !hasBody) {
-      logger.warn('[CreateArticlePage] Validation failed:', { hasTitle, hasBody })
+    if (!hasTitle) {
+      logger.warn('[CreateArticlePage] Validation failed: missing title')
       toast({
-        title: t('createArticle.missingInformation'),
-        description: t('createArticle.missingInformationDescription'),
+        title: t('createArticle.titleRequired') || 'Title required',
+        description: t('createArticle.titleRequiredDescription') || 'Please add a title for your article',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!hasBody) {
+      logger.warn('[CreateArticlePage] Validation failed: missing content')
+      toast({
+        title: t('createArticle.contentRequired') || 'Content required',
+        description: t('createArticle.contentRequiredDescription') || 'Please add content to your article',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!hasExcerpt) {
+      logger.warn('[CreateArticlePage] Validation failed: missing excerpt')
+      toast({
+        title: t('createArticle.excerptRequired') || 'Excerpt required',
+        description: t('createArticle.excerptRequiredDescription') || 'Please add a description for your article',
         variant: 'destructive',
       })
       return
@@ -701,15 +1120,20 @@ export default function CreateArticlePage() {
       try {
         previewImageUrl = await uploadPreviewImageAsset()
         logger.debug('[CreateArticlePage] Preview image uploaded:', { url: previewImageUrl })
-        } catch (error) {
-        logger.error('[CreateArticlePage] Preview upload failed:', error)
-          toast({
-          title: t('createArticle.imageUploadFailed'),
-          description: t('createArticle.imageUploadFailedPublishDescription'),
+      } catch (error) {
+        logger.error('[CreateArticlePage] Preview upload failed, using existing or continuing without:', error)
+        // Используем existingPreviewImageId если есть, иначе продолжаем без изображения
+        previewImageUrl = existingPreviewImageId || null
+        if (!previewImageUrl) {
+        toast({
+            title: t('createArticle.imageUploadFailed'),
+            description: t('createArticle.imageUploadFailedPublishDescription'),
             variant: 'destructive',
           })
-          setIsPublishing(false)
-          return
+          // НЕ прерываем публикацию - продолжаем без изображения
+        } else {
+          logger.debug('[CreateArticlePage] Using existing preview image:', { url: previewImageUrl })
+        }
       }
 
       // Получаем JSON из TipTap editor для отправки в GraphQL
@@ -759,12 +1183,12 @@ export default function CreateArticlePage() {
           toast({
           title: t('createArticle.missingInformation'),
           description: 'Editor is not ready or content is empty. Please add content and try again.',
-            variant: 'destructive',
-          })
-          setIsPublishing(false)
-          return
-        }
-      
+          variant: 'destructive',
+        })
+        setIsPublishing(false)
+        return
+      }
+
       // Проверяем, что это валидный ProseMirror документ
       if (finalContentJSON.type !== 'doc') {
         logger.error('[CreateArticlePage] Invalid ProseMirror document:', {
@@ -1554,23 +1978,42 @@ export default function CreateArticlePage() {
         fullStructure: JSON.stringify(keystoneContent),
       })
 
+      // Функция для преобразования difficulty из frontend в backend формат
+      const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+        const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+          beginner: 'easy',
+          intermediate: 'medium',
+          advanced: 'hard',
+        };
+        return mapping[diff] || 'medium';
+      };
+
       // Используем GraphQL API для создания/обновления статьи
-      const articleData = {
-            title: title.trim(),
+      // ВАЖНО: excerpt обязателен, поэтому всегда передаем строку (не undefined)
+      const articleData: any = {
+        title: title.trim(),
         content: keystoneContent, // KeystoneJS ожидает массив блоков напрямую
-            excerpt: excerpt.trim() || null,
-            tags,
-            difficulty,
-        previewImage: previewImageUrl || undefined,
+        excerpt: excerpt.trim(), // excerpt обязателен, всегда передаем строку
+        tags,
+        difficulty: mapDifficultyToBackend(difficulty), // Преобразуем difficulty в backend формат
+      }
+      
+      // Добавляем previewImage только если он есть (опциональное поле)
+      if (previewImageUrl) {
+        articleData.previewImage = previewImageUrl
       }
 
       logger.debug('[CreateArticlePage] Article data prepared:', {
         title: articleData.title,
-        contentLength: contentDocument.length,
+        contentLength: keystoneContent.length,
         excerpt: articleData.excerpt,
+        excerptLength: articleData.excerpt.length,
         tags: articleData.tags,
         difficulty: articleData.difficulty,
+        previewImage: articleData.previewImage,
         hasPreviewImage: !!articleData.previewImage,
+        previewImageUrl: previewImageUrl,
+        existingPreviewImageId: existingPreviewImageId,
       })
 
       const publishedArticle = draftId
@@ -1595,7 +2038,7 @@ export default function CreateArticlePage() {
         id: publishedArticle.id,
         articleId,
       })
-      
+
       toast({
         title: t('createArticle.articlePublished'),
         description: t('createArticle.articlePublishedDescription'),
@@ -1606,7 +2049,7 @@ export default function CreateArticlePage() {
       setExcerpt('')
       setTags([])
       setTagInput('')
-      setDifficulty('medium')
+      setDifficulty('intermediate')
       setDraftId(null)
       setExistingPreviewImageId(null)
 
@@ -1621,37 +2064,43 @@ export default function CreateArticlePage() {
       
       navigate(`/article/${articleId}`)
     } catch (error: unknown) {
-      // Определяем articleData и contentDocument для логирования
-      let articleDataForLog: any = {}
-      let contentDocumentLength = 0
-      
-      try {
-        // Пытаемся получить данные из области видимости выше
-        if (typeof contentDocument !== 'undefined' && Array.isArray(contentDocument)) {
-          contentDocumentLength = contentDocument.length
-        }
-        // articleData может быть не определен, если ошибка произошла до его создания
-      } catch (e) {
-        // Игнорируем ошибки при логировании
-      }
-      
+      // Логируем полную информацию об ошибке
       logger.error('[CreateArticlePage] Failed to publish article:', {
         error,
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        contentDocumentLength,
-        articleData: articleDataForLog,
+        errorType: typeof error,
+        errorKeys: error && typeof error === 'object' ? Object.keys(error) : [],
+        response: (error as any)?.response,
+        responseData: (error as any)?.response?.data,
+        responseErrors: (error as any)?.response?.errors,
       });
       
-      const message =
-        typeof error === 'object' && error && 'response' in error
-          ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
-          : error instanceof Error
-            ? error.message
-            : undefined
+      // Извлекаем сообщение об ошибке из GraphQL ответа
+      let message: string | undefined = undefined
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as any).response
+        if (response?.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          // GraphQL ошибки
+          message = response.errors.map((e: any) => e.message).join(', ')
+        } else if (response?.data?.error?.message) {
+          message = response.data.error.message
+        } else if (response?.data?.message) {
+          message = response.data.message
+        }
+      }
+      
+      if (!message && error instanceof Error) {
+        message = error.message
+      }
+      
+      if (!message) {
+        message = t('createArticle.publicationFailedDescription')
+      }
+      
       toast({
         title: t('createArticle.publicationFailed'),
-        description: message || t('createArticle.publicationFailedDescription'),
+        description: message,
         variant: 'destructive',
       })
     } finally {
@@ -1701,7 +2150,7 @@ export default function CreateArticlePage() {
   const canGoNext = () => {
     switch (currentStep) {
       case 0:
-        return title.trim().length > 0
+        return title.trim().length > 0 && excerpt.trim().length > 0
       case 1:
         return getPlainTextFromHtml(content).trim().length > 0
       case 2:
@@ -1860,7 +2309,10 @@ export default function CreateArticlePage() {
             {currentStep === 0 && (
               <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
           <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">{t('createArticle.articleTitle')}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    {t('createArticle.articleTitle')}
+                    {!title.trim() && <span className="text-destructive">*</span>}
+                  </Label>
             <div className="relative">
             <Input
                       placeholder={isTitleFocused || title.trim() ? '' : t('createArticle.titlePlaceholder')}
@@ -1887,8 +2339,9 @@ export default function CreateArticlePage() {
           <Separator />
 
           <div className="space-y-2">
-                  <Label htmlFor="excerpt" className="text-sm font-medium">
-                    {t('createArticle.excerpt')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
+                  <Label htmlFor="excerpt" className="text-sm font-medium flex items-center gap-1">
+                    {t('createArticle.excerpt')}
+                    {!excerpt.trim() && <span className="text-destructive">*</span>}
                   </Label>
             <div className="relative">
               <Textarea
@@ -1924,7 +2377,7 @@ export default function CreateArticlePage() {
                 <RichTextEditor
                   ref={editorRef}
                   id="content-editor"
-                  value={content}
+              value={content}
                   jsonValue={contentJSON}
                   onChange={(html) => {
                     setContent(html)
@@ -1955,8 +2408,8 @@ export default function CreateArticlePage() {
                   }}
                   placeholder={t('createArticle.contentPlaceholder')}
                   characterLimit={20000}
-                />
-              </div>
+            />
+          </div>
             )}
 
             {/* Step 2: Metadata */}
@@ -1969,32 +2422,50 @@ export default function CreateArticlePage() {
                       {t('createArticle.tags')}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {t('createArticle.tagsDescription')}
+                      {t('createArticle.tagsDescription', { max: MAX_TAGS })}
                     </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder={t('createArticle.tagsPlaceholder')}
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddTag()
-                    }
-                  }}
-                />
-                <Button onClick={handleAddTag}>{t('createArticle.addTag')}</Button>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder={t('createArticle.tagsPlaceholder')}
+                      value={tagInput}
+                      onChange={(e) => {
+                        const newValue = e.target.value.slice(0, TAG_MAX_LENGTH)
+                        setTagInput(newValue)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAddTag()
+                        }
+                      }}
+                      maxLength={TAG_MAX_LENGTH}
+                      className="pr-16"
+                    />
+                    <div className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                      {tagInput.length}/{TAG_MAX_LENGTH}
+                    </div>
+                  </div>
+                  <Button onClick={handleAddTag} disabled={tags.length >= MAX_TAGS}>
+                    {t('createArticle.addTag')}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t('createArticle.tagsCounter', { count: tags.length, max: MAX_TAGS }) || `${tags.length}/${MAX_TAGS} tags`}
+                </p>
               </div>
 
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-start gap-2">
                   {tags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs"
+                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs break-words overflow-wrap-anywhere"
+                      style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag} ×
@@ -2014,7 +2485,7 @@ export default function CreateArticlePage() {
             </CardHeader>
             <CardContent>
                     <div className="flex gap-3">
-                {(['easy', 'medium', 'hard'] as const).map((level) => (
+                {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
                   <Button
                     key={level}
                     variant={difficulty === level ? 'default' : 'outline'}
@@ -2022,7 +2493,7 @@ export default function CreateArticlePage() {
                           className="capitalize flex-1"
                           size="lg"
                   >
-                    {level}
+                    {t(`createArticle.difficultyOptions.${level}`)}
                   </Button>
                 ))}
               </div>
@@ -2169,7 +2640,7 @@ export default function CreateArticlePage() {
                       <span className="text-xs text-muted-foreground">{t('createArticle.noTags')}</span>
                     )}
                     <Badge variant="outline" className="capitalize text-xs">
-                      {difficulty}
+                      {t(`createArticle.difficultyOptions.${difficulty}`)}
                     </Badge>
                   </div>
                 </div>
@@ -2593,7 +3064,7 @@ export default function CreateArticlePage() {
                     <div className="pointer-events-none absolute inset-0 border border-white/20" />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/10" />
                   </>
-                  ) : (
+                ) : (
                   <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                     {t('createArticle.waitingForImage')}
                   </div>

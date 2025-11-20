@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileText, Clock, PencilLine, Trash2 } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
 import { useAuthStore } from '@/stores/authStore'
-import { getDraftArticles, deleteArticle } from '@/api/articles'
+import { getDrafts, deleteDraft } from '@/api/drafts-graphql'
 import type { Article } from '@/types/article'
 import { useToast } from '@/components/ui/use-toast'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -38,6 +38,20 @@ export default function DraftsPage() {
   const { t } = useTranslation()
   const user = useAuthStore((state) => state.user)
 
+  // Map old difficulty values to new ones for backward compatibility
+  const getDifficultyKey = (difficulty: string | undefined): string => {
+    if (!difficulty) return ''
+    const difficultyMap: Record<string, string> = {
+      'easy': 'beginner',
+      'medium': 'intermediate',
+      'hard': 'advanced',
+      'beginner': 'beginner',
+      'intermediate': 'intermediate',
+      'advanced': 'advanced',
+    }
+    return difficultyMap[difficulty.toLowerCase()] || difficulty
+  }
+
   const {
     data: drafts = [],
     isLoading,
@@ -45,15 +59,39 @@ export default function DraftsPage() {
     error,
     refetch,
   } = useQuery<Article[], Error>({
-    queryKey: ['drafts', user?.id],
+    queryKey: ['drafts'],
     queryFn: () => {
-      if (!user?.id) {
-        return Promise.resolve([])
-      }
-      logger.debug('[DraftsPage] Fetching drafts for user', user.id)
-      return getDraftArticles(user.id, { limit: 50 })
+      logger.debug('[DraftsPage] Fetching drafts')
+      return getDrafts(0, 100)
     },
-    enabled: !!user?.id,
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000, // 2 минуты
+    gcTime: 30 * 60 * 1000, // 30 минут
+  })
+
+  // Delete draft mutation
+  const deleteDraftMutation = useMutation({
+    mutationFn: deleteDraft,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+      toast({
+        title: t('drafts.deleted'),
+        description: t('drafts.deletedDescription'),
+      })
+    },
+    onError: (error: unknown) => {
+      logger.error('[DraftsPage] Failed to delete draft', error)
+      toast({
+        title: t('drafts.deleteError'),
+        description:
+          typeof error === 'object' && error && 'response' in error
+            ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+            : error instanceof Error
+              ? error.message
+              : t('drafts.deleteErrorDescription'),
+        variant: 'destructive',
+      })
+    },
   })
 
   const formattedDrafts = useMemo(
@@ -74,27 +112,7 @@ export default function DraftsPage() {
   }
 
   const handleDeleteDraft = async (draftId: string | number) => {
-    try {
-      await deleteArticle(draftId)
-      await refetch()
-      toast({
-        title: t('drafts.deleted'),
-        description: t('drafts.deletedDescription'),
-      })
-      queryClient.invalidateQueries({ queryKey: ['drafts', user?.id] })
-    } catch (error: unknown) {
-      logger.error('[DraftsPage] Failed to remove draft', error)
-      toast({
-        title: t('drafts.deleteError'),
-        description:
-          typeof error === 'object' && error && 'response' in error
-            ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
-            : error instanceof Error
-              ? error.message
-              : t('drafts.deleteErrorDescription'),
-        variant: 'destructive',
-      })
-    }
+    deleteDraftMutation.mutate(String(draftId))
   }
 
   if (!user) {
@@ -214,7 +232,7 @@ export default function DraftsPage() {
                         </span>
                         {draft.difficulty && (
                           <Badge variant="secondary" className="uppercase tracking-wide">
-                            {draft.difficulty}
+                            {t(`createArticle.difficultyOptions.${getDifficultyKey(draft.difficulty)}`)}
                           </Badge>
                         )}
                       </div>
@@ -247,6 +265,7 @@ export default function DraftsPage() {
                         size="sm"
                         className="gap-2 text-destructive hover:text-destructive"
                         onClick={() => handleDeleteDraft(draft.id)}
+                        disabled={deleteDraftMutation.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
                         {t('drafts.delete')}

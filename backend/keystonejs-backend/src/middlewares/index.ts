@@ -594,25 +594,80 @@ export async function extendExpressApp(
   // ВАЖНО: multer уже настроен выше
   app.post('/api/upload/image', upload.single('files'), async (req, res) => {
     try {
+      logger.debug('Image upload request received:', {
+        method: req.method,
+        path: req.path,
+        hasFile: !!req.file,
+        cookies: req.headers.cookie ? 'present' : 'missing',
+        contentType: req.headers['content-type'],
+      });
+
       // Проверяем аутентификацию через KeystoneJS session
       const ctx = context || keystoneContext;
       if (!ctx) {
+        logger.error('KeystoneJS context not available for image upload', {
+          hasContext: !!context,
+          hasKeystoneContext: !!keystoneContext,
+        });
         return res.status(500).json({ error: 'KeystoneJS context not available' });
       }
 
-      // Проверяем, что пользователь аутентифицирован через KeystoneJS session
-      // Session cookie автоматически передается с запросом благодаря credentials: 'include'
-      // Проверяем наличие session cookie
-      const sessionCookie = req.headers.cookie
-        ?.split(';')
-        .find(c => c.trim().startsWith('keystonejs-session='));
+      if (!ctx.sessionStrategy) {
+        logger.error('KeystoneJS sessionStrategy not available', {
+          hasContext: !!ctx,
+          contextKeys: Object.keys(ctx || {}),
+        });
+        return res.status(500).json({ error: 'Session strategy not available' });
+      }
       
-      if (!sessionCookie) {
-        logger.warn('Image upload attempted without session cookie');
+      logger.debug('KeystoneJS context available for image upload', {
+        hasSessionStrategy: !!ctx.sessionStrategy,
+        sessionStrategyType: typeof ctx.sessionStrategy,
+      });
+
+      // Создаем контекст с Express request и response для sessionStrategy
+      // sessionStrategy.get() требует context.req для чтения cookies
+      const sessionContext = {
+        ...ctx,
+        req: req,
+        res: res,
+      } as any;
+
+      // Получаем session через sessionStrategy
+      let sessionData;
+      try {
+        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
+        logger.debug('Image upload session check:', {
+          hasSession: !!sessionData,
+          itemId: sessionData?.itemId,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
+      } catch (sessionError: any) {
+        logger.error('Session check failed for image upload:', {
+          error: sessionError?.message,
+          stack: sessionError?.stack,
+          name: sessionError?.name,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
+        // Если ошибка при получении сессии, возвращаем 401
+        return res.status(401).json({ 
+          error: 'Authentication required',
+          details: process.env.NODE_ENV === 'development' ? sessionError?.message : undefined,
+        });
+      }
+
+      // Проверяем, что пользователь аутентифицирован
+      if (!sessionData?.itemId) {
+        logger.warn('Image upload attempted without authentication', {
+          hasSession: !!sessionData,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      logger.debug('Image upload request from authenticated user');
+      logger.debug('Image upload request from authenticated user:', {
+        userId: sessionData.itemId,
+      });
 
       if (!req.file) {
         return res.status(400).json({ error: 'No file provided' });
@@ -787,23 +842,45 @@ export async function extendExpressApp(
           name: file.originalname,
         }]);
       } catch (uploadError: any) {
-        logger.error('Failed to upload image to ImgBB:', uploadError);
+        logger.error('Failed to upload image to ImgBB:', {
+          error: uploadError.message,
+          code: uploadError.code,
+          stack: uploadError.stack,
+        });
         
         // В development показываем детали ошибки
         if (process.env.NODE_ENV === 'development') {
           return res.status(500).json({ 
             error: 'Image upload failed',
             details: uploadError.message || 'Unknown error',
+            code: uploadError.code,
           });
         }
         
         return res.status(500).json({ error: 'Image upload failed. Please try again.' });
       }
     } catch (error: any) {
-      logger.error('Image upload endpoint error:', error);
+      logger.error('Image upload endpoint error:', {
+        error: error.message,
+        stack: error.stack,
+        name: error.name,
+        code: error.code,
+        type: typeof error,
+        keys: Object.keys(error || {}),
+      });
+      
+      // Если это ошибка аутентификации, возвращаем 401
+      if (error.message?.includes('Authentication') || error.message?.includes('session')) {
+        return res.status(401).json({ 
+          error: 'Authentication required',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        });
+      }
+      
       res.status(500).json({ 
         error: 'Internal server error',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        code: process.env.NODE_ENV === 'development' ? error.code : undefined,
       });
     }
   });

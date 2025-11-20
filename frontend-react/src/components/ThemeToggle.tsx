@@ -19,7 +19,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={handleToggle}
-      className="h-9 w-9"
+      className="h-8 w-8 sm:h-9 sm:w-9"
       aria-label={
         theme === 'system'
           ? `Use ${nextResolvedTheme} mode instead of system`

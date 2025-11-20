@@ -11,10 +11,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthStore } from '@/stores/authStore'
-import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { Flame, Award, Bell, TrendingUp } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useQuery } from '@tanstack/react-query'
+import { getUnreadCount } from '@/api/notifications-graphql'
 
 interface StatsSheetProps {
   open: boolean
@@ -27,7 +28,14 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
   const { user } = useAuthStore((state) => ({
     user: state.user,
   }))
-  const unreadNotifications = useNotificationsStore(selectUnreadCount)
+  const { data: unreadNotifications = 0 } = useQuery({
+    queryKey: ['notifications', 'unreadCount'],
+    queryFn: getUnreadCount,
+    enabled: !!user, // Запрашиваем только если пользователь авторизован
+    staleTime: 1 * 60 * 1000, // 1 минута - счетчик обновляется чаще
+    refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
+    refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
+  })
   const { level, xpIntoLevel, xpForLevel, streakDays, experience } = useGamificationStore((state) => ({
     level: state.level,
     xpIntoLevel: state.xpIntoLevel,

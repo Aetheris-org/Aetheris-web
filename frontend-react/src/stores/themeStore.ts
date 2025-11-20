@@ -112,6 +112,8 @@ interface AccentTone {
   accent: string
   accentForeground: string
   ring: string
+  destructive?: string
+  destructiveForeground?: string
 }
 
 interface AccentConfig {
@@ -3016,16 +3018,43 @@ function getForegroundForLightness(lightness: number): string {
   return lightness > 60 ? FOREGROUND_DARK : FOREGROUND_LIGHT
 }
 
+// Generate destructive color based on accent color
+function generateDestructiveColor(accentTone: AccentTone, mode: ResolvedTheme): { destructive: string; destructiveForeground: string } {
+  // If destructive color is already defined, use it
+  if (accentTone.destructive && accentTone.destructiveForeground) {
+    return {
+      destructive: accentTone.destructive,
+      destructiveForeground: accentTone.destructiveForeground,
+    }
+  }
+  
+  // Generate red-based destructive color with appropriate lightness for the theme
+  const destructiveHue = 0 // Red
+  const destructiveLightness = mode === 'light' ? 60.2 : 30.6
+  const destructiveSaturation = mode === 'light' ? 84.2 : 62.8
+  return {
+    destructive: `${destructiveHue} ${destructiveSaturation}% ${destructiveLightness}%`,
+    destructiveForeground: FOREGROUND_LIGHT,
+  }
+}
+
 function buildAccentToneFromHex(color: string, mode: ResolvedTheme): AccentTone {
   const base = hexToHsl(color)
   const primary = hslToString(base)
   const accent = hslToString(adjustLightness(base, mode === 'light' ? 0.12 : -0.12))
+  // Generate destructive color: red hue with lightness adapted to accent
+  const destructiveHue = 0 // Red
+  const destructiveLightness = mode === 'light' ? 60.2 : 30.6
+  const destructiveSaturation = mode === 'light' ? 84.2 : 62.8
+  const destructive = `${destructiveHue} ${destructiveSaturation}% ${destructiveLightness}%`
   return {
     primary,
     primaryForeground: getForegroundForLightness(base.l),
     accent,
     accentForeground: getForegroundForLightness(base.l),
     ring: primary,
+    destructive,
+    destructiveForeground: FOREGROUND_LIGHT,
   }
 }
 
@@ -3419,6 +3448,11 @@ function applyThemePreferences(state: ThemeState) {
   root.style.setProperty('--secondary-foreground', surfaceValues.secondaryForeground)
   root.style.setProperty('--border', surfaceValues.border)
   root.style.setProperty('--input', surfaceValues.input)
+  
+  // Apply destructive color from accent if available, otherwise generate it
+  const destructiveColors = generateDestructiveColor(accentValues, resolved)
+  root.style.setProperty('--destructive', destructiveColors.destructive)
+  root.style.setProperty('--destructive-foreground', destructiveColors.destructiveForeground)
 }
 
 let isInitialized = false

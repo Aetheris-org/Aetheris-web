@@ -2,7 +2,6 @@ import type { Article } from '@/types/article'
 
 export interface ProfileStats {
   publishedArticles: number
-  draftArticles: number
   totalLikes: number
   totalComments: number
 }
@@ -10,6 +9,27 @@ export interface ProfileStats {
 export interface ProfileHighlights {
   tags: string[]
   recentArticleCount: number
+}
+
+export interface ProfileComment {
+  id: string
+  text: string
+  createdAt: string
+  article: {
+    id: string
+    title: string
+  }
+}
+
+export interface ProfileBookmark {
+  id: string
+  createdAt: string
+  article: {
+    id: string
+    title: string
+    excerpt?: string | null
+    previewImage?: string | null
+  }
 }
 
 export interface UserProfile {
@@ -24,6 +44,8 @@ export interface UserProfile {
   stats: ProfileStats
   highlights: ProfileHighlights
   articles: Article[]
+  comments: ProfileComment[]
+  bookmarks: ProfileBookmark[]
 }
 
 

@@ -89,6 +89,22 @@ export const User = list({
       ref: 'CommentReaction.user',
       many: true,
     }),
+    bookmarks: relationship({
+      ref: 'Bookmark.user',
+      many: true,
+    }),
+    following: relationship({
+      ref: 'Follow.follower',
+      many: true,
+    }),
+    followers: relationship({
+      ref: 'Follow.following',
+      many: true,
+    }),
+    notifications: relationship({
+      ref: 'Notification.user',
+      many: true,
+    }),
     createdAt: timestamp({
       defaultValue: { kind: 'now' },
     }),

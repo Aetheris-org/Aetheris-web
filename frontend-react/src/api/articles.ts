@@ -77,7 +77,7 @@ function transformArticle(strapiArticle: any): Article {
     tags: Array.isArray(strapiArticle.tags) ? strapiArticle.tags : [],
     previewImage: previewUrl,
     status: strapiArticle.publishedAt ? 'published' : 'draft',
-    difficulty: strapiArticle.difficulty || 'medium',
+    difficulty: strapiArticle.difficulty || 'intermediate',
     likes: strapiArticle.likes_count || 0,
     dislikes: strapiArticle.dislikes_count || 0,
     commentsCount: strapiArticle.comments_count || 0,
@@ -95,7 +95,7 @@ export interface ArticlesResponse {
   total: number
 }
 
-export type ArticleDifficulty = 'easy' | 'medium' | 'hard'
+export type ArticleDifficulty = 'beginner' | 'intermediate' | 'advanced'
 
 export type ArticleSortOption = 'newest' | 'oldest' | 'popular'
 
@@ -407,7 +407,7 @@ function buildArticleData(payload: DraftPayload, publishedAt?: string | null) {
     content: payload.content,
     excerpt: payload.excerpt ?? null,
     tags: payload.tags ?? [],
-    difficulty: payload.difficulty && payload.difficulty !== 'all' ? payload.difficulty : 'medium',
+    difficulty: payload.difficulty && payload.difficulty !== 'all' ? payload.difficulty : 'intermediate',
     preview_image: payload.previewImageUrl || null,
     ...(typeof publishedAt !== 'undefined' ? { publishedAt } : {}),
   }

@@ -34,7 +34,7 @@ __export(keystone_exports, {
 });
 module.exports = __toCommonJS(keystone_exports);
 var import_config = require("dotenv/config");
-var import_core9 = require("@keystone-6/core");
+var import_core12 = require("@keystone-6/core");
 
 // schemas/User.ts
 var import_core = require("@keystone-6/core");
@@ -43,15 +43,8 @@ var import_fields = require("@keystone-6/core/fields");
 // src/access-control.ts
 function isReactionOwner({ session: session2, item }) {
   if (!session2?.itemId) return false;
+  if (!item) return false;
   return String(item.user?.id || item.user) === String(session2.itemId);
-}
-function isCommentOwner({ session: session2, item }) {
-  if (!session2?.itemId) return false;
-  return String(item.author?.id || item.author) === String(session2.itemId);
-}
-function isArticleOwner({ session: session2, item }) {
-  if (!session2?.itemId) return false;
-  return String(item.author?.id || item.author) === String(session2.itemId);
 }
 var accessControl = {
   User: {
@@ -90,11 +83,11 @@ var accessControl = {
       create: ({ session: session2 }) => {
         return !!session2?.itemId;
       },
-      update: ({ session: session2, item }) => {
-        return isArticleOwner({ session: session2, item });
+      update: ({ session: session2 }) => {
+        return !!session2?.itemId;
       },
-      delete: ({ session: session2, item }) => {
-        return isArticleOwner({ session: session2, item });
+      delete: ({ session: session2 }) => {
+        return !!session2?.itemId;
       }
     },
     filter: {
@@ -110,6 +103,18 @@ var accessControl = {
             { author: { id: { equals: session2.itemId } } }
           ]
         };
+      },
+      update: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          author: { id: { equals: session2.itemId } }
+        };
+      },
+      delete: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          author: { id: { equals: session2.itemId } }
+        };
       }
     }
   },
@@ -120,16 +125,28 @@ var accessControl = {
       create: ({ session: session2 }) => {
         return !!session2?.itemId;
       },
-      update: ({ session: session2, item }) => {
-        return isCommentOwner({ session: session2, item });
+      update: ({ session: session2 }) => {
+        return !!session2?.itemId;
       },
-      delete: ({ session: session2, item }) => {
-        return isCommentOwner({ session: session2, item });
+      delete: ({ session: session2 }) => {
+        return !!session2?.itemId;
       }
     },
     filter: {
-      query: () => true
+      query: () => true,
       // Все видят все комментарии
+      update: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          author: { id: { equals: session2.itemId } }
+        };
+      },
+      delete: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          author: { id: { equals: session2.itemId } }
+        };
+      }
     }
   },
   ArticleReaction: {
@@ -168,6 +185,86 @@ var accessControl = {
     filter: {
       query: () => true
       // Все видят все реакции
+    }
+  },
+  Bookmark: {
+    operation: {
+      query: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      },
+      create: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      },
+      update: () => false,
+      // Закладки нельзя обновлять
+      delete: ({ session: session2, item }) => {
+        if (!session2?.itemId) return false;
+        if (!item) return false;
+        return String(item.user?.id || item.user) === String(session2.itemId);
+      }
+    },
+    filter: {
+      query: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          user: { id: { equals: session2.itemId } }
+        };
+      }
+    }
+  },
+  Follow: {
+    operation: {
+      query: () => true,
+      // Чтение подписок - публично
+      create: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      },
+      update: () => false,
+      // Подписки нельзя обновлять
+      delete: ({ session: session2, item }) => {
+        if (!session2?.itemId) return false;
+        if (!item) return false;
+        return String(item.follower?.id || item.follower) === String(session2.itemId);
+      }
+    },
+    filter: {
+      query: () => true
+      // Все видят все подписки
+    }
+  },
+  Notification: {
+    operation: {
+      query: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      },
+      create: () => false,
+      // Уведомления создаются только системой через hooks
+      update: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      },
+      delete: ({ session: session2 }) => {
+        return !!session2?.itemId;
+      }
+    },
+    filter: {
+      query: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          user: { id: { equals: session2.itemId } }
+        };
+      },
+      update: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          user: { id: { equals: session2.itemId } }
+        };
+      },
+      delete: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          user: { id: { equals: session2.itemId } }
+        };
+      }
     }
   }
 };
@@ -253,6 +350,22 @@ var User = (0, import_core.list)({
       ref: "CommentReaction.user",
       many: true
     }),
+    bookmarks: (0, import_fields.relationship)({
+      ref: "Bookmark.user",
+      many: true
+    }),
+    following: (0, import_fields.relationship)({
+      ref: "Follow.follower",
+      many: true
+    }),
+    followers: (0, import_fields.relationship)({
+      ref: "Follow.following",
+      many: true
+    }),
+    notifications: (0, import_fields.relationship)({
+      ref: "Notification.user",
+      many: true
+    }),
     createdAt: (0, import_fields.timestamp)({
       defaultValue: { kind: "now" }
     }),
@@ -267,9 +380,280 @@ var import_core2 = require("@keystone-6/core");
 var import_fields2 = require("@keystone-6/core/fields");
 var import_core3 = require("@keystone-6/core");
 var import_fields_document = require("@keystone-6/fields-document");
-var import_meta = {};
+
+// src/lib/logger.ts
+var import_winston = __toESM(require("winston"));
+var import_winston_daily_rotate_file = __toESM(require("winston-daily-rotate-file"));
+var import_fs = require("fs");
+var logFormat = import_winston.default.format.combine(
+  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  import_winston.default.format.errors({ stack: true }),
+  import_winston.default.format.splat(),
+  import_winston.default.format.json()
+);
+var consoleFormat = import_winston.default.format.combine(
+  import_winston.default.format.colorize(),
+  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  import_winston.default.format.printf(({ timestamp: timestamp9, level, message, ...meta }) => {
+    let msg = `${timestamp9} [${level}]: ${message}`;
+    if (Object.keys(meta).length > 0) {
+      msg += ` ${JSON.stringify(meta)}`;
+    }
+    return msg;
+  })
+);
+var fileRotateTransport = new import_winston_daily_rotate_file.default({
+  filename: "logs/application-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  format: logFormat
+});
+var errorFileRotateTransport = new import_winston_daily_rotate_file.default({
+  filename: "logs/error-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
+  level: "error",
+  maxSize: "20m",
+  maxFiles: "30d",
+  format: logFormat
+});
+var logger = import_winston.default.createLogger({
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
+  format: logFormat,
+  defaultMeta: { service: "keystonejs-backend" },
+  transports: [
+    fileRotateTransport,
+    errorFileRotateTransport,
+    new import_winston.default.transports.Console({
+      format: consoleFormat
+    })
+  ],
+  exceptionHandlers: [
+    new import_winston.default.transports.File({ filename: "logs/exceptions.log" })
+  ],
+  rejectionHandlers: [
+    new import_winston.default.transports.File({ filename: "logs/rejections.log" })
+  ]
+});
+if (!(0, import_fs.existsSync)("logs")) {
+  (0, import_fs.mkdirSync)("logs", { recursive: true });
+}
+var logger_default = logger;
+
+// src/lib/notifications.ts
+async function hasDuplicateNotification(context, data, timeWindowMs = 60 * 60 * 1e3) {
+  try {
+    const userId = String(data.userId);
+    const actorId = String(data.actorId);
+    const cutoffTime = new Date(Date.now() - timeWindowMs);
+    const where = {
+      user: { id: { equals: userId } },
+      actor: { id: { equals: actorId } },
+      type: { equals: data.type },
+      createdAt: { gte: cutoffTime.toISOString() }
+      // Проверяем только за последний час
+    };
+    if (data.type === "article_like" || data.type === "comment_like") {
+      if (data.articleId) {
+        where.article = { id: { equals: String(data.articleId) } };
+      }
+      if (data.commentId) {
+        where.comment = { id: { equals: String(data.commentId) } };
+      }
+      if (data.metadata?.threshold) {
+        const existingNotifications = await context.sudo().query.Notification.findMany({
+          where: {
+            user: { id: { equals: userId } },
+            actor: { id: { equals: actorId } },
+            type: { equals: data.type },
+            createdAt: { gte: cutoffTime.toISOString() },
+            ...data.articleId ? { article: { id: { equals: String(data.articleId) } } } : {},
+            ...data.commentId ? { comment: { id: { equals: String(data.commentId) } } } : {}
+          },
+          query: "id metadata"
+        });
+        return existingNotifications.some(
+          (notif) => notif.metadata?.threshold === data.metadata?.threshold
+        );
+      }
+    } else if (data.type === "comment" || data.type === "comment_reply") {
+      if (data.articleId) {
+        where.article = { id: { equals: String(data.articleId) } };
+      }
+      if (data.commentId) {
+        where.comment = { id: { equals: String(data.commentId) } };
+      }
+    } else if (data.type === "follow") {
+    }
+    const existing = await context.sudo().query.Notification.findMany({
+      where,
+      query: "id",
+      take: 1
+    });
+    return existing.length > 0;
+  } catch (error) {
+    logger_default.error(`[hasDuplicateNotification] Error checking for duplicates:`, {
+      error: error.message,
+      data
+    });
+    return false;
+  }
+}
+async function createNotification(context, data, skipDuplicateCheck = false) {
+  try {
+    const userId = String(data.userId);
+    const actorId = String(data.actorId);
+    if (userId === actorId) {
+      logger_default.debug(`[createNotification] Skipping self-notification: userId=${userId}, type=${data.type}`);
+      return;
+    }
+    if (!skipDuplicateCheck) {
+      const hasDuplicate = await hasDuplicateNotification(context, data);
+      if (hasDuplicate) {
+        logger_default.debug(`[createNotification] Duplicate notification found, skipping:`, {
+          type: data.type,
+          userId,
+          actorId,
+          articleId: data.articleId,
+          commentId: data.commentId
+        });
+        return;
+      }
+    }
+    const notificationData = {
+      user: { connect: { id: userId } },
+      actor: { connect: { id: actorId } },
+      type: data.type,
+      isRead: false
+    };
+    if (data.articleId) {
+      notificationData.article = { connect: { id: String(data.articleId) } };
+    }
+    if (data.commentId) {
+      notificationData.comment = { connect: { id: String(data.commentId) } };
+    }
+    if (data.metadata) {
+      notificationData.metadata = data.metadata;
+    }
+    logger_default.debug(`[createNotification] Creating notification:`, {
+      type: data.type,
+      userId,
+      actorId,
+      articleId: data.articleId,
+      commentId: data.commentId
+    });
+    await context.sudo().query.Notification.createOne({
+      data: notificationData
+    });
+    logger_default.info(`[createNotification] Notification created successfully: type=${data.type}, userId=${userId}, actorId=${actorId}`);
+  } catch (error) {
+    logger_default.error(`[createNotification] Failed to create notification:`, {
+      error: error.message,
+      stack: error.stack,
+      data
+    });
+  }
+}
+function shouldNotifyAboutLike(currentCount, previousCount, thresholds) {
+  if (previousCount === 0 && currentCount === 1) {
+    return 1;
+  }
+  for (const threshold of thresholds) {
+    if (previousCount < threshold && currentCount >= threshold) {
+      return threshold;
+    }
+  }
+  return null;
+}
+
+// schemas/Article.ts
 var Article = (0, import_core2.list)({
   access: accessControl.Article,
+  hooks: {
+    resolveInput: async ({ resolvedData, operation, context, inputData }) => {
+      if (operation === "create") {
+        const session2 = context.session;
+        logger_default.info(`[Article] resolveInput create: session.itemId=${session2?.itemId}, inputData.author=${JSON.stringify(inputData?.author)}, resolvedData.author=${JSON.stringify(resolvedData?.author)}`);
+        if (!session2?.itemId) {
+          logger_default.error("[Article] Attempted to create article without authentication");
+          throw new Error("Authentication required to create an article");
+        }
+        let userId = session2.itemId;
+        if (typeof userId === "string") {
+          const parsedId = parseInt(userId, 10);
+          if (!isNaN(parsedId)) {
+            userId = parsedId;
+          } else {
+            logger_default.error(`[Article] Invalid session.itemId format (string, not parsable to int): ${session2.itemId}`);
+            throw new Error("Invalid user ID format");
+          }
+        } else if (typeof userId !== "number") {
+          logger_default.error(`[Article] Invalid session.itemId type (not string or number): ${typeof session2.itemId}`);
+          throw new Error("Invalid user ID type");
+        }
+        resolvedData.author = { connect: { id: userId } };
+        logger_default.info(`[Article] Auto-setting author from session: userId=${userId}, author=${JSON.stringify(resolvedData.author)}`);
+      }
+      return resolvedData;
+    },
+    afterOperation: async ({ operation, item, context, originalItem }) => {
+      if (operation === "update" && item) {
+        try {
+          const currentArticle = await context.query.Article.findOne({
+            where: { id: item.id },
+            query: `
+              id
+              publishedAt
+              author {
+                id
+              }
+            `
+          });
+          if (!currentArticle || !currentArticle.author) {
+            logger_default.warn(`[Article] afterOperation: Article or author not found: articleId=${item.id}`);
+            return;
+          }
+          const wasPublished = currentArticle.publishedAt !== null;
+          const wasPreviouslyPublished = originalItem?.publishedAt !== null;
+          if (wasPublished && !wasPreviouslyPublished) {
+            logger_default.debug(`[Article] afterOperation: Article published, finding followers:`, {
+              articleId: currentArticle.id,
+              authorId: currentArticle.author.id
+            });
+            const followers = await context.query.Follow.findMany({
+              where: {
+                following: { id: { equals: String(currentArticle.author.id) } }
+              },
+              query: `
+                id
+                follower {
+                  id
+                }
+              `
+            });
+            logger_default.debug(`[Article] afterOperation: Found ${followers.length} followers`);
+            for (const follow of followers) {
+              if (follow.follower?.id) {
+                await createNotification(context, {
+                  type: "article_published",
+                  userId: follow.follower.id,
+                  actorId: currentArticle.author.id,
+                  articleId: currentArticle.id
+                });
+              }
+            }
+            logger_default.info(`[Article] afterOperation: Created ${followers.length} notifications for article publication`);
+          }
+        } catch (error) {
+          logger_default.error(`[Article] afterOperation: Failed to create notifications:`, {
+            error: error.message,
+            stack: error.stack,
+            articleId: item.id
+          });
+        }
+      }
+    }
+  },
   fields: {
     title: (0, import_fields2.text)({
       validation: { isRequired: true, length: { min: 10, max: 200 } },
@@ -285,7 +669,7 @@ var Article = (0, import_core2.list)({
       ]
     }),
     excerpt: (0, import_fields2.text)({
-      validation: { length: { max: 500 } }
+      validation: { isRequired: true, length: { max: 500 } }
     }),
     author: (0, import_fields2.relationship)({
       ref: "User.articles",
@@ -325,6 +709,10 @@ var Article = (0, import_core2.list)({
       ref: "ArticleReaction.article",
       many: true
     }),
+    bookmarks: (0, import_fields2.relationship)({
+      ref: "Bookmark.article",
+      many: true
+    }),
     userReaction: (0, import_fields2.virtual)({
       field: import_core3.graphql.field({
         type: import_core3.graphql.String,
@@ -349,9 +737,7 @@ var Article = (0, import_core2.list)({
             });
             return reaction.length > 0 ? reaction[0].reaction : null;
           } catch (error) {
-            if (import_meta.env?.DEV || process.env.NODE_ENV === "development") {
-              console.error("Failed to get userReaction for article:", error);
-            }
+            logger_default.error("Failed to get userReaction for article:", error);
             return null;
           }
         }
@@ -371,9 +757,95 @@ var Article = (0, import_core2.list)({
 var import_core4 = require("@keystone-6/core");
 var import_fields3 = require("@keystone-6/core/fields");
 var import_core5 = require("@keystone-6/core");
-var import_meta2 = {};
 var Comment = (0, import_core4.list)({
   access: accessControl.Comment,
+  hooks: {
+    resolveInput: async ({ resolvedData, operation, context, inputData }) => {
+      if (operation === "create") {
+        const session2 = context.session;
+        logger_default.info(`[Comment] resolveInput create: session.itemId=${session2?.itemId}, inputData.author=${JSON.stringify(inputData?.author)}, resolvedData.author=${JSON.stringify(resolvedData?.author)}`);
+        if (!session2?.itemId) {
+          logger_default.error("[Comment] Attempted to create comment without authentication");
+          throw new Error("Authentication required to create a comment");
+        }
+        const userId = typeof session2.itemId === "string" ? parseInt(session2.itemId, 10) : Number(session2.itemId);
+        if (isNaN(userId)) {
+          logger_default.error(`[Comment] Invalid userId: ${session2.itemId}`);
+          throw new Error("Invalid user ID in session");
+        }
+        resolvedData.author = { connect: { id: userId } };
+        logger_default.info(`[Comment] Auto-setting author from session: userId=${userId} (type: ${typeof userId}), author=${JSON.stringify(resolvedData.author)}`);
+      }
+      return resolvedData;
+    },
+    afterOperation: async ({ operation, item, context, originalItem }) => {
+      if (operation === "create" && item) {
+        try {
+          const comment = await context.query.Comment.findOne({
+            where: { id: item.id },
+            query: `
+              id
+              author {
+                id
+              }
+              article {
+                id
+                author {
+                  id
+                }
+              }
+              parent {
+                id
+                author {
+                  id
+                }
+              }
+            `
+          });
+          if (!comment || !comment.author) {
+            logger_default.warn(`[Comment] afterOperation: Comment or author not found: commentId=${item.id}`);
+            return;
+          }
+          const commentAuthorId = comment.author.id;
+          const articleId = comment.article?.id;
+          const articleAuthorId = comment.article?.author?.id;
+          const parentCommentId = comment.parent?.id;
+          const parentAuthorId = comment.parent?.author?.id;
+          logger_default.debug(`[Comment] afterOperation: Creating notifications for comment:`, {
+            commentId: comment.id,
+            commentAuthorId,
+            articleId,
+            articleAuthorId,
+            parentCommentId,
+            parentAuthorId
+          });
+          if (parentCommentId && parentAuthorId) {
+            await createNotification(context, {
+              type: "comment_reply",
+              userId: parentAuthorId,
+              actorId: commentAuthorId,
+              articleId,
+              commentId: parentCommentId
+            }, false);
+          } else if (articleId && articleAuthorId) {
+            await createNotification(context, {
+              type: "comment",
+              userId: articleAuthorId,
+              actorId: commentAuthorId,
+              articleId,
+              commentId: comment.id
+            }, false);
+          }
+        } catch (error) {
+          logger_default.error(`[Comment] afterOperation: Failed to create notifications:`, {
+            error: error.message,
+            stack: error.stack,
+            commentId: item.id
+          });
+        }
+      }
+    }
+  },
   fields: {
     text: (0, import_fields3.text)({
       validation: { isRequired: true, length: { min: 1, max: 1e4 } }
@@ -428,9 +900,7 @@ var Comment = (0, import_core4.list)({
             });
             return reaction.length > 0 ? reaction[0].reaction : null;
           } catch (error) {
-            if (import_meta2.env?.DEV || process.env.NODE_ENV === "development") {
-              console.error("Failed to get userReaction for comment:", error);
-            }
+            logger_default.error("Failed to get userReaction for comment:", error);
             return null;
           }
         }
@@ -505,79 +975,224 @@ var CommentReaction = (0, import_core7.list)({
   }
 });
 
+// schemas/Bookmark.ts
+var import_core8 = require("@keystone-6/core");
+var import_fields6 = require("@keystone-6/core/fields");
+var Bookmark = (0, import_core8.list)({
+  access: accessControl.Bookmark,
+  hooks: {
+    resolveInput: async ({ resolvedData, operation, context, inputData }) => {
+      if (operation === "create") {
+        const session2 = context.session;
+        logger_default.info(`[Bookmark] resolveInput create: session.itemId=${session2?.itemId}, inputData.user=${JSON.stringify(inputData?.user)}, resolvedData.user=${JSON.stringify(resolvedData?.user)}`);
+        if (!session2?.itemId) {
+          logger_default.error("[Bookmark] Attempted to create bookmark without authentication");
+          throw new Error("Authentication required to create a bookmark");
+        }
+        let userId = session2.itemId;
+        if (typeof userId === "string") {
+          const parsedId = parseInt(userId, 10);
+          if (!isNaN(parsedId)) {
+            userId = parsedId;
+          } else {
+            logger_default.error(`[Bookmark] Invalid session.itemId format (string, not parsable to int): ${session2.itemId}`);
+            throw new Error("Invalid user ID format");
+          }
+        } else if (typeof userId !== "number") {
+          logger_default.error(`[Bookmark] Invalid session.itemId type (not string or number): ${typeof session2.itemId}`);
+          throw new Error("Invalid user ID type");
+        }
+        resolvedData.user = { connect: { id: userId } };
+        logger_default.info(`[Bookmark] Auto-setting user from session: userId=${userId}, user=${JSON.stringify(resolvedData.user)}`);
+      }
+      return resolvedData;
+    }
+  },
+  fields: {
+    user: (0, import_fields6.relationship)({
+      ref: "User.bookmarks",
+      many: false,
+      validation: { isRequired: true }
+    }),
+    article: (0, import_fields6.relationship)({
+      ref: "Article.bookmarks",
+      many: false,
+      validation: { isRequired: true }
+    }),
+    createdAt: (0, import_fields6.timestamp)({
+      defaultValue: { kind: "now" }
+    })
+  }
+});
+
+// schemas/Follow.ts
+var import_core9 = require("@keystone-6/core");
+var import_fields7 = require("@keystone-6/core/fields");
+var Follow = (0, import_core9.list)({
+  access: accessControl.Follow,
+  hooks: {
+    resolveInput: async ({ resolvedData, operation, context, inputData }) => {
+      if (operation === "create") {
+        const session2 = context.session;
+        logger_default.info(`[Follow] resolveInput create: session.itemId=${session2?.itemId}, inputData.follower=${JSON.stringify(inputData?.follower)}, resolvedData.follower=${JSON.stringify(resolvedData?.follower)}`);
+        if (!session2?.itemId) {
+          logger_default.error("[Follow] Attempted to create follow without authentication");
+          throw new Error("Authentication required to create a follow");
+        }
+        let userId = session2.itemId;
+        if (typeof userId === "string") {
+          const parsedId = parseInt(userId, 10);
+          if (!isNaN(parsedId)) {
+            userId = parsedId;
+          } else {
+            logger_default.error(`[Follow] Invalid session.itemId format (string, not parsable to int): ${session2.itemId}`);
+            throw new Error("Invalid user ID format");
+          }
+        } else if (typeof userId !== "number") {
+          logger_default.error(`[Follow] Invalid session.itemId type (not string or number): ${typeof session2.itemId}`);
+          throw new Error("Invalid user ID type");
+        }
+        resolvedData.follower = { connect: { id: userId } };
+        logger_default.info(`[Follow] Auto-setting follower from session: userId=${userId}, follower=${JSON.stringify(resolvedData.follower)}`);
+      }
+      return resolvedData;
+    },
+    afterOperation: async ({ operation, item, context }) => {
+      if (operation === "create" && item) {
+        try {
+          const follow = await context.query.Follow.findOne({
+            where: { id: item.id },
+            query: `
+              id
+              follower {
+                id
+              }
+              following {
+                id
+              }
+            `
+          });
+          if (!follow || !follow.follower || !follow.following) {
+            logger_default.warn(`[Follow] afterOperation: Follow or relationships not found: followId=${item.id}`);
+            return;
+          }
+          const followerId = follow.follower.id;
+          const followingId = follow.following.id;
+          logger_default.debug(`[Follow] afterOperation: Creating notification for follow:`, {
+            followId: follow.id,
+            followerId,
+            followingId
+          });
+          await createNotification(context, {
+            type: "follow",
+            userId: followingId,
+            actorId: followerId
+          }, false);
+        } catch (error) {
+          logger_default.error(`[Follow] afterOperation: Failed to create notification:`, {
+            error: error.message,
+            stack: error.stack,
+            followId: item.id
+          });
+        }
+      }
+    }
+  },
+  fields: {
+    follower: (0, import_fields7.relationship)({
+      ref: "User.following",
+      many: false,
+      validation: { isRequired: true }
+    }),
+    following: (0, import_fields7.relationship)({
+      ref: "User.followers",
+      many: false,
+      validation: { isRequired: true }
+    }),
+    createdAt: (0, import_fields7.timestamp)({
+      defaultValue: { kind: "now" }
+    })
+  }
+});
+
+// schemas/Notification.ts
+var import_core10 = require("@keystone-6/core");
+var import_fields8 = require("@keystone-6/core/fields");
+var Notification = (0, import_core10.list)({
+  access: accessControl.Notification,
+  hooks: {
+    afterOperation: async ({ operation, item, context, originalItem }) => {
+      if (operation === "update" && item) {
+        logger_default.info(`[Notification] afterOperation update:`, {
+          notificationId: item.id,
+          isRead: item.isRead,
+          readAt: item.readAt,
+          originalIsRead: originalItem?.isRead
+        });
+      }
+    }
+  },
+  fields: {
+    user: (0, import_fields8.relationship)({
+      ref: "User.notifications",
+      many: false,
+      validation: { isRequired: true },
+      isIndexed: true
+    }),
+    type: (0, import_fields8.select)({
+      type: "string",
+      options: [
+        { label: "Comment", value: "comment" },
+        { label: "Comment Reply", value: "comment_reply" },
+        { label: "Follow", value: "follow" },
+        { label: "Article Published", value: "article_published" },
+        { label: "Article Like", value: "article_like" },
+        { label: "Comment Like", value: "comment_like" }
+      ],
+      validation: { isRequired: true },
+      isIndexed: true
+    }),
+    actor: (0, import_fields8.relationship)({
+      ref: "User",
+      many: false,
+      validation: { isRequired: true }
+    }),
+    article: (0, import_fields8.relationship)({
+      ref: "Article",
+      many: false
+    }),
+    comment: (0, import_fields8.relationship)({
+      ref: "Comment",
+      many: false
+    }),
+    isRead: (0, import_fields8.checkbox)({
+      defaultValue: false,
+      isIndexed: true
+    }),
+    readAt: (0, import_fields8.timestamp)(),
+    metadata: (0, import_fields8.json)(),
+    createdAt: (0, import_fields8.timestamp)({
+      defaultValue: { kind: "now" },
+      isIndexed: true
+    })
+  }
+});
+
 // schemas/index.ts
 var lists = {
   User,
   Article,
   Comment,
   ArticleReaction,
-  CommentReaction
+  CommentReaction,
+  Bookmark,
+  Follow,
+  Notification
 };
 
 // src/auth/auth.ts
 var import_session = require("@keystone-6/core/session");
 var import_auth = require("@keystone-6/auth");
-
-// src/lib/logger.ts
-var import_winston = __toESM(require("winston"));
-var import_winston_daily_rotate_file = __toESM(require("winston-daily-rotate-file"));
-var import_fs = require("fs");
-var logFormat = import_winston.default.format.combine(
-  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  import_winston.default.format.errors({ stack: true }),
-  import_winston.default.format.splat(),
-  import_winston.default.format.json()
-);
-var consoleFormat = import_winston.default.format.combine(
-  import_winston.default.format.colorize(),
-  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  import_winston.default.format.printf(({ timestamp: timestamp6, level, message, ...meta }) => {
-    let msg = `${timestamp6} [${level}]: ${message}`;
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
-    }
-    return msg;
-  })
-);
-var fileRotateTransport = new import_winston_daily_rotate_file.default({
-  filename: "logs/application-%DATE%.log",
-  datePattern: "YYYY-MM-DD",
-  maxSize: "20m",
-  maxFiles: "14d",
-  format: logFormat
-});
-var errorFileRotateTransport = new import_winston_daily_rotate_file.default({
-  filename: "logs/error-%DATE%.log",
-  datePattern: "YYYY-MM-DD",
-  level: "error",
-  maxSize: "20m",
-  maxFiles: "30d",
-  format: logFormat
-});
-var logger = import_winston.default.createLogger({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
-  format: logFormat,
-  defaultMeta: { service: "keystonejs-backend" },
-  transports: [
-    fileRotateTransport,
-    errorFileRotateTransport,
-    new import_winston.default.transports.Console({
-      format: consoleFormat
-    })
-  ],
-  exceptionHandlers: [
-    new import_winston.default.transports.File({ filename: "logs/exceptions.log" })
-  ],
-  rejectionHandlers: [
-    new import_winston.default.transports.File({ filename: "logs/rejections.log" })
-  ]
-});
-if (!(0, import_fs.existsSync)("logs")) {
-  (0, import_fs.mkdirSync)("logs", { recursive: true });
-}
-var logger_default = logger;
-
-// src/auth/auth.ts
 var session = (0, import_session.statelessSessions)({
   secret: process.env.SESSION_SECRET || "change-me-in-production",
   maxAge: 7 * 24 * 60 * 60
@@ -844,7 +1459,7 @@ logger_default.info("\u2705 Passport.js configured");
 
 // src/lib/security-logger.ts
 function logSecurityEvent(event) {
-  const timestamp6 = event.timestamp || /* @__PURE__ */ new Date();
+  const timestamp9 = event.timestamp || /* @__PURE__ */ new Date();
   const logData = {
     type: event.type,
     ip: event.ip,
@@ -852,7 +1467,7 @@ function logSecurityEvent(event) {
     userId: event.userId,
     userAgent: event.userAgent,
     reason: event.reason,
-    timestamp: timestamp6.toISOString()
+    timestamp: timestamp9.toISOString()
   };
   if (event.type === "login_failure" || event.type === "admin_access_denied" || event.type === "rate_limit_exceeded") {
     logger_default.warn(`\u{1F512} Security Event: ${event.type}`, logData);
@@ -1352,16 +1967,67 @@ async function extendExpressApp(app, context) {
   });
   app.post("/api/upload/image", upload.single("files"), async (req, res) => {
     try {
+      logger_default.debug("Image upload request received:", {
+        method: req.method,
+        path: req.path,
+        hasFile: !!req.file,
+        cookies: req.headers.cookie ? "present" : "missing",
+        contentType: req.headers["content-type"]
+      });
       const ctx = context || keystoneContext;
       if (!ctx) {
+        logger_default.error("KeystoneJS context not available for image upload", {
+          hasContext: !!context,
+          hasKeystoneContext: !!keystoneContext
+        });
         return res.status(500).json({ error: "KeystoneJS context not available" });
       }
-      const sessionCookie = req.headers.cookie?.split(";").find((c) => c.trim().startsWith("keystonejs-session="));
-      if (!sessionCookie) {
-        logger_default.warn("Image upload attempted without session cookie");
+      if (!ctx.sessionStrategy) {
+        logger_default.error("KeystoneJS sessionStrategy not available", {
+          hasContext: !!ctx,
+          contextKeys: Object.keys(ctx || {})
+        });
+        return res.status(500).json({ error: "Session strategy not available" });
+      }
+      logger_default.debug("KeystoneJS context available for image upload", {
+        hasSessionStrategy: !!ctx.sessionStrategy,
+        sessionStrategyType: typeof ctx.sessionStrategy
+      });
+      const sessionContext = {
+        ...ctx,
+        req,
+        res
+      };
+      let sessionData;
+      try {
+        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
+        logger_default.debug("Image upload session check:", {
+          hasSession: !!sessionData,
+          itemId: sessionData?.itemId,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
+      } catch (sessionError) {
+        logger_default.error("Session check failed for image upload:", {
+          error: sessionError?.message,
+          stack: sessionError?.stack,
+          name: sessionError?.name,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
+        return res.status(401).json({
+          error: "Authentication required",
+          details: process.env.NODE_ENV === "development" ? sessionError?.message : void 0
+        });
+      }
+      if (!sessionData?.itemId) {
+        logger_default.warn("Image upload attempted without authentication", {
+          hasSession: !!sessionData,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
         return res.status(401).json({ error: "Authentication required" });
       }
-      logger_default.debug("Image upload request from authenticated user");
+      logger_default.debug("Image upload request from authenticated user:", {
+        userId: sessionData.itemId
+      });
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
       }
@@ -1488,20 +2154,39 @@ async function extendExpressApp(app, context) {
           name: file.originalname
         }]);
       } catch (uploadError) {
-        logger_default.error("Failed to upload image to ImgBB:", uploadError);
+        logger_default.error("Failed to upload image to ImgBB:", {
+          error: uploadError.message,
+          code: uploadError.code,
+          stack: uploadError.stack
+        });
         if (process.env.NODE_ENV === "development") {
           return res.status(500).json({
             error: "Image upload failed",
-            details: uploadError.message || "Unknown error"
+            details: uploadError.message || "Unknown error",
+            code: uploadError.code
           });
         }
         return res.status(500).json({ error: "Image upload failed. Please try again." });
       }
     } catch (error) {
-      logger_default.error("Image upload endpoint error:", error);
+      logger_default.error("Image upload endpoint error:", {
+        error: error.message,
+        stack: error.stack,
+        name: error.name,
+        code: error.code,
+        type: typeof error,
+        keys: Object.keys(error || {})
+      });
+      if (error.message?.includes("Authentication") || error.message?.includes("session")) {
+        return res.status(401).json({
+          error: "Authentication required",
+          details: process.env.NODE_ENV === "development" ? error.message : void 0
+        });
+      }
       res.status(500).json({
         error: "Internal server error",
-        details: process.env.NODE_ENV === "development" ? error.message : void 0
+        details: process.env.NODE_ENV === "development" ? error.message : void 0,
+        code: process.env.NODE_ENV === "development" ? error.code : void 0
       });
     }
   });
@@ -1872,38 +2557,53 @@ async function extendExpressApp(app, context) {
 }
 
 // src/graphql/reactions.ts
-var import_core8 = require("@keystone-6/core");
-var extendGraphqlSchema = import_core8.graphql.extend((base) => {
-  const ReactionType = import_core8.graphql.enum({
+var import_core11 = require("@keystone-6/core");
+var extendGraphqlSchema = import_core11.graphql.extend((base) => {
+  const ReactionType = import_core11.graphql.enum({
     name: "ReactionType",
-    values: import_core8.graphql.enumValues(["like", "dislike"])
+    values: import_core11.graphql.enumValues(["like", "dislike"])
   });
   return {
     mutation: {
-      reactToArticle: import_core8.graphql.field({
+      reactToArticle: import_core11.graphql.field({
         type: base.object("Article"),
         args: {
-          articleId: import_core8.graphql.arg({ type: import_core8.graphql.nonNull(import_core8.graphql.ID) }),
-          reaction: import_core8.graphql.arg({
-            type: import_core8.graphql.nonNull(ReactionType)
+          articleId: import_core11.graphql.arg({ type: import_core11.graphql.nonNull(import_core11.graphql.ID) }),
+          reaction: import_core11.graphql.arg({
+            type: import_core11.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { articleId, reaction }, context) {
+          logger_default.info(`[reactToArticle] START: articleId=${articleId}, reaction=${reaction}`);
           const session2 = context.session;
           if (!session2?.itemId) {
+            logger_default.error(`[reactToArticle] Authentication required`);
             throw new Error("Authentication required");
           }
           const userId = session2.itemId;
+          logger_default.info(`[reactToArticle] userId=${userId}`);
           if (reaction !== "like" && reaction !== "dislike") {
+            logger_default.error(`[reactToArticle] Invalid reaction type: ${reaction}`);
             throw new Error("Invalid reaction type");
           }
+          logger_default.info(`[reactToArticle] Finding article: articleId=${articleId}`);
           const article = await context.query.Article.findOne({
             where: { id: articleId },
-            query: "id likes_count dislikes_count"
+            query: `
+              id
+              likes_count
+              dislikes_count
+              author {
+                id
+              }
+            `
           });
+          logger_default.info(`[reactToArticle] Article found:`, { id: article?.id, likes: article?.likes_count, dislikes: article?.dislikes_count });
           if (!article) {
+            logger_default.error(`[reactToArticle] Article not found: articleId=${articleId}`);
             throw new Error("Article not found");
           }
+          logger_default.info(`[reactToArticle] Checking existing reaction: articleId=${articleId}, userId=${userId}`);
           const existingReaction = await context.query.ArticleReaction.findMany({
             where: {
               article: { id: { equals: articleId } },
@@ -1912,13 +2612,17 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
             query: "id reaction",
             take: 1
           });
+          logger_default.info(`[reactToArticle] Existing reaction:`, existingReaction);
           let finalUserReaction = null;
           let newLikes = article.likes_count || 0;
           let newDislikes = article.dislikes_count || 0;
+          const previousLikes = newLikes;
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
+            logger_default.info(`[reactToArticle] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             if (currentReaction === reaction) {
-              await context.query.ArticleReaction.deleteOne({
+              logger_default.info(`[reactToArticle] Removing reaction: reactionId=${existingReaction[0].id}`);
+              await context.sudo().query.ArticleReaction.deleteOne({
                 where: { id: existingReaction[0].id }
               });
               finalUserReaction = null;
@@ -1928,7 +2632,8 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
                 newDislikes = Math.max(0, newDislikes - 1);
               }
             } else {
-              await context.query.ArticleReaction.updateOne({
+              logger_default.info(`[reactToArticle] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
+              await context.sudo().query.ArticleReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction }
               });
@@ -1942,6 +2647,7 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
               }
             }
           } else {
+            logger_default.info(`[reactToArticle] Creating new reaction: articleId=${articleId}, userId=${userId}, reaction=${reaction}`);
             await context.query.ArticleReaction.createOne({
               data: {
                 article: { connect: { id: articleId } },
@@ -1956,62 +2662,137 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
               newDislikes = newDislikes + 1;
             }
           }
-          const updatedArticle = await context.query.Article.updateOne({
+          logger_default.info(`[reactToArticle] New counts: likes=${newLikes}, dislikes=${newDislikes}`);
+          logger_default.info(`[reactToArticle] Updating article counts: articleId=${articleId}`);
+          await context.sudo().query.Article.updateOne({
             where: { id: articleId },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes
             },
-            query: `
-              id
-              title
-              content
-              excerpt
-              author {
-                id
-                username
-                avatar
-              }
-              previewImage
-              tags
-              difficulty
-              likes_count
-              dislikes_count
-              views
-              publishedAt
-              createdAt
-              updatedAt
-              userReaction
-            `
+            query: "id"
+            // Минимальный запрос для обновления
           });
-          logger_default.info(`Article reaction: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
-          return updatedArticle;
+          logger_default.info(`[reactToArticle] Article counts updated`);
+          if (reaction === "like" && finalUserReaction === "like" && article.author?.id) {
+            try {
+              const thresholds = [1, 5, 10, 50, 100, 500, 1e3];
+              const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
+              if (threshold !== null) {
+                const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
+                const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
+                const where = {
+                  user: { id: { equals: String(article.author.id) } },
+                  article: { id: { equals: articleId } },
+                  type: { equals: "article_like" }
+                };
+                if (cutoffTime) {
+                  where.createdAt = { gte: cutoffTime.toISOString() };
+                }
+                const existingNotifications = await context.sudo().query.Notification.findMany({
+                  where,
+                  query: "id metadata createdAt"
+                });
+                const hasNotificationForThreshold = existingNotifications.some(
+                  (notif) => notif.metadata?.threshold === threshold
+                );
+                if (!hasNotificationForThreshold) {
+                  await createNotification(context, {
+                    type: "article_like",
+                    userId: article.author.id,
+                    actorId: userId,
+                    articleId,
+                    metadata: {
+                      threshold,
+                      likesCount: newLikes
+                    }
+                  }, true);
+                  logger_default.info(`[reactToArticle] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
+                } else {
+                  logger_default.debug(`[reactToArticle] Notification already exists for threshold: ${threshold}`);
+                }
+              }
+            } catch (error) {
+              logger_default.error(`[reactToArticle] Failed to create like notification:`, {
+                error: error.message,
+                stack: error.stack
+              });
+            }
+          }
+          logger_default.info(`[reactToArticle] Fetching updated article: articleId=${articleId}`);
+          try {
+            const updatedArticle = await context.sudo().query.Article.findOne({
+              where: { id: articleId },
+              query: `
+                id
+                title
+                excerpt
+                previewImage
+                tags
+                difficulty
+                likes_count
+                dislikes_count
+                views
+                userReaction
+              `
+            });
+            logger_default.info(`[reactToArticle] Article fetched successfully:`, {
+              id: updatedArticle?.id,
+              title: updatedArticle?.title,
+              likes: updatedArticle?.likes_count,
+              dislikes: updatedArticle?.dislikes_count,
+              userReaction: updatedArticle?.userReaction
+            });
+            logger_default.info(`[reactToArticle] SUCCESS: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
+            return updatedArticle;
+          } catch (error) {
+            logger_default.error(`[reactToArticle] Error fetching article:`, error);
+            throw error;
+          }
         }
       }),
-      reactToComment: import_core8.graphql.field({
+      reactToComment: import_core11.graphql.field({
         type: base.object("Comment"),
         args: {
-          commentId: import_core8.graphql.arg({ type: import_core8.graphql.nonNull(import_core8.graphql.ID) }),
-          reaction: import_core8.graphql.arg({
-            type: import_core8.graphql.nonNull(ReactionType)
+          commentId: import_core11.graphql.arg({ type: import_core11.graphql.nonNull(import_core11.graphql.ID) }),
+          reaction: import_core11.graphql.arg({
+            type: import_core11.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { commentId, reaction }, context) {
+          logger_default.info(`[reactToComment] START: commentId=${commentId}, reaction=${reaction}`);
           const session2 = context.session;
           if (!session2?.itemId) {
+            logger_default.error(`[reactToComment] Authentication required`);
             throw new Error("Authentication required");
           }
           const userId = session2.itemId;
+          logger_default.info(`[reactToComment] userId=${userId}`);
           if (reaction !== "like" && reaction !== "dislike") {
+            logger_default.error(`[reactToComment] Invalid reaction type: ${reaction}`);
             throw new Error("Invalid reaction type");
           }
+          logger_default.info(`[reactToComment] Finding comment: commentId=${commentId}`);
           const comment = await context.query.Comment.findOne({
             where: { id: commentId },
-            query: "id likes_count dislikes_count"
+            query: `
+              id
+              likes_count
+              dislikes_count
+              author {
+                id
+              }
+              article {
+                id
+              }
+            `
           });
+          logger_default.info(`[reactToComment] Comment found:`, { id: comment?.id, likes: comment?.likes_count, dislikes: comment?.dislikes_count });
           if (!comment) {
+            logger_default.error(`[reactToComment] Comment not found: commentId=${commentId}`);
             throw new Error("Comment not found");
           }
+          logger_default.info(`[reactToComment] Checking existing reaction: commentId=${commentId}, userId=${userId}`);
           const existingReaction = await context.query.CommentReaction.findMany({
             where: {
               comment: { id: { equals: commentId } },
@@ -2020,13 +2801,17 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
             query: "id reaction",
             take: 1
           });
+          logger_default.info(`[reactToComment] Existing reaction:`, existingReaction);
           let finalUserReaction = null;
           let newLikes = comment.likes_count || 0;
           let newDislikes = comment.dislikes_count || 0;
+          const previousLikes = newLikes;
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
+            logger_default.info(`[reactToComment] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             if (currentReaction === reaction) {
-              await context.query.CommentReaction.deleteOne({
+              logger_default.info(`[reactToComment] Removing reaction: reactionId=${existingReaction[0].id}`);
+              await context.sudo().query.CommentReaction.deleteOne({
                 where: { id: existingReaction[0].id }
               });
               finalUserReaction = null;
@@ -2036,7 +2821,8 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
                 newDislikes = Math.max(0, newDislikes - 1);
               }
             } else {
-              await context.query.CommentReaction.updateOne({
+              logger_default.info(`[reactToComment] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
+              await context.sudo().query.CommentReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction }
               });
@@ -2050,6 +2836,7 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
               }
             }
           } else {
+            logger_default.info(`[reactToComment] Creating new reaction: commentId=${commentId}, userId=${userId}, reaction=${reaction}`);
             await context.query.CommentReaction.createOne({
               data: {
                 comment: { connect: { id: commentId } },
@@ -2064,15 +2851,73 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
               newDislikes = newDislikes + 1;
             }
           }
-          const updatedComment = await context.query.Comment.updateOne({
+          logger_default.info(`[reactToComment] New counts: likes=${newLikes}, dislikes=${newDislikes}`);
+          logger_default.info(`[reactToComment] Updating comment counts: commentId=${commentId}`);
+          await context.sudo().query.Comment.updateOne({
             where: { id: commentId },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes
             },
+            query: "id"
+            // Минимальный запрос для обновления
+          });
+          logger_default.info(`[reactToComment] Comment counts updated`);
+          if (reaction === "like" && finalUserReaction === "like" && comment.author?.id) {
+            try {
+              const thresholds = [1, 3, 5, 10, 25];
+              const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
+              if (threshold !== null) {
+                const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
+                const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
+                const where = {
+                  user: { id: { equals: String(comment.author.id) } },
+                  comment: { id: { equals: commentId } },
+                  type: { equals: "comment_like" }
+                };
+                if (cutoffTime) {
+                  where.createdAt = { gte: cutoffTime.toISOString() };
+                }
+                const existingNotifications = await context.sudo().query.Notification.findMany({
+                  where,
+                  query: "id metadata createdAt"
+                });
+                const hasNotificationForThreshold = existingNotifications.some(
+                  (notif) => notif.metadata?.threshold === threshold
+                );
+                if (!hasNotificationForThreshold) {
+                  await createNotification(context, {
+                    type: "comment_like",
+                    userId: comment.author.id,
+                    actorId: userId,
+                    articleId: comment.article?.id,
+                    commentId,
+                    metadata: {
+                      threshold,
+                      likesCount: newLikes
+                    }
+                  }, true);
+                  logger_default.info(`[reactToComment] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
+                } else {
+                  logger_default.debug(`[reactToComment] Notification already exists for threshold: ${threshold}`);
+                }
+              }
+            } catch (error) {
+              logger_default.error(`[reactToComment] Failed to create like notification:`, {
+                error: error.message,
+                stack: error.stack
+              });
+            }
+          }
+          logger_default.info(`[reactToComment] Fetching updated comment: commentId=${commentId}`);
+          let updatedComment = await context.sudo().query.Comment.findOne({
+            where: { id: commentId },
             query: `
               id
               text
+              likes_count
+              dislikes_count
+              userReaction
               author {
                 id
                 username
@@ -2084,14 +2929,19 @@ var extendGraphqlSchema = import_core8.graphql.extend((base) => {
               article {
                 id
               }
-              likes_count
-              dislikes_count
-              createdAt
-              updatedAt
-              userReaction
             `
           });
-          logger_default.info(`Comment reaction: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
+          logger_default.info(`[reactToComment] Comment fetched successfully:`, {
+            id: updatedComment?.id,
+            text: updatedComment?.text,
+            author: updatedComment?.author?.id,
+            parent: updatedComment?.parent?.id,
+            article: updatedComment?.article?.id,
+            likes: updatedComment?.likes_count,
+            dislikes: updatedComment?.dislikes_count,
+            userReaction: updatedComment?.userReaction
+          });
+          logger_default.info(`[reactToComment] SUCCESS: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
           return updatedComment;
         }
       })
@@ -2116,7 +2966,7 @@ if (!sessionSecret || sessionSecret.length < 32) {
   logger_default.info("\u2705 SESSION_SECRET is secure (length: " + sessionSecret.length + " characters)");
 }
 var keystone_default = withAuth(
-  (0, import_core9.config)({
+  (0, import_core12.config)({
     db: {
       provider: "sqlite",
       url: databaseURL,

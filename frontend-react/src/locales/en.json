@@ -1241,7 +1241,7 @@
     }
   },
   "article": {
-    "readTime": "min read",
+    "readTime": "min",
     "noComments": "No comments yet",
     "beFirst": "Be the first to comment",
     "writeComment": "Write a comment...",
@@ -1397,7 +1397,8 @@
     "shareTitleDefault": "Check out this article on Aetheris",
     "thisArticle": "this article",
     "info": "Info",
-    "replyTo": "Reply to @{username}"
+    "replyTo": "Reply to @{username}",
+    "viewProfile": "View Profile"
   },
   "createArticle": {
     "title": "Create Article",
@@ -1413,15 +1414,15 @@
     "content": "Content",
     "contentPlaceholder": "Write your article...",
     "tags": "Article tags",
-    "tagsDescription": "Select up to 5 tags for your article",
+    "tagsDescription": "Select up to {max} tags for your article",
     "tagsPlaceholder": "Enter tags (separated by commas)...",
     "tagsCounter": "Selected: {count}/{max}",
     "difficulty": "Article difficulty",
     "difficultyDescription": "Select the difficulty level of your article",
     "difficultyOptions": {
-      "easy": "Easy",
-      "medium": "Medium",
-      "hard": "Hard"
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
     },
     "category": "Article category",
     "categoryDescription": "Select a category for your article",
@@ -1481,6 +1482,18 @@
     "unableToLoadDraftDescription": "We could not open this draft. It may have been removed.",
     "missingInformation": "Missing information",
     "missingInformationDescription": "Add a title and the main content before publishing.",
+    "titleRequired": "Title required",
+    "titleRequiredDescription": "Please add a title for your article.",
+    "contentRequired": "Content required",
+    "contentRequiredDescription": "Please add content to your article.",
+    "excerptRequired": "Excerpt required",
+    "excerptRequiredDescription": "Please add a description for your article.",
+    "maxTagsReached": "Maximum tags reached",
+    "maxTagsReachedDescription": "You can add up to {max} tags.",
+    "tagTooLong": "Tag too long",
+    "tagTooLongDescription": "Tag must be no more than {max} characters.",
+    "saveCooldown": "Please wait",
+    "saveCooldownDescription": "Please wait {seconds} second(s) before saving again.",
     "articlePublished": "Article published!",
     "articlePublishedDescription": "Your article is now live.",
     "publicationFailed": "Publication failed",
@@ -1722,7 +1735,7 @@
     "settings": "Settings",
     "drafts": "Drafts",
     "notifications": "Notifications",
-    "readingList": "Reading list",
+    "readingList": "Favorites",
     "friends": "Friends",
     "pageTitle": "Profile",
     "signOut": "Sign out",
@@ -2102,7 +2115,18 @@
     "browseArticles": "Browse articles",
     "view": "View",
     "markAsRead": "Mark notification as read",
-    "alreadyRead": "Notification already read"
+    "alreadyRead": "Notification already read",
+    "messages": {
+      "comment": "{actor} commented on your article",
+      "commentReply": "{actor} replied to your comment",
+      "follow": "{actor} started following you",
+      "articlePublished": "{actor} published a new article",
+      "articleLikeFirst": "{actor} liked your article",
+      "articleLikeThreshold": "Your article reached {threshold} likes",
+      "commentLikeFirst": "{actor} liked your comment",
+      "commentLikeThreshold": "Your comment reached {threshold} likes",
+      "unknown": "New notification"
+    }
   },
   "accountSheet": {
     "openMenu": "Open account menu",
@@ -2127,7 +2151,7 @@
     "achievements": "Achievements",
     "settings": "Settings",
     "keepExploring": "Keep exploring",
-    "readingList": "Reading list",
+    "readingList": "Favorites",
     "drafts": "Drafts",
     "helpCenter": "Help center",
     "feedback": "Feedback",
@@ -2138,7 +2162,7 @@
     "signIn": "Sign In"
   },
   "readingList": {
-    "title": "Reading list",
+    "title": "Favorites",
     "back": "Back",
     "noSavedArticles": "No saved articles yet",
     "noSavedArticlesDescription": "Use the \"Read later\" button on any article to add it to your personal reading queue.",
@@ -2150,7 +2174,13 @@
     "savedOn": "Saved on {date}",
     "continueReading": "Continue reading",
     "remove": "Remove",
-    "minRead": "{minutes} min read"
+    "minRead": "{minutes} min read",
+    "signInRequired": "Sign in required",
+    "signInDescription": "Sign in to save articles to favorites and sync them across devices.",
+    "removedFromFavorites": "Article removed from favorites",
+    "removeError": "Failed to remove article from favorites",
+    "allRemoved": "All articles removed from favorites",
+    "clearError": "Failed to clear favorites"
   },
   "feedback": {
     "title": "Feedback",

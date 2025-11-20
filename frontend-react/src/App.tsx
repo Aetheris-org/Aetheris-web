@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { setupCachePersistence } from '@/lib/queryCache'
 import { Toaster } from '@/components/ui/toaster'
 import { SiteFooter } from '@/components/SiteFooter'
 import HomePage from '@/pages/HomePage'
@@ -39,6 +40,7 @@ import { useI18nStore } from '@/stores/i18nStore'
  * - Кэширование для снижения нагрузки на сервер
  * - Retry логика для отказоустойчивости
  * - Stale time для баланса между актуальностью и производительностью
+ * - Персистентное кэширование в localStorage
  */
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +78,11 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+// Настраиваем персистентное кэширование
+if (typeof window !== 'undefined') {
+  setupCachePersistence(queryClient)
+}
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initialize)

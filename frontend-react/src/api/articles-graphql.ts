@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 import { slateToHtml } from '@/lib/slate-to-html';
 import { slateToProseMirror } from '@/lib/slate-to-prosemirror';
 
-function transformArticle(raw: any): Article {
+export function transformArticle(raw: any): Article {
   const numericId = typeof raw.id === 'number' ? raw.id : Number.parseInt(raw.id, 10) || 0;
 
       // KeystoneJS document field возвращает объект с полем `document` в формате Slate
@@ -126,6 +126,17 @@ function transformArticle(raw: any): Article {
     }
   }
 
+  // Логируем данные автора для отладки
+  if (import.meta.env.DEV && (!raw.author || !raw.author.username)) {
+    logger.warn('[transformArticle] Article without author or username:', {
+      articleId: numericId,
+      hasAuthor: !!raw.author,
+      authorId: raw.author?.id,
+      authorUsername: raw.author?.username,
+      rawAuthor: raw.author,
+    });
+  }
+
   return {
     id: String(numericId),
     title: raw.title || '',
@@ -141,7 +152,7 @@ function transformArticle(raw: any): Article {
     tags: Array.isArray(raw.tags) ? raw.tags : [],
     previewImage: raw.previewImage || undefined,
     status: raw.publishedAt ? 'published' : 'draft',
-    difficulty: raw.difficulty || 'medium',
+    difficulty: raw.difficulty || 'intermediate',
     likes: raw.likes_count || 0,
     dislikes: raw.dislikes_count || 0,
     commentsCount: raw.comments?.length || 0,
@@ -159,7 +170,7 @@ export interface ArticlesResponse {
   total: number;
 }
 
-export type ArticleDifficulty = 'easy' | 'medium' | 'hard';
+export type ArticleDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type ArticleSortOption = 'newest' | 'oldest' | 'popular';
 
 /**
@@ -457,24 +468,13 @@ export async function reactArticle(
       reactToArticle(articleId: $articleId, reaction: $reaction) {
         id
         title
-        content {
-          document
-        }
         excerpt
-        author {
-          id
-          username
-          avatar
-        }
         previewImage
         tags
         difficulty
         likes_count
         dislikes_count
         views
-        publishedAt
-        createdAt
-        updatedAt
         userReaction
       }
     }
@@ -557,7 +557,7 @@ export async function createArticle(data: {
         content: data.content,
         excerpt: data.excerpt,
         tags: data.tags,
-        difficulty: data.difficulty || 'medium',
+        difficulty: data.difficulty || 'intermediate',
         previewImage: data.previewImage,
         publishedAt: data.publishedAt || null,
       },

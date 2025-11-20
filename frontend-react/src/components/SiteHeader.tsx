@@ -56,11 +56,11 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
 
   return (
     <header className={headerClasses}>
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
-            className="text-xl font-semibold tracking-tight"
+            className="text-lg sm:text-xl font-semibold tracking-tight shrink-0"
             onClick={() => navigate('/')}
             aria-label="Go to Aetheris home"
           >
@@ -73,11 +73,11 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
                 aria-label="Select section"
               >
-                <ActiveIcon className="h-4 w-4" />
-                {activeDestination?.label ?? t('header.explore')}
+                <ActiveIcon className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{activeDestination?.label ?? t('header.explore')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-72" align="start">
@@ -115,25 +115,26 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {isLandingPage && (
             <Button
               size="sm"
               variant="ghost"
               onClick={() => navigate('/pricing')}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              Pricing
+              <span className="hidden sm:inline">Pricing</span>
+              <span className="sm:hidden">$</span>
             </Button>
           )}
           {showCreateButton && (
             <Button
               size="sm"
               onClick={() => navigate('/create')}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
             >
-              <PenSquare className="h-4 w-4" />
-              {t('header.create')}
+              <PenSquare className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">{t('header.create')}</span>
             </Button>
           )}
           <ThemeToggle />

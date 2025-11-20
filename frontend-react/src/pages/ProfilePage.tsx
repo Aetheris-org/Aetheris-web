@@ -25,7 +25,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Award,
@@ -59,10 +59,14 @@ import {
   Flag,
   Copy,
   Check,
+  UserPlus,
+  UserMinus,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { getUserProfile } from '@/api/profile'
+import { getUserProfile } from '@/api/profile-graphql'
+import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow-graphql'
 import type { UserProfile } from '@/types/profile'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -85,16 +89,12 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
-  mockProfileComments,
-  mockProfileBookmarks,
   mockAudienceInsights,
   mockContentMix,
   mockActivityFeed,
   mockCreatorGoals,
   mockQuickActions,
   mockPinnedCollections,
-  type MockProfileComment,
-  type MockProfileBookmark,
   type MockAudienceInsight,
   type MockContentMix,
   type MockActivityItem,
@@ -216,7 +216,7 @@ function AchievementsCard({ achievements }: { achievements: Array<{ id: string; 
 }
 
 // Компонент комментариев
-function CommentsTab({ comments, onArticleClick }: { comments: MockProfileComment[]; onArticleClick: (id: string) => void }) {
+function CommentsTab({ comments, onArticleClick }: { comments: Array<{ id: string; text: string; createdAt: string; article: { id: string; title: string } }>; onArticleClick: (id: string) => void }) {
   const { t } = useTranslation()
   if (comments.length === 0) {
   return (
@@ -237,27 +237,21 @@ function CommentsTab({ comments, onArticleClick }: { comments: MockProfileCommen
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3">
           <button
-                  onClick={() => onArticleClick(comment.articleId)}
+                  onClick={() => onArticleClick(comment.article.id)}
                   className="text-left group"
                 >
                   <p className="text-sm font-semibold text-primary group-hover:underline">
-                    {comment.articleTitle}
+                    {comment.article.title}
                   </p>
           </button>
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {new Date(comment.publishedAt).toLocaleDateString('ru-RU', {
+                  {new Date(comment.createdAt).toLocaleDateString('ru-RU', {
                     month: 'short',
                     day: 'numeric',
                   })}
                 </span>
         </div>
-              <p className="text-sm text-foreground leading-relaxed">{comment.excerpt}</p>
-              {comment.likes !== undefined && comment.likes > 0 && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Heart className="h-3.5 w-3.5" />
-                  <span>{t('profile.likes', { count: comment.likes })}</span>
-      </div>
-                  )}
+              <p className="text-sm text-foreground leading-relaxed line-clamp-3">{comment.text}</p>
                   </div>
       </CardContent>
     </Card>
@@ -271,7 +265,7 @@ function BookmarksTab({
   bookmarks,
   onArticleClick,
 }: {
-  bookmarks: MockProfileBookmark[]
+  bookmarks: Array<{ id: string; createdAt: string; article: { id: string; title: string; excerpt?: string | null; previewImage?: string | null } }>
   onArticleClick: (id: string) => void
 }) {
   const { t } = useTranslation()
@@ -292,12 +286,14 @@ function BookmarksTab({
         <Card
           key={bookmark.id}
           className="hover:border-primary/40 transition-colors cursor-pointer"
-          onClick={() => onArticleClick(bookmark.articleId)}
+          onClick={() => onArticleClick(bookmark.article.id)}
         >
           <CardContent className="p-5">
               <div className="space-y-2">
-              <p className="text-sm font-semibold line-clamp-2">{bookmark.title}</p>
-              <p className="text-xs text-muted-foreground line-clamp-2">{bookmark.description}</p>
+              <p className="text-sm font-semibold line-clamp-2">{bookmark.article.title}</p>
+              {bookmark.article.excerpt && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{bookmark.article.excerpt}</p>
+              )}
                 </div>
             </CardContent>
           </Card>
@@ -567,6 +563,7 @@ export default function ProfilePage() {
   const { user: currentUser } = useAuthStore()
   const { toast } = useToast()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
 
   const routeProfileId = id ? Number(id) : undefined
@@ -601,6 +598,59 @@ export default function ProfilePage() {
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
   const isOwnProfile = profile?.user.id === currentUser?.id
+
+  // Проверяем статус подписки
+  const { data: followStatus } = useQuery({
+    queryKey: ['follow-status', profileId, currentUser?.id],
+    queryFn: () => {
+      if (!currentUser?.id || !profileId || isOwnProfile) return null
+      return checkFollowStatus(profileId, currentUser.id)
+    },
+    enabled: !!currentUser?.id && !!profileId && !isOwnProfile,
+  })
+
+  const followMutation = useMutation({
+    mutationFn: () => followUser(profileId!),
+    onSuccess: () => {
+      toast({
+        title: t('profile.followed') || 'Подписка оформлена',
+        description: t('profile.followedDescription') || 'Вы подписались на этого пользователя',
+      })
+      // Обновляем статус подписки
+      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to follow user:', error)
+      toast({
+        title: t('common.error') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('profile.followError') || 'Не удалось подписаться',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const unfollowMutation = useMutation({
+    mutationFn: () => {
+      if (!followStatus?.id) throw new Error('Follow ID not found')
+      return unfollowUser(followStatus.id)
+    },
+    onSuccess: () => {
+      toast({
+        title: t('profile.unfollowed') || 'Отписка оформлена',
+        description: t('profile.unfollowedDescription') || 'Вы отписались от этого пользователя',
+      })
+      // Обновляем статус подписки
+      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
+    },
+    onError: (error: any) => {
+      logger.error('Failed to unfollow user:', error)
+      toast({
+        title: t('common.error') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('profile.unfollowError') || 'Не удалось отписаться',
+        variant: 'destructive',
+      })
+    },
+  })
 
   // Функция для копирования ссылки на профиль
   const handleCopyProfileLink = async () => {
@@ -655,9 +705,9 @@ export default function ProfilePage() {
     })
   }
 
-  // Используем мок-данные для комментариев и закладок
-  const comments = mockProfileComments
-  const bookmarks = mockProfileBookmarks
+  // Используем реальные данные из профиля
+  const comments = profile?.comments || []
+  const bookmarks = profile?.bookmarks || []
 
   // Используем мок-данные для восстановленных блоков
   const audienceInsights = isOwnProfile ? mockAudienceInsights : []
@@ -908,11 +958,6 @@ export default function ProfilePage() {
                   <MessageSquare className="h-4 w-4 shrink-0" />
                   <span className="font-semibold text-foreground">{profile.stats.totalComments}</span>
                 </div>
-                <Separator orientation="vertical" className="h-4" />
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Eye className="h-4 w-4 shrink-0" />
-                  <span className="font-semibold text-foreground">{profile.stats.draftArticles}</span>
-                    </div>
                   </div>
 
               {/* Теги */}
@@ -942,7 +987,7 @@ export default function ProfilePage() {
                       <ArrowLeft className="h-4 w-4" />
                   {t('profile.openArticles')}
                     </Button>
-                {isOwnProfile && (
+                {isOwnProfile ? (
                     <Button
                     size="default"
                     variant="default"
@@ -951,6 +996,32 @@ export default function ProfilePage() {
                   >
                           <Settings className="h-4 w-4" />
                     {t('profile.settings')}
+                  </Button>
+                ) : (
+                  <Button
+                    size="default"
+                    variant={followStatus ? 'outline' : 'default'}
+                    className="gap-2 w-full"
+                    onClick={() => {
+                      if (followStatus) {
+                        unfollowMutation.mutate()
+                      } else {
+                        followMutation.mutate()
+                      }
+                    }}
+                    disabled={followMutation.isPending || unfollowMutation.isPending}
+                  >
+                    {followStatus ? (
+                      <>
+                        <UserMinus className="h-4 w-4" />
+                        {t('profile.unfollow') || 'Отписаться'}
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4" />
+                        {t('profile.follow') || 'Подписаться'}
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
@@ -1014,12 +1085,6 @@ export default function ProfilePage() {
                     <MessageSquare className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.totalComments}</span>
                     <span className="text-muted-foreground/70">{t('profile.commentsCount')}</span>
-                  </div>
-                  <Separator orientation="vertical" className="h-4" />
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Eye className="h-4 w-4 shrink-0" />
-                    <span className="font-medium">{profile.stats.draftArticles}</span>
-                    <span className="text-muted-foreground/70">{t('profile.draftsCount')}</span>
                   </div>
                 </div>
 
@@ -1091,7 +1156,7 @@ export default function ProfilePage() {
                     <ArrowLeft className="h-4 w-4" />
                     {t('profile.openArticles')}
                   </Button>
-                  {isOwnProfile && (
+                  {isOwnProfile ? (
                     <Button
                       size="sm"
                       variant="default"
@@ -1101,7 +1166,33 @@ export default function ProfilePage() {
                       <Settings className="h-4 w-4" />
                       {t('profile.settings')}
                     </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant={followStatus ? 'outline' : 'default'}
+                      className="gap-2 whitespace-nowrap"
+                      onClick={() => {
+                        if (followStatus) {
+                          unfollowMutation.mutate()
+                        } else {
+                          followMutation.mutate()
+                        }
+                      }}
+                      disabled={followMutation.isPending || unfollowMutation.isPending}
+                    >
+                      {followStatus ? (
+                        <>
+                          <UserMinus className="h-4 w-4" />
+                          {t('profile.unfollow') || 'Отписаться'}
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4" />
+                          {t('profile.follow') || 'Подписаться'}
+                        </>
                       )}
+                    </Button>
+                  )}
                     </div>
               </div>
                     </div>

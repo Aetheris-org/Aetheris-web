@@ -60,15 +60,40 @@ function transformComment(raw: any): Comment {
     userReaction = null;
   }
 
+  // Обработка author - проверяем наличие и логируем если отсутствует
+  let authorId: number | string = 0;
+  let authorUsername: string = 'Anonymous';
+  let authorAvatar: string | undefined = undefined;
+
+  if (raw.author) {
+    if (typeof raw.author === 'object') {
+      authorId = raw.author.id || 0;
+      authorUsername = raw.author.username || 'Anonymous';
+      authorAvatar = raw.author.avatar || undefined;
+    } else {
+      // Если author это просто ID (не должно быть, но на всякий случай)
+      authorId = raw.author;
+    }
+  } else {
+    // Логируем отсутствие автора только в dev режиме
+    if (import.meta.env.DEV) {
+      logger.warn('[transformComment] Comment without author:', {
+        id: numericId,
+        rawAuthor: raw.author,
+        rawData: raw,
+      });
+    }
+  }
+
   return {
     id: String(numericId),
     text: raw.text || '',
     createdAt: raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updatedAt || undefined,
     author: {
-      id: raw.author?.id || 0,
-      username: raw.author?.username || 'Anonymous',
-      avatar: raw.author?.avatar || undefined,
+      id: authorId,
+      username: authorUsername,
+      avatar: authorAvatar,
     },
     parentId,
     likes: raw.likes_count || 0,
@@ -169,6 +194,7 @@ export async function createComment(data: {
         }
         likes_count
         dislikes_count
+        userReaction
         createdAt
         updatedAt
       }
@@ -221,6 +247,7 @@ export async function updateComment(
         }
         likes_count
         dislikes_count
+        userReaction
         createdAt
         updatedAt
       }
@@ -273,21 +300,8 @@ export async function reactToComment(
       reactToComment(commentId: $commentId, reaction: $reaction) {
         id
         text
-        author {
-          id
-          username
-          avatar
-        }
-        parent {
-          id
-        }
-        article {
-          id
-        }
         likes_count
         dislikes_count
-        createdAt
-        updatedAt
         userReaction
       }
     }

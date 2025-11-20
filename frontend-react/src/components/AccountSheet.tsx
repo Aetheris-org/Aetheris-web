@@ -27,12 +27,13 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/authStore'
-import { useNotificationsStore, selectUnreadCount } from '@/stores/notificationsStore'
 import { selectReadingListCount, useReadingListStore } from '@/stores/readingListStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { FriendsSheet } from '@/components/FriendsSheet'
 import { StatsSheet } from '@/components/StatsSheet'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useQuery } from '@tanstack/react-query'
+import { getUnreadCount } from '@/api/notifications-graphql'
 
 export function AccountSheet() {
   const { t } = useTranslation()
@@ -44,7 +45,14 @@ export function AccountSheet() {
     user: state.user,
     logout: state.logout,
   }))
-  const unreadNotifications = useNotificationsStore(selectUnreadCount)
+  const { data: unreadNotifications = 0 } = useQuery({
+    queryKey: ['notifications', 'unreadCount'],
+    queryFn: getUnreadCount,
+    enabled: !!user, // Запрашиваем только если пользователь авторизован
+    staleTime: 1 * 60 * 1000, // 1 минута - счетчик обновляется чаще
+    refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
+    refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
+  })
   const readingListCount = useReadingListStore(selectReadingListCount)
   const { level, xpIntoLevel, xpForLevel, streakDays } = useGamificationStore((state) => ({
     level: state.level,
@@ -91,8 +99,10 @@ export function AccountSheet() {
             navigate('/auth')
           }
         }}
+        className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
       >
-        {t('accountSheet.signIn')}
+        <span className="hidden sm:inline">{t('accountSheet.signIn')}</span>
+        <span className="sm:hidden">{t('accountSheet.signIn')?.slice(0, 3) || 'Вход'}</span>
       </Button>
     )
   }
@@ -101,7 +111,7 @@ export function AccountSheet() {
     <Sheet>
       <SheetTrigger asChild>
         <button
-          className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted transition hover:border-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted transition hover:border-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shrink-0"
           aria-label={t('accountSheet.openMenu')}
         >
           {user.avatar ? (
@@ -111,7 +121,7 @@ export function AccountSheet() {
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-sm font-semibold text-primary">{initials}</span>
+            <span className="text-xs sm:text-sm font-semibold text-primary">{initials}</span>
           )}
         </button>
       </SheetTrigger>

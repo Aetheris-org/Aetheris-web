@@ -22,6 +22,14 @@ type User {
   articleReactionsCount(where: ArticleReactionWhereInput! = {}): Int
   commentReactions(where: CommentReactionWhereInput! = {}, orderBy: [CommentReactionOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: CommentReactionWhereUniqueInput): [CommentReaction!]
   commentReactionsCount(where: CommentReactionWhereInput! = {}): Int
+  bookmarks(where: BookmarkWhereInput! = {}, orderBy: [BookmarkOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: BookmarkWhereUniqueInput): [Bookmark!]
+  bookmarksCount(where: BookmarkWhereInput! = {}): Int
+  following(where: FollowWhereInput! = {}, orderBy: [FollowOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: FollowWhereUniqueInput): [Follow!]
+  followingCount(where: FollowWhereInput! = {}): Int
+  followers(where: FollowWhereInput! = {}, orderBy: [FollowOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: FollowWhereUniqueInput): [Follow!]
+  followersCount(where: FollowWhereInput! = {}): Int
+  notifications(where: NotificationWhereInput! = {}, orderBy: [NotificationOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: NotificationWhereUniqueInput): [Notification!]
+  notificationsCount(where: NotificationWhereInput! = {}): Int
   createdAt: DateTime
   updatedAt: DateTime
   passwordResetToken: PasswordState
@@ -64,6 +72,10 @@ input UserWhereInput {
   comments: CommentManyRelationFilter
   articleReactions: ArticleReactionManyRelationFilter
   commentReactions: CommentReactionManyRelationFilter
+  bookmarks: BookmarkManyRelationFilter
+  following: FollowManyRelationFilter
+  followers: FollowManyRelationFilter
+  notifications: NotificationManyRelationFilter
   createdAt: DateTimeNullableFilter
   updatedAt: DateTimeNullableFilter
   passwordResetToken: PasswordFilter
@@ -160,6 +172,24 @@ input CommentReactionManyRelationFilter {
   none: CommentReactionWhereInput
 }
 
+input BookmarkManyRelationFilter {
+  every: BookmarkWhereInput
+  some: BookmarkWhereInput
+  none: BookmarkWhereInput
+}
+
+input FollowManyRelationFilter {
+  every: FollowWhereInput
+  some: FollowWhereInput
+  none: FollowWhereInput
+}
+
+input NotificationManyRelationFilter {
+  every: NotificationWhereInput
+  some: NotificationWhereInput
+  none: NotificationWhereInput
+}
+
 input DateTimeNullableFilter {
   equals: DateTime
   in: [DateTime!]
@@ -212,6 +242,10 @@ input UserUpdateInput {
   comments: CommentRelateToManyForUpdateInput
   articleReactions: ArticleReactionRelateToManyForUpdateInput
   commentReactions: CommentReactionRelateToManyForUpdateInput
+  bookmarks: BookmarkRelateToManyForUpdateInput
+  following: FollowRelateToManyForUpdateInput
+  followers: FollowRelateToManyForUpdateInput
+  notifications: NotificationRelateToManyForUpdateInput
   createdAt: DateTime
   updatedAt: DateTime
   passwordResetToken: String
@@ -250,6 +284,27 @@ input CommentReactionRelateToManyForUpdateInput {
   connect: [CommentReactionWhereUniqueInput!]
 }
 
+input BookmarkRelateToManyForUpdateInput {
+  disconnect: [BookmarkWhereUniqueInput!]
+  set: [BookmarkWhereUniqueInput!]
+  create: [BookmarkCreateInput!]
+  connect: [BookmarkWhereUniqueInput!]
+}
+
+input FollowRelateToManyForUpdateInput {
+  disconnect: [FollowWhereUniqueInput!]
+  set: [FollowWhereUniqueInput!]
+  create: [FollowCreateInput!]
+  connect: [FollowWhereUniqueInput!]
+}
+
+input NotificationRelateToManyForUpdateInput {
+  disconnect: [NotificationWhereUniqueInput!]
+  set: [NotificationWhereUniqueInput!]
+  create: [NotificationCreateInput!]
+  connect: [NotificationWhereUniqueInput!]
+}
+
 input UserUpdateArgs {
   where: UserWhereUniqueInput!
   data: UserUpdateInput!
@@ -271,6 +326,10 @@ input UserCreateInput {
   comments: CommentRelateToManyForCreateInput
   articleReactions: ArticleReactionRelateToManyForCreateInput
   commentReactions: CommentReactionRelateToManyForCreateInput
+  bookmarks: BookmarkRelateToManyForCreateInput
+  following: FollowRelateToManyForCreateInput
+  followers: FollowRelateToManyForCreateInput
+  notifications: NotificationRelateToManyForCreateInput
   createdAt: DateTime
   updatedAt: DateTime
   passwordResetToken: String
@@ -301,6 +360,21 @@ input CommentReactionRelateToManyForCreateInput {
   connect: [CommentReactionWhereUniqueInput!]
 }
 
+input BookmarkRelateToManyForCreateInput {
+  create: [BookmarkCreateInput!]
+  connect: [BookmarkWhereUniqueInput!]
+}
+
+input FollowRelateToManyForCreateInput {
+  create: [FollowCreateInput!]
+  connect: [FollowWhereUniqueInput!]
+}
+
+input NotificationRelateToManyForCreateInput {
+  create: [NotificationCreateInput!]
+  connect: [NotificationWhereUniqueInput!]
+}
+
 type Article {
   id: ID!
   title: String
@@ -317,6 +391,8 @@ type Article {
   commentsCount(where: CommentWhereInput! = {}): Int
   reactions(where: ArticleReactionWhereInput! = {}, orderBy: [ArticleReactionOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: ArticleReactionWhereUniqueInput): [ArticleReaction!]
   reactionsCount(where: ArticleReactionWhereInput! = {}): Int
+  bookmarks(where: BookmarkWhereInput! = {}, orderBy: [BookmarkOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: BookmarkWhereUniqueInput): [Bookmark!]
+  bookmarksCount(where: BookmarkWhereInput! = {}): Int
   userReaction: String
   publishedAt: DateTime
   createdAt: DateTime
@@ -346,6 +422,7 @@ input ArticleWhereInput {
   views: IntNullableFilter
   comments: CommentManyRelationFilter
   reactions: ArticleReactionManyRelationFilter
+  bookmarks: BookmarkManyRelationFilter
   publishedAt: DateTimeNullableFilter
   createdAt: DateTimeNullableFilter
   updatedAt: DateTimeNullableFilter
@@ -389,6 +466,7 @@ input ArticleUpdateInput {
   views: Int
   comments: CommentRelateToManyForUpdateInput
   reactions: ArticleReactionRelateToManyForUpdateInput
+  bookmarks: BookmarkRelateToManyForUpdateInput
   publishedAt: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -418,6 +496,7 @@ input ArticleCreateInput {
   views: Int
   comments: CommentRelateToManyForCreateInput
   reactions: ArticleReactionRelateToManyForCreateInput
+  bookmarks: BookmarkRelateToManyForCreateInput
   publishedAt: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -619,6 +698,161 @@ input CommentReactionCreateInput {
   createdAt: DateTime
 }
 
+type Bookmark {
+  id: ID!
+  user: User
+  article: Article
+  createdAt: DateTime
+}
+
+input BookmarkWhereUniqueInput {
+  id: ID
+}
+
+input BookmarkWhereInput {
+  AND: [BookmarkWhereInput!]
+  OR: [BookmarkWhereInput!]
+  NOT: [BookmarkWhereInput!]
+  id: IDFilter
+  user: UserWhereInput
+  article: ArticleWhereInput
+  createdAt: DateTimeNullableFilter
+}
+
+input BookmarkOrderByInput {
+  id: OrderDirection
+  createdAt: OrderDirection
+}
+
+input BookmarkUpdateInput {
+  user: UserRelateToOneForUpdateInput
+  article: ArticleRelateToOneForUpdateInput
+  createdAt: DateTime
+}
+
+input BookmarkUpdateArgs {
+  where: BookmarkWhereUniqueInput!
+  data: BookmarkUpdateInput!
+}
+
+input BookmarkCreateInput {
+  user: UserRelateToOneForCreateInput
+  article: ArticleRelateToOneForCreateInput
+  createdAt: DateTime
+}
+
+type Follow {
+  id: ID!
+  follower: User
+  following: User
+  createdAt: DateTime
+}
+
+input FollowWhereUniqueInput {
+  id: ID
+}
+
+input FollowWhereInput {
+  AND: [FollowWhereInput!]
+  OR: [FollowWhereInput!]
+  NOT: [FollowWhereInput!]
+  id: IDFilter
+  follower: UserWhereInput
+  following: UserWhereInput
+  createdAt: DateTimeNullableFilter
+}
+
+input FollowOrderByInput {
+  id: OrderDirection
+  createdAt: OrderDirection
+}
+
+input FollowUpdateInput {
+  follower: UserRelateToOneForUpdateInput
+  following: UserRelateToOneForUpdateInput
+  createdAt: DateTime
+}
+
+input FollowUpdateArgs {
+  where: FollowWhereUniqueInput!
+  data: FollowUpdateInput!
+}
+
+input FollowCreateInput {
+  follower: UserRelateToOneForCreateInput
+  following: UserRelateToOneForCreateInput
+  createdAt: DateTime
+}
+
+type Notification {
+  id: ID!
+  user: User
+  type: String
+  actor: User
+  article: Article
+  comment: Comment
+  isRead: Boolean
+  readAt: DateTime
+  metadata: JSON
+  createdAt: DateTime
+}
+
+input NotificationWhereUniqueInput {
+  id: ID
+}
+
+input NotificationWhereInput {
+  AND: [NotificationWhereInput!]
+  OR: [NotificationWhereInput!]
+  NOT: [NotificationWhereInput!]
+  id: IDFilter
+  user: UserWhereInput
+  type: StringFilter
+  actor: UserWhereInput
+  article: ArticleWhereInput
+  comment: CommentWhereInput
+  isRead: BooleanFilter
+  readAt: DateTimeNullableFilter
+  createdAt: DateTimeNullableFilter
+}
+
+input NotificationOrderByInput {
+  id: OrderDirection
+  type: OrderDirection
+  isRead: OrderDirection
+  readAt: OrderDirection
+  createdAt: OrderDirection
+}
+
+input NotificationUpdateInput {
+  user: UserRelateToOneForUpdateInput
+  type: String
+  actor: UserRelateToOneForUpdateInput
+  article: ArticleRelateToOneForUpdateInput
+  comment: CommentRelateToOneForUpdateInput
+  isRead: Boolean
+  readAt: DateTime
+  metadata: JSON
+  createdAt: DateTime
+}
+
+input NotificationUpdateArgs {
+  where: NotificationWhereUniqueInput!
+  data: NotificationUpdateInput!
+}
+
+input NotificationCreateInput {
+  user: UserRelateToOneForCreateInput
+  type: String
+  actor: UserRelateToOneForCreateInput
+  article: ArticleRelateToOneForCreateInput
+  comment: CommentRelateToOneForCreateInput
+  isRead: Boolean
+  readAt: DateTime
+  metadata: JSON
+  createdAt: DateTime
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -655,6 +889,24 @@ type Mutation {
   updateCommentReactions(data: [CommentReactionUpdateArgs!]!): [CommentReaction]
   deleteCommentReaction(where: CommentReactionWhereUniqueInput!): CommentReaction
   deleteCommentReactions(where: [CommentReactionWhereUniqueInput!]!): [CommentReaction]
+  createBookmark(data: BookmarkCreateInput!): Bookmark
+  createBookmarks(data: [BookmarkCreateInput!]!): [Bookmark]
+  updateBookmark(where: BookmarkWhereUniqueInput!, data: BookmarkUpdateInput!): Bookmark
+  updateBookmarks(data: [BookmarkUpdateArgs!]!): [Bookmark]
+  deleteBookmark(where: BookmarkWhereUniqueInput!): Bookmark
+  deleteBookmarks(where: [BookmarkWhereUniqueInput!]!): [Bookmark]
+  createFollow(data: FollowCreateInput!): Follow
+  createFollows(data: [FollowCreateInput!]!): [Follow]
+  updateFollow(where: FollowWhereUniqueInput!, data: FollowUpdateInput!): Follow
+  updateFollows(data: [FollowUpdateArgs!]!): [Follow]
+  deleteFollow(where: FollowWhereUniqueInput!): Follow
+  deleteFollows(where: [FollowWhereUniqueInput!]!): [Follow]
+  createNotification(data: NotificationCreateInput!): Notification
+  createNotifications(data: [NotificationCreateInput!]!): [Notification]
+  updateNotification(where: NotificationWhereUniqueInput!, data: NotificationUpdateInput!): Notification
+  updateNotifications(data: [NotificationUpdateArgs!]!): [Notification]
+  deleteNotification(where: NotificationWhereUniqueInput!): Notification
+  deleteNotifications(where: [NotificationWhereUniqueInput!]!): [Notification]
   endSession: Boolean!
   authenticateUserWithPassword(email: String!, password: String!): UserAuthenticationWithPasswordResult
   sendUserPasswordResetLink(email: String!): Boolean!
@@ -726,6 +978,15 @@ type Query {
   commentReaction(where: CommentReactionWhereUniqueInput!): CommentReaction
   commentReactions(where: CommentReactionWhereInput! = {}, orderBy: [CommentReactionOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: CommentReactionWhereUniqueInput): [CommentReaction!]
   commentReactionsCount(where: CommentReactionWhereInput! = {}): Int
+  bookmark(where: BookmarkWhereUniqueInput!): Bookmark
+  bookmarks(where: BookmarkWhereInput! = {}, orderBy: [BookmarkOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: BookmarkWhereUniqueInput): [Bookmark!]
+  bookmarksCount(where: BookmarkWhereInput! = {}): Int
+  follow(where: FollowWhereUniqueInput!): Follow
+  follows(where: FollowWhereInput! = {}, orderBy: [FollowOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: FollowWhereUniqueInput): [Follow!]
+  followsCount(where: FollowWhereInput! = {}): Int
+  notification(where: NotificationWhereUniqueInput!): Notification
+  notifications(where: NotificationWhereInput! = {}, orderBy: [NotificationOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: NotificationWhereUniqueInput): [Notification!]
+  notificationsCount(where: NotificationWhereInput! = {}): Int
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
   validateUserPasswordResetToken(email: String!, token: String!): ValidateUserPasswordResetTokenResult

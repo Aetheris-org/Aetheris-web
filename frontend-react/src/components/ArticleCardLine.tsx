@@ -45,13 +45,18 @@ export function ArticleCardLine({
                 alt={article.title}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
+                onError={(e) => {
+                  // Скрываем изображение при ошибке загрузки
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                }}
               />
               </div>
             </div>
           )}
           {/* Content */}
           <div className="flex-1 min-w-0 space-y-2">
-            <h3 className="font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className="font-semibold tracking-tight group-hover:text-primary transition-colors break-words overflow-wrap-anywhere word-break-break-word" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               {article.title}
             </h3>
 
@@ -73,12 +78,13 @@ export function ArticleCardLine({
 
             {/* Tags */}
             {article.tags.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-start gap-1.5 flex-wrap">
                 {article.tags.slice(0, 3).map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="rounded-md text-xs bg-primary/10 text-primary hover:bg-primary/15 cursor-pointer transition-colors"
+                    className="rounded-md text-xs bg-primary/10 text-primary hover:bg-primary/15 cursor-pointer transition-colors break-words overflow-wrap-anywhere"
+                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                     onClick={(e) => {
                       e.stopPropagation()
                       onTagClick?.(tag)
