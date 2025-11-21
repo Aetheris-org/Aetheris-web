@@ -592,7 +592,7 @@ export default function ArticlePage() {
     }
 
     if (!article?.id) {
-      toast({
+    toast({
         title: t('article.wait'),
         description: t('article.waitDescription'),
         variant: 'destructive',
@@ -603,11 +603,11 @@ export default function ArticlePage() {
     const wasSaved = isSaved
     bookmarkMutation.mutate({ articleId: article.id, currentlySaved: isSaved }, {
       onSuccess: () => {
-        toast({
-          title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
-          description: wasSaved
-            ? t('article.removedFromReadingListDescription')
-            : t('article.savedForLaterDescription'),
+    toast({
+      title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
+      description: wasSaved
+        ? t('article.removedFromReadingListDescription')
+        : t('article.savedForLaterDescription'),
         })
       },
       onError: (error) => {
@@ -1176,11 +1176,11 @@ export default function ArticlePage() {
                   className="hover:opacity-80 transition-opacity shrink-0"
                 >
                   <Avatar className="h-7 w-7 sm:h-9 sm:w-9">
-                    {node.author.avatar ? (
-                      <AvatarImage src={node.author.avatar} alt={node.author.username} />
-                    ) : null}
+                  {node.author.avatar ? (
+                    <AvatarImage src={node.author.avatar} alt={node.author.username} />
+                  ) : null}
                     <AvatarFallback className="text-xs sm:text-sm">{initials}</AvatarFallback>
-                  </Avatar>
+                </Avatar>
                 </button>
                 <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -1201,29 +1201,29 @@ export default function ArticlePage() {
                   </div>
                   {parentNode && (
                     <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const anchor = document.getElementById(`comment-${parentNode.id}`)
-                          if (anchor) {
-                            anchor.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                            if (replyHighlightTimeoutRef.current) {
-                              clearTimeout(replyHighlightTimeoutRef.current)
-                            }
-                            const parentDepth = depthById.get(parentNode.id) ?? null
-                            setHighlightDepth(parentDepth)
-                            replyHighlightTimeoutRef.current = setTimeout(() => {
-                              setHighlightDepth((prev) =>
-                                prev === parentDepth ? null : prev
-                              )
-                            }, 2500)
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const anchor = document.getElementById(`comment-${parentNode.id}`)
+                        if (anchor) {
+                          anchor.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          if (replyHighlightTimeoutRef.current) {
+                            clearTimeout(replyHighlightTimeoutRef.current)
                           }
-                        }}
+                          const parentDepth = depthById.get(parentNode.id) ?? null
+                          setHighlightDepth(parentDepth)
+                          replyHighlightTimeoutRef.current = setTimeout(() => {
+                            setHighlightDepth((prev) =>
+                              prev === parentDepth ? null : prev
+                            )
+                          }, 2500)
+                        }
+                      }}
                         className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full border border-border/60 bg-muted/60 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-medium transition hover:bg-muted hover:text-foreground"
-                      >
+                    >
                         <CornerUpLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         <span className="hidden xs:inline">{t('article.inReplyTo', { username: '' })}</span>
-                      </button>
+                    </button>
                       <button
                         onClick={() => navigate(`/profile/${parentNode.author.id}`)}
                         className="text-[10px] sm:text-[11px] font-medium hover:underline"
@@ -1279,8 +1279,8 @@ export default function ArticlePage() {
                     </div>
                   ) : (
                     <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
-                      {node.text}
-                    </p>
+                    {node.text}
+                  </p>
                   )}
                 </div>
               </div>
@@ -1349,20 +1349,20 @@ export default function ArticlePage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <div className="flex items-center gap-0 rounded-[calc(var(--radius)*1.2)] bg-background/35 shadow-sm ring-1 ring-border/60 backdrop-blur-sm overflow-hidden">
-                    <Button
+                        <Button
                           variant="ghost"
-                      size="icon"
+                          size="icon"
                           className={cn(
                             'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
                             node.userReaction === 'like' &&
                               'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
-                      onClick={() => handleCommentReaction(node.id, 'up')}
+                          onClick={() => handleCommentReaction(node.id, 'up')}
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.support')}
-                    >
+                        >
                       <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    </Button>
+                        </Button>
                         <span
                           className={cn(
                             'min-w-[28px] sm:min-w-[36px] px-1.5 sm:px-2 py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-semibold tabular-nums',
@@ -1372,22 +1372,22 @@ export default function ArticlePage() {
                           )}
                         >
                           {(node.likes || 0) - (node.dislikes || 0)}
-                          </span>
-                    <Button
+                        </span>
+                        <Button
                           variant="ghost"
-                      size="icon"
+                          size="icon"
                           className={cn(
                             'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
                             node.userReaction === 'dislike' &&
                               'bg-primary text-primary-foreground hover:bg-primary/90'
                           )}
-                      onClick={() => handleCommentReaction(node.id, 'down')}
+                          onClick={() => handleCommentReaction(node.id, 'down')}
                           disabled={!user || reactCommentMutation.isPending}
                           aria-label={t('article.against')}
-                    >
+                        >
                       <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    </Button>
-                  </div>
+                        </Button>
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
@@ -1471,7 +1471,7 @@ export default function ArticlePage() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  </div>
+                </div>
               </div>
               {activeReply?.parentId === node.id && (
                 <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-2 sm:p-3">
@@ -1910,10 +1910,10 @@ export default function ArticlePage() {
                     </details>
                   </div>
                 )}
-                <div
-                  className="text-foreground leading-relaxed break-words"
-                  dangerouslySetInnerHTML={{ __html: article.content }}
-                />
+            <div
+              className="text-foreground leading-relaxed break-words"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
               </div>
             )}
           </div>
@@ -2033,22 +2033,22 @@ export default function ArticlePage() {
                       </div>
                     ))}
                   </div>
-            ) : combinedComments.length === 0 ? (
+              ) : combinedComments.length === 0 ? (
                   <div className="py-8 sm:py-12 text-center text-xs sm:text-sm text-muted-foreground">
                   {t('article.noComments')} {t('article.beFirst')}
                   </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {renderCommentThread(
-                  threadRootId && nodeLookup.has(threadRootId)
-                    ? [nodeLookup.get(threadRootId)!]
-                    : commentTree,
-                  0,
-                  {
+                  {renderCommentThread(
+                    threadRootId && nodeLookup.has(threadRootId)
+                      ? [nodeLookup.get(threadRootId)!]
+                      : commentTree,
+                    0,
+                    {
                         showConnectors: !(threadRootId && nodeLookup.has(threadRootId)),
-                    threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
-                  }
-                )}
+                      threadMode: !!(threadRootId && nodeLookup.has(threadRootId)),
+                    }
+                  )}
               </div>
             )}
             </div>
@@ -2079,19 +2079,19 @@ export default function ArticlePage() {
                   onClick={() => navigate(`/profile/${infoComment.author.id}`)}
                   className="hover:opacity-80 transition-opacity"
                 >
-                  <Avatar className="h-10 w-10">
-                    {infoComment.author.avatar ? (
-                      <AvatarImage src={infoComment.author.avatar} alt={infoComment.author.username} />
-                    ) : null}
-                    <AvatarFallback>
-                      {infoComment.author.username
-                        .split(' ')
-                        .map((word) => word[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                <Avatar className="h-10 w-10">
+                  {infoComment.author.avatar ? (
+                    <AvatarImage src={infoComment.author.avatar} alt={infoComment.author.username} />
+                  ) : null}
+                  <AvatarFallback>
+                    {infoComment.author.username
+                      .split(' ')
+                      .map((word) => word[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 </button>
                 <div className="space-y-1">
                   <button
@@ -2263,7 +2263,7 @@ export default function ArticlePage() {
                     </>
                   )}
                 </Button>
-              </div>
+    </div>
             </div>
 
             {/* Social sharing buttons */}
@@ -2351,7 +2351,7 @@ export default function ArticlePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
     </TooltipProvider>
   )
 }

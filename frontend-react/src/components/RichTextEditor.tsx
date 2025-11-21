@@ -19,8 +19,7 @@ import Image from '@tiptap/extension-image'
 // import Details from '@tiptap/extension-details' // Временно отключено из-за проблем с detailsSummary/detailsContent
 import { Extension, type Range, type Editor } from '@tiptap/core'
 import Suggestion, { type SuggestionOptions, type SuggestionProps } from '@tiptap/suggestion'
-import { createLowlight, common } from 'lowlight'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+// Используем CodeBlockWithCopy, который уже настроен с lowlight и всеми языками
 import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import Highlight from '@tiptap/extension-highlight'
 import { TextStyle } from '@tiptap/extension-text-style'
@@ -77,8 +76,6 @@ import { SmartInput } from '@/extensions/smart-input'
 import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
 import DragHandle from '@tiptap/extension-drag-handle'
 import { offset } from '@floating-ui/dom'
-
-const lowlight = createLowlight(common)
 
 type SlashCommandItem = {
   id: string

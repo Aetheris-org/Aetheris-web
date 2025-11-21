@@ -1,13 +1,52 @@
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { createLowlight, common } from 'lowlight'
 import { Copy, Check } from 'lucide-react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, type Root } from 'react-dom/client'
 import { cn } from '@/lib/utils'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { useState } from 'react'
 import hljs from 'highlight.js'
+// Импортируем дополнительные языки для lowlight
+import javascript from 'highlight.js/lib/languages/javascript'
+import typescript from 'highlight.js/lib/languages/typescript'
+import python from 'highlight.js/lib/languages/python'
+import java from 'highlight.js/lib/languages/java'
+import cpp from 'highlight.js/lib/languages/cpp'
+import csharp from 'highlight.js/lib/languages/csharp'
+import php from 'highlight.js/lib/languages/php'
+import ruby from 'highlight.js/lib/languages/ruby'
+import go from 'highlight.js/lib/languages/go'
+import rust from 'highlight.js/lib/languages/rust'
+import swift from 'highlight.js/lib/languages/swift'
+import kotlin from 'highlight.js/lib/languages/kotlin'
+import html from 'highlight.js/lib/languages/xml'
+import css from 'highlight.js/lib/languages/css'
+import json from 'highlight.js/lib/languages/json'
+import sql from 'highlight.js/lib/languages/sql'
+import bash from 'highlight.js/lib/languages/bash'
+import shell from 'highlight.js/lib/languages/shell'
 
+// Создаем lowlight с поддержкой всех необходимых языков
 const lowlight = createLowlight(common)
+// Регистрируем дополнительные языки
+lowlight.register('javascript', javascript)
+lowlight.register('typescript', typescript)
+lowlight.register('python', python)
+lowlight.register('java', java)
+lowlight.register('cpp', cpp)
+lowlight.register('csharp', csharp)
+lowlight.register('php', php)
+lowlight.register('ruby', ruby)
+lowlight.register('go', go)
+lowlight.register('rust', rust)
+lowlight.register('swift', swift)
+lowlight.register('kotlin', kotlin)
+lowlight.register('html', html)
+lowlight.register('css', css)
+lowlight.register('json', json)
+lowlight.register('sql', sql)
+lowlight.register('bash', bash)
+lowlight.register('shell', shell)
 
 // Функция для автоматического определения языка по содержимому кода используя highlight.js
 function detectLanguage(code: string): string {
@@ -20,7 +59,6 @@ function detectLanguage(code: string): string {
   
   try {
     // Используем highlight.js для автоматического определения языка
-    // Ограничиваем список языков для более точного определения
     const result = hljs.highlightAuto(trimmed, [
       'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp',
       'html', 'css', 'json', 'xml', 'sql', 'bash', 'shell', 'php',
@@ -28,14 +66,12 @@ function detectLanguage(code: string): string {
     ])
     
     // Используем язык только если уверенность достаточно высока
-    // highlightAuto возвращает relevance - чем выше, тем увереннее
-    if (result.language && result.relevance && result.relevance > 2) {
+    if (result.language && result.relevance && result.relevance >= 1) {
       return result.language
     }
     
     return 'plaintext'
   } catch (err) {
-    // Fallback на plaintext, если highlight.js не может определить
     return 'plaintext'
   }
 }
@@ -70,14 +106,15 @@ function getLanguageLabel(language: string): string {
   return labels[language.toLowerCase()] || language.charAt(0).toUpperCase() + language.slice(1)
 }
 
-const CodeBlockHeader = ({ node, editor, detectedLanguage }: { 
+const CodeBlockHeader = ({ 
+  node, 
+  language 
+}: { 
   node: ProseMirrorNode
-  editor: any
-  detectedLanguage?: string | null
+  language: string
 }) => {
   const [copied, setCopied] = useState(false)
 
-  const language = node.attrs.language || detectedLanguage || 'plaintext'
   const languageLabel = getLanguageLabel(language)
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -137,14 +174,11 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
         tag: 'div.code-block-wrapper',
         getAttrs: (node) => {
           const element = node as HTMLElement
-          // Извлекаем язык из data-language атрибута
           const language = element.getAttribute('data-language') || 'plaintext'
           return { language }
         },
-        // Извлекаем содержимое из code элемента внутри .code-block-content > pre > code
         contentElement: (node) => {
           const wrapper = node as HTMLElement
-          // Ищем структуру: .code-block-content > pre > code
           const codeContent = wrapper.querySelector('.code-block-content')
           if (codeContent) {
             const preElement = codeContent.querySelector('pre')
@@ -153,266 +187,244 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
               if (codeElement) {
                 return codeElement
               }
-              // Если code нет, используем pre
               return preElement
             }
           }
-          // Fallback: ищем code напрямую в wrapper
           const codeElement = wrapper.querySelector('code')
           if (codeElement) {
             return codeElement
           }
-          // Fallback: ищем pre напрямую
-          const preElement = wrapper.querySelector('pre')
-          if (preElement) {
-            return preElement
-          }
-          return null
+          return wrapper.querySelector('pre') || wrapper
         },
       },
       {
         tag: 'pre',
+        preserveWhitespace: 'full',
         getAttrs: (node) => {
           const element = node as HTMLElement
           const codeElement = element.querySelector('code')
-          if (codeElement) {
-            const classList = codeElement.classList
-            // Извлекаем язык из класса language-xxx
-            for (const className of classList) {
-              if (className.startsWith('language-')) {
-                const language = className.replace('language-', '')
-                return { language }
-              }
-            }
-          }
-          return { language: 'plaintext' }
+          const language = codeElement?.className.match(/language-(\w+)/)?.[1] || 'plaintext'
+          return { language }
         },
       },
     ]
   },
 
-  renderHTML({ HTMLAttributes, node }) {
-    const language = node.attrs.language || 'plaintext'
-    
-    // Определяем язык автоматически, если не указан
-    let detectedLanguage = language
-    if ((!node.attrs.language || node.attrs.language === 'plaintext') && node.textContent.trim().length >= 10) {
-      const detected = detectLanguage(node.textContent)
-      if (detected !== 'plaintext') {
-        detectedLanguage = detected
-      }
-    }
-    
-    const finalLanguage = detectedLanguage !== 'plaintext' ? detectedLanguage : language
-    const finalLanguageLabel = getLanguageLabel(finalLanguage)
-    
-    // SVG иконки для кнопки копирования (сохраняем в data-атрибутах)
-    const copyIconSvg = '<svg class="h-3.5 w-3.5 copy-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>'
-    const checkIconSvg = '<svg class="h-3.5 w-3.5 check-icon hidden text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
-    
-    // Возвращаем структуру с header и кнопкой копирования
-    // TipTap renderHTML поддерживает вложенные массивы
-    // Используем data-атрибуты для сохранения информации, которая будет использована на review этапе
-    return [
-      'div',
-      {
-        class: 'relative group mb-6 rounded-lg overflow-hidden code-block-wrapper',
-        'data-language': finalLanguage,
-        'data-language-label': finalLanguageLabel,
-        'data-copy-icon-svg': copyIconSvg,
-        'data-check-icon-svg': checkIconSvg,
-      },
-      [
-        'div',
-        { class: 'flex items-center justify-between gap-3 px-3 py-2 code-block-header' },
-        [
-          'span',
-          { class: 'text-xs font-medium uppercase tracking-wide code-block-language' },
-          finalLanguageLabel,
-        ],
-        [
-          'button',
-          {
-            type: 'button',
-            class: 'code-block-copy-btn',
-            title: 'Скопировать код',
-            'aria-label': 'Скопировать код',
-          },
-          '', // Пустая строка для button (иконки будут добавлены через JavaScript)
-        ],
-      ],
-      [
-        'div',
-        { class: 'code-block-content' },
-        [
-          'pre',
-          { class: 'overflow-x-auto p-4 text-sm m-0' },
-          [
-            'code',
-            {
-              class: `language-${finalLanguage}`,
-              spellcheck: 'false',
-            },
-            0, // 0 означает, что здесь будет контент узла
-          ],
-        ],
-      ],
-    ]
-  },
-
   addNodeView() {
-    return ({ node, HTMLAttributes, editor }) => {
-      if (import.meta.env.DEV) {
-        console.log('[CodeBlockWithCopy] addNodeView called, language:', node.attrs.language)
-      }
-      
+    return ({ node }) => {
+      // Создаем основной контейнер
       const dom = document.createElement('div')
       dom.className = 'relative group mb-6 rounded-lg overflow-hidden code-block-wrapper'
       
-      // Создаем шапку
+      // Создаем контейнер для шапки
       const headerContainer = document.createElement('div')
       headerContainer.className = 'code-block-header'
       dom.appendChild(headerContainer)
       
-      // Создаем контейнер для pre/code (используем существующий рендеринг CodeBlockLowlight)
+      // Создаем контейнер для кода
       const codeContainer = document.createElement('div')
       codeContainer.className = 'code-block-content'
       
       const pre = document.createElement('pre')
       pre.className = 'overflow-x-auto p-4 text-sm m-0'
-      pre.setAttribute('spellcheck', 'false') // Отключаем проверку орфографии
+      pre.setAttribute('spellcheck', 'false')
       pre.setAttribute('autocorrect', 'off')
       pre.setAttribute('autocapitalize', 'off')
       
-      let currentLanguage = node.attrs.language || 'plaintext'
-      let detectedLang: string | null = null
+      const code = document.createElement('code')
+      code.className = 'hljs'
       
-      // Автоматически определяем язык, если он не указан (только визуально, без изменения узла)
-      // Определяем только если код достаточно длинный
-      if ((!node.attrs.language || node.attrs.language === 'plaintext') && node.textContent.trim().length >= 10) {
-        const detected = detectLanguage(node.textContent)
-        if (detected !== 'plaintext') {
-          detectedLang = detected
-          currentLanguage = detected
-        }
-      }
-      
-      // ВАЖНО: ProseMirror ожидает, что contentDOM будет прямым дочерним элементом dom
-      // Но нам нужна структура: dom > headerContainer + codeContainer > pre
-      // CodeBlockLowlight обычно использует pre как contentDOM
-      // Мы используем pre как contentDOM напрямую - ProseMirror будет вставлять текст в pre
-      // Подсветка синтаксиса будет применяться к содержимому pre через lowlight
-      // Lowlight автоматически создаст code элемент внутри pre для подсветки
+      pre.appendChild(code)
       codeContainer.appendChild(pre)
       dom.appendChild(codeContainer)
       
-      // Рендерим React компонент для шапки
-      const headerRoot = createRoot(headerContainer)
+      // Кеш для определения языка (чтобы не вызывать detectLanguage слишком часто)
+      let languageCache: { text: string; language: string } | null = null
       
-      // Сохраняем текущее состояние для компонента
-      let currentDetectedLang = detectedLang
-      let lastNodeAttrs = { ...node.attrs }
-      let lastTextContent = node.textContent
-      let isUpdating = false
-      
-      // Функция для обновления шапки
-      const updateHeader = (updatedNode: ProseMirrorNode, detectedLang: string | null) => {
-        if (isUpdating) return // Предотвращаем обновление во время обновления
-        headerRoot.render(<CodeBlockHeader node={updatedNode} editor={editor} detectedLanguage={detectedLang} />)
+      // Определяем язык для отображения
+      const getDisplayLanguage = (node: ProseMirrorNode): string => {
+        const attrLanguage = node.attrs.language || 'plaintext'
+        if (attrLanguage !== 'plaintext') {
+          return attrLanguage
+        }
+        
+        const textContent = node.textContent.trim()
+        if (textContent.length < 10) {
+          return 'plaintext'
+        }
+        
+        // Используем кеш, если содержимое не изменилось
+        if (languageCache && languageCache.text === textContent) {
+          return languageCache.language
+        }
+        
+        // Определяем язык только если содержимое изменилось
+        const detected = detectLanguage(textContent)
+        languageCache = { text: textContent, language: detected }
+        
+        return detected !== 'plaintext' ? detected : 'plaintext'
       }
       
-      updateHeader(node, currentDetectedLang)
+      // Функция для экранирования HTML
+      const escapeHtml = (text: string): string => {
+        const div = document.createElement('div')
+        div.textContent = text
+        return div.innerHTML
+      }
       
-      // Предотвращаем клики на шапке от всплытия, но НЕ блокируем pointer-events
+      // Функция для применения подсветки синтаксиса
+      const applyHighlighting = (text: string, language: string) => {
+        if (!text.trim()) {
+          code.textContent = text
+          return
+        }
+        
+        const lang = language !== 'plaintext' ? language : undefined
+        
+        if (lang) {
+          try {
+            const result = lowlight.highlight(lang, text)
+            const html = result.children.map((child: any) => {
+              if (typeof child === 'string') {
+                return escapeHtml(child)
+              }
+              if (child.type === 'element' && child.tagName === 'span') {
+                const className = Array.isArray(child.properties?.className) 
+                  ? child.properties.className.join(' ') 
+                  : child.properties?.className || ''
+                const content = child.children.map((c: any) => {
+                  if (typeof c === 'string') {
+                    return escapeHtml(c)
+                  }
+                  if (c.type === 'text') {
+                    return escapeHtml(c.value || '')
+                  }
+                  return ''
+                }).join('')
+                return `<span class="${escapeHtml(className)}">${content}</span>`
+              }
+              if (child.type === 'text') {
+                return escapeHtml(child.value || '')
+              }
+              return ''
+            }).join('')
+            code.innerHTML = html
+          } catch (error) {
+            code.textContent = text
+          }
+        } else {
+          code.textContent = text
+        }
+      }
+      
+      // Инициализация
+      // Определяем язык только если содержимое не пустое, чтобы не блокировать UI при создании пустого блока
+      const initialText = node.textContent.trim()
+      let currentDisplayLanguage = 'plaintext'
+      if (initialText.length >= 10) {
+        currentDisplayLanguage = getDisplayLanguage(node)
+      } else if (node.attrs.language && node.attrs.language !== 'plaintext') {
+        currentDisplayLanguage = node.attrs.language
+      }
+      
+      let headerRoot: Root | null = null
+      
+      // Рендерим шапку сразу
+      headerRoot = createRoot(headerContainer)
+      headerRoot.render(<CodeBlockHeader node={node} language={currentDisplayLanguage} />)
+      
+      // Обновляем класс языка
+      if (currentDisplayLanguage && currentDisplayLanguage !== 'plaintext') {
+        code.className = `hljs language-${currentDisplayLanguage}`
+      }
+      
+      // Предотвращаем клики на шапке от всплытия
       headerContainer.addEventListener('click', (e) => {
-        // Останавливаем всплытие только для элементов внутри header (кнопка копирования и т.д.)
         if (e.target !== headerContainer && !headerContainer.contains(e.target as Node)) {
           return
         }
         e.stopPropagation()
       }, true)
       
-      // Убеждаемся, что pre элемент может получать клики и фокус
-      // ProseMirror автоматически установит contenteditable на contentDOM (pre)
-      pre.style.pointerEvents = 'auto'
-      codeContainer.style.pointerEvents = 'auto'
+      // Используем MutationObserver для применения подсветки при изменении содержимого
+      // Но только после того, как ProseMirror вставит содержимое
+      let observerTimeout: ReturnType<typeof setTimeout> | null = null
+      let isHighlighting = false
       
-      // Убеждаемся, что header не блокирует клики на pre
-      headerContainer.style.pointerEvents = 'auto'
+      const observer = new MutationObserver(() => {
+        // Игнорируем изменения, которые мы сами делаем (применение подсветки)
+        if (isHighlighting) {
+          return
+        }
+        
+        // Отменяем предыдущий таймер
+        if (observerTimeout) {
+          clearTimeout(observerTimeout)
+        }
+        
+        // Применяем подсветку с задержкой, чтобы избежать частых обновлений
+        observerTimeout = setTimeout(() => {
+          if (isHighlighting) {
+            return
+          }
+          
+          const text = code.textContent || ''
+          if (text && text.trim().length > 0) {
+            // Определяем язык только если содержимое достаточно длинное
+            let lang = currentDisplayLanguage
+            if (text.trim().length >= 10 && currentDisplayLanguage === 'plaintext') {
+              lang = detectLanguage(text)
+              if (lang !== 'plaintext' && lang !== currentDisplayLanguage) {
+                currentDisplayLanguage = lang
+                code.className = `hljs language-${currentDisplayLanguage}`
+                if (headerRoot) {
+                  headerRoot.render(<CodeBlockHeader node={node} language={currentDisplayLanguage} />)
+                }
+              }
+            }
+            
+            // Применяем подсветку
+            isHighlighting = true
+            applyHighlighting(text, currentDisplayLanguage)
+            isHighlighting = false
+          }
+        }, 150)
+      })
       
-      // ВАЖНО: ProseMirror требует, чтобы contentDOM был прямым дочерним элементом dom
-      // Но у нас структура: dom > [headerContainer, codeContainer > pre]
-      // Мы используем pre как contentDOM (стандартный подход для CodeBlockLowlight)
-      // ProseMirror будет вставлять текст в pre, а lowlight автоматически применит подсветку синтаксиса
+      // Наблюдаем за изменениями в pre элементе (но не в code, чтобы избежать рекурсии)
+      observer.observe(pre, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      })
       
       return {
         dom,
-        contentDOM: pre, // Используем pre как contentDOM - это стандартный подход для CodeBlockLowlight
+        contentDOM: pre,
         update: (updatedNode) => {
           if (updatedNode.type !== this.type) {
             return false
           }
           
-          // Предотвращаем обновление во время обработки событий
-          if (isUpdating) {
+          // Просто возвращаем true - не делаем ничего сложного в update
+          // Это предотвращает зависание при создании/выборе code block
+          // Подсветка применяется через MutationObserver
             return true
-          }
-          
-          isUpdating = true
-          
-          // Проверяем, действительно ли что-то изменилось
-          const attrsChanged = JSON.stringify(updatedNode.attrs) !== JSON.stringify(lastNodeAttrs)
-          const textChanged = updatedNode.textContent !== lastTextContent
-          
-          // Обновляем язык визуально, если он изменился (без изменения атрибутов узла во время редактирования)
-          // Определяем язык только если код достаточно длинный (>= 10 символов)
-          let updatedLanguage = updatedNode.attrs.language || 'plaintext'
-          let updatedDetectedLang: string | null = null
-          
-          if ((!updatedNode.attrs.language || updatedNode.attrs.language === 'plaintext') && updatedNode.textContent.trim().length >= 10) {
-            const detected = detectLanguage(updatedNode.textContent)
-            if (detected !== 'plaintext') {
-              updatedDetectedLang = detected
-              updatedLanguage = detected
-            }
-          } else if (updatedNode.textContent.trim().length < 10) {
-            // Если код стал слишком коротким, сбрасываем определение
-            updatedDetectedLang = null
-            updatedLanguage = updatedNode.attrs.language || 'plaintext'
-          }
-          
-          // Обновляем класс языка на pre (lowlight будет использовать его для подсветки)
-          if (updatedLanguage !== currentLanguage) {
-            // Lowlight автоматически создаст code элемент с нужным классом
-            // Нам нужно только убедиться, что pre имеет правильный класс для lowlight
-            currentLanguage = updatedLanguage
-          }
-          
-          // Обновляем обнаруженный язык если изменился
-          if (updatedDetectedLang !== currentDetectedLang) {
-            currentDetectedLang = updatedDetectedLang
-          }
-          
-          // Обновляем шапку только если действительно изменился язык или атрибуты
-          // НЕ обновляем при изменении текста, чтобы не мешать редактированию
-          if (attrsChanged || updatedDetectedLang !== currentDetectedLang) {
-            // Используем setTimeout для отложенного обновления, чтобы избежать проблем с событиями
-            setTimeout(() => {
-              updateHeader(updatedNode, currentDetectedLang)
-              isUpdating = false
-            }, 0)
-          } else {
-            isUpdating = false
-          }
-          
-          // Обновляем сохраненные значения
-          lastNodeAttrs = { ...updatedNode.attrs }
-          lastTextContent = updatedNode.textContent
-          
-          return true
         },
         destroy: () => {
-          headerRoot.unmount()
+          // Останавливаем observer
+          observer.disconnect()
+          
+          // Отменяем таймер
+          if (observerTimeout) {
+            clearTimeout(observerTimeout)
+          }
+          
+          // Уничтожаем React root
+          if (headerRoot) {
+            headerRoot.unmount()
+            headerRoot = null
+          }
         },
       }
     }
@@ -420,4 +432,3 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
 }).configure({
   lowlight,
 })
-

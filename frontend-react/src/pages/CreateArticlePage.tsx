@@ -284,7 +284,6 @@ export default function CreateArticlePage() {
           const aside = callout as HTMLElement
           const iconSvg = aside.getAttribute('data-icon-svg')
           const label = aside.getAttribute('data-label')
-          const variant = aside.getAttribute('data-variant') || 'info'
           
           // Вставляем иконку
           if (iconSvg) {
@@ -2182,32 +2181,32 @@ export default function CreateArticlePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate(-1)}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
             >
-              <ArrowLeft className="h-4 w-4" />
-              {t('common.back')}
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('common.back')}</span>
             </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{t('createArticle.title')}</h1>
+            <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+            <h1 className="text-base sm:text-lg font-semibold truncate">{t('createArticle.title')}</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
             <AccountSheet />
           </div>
         </div>
       </header>
 
-      <div className="container pt-8 pb-6">
+      <div className="container pt-4 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6">
         {/* Stepper - Compact and Modern */}
-        <div className="mb-12">
-          <div className="flex items-start">
+        <div className="mb-6 sm:mb-12">
+          <div className="flex items-start justify-between gap-0.5 sm:gap-1">
             {steps.map((step, index) => {
               const StepIcon = step.icon
               const isActive = currentStep === step.id
@@ -2216,8 +2215,8 @@ export default function CreateArticlePage() {
               const stepNumber = index + 1
 
               return (
-                <div key={step.id} className="flex items-start flex-1">
-                  <div className="flex flex-col items-center flex-shrink-0">
+                <div key={step.id} className="flex items-start flex-1 min-w-0">
+                  <div className="flex flex-col items-center flex-shrink-0 w-full">
                     {/* Step Circle */}
                     <button
                       type="button"
@@ -2229,10 +2228,11 @@ export default function CreateArticlePage() {
                         isCompleted && 'cursor-pointer hover:scale-105',
                         isUpcoming && 'cursor-not-allowed opacity-50'
                       )}
+                      title={step.label}
                     >
                       <div
                         className={cn(
-                          'relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-200 z-10',
+                          'relative flex h-7 w-7 sm:h-10 sm:w-10 items-center justify-center rounded-full border-2 transition-all duration-200 z-10',
                           isActive
                             ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20'
                             : isCompleted
@@ -2241,33 +2241,34 @@ export default function CreateArticlePage() {
                         )}
                       >
                         {isCompleted ? (
-                          <Check className="h-5 w-5" />
+                          <Check className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                         ) : isActive ? (
-                          <StepIcon className="h-5 w-5" />
+                          <StepIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                         ) : (
-                          <span className="text-sm font-semibold">{stepNumber}</span>
+                          <span className="text-[10px] sm:text-sm font-semibold">{stepNumber}</span>
                         )}
                       </div>
                       {isActive && (
                         <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '3s' }} />
                       )}
                     </button>
-                    {/* Step Label */}
-                    <div className="mt-3 text-center min-w-[80px] max-w-[100px]">
+                    {/* Step Label - Hidden on mobile, shown on desktop */}
+                    <div className="mt-1.5 sm:mt-3 text-center w-full px-0.5">
                       <p
                         className={cn(
-                          'text-xs font-medium transition-colors leading-tight',
+                          'hidden sm:block text-xs font-medium transition-colors leading-tight truncate',
                           isActive
                             ? 'text-foreground font-semibold'
                             : isCompleted
                               ? 'text-muted-foreground'
                               : 'text-muted-foreground/50'
                         )}
+                        title={step.label}
                       >
                         {step.label}
                       </p>
                       {step.description && (
-                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                        <p className="hidden sm:block text-[10px] text-muted-foreground/60 mt-0.5 truncate" title={step.description}>
                           {step.description}
                         </p>
                       )}
@@ -2275,7 +2276,7 @@ export default function CreateArticlePage() {
                   </div>
                   {/* Connector Line */}
                   {index < steps.length - 1 && (
-                    <div className="flex-1 h-0.5 mx-2 mt-5 relative">
+                    <div className="flex-1 h-0.5 mx-0.5 sm:mx-2 mt-3.5 sm:mt-5 relative min-w-0">
                       <div className="absolute inset-0 bg-border rounded-full" />
                       <div
                         className={cn(
@@ -2307,9 +2308,9 @@ export default function CreateArticlePage() {
           >
             {/* Step 0: Basic Info (Title and Excerpt) */}
             {currentStep === 0 && (
-              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
-          <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+          <div className="space-y-1.5 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
                     {t('createArticle.articleTitle')}
                     {!title.trim() && <span className="text-destructive">*</span>}
                   </Label>
@@ -2323,23 +2324,23 @@ export default function CreateArticlePage() {
                 }}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => setIsTitleFocused(false)}
-                      className="text-3xl font-bold border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground/50 bg-transparent shadow-none break-words pr-20"
+                      className="text-xl sm:text-2xl lg:text-3xl font-bold border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground/50 bg-transparent shadow-none break-words pr-16 sm:pr-20"
                       style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                       maxLength={TITLE_MAX_LENGTH}
               />
-              <div className="absolute bottom-2 right-0 text-xs text-muted-foreground">
+              <div className="absolute bottom-2 right-0 text-[10px] sm:text-xs text-muted-foreground">
                 {title.length}/{TITLE_MAX_LENGTH}
               </div>
             </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {t('createArticle.titleHint')}
                   </p>
           </div>
 
           <Separator />
 
-          <div className="space-y-2">
-                  <Label htmlFor="excerpt" className="text-sm font-medium flex items-center gap-1">
+          <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="excerpt" className="text-xs sm:text-sm font-medium flex items-center gap-1">
                     {t('createArticle.excerpt')}
                     {!excerpt.trim() && <span className="text-destructive">*</span>}
                   </Label>
@@ -2356,15 +2357,15 @@ export default function CreateArticlePage() {
                 }}
                 onFocus={() => setIsExcerptFocused(true)}
                 onBlur={() => setIsExcerptFocused(false)}
-                className="text-base min-h-[80px] resize-none break-words pr-16"
+                className="text-sm sm:text-base min-h-[80px] sm:min-h-[100px] resize-none break-words pr-12 sm:pr-16"
                 rows={3}
                 maxLength={EXCERPT_MAX_LENGTH}
               />
-              <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+              <div className="absolute bottom-2 right-2 text-[10px] sm:text-xs text-muted-foreground">
                 {excerpt.length}/{EXCERPT_MAX_LENGTH}
           </div>
             </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {t('createArticle.excerptHint')}
                   </p>
           </div>
@@ -2373,7 +2374,7 @@ export default function CreateArticlePage() {
 
             {/* Step 1: Content */}
             {currentStep === 1 && (
-              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
                 <RichTextEditor
                   ref={editorRef}
                   id="content-editor"
@@ -2414,20 +2415,20 @@ export default function CreateArticlePage() {
 
             {/* Step 2: Metadata */}
             {currentStep === 2 && (
-              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
           <Card>
-            <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Tag className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-1.5 sm:gap-2">
+                      <Tag className="h-4 w-4 sm:h-5 sm:w-5" />
                       {t('createArticle.tags')}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('createArticle.tagsDescription', { max: MAX_TAGS })}
                     </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex gap-2">
+            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
                     <Input
                       placeholder={t('createArticle.tagsPlaceholder')}
@@ -2443,28 +2444,28 @@ export default function CreateArticlePage() {
                         }
                       }}
                       maxLength={TAG_MAX_LENGTH}
-                      className="pr-16"
+                      className="h-9 sm:h-10 text-sm pr-12 sm:pr-16"
                     />
-                    <div className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    <div className="absolute top-1/2 right-2 -translate-y-1/2 text-[10px] sm:text-xs text-muted-foreground pointer-events-none">
                       {tagInput.length}/{TAG_MAX_LENGTH}
                     </div>
                   </div>
-                  <Button onClick={handleAddTag} disabled={tags.length >= MAX_TAGS}>
+                  <Button onClick={handleAddTag} disabled={tags.length >= MAX_TAGS} className="h-9 sm:h-10 text-xs sm:text-sm">
                     {t('createArticle.addTag')}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   {t('createArticle.tagsCounter', { count: tags.length, max: MAX_TAGS }) || `${tags.length}/${MAX_TAGS} tags`}
                 </p>
               </div>
 
               {tags.length > 0 && (
-                <div className="flex flex-wrap items-start gap-2">
+                <div className="flex flex-wrap items-start gap-1.5 sm:gap-2">
                   {tags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-xs break-words overflow-wrap-anywhere"
+                            className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-[10px] sm:text-xs break-words overflow-wrap-anywhere"
                       style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '100%' }}
                       onClick={() => handleRemoveTag(tag)}
                     >
@@ -2477,21 +2478,20 @@ export default function CreateArticlePage() {
           </Card>
 
           <Card>
-            <CardHeader>
-                    <CardTitle className="text-lg">{t('createArticle.difficultyLevel')}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
+            <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg">{t('createArticle.difficultyLevel')}</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('createArticle.difficultyLevelDescription')}
                     </p>
             </CardHeader>
-            <CardContent>
-                    <div className="flex gap-3">
+            <CardContent className="p-4 sm:p-6 pt-0">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
                   <Button
                     key={level}
                     variant={difficulty === level ? 'default' : 'outline'}
                     onClick={() => setDifficulty(level)}
-                          className="capitalize flex-1"
-                          size="lg"
+                          className="capitalize flex-1 h-9 sm:h-10 text-xs sm:text-sm sm:size-lg"
                   >
                     {t(`createArticle.difficultyOptions.${level}`)}
                   </Button>
@@ -2504,18 +2504,18 @@ export default function CreateArticlePage() {
 
             {/* Step 3: Preview Image */}
             {currentStep === 3 && (
-              <div className="space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in-0 slide-in-from-right-4 duration-300">
           <Card>
-            <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-1.5 sm:gap-2">
+                      <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                       {t('createArticle.previewImageTitle')}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('createArticle.previewImageDescription')}
                     </p>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-4 sm:space-y-5 p-4 sm:p-6 pt-0">
               {croppedImageUrl ? (
                 <>
                   <div className="relative overflow-hidden rounded-xl border border-border/70 bg-muted/20">
@@ -2524,59 +2524,59 @@ export default function CreateArticlePage() {
                       alt="Article preview"
                       className="aspect-video w-full object-cover"
                     />
-                    <div className="pointer-events-none absolute bottom-4 left-4 hidden items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
-                      <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                    <div className="pointer-events-none absolute bottom-2 sm:bottom-4 left-2 sm:left-4 hidden items-center gap-1.5 sm:gap-2 rounded-full border border-border/50 bg-background/80 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground shadow-sm backdrop-blur sm:flex">
+                      <Badge variant="secondary" className="rounded-sm px-1.5 sm:px-2 py-0.5 uppercase tracking-wide text-[9px] sm:text-[10px]">
                         16:9
                       </Badge>
                       {t('createArticle.perfectForSocial')}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <Button
                       variant="outline"
-                      className="gap-2"
+                      className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                       onClick={handleAdjustCrop}
                       disabled={!originalImageUrl}
                     >
-                      <Crop className="h-4 w-4" />
+                      <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('createArticle.adjustCrop')}
                     </Button>
                     <Button
                       variant="outline"
-                      className="gap-2"
+                      className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <RefreshCw className="h-4 w-4" />
+                      <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('createArticle.replaceImage')}
                     </Button>
                     <Button
                       variant="ghost"
-                      className="gap-2 text-destructive hover:text-destructive"
+                      className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm text-destructive hover:text-destructive"
                       onClick={resetPreviewImage}
                     >
-                      <XCircle className="h-4 w-4" />
+                      <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('createArticle.removeImage')}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {t('createArticle.imageUploadHint')}
                   </p>
                 </>
               ) : (
-                      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-6 py-16 text-center">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/40">
-                          <ImagePlus className="h-10 w-10 text-muted-foreground" />
+                      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/40 bg-muted/10 px-4 sm:px-6 py-12 sm:py-16 text-center">
+                        <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-muted/40">
+                          <ImagePlus className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
                   </div>
-                        <h4 className="mt-6 text-lg font-semibold">{t('createArticle.addHeroImage')}</h4>
-                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                        <h4 className="mt-4 sm:mt-6 text-base sm:text-lg font-semibold">{t('createArticle.addHeroImage')}</h4>
+                        <p className="mt-2 max-w-md text-xs sm:text-sm text-muted-foreground">
                           {t('createArticle.addHeroImageDescription')}
                   </p>
                   <Button
-                    className="mt-6 gap-2"
+                    className="mt-4 sm:mt-6 gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <ImagePlus className="h-4 w-4" />
+                    <ImagePlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t('createArticle.uploadImage')}
                   </Button>
                 </div>
@@ -2598,7 +2598,7 @@ export default function CreateArticlePage() {
               <div className="animate-in fade-in-0 slide-in-from-right-4 duration-300">
                 {/* Preview Image */}
                 {croppedImageUrl && (
-                  <div className="mb-8 overflow-hidden rounded-2xl border border-border/40">
+                  <div className="mb-6 sm:mb-8 overflow-hidden rounded-xl sm:rounded-2xl border border-border/40">
                     <img
                       src={croppedImageUrl}
                       alt={title.trim() || 'Article preview'}
@@ -2608,44 +2608,44 @@ export default function CreateArticlePage() {
                 )}
 
                 {/* Article Header */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Title */}
-                  <h1 className="text-4xl font-bold tracking-tight lg:text-5xl break-words">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                     {title.trim() || <span className="text-muted-foreground italic">{t('createArticle.untitled')}</span>}
                   </h1>
 
                   {/* Meta Info */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="font-medium">{user?.nickname || user?.email || 'You'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span>{estimateReadTime(getPlainTextFromHtml(content))} min read</span>
                     </div>
                   </div>
 
                   {/* Tags and Difficulty */}
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2">
                     {tags.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         {tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-xs">
+                          <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary text-[10px] sm:text-xs">
                             {tag}
                           </Badge>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">{t('createArticle.noTags')}</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">{t('createArticle.noTags')}</span>
                     )}
-                    <Badge variant="outline" className="capitalize text-xs">
+                    <Badge variant="outline" className="capitalize text-[10px] sm:text-xs">
                       {t(`createArticle.difficultyOptions.${difficulty}`)}
                     </Badge>
                   </div>
                 </div>
 
-                <Separator className="my-8" />
+                <Separator className="my-6 sm:my-8" />
 
                 {/* Article Content - Collapsible */}
                 <div className="space-y-4">
@@ -2681,16 +2681,16 @@ export default function CreateArticlePage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setIsContentExpanded(!isContentExpanded)}
-                        className="gap-2 relative z-10"
+                        className="gap-1.5 sm:gap-2 relative z-10 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                       >
                         {isContentExpanded ? (
                           <>
-                            <ChevronRight className="h-4 w-4 rotate-90" />
+                            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 rotate-90" />
                             {t('createArticle.showLess')}
                           </>
                         ) : (
                           <>
-                            <ChevronRight className="h-4 w-4 -rotate-90" />
+                            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 -rotate-90" />
                             {t('createArticle.showMore')}
                           </>
                         )}
@@ -2702,46 +2702,46 @@ export default function CreateArticlePage() {
                 <Separator className="my-8" />
 
                 {/* Metadata Section - Minimal Design */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Excerpt Section */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         {t('createArticle.excerptLabel')}
                       </span>
-                      <span className="text-xs text-muted-foreground font-mono">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
                         {excerpt.length} / {EXCERPT_MAX_LENGTH}
                       </span>
                     </div>
                     {excerpt.trim() ? (
-                      <p className="text-sm text-foreground leading-relaxed break-words pt-1">
+                      <p className="text-xs sm:text-sm text-foreground leading-relaxed break-words pt-1" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                         {excerpt}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground italic pt-1">{t('createArticle.noExcerpt')}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground italic pt-1">{t('createArticle.noExcerpt')}</p>
                     )}
                   </div>
 
                   <Separator />
 
                   {/* Statistics Grid */}
-                  <div className="grid grid-cols-3 gap-6">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">{t('createArticle.words')}</p>
-                      <p className="text-base font-semibold text-foreground">
+                  <div className="grid grid-cols-3 gap-3 sm:gap-6">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">{t('createArticle.words')}</p>
+                      <p className="text-sm sm:text-base font-semibold text-foreground">
                         {getPlainTextFromHtml(content).split(/\s+/).filter(Boolean).length}
                       </p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">{t('createArticle.titleLabel')}</p>
-                      <p className="text-base font-semibold text-foreground">
-                        {title.length} <span className="text-xs font-normal text-muted-foreground">/ {TITLE_MAX_LENGTH}</span>
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">{t('createArticle.titleLabel')}</p>
+                      <p className="text-sm sm:text-base font-semibold text-foreground">
+                        {title.length} <span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/ {TITLE_MAX_LENGTH}</span>
                       </p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">{t('createArticle.contentLabel')}</p>
-                      <p className="text-base font-semibold text-foreground">
-                        {getPlainTextFromHtml(content).length.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ {CONTENT_MAX_LENGTH.toLocaleString()}</span>
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">{t('createArticle.contentLabel')}</p>
+                      <p className="text-sm sm:text-base font-semibold text-foreground">
+                        {getPlainTextFromHtml(content).length.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/ {CONTENT_MAX_LENGTH.toLocaleString()}</span>
                       </p>
                     </div>
                   </div>
@@ -2751,45 +2751,45 @@ export default function CreateArticlePage() {
 
             {/* Step 5: Guidelines */}
             {currentStep === 5 && (
-              <div className="space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
                 <div className="space-y-1">
-                  <h2 className="text-3xl font-bold">{t('createArticle.publishingGuidelines')}</h2>
-                  <p className="text-muted-foreground">
+                  <h2 className="text-2xl sm:text-3xl font-bold">{t('createArticle.publishingGuidelines')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {t('createArticle.reviewRulesBeforePublishing')}
                   </p>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   {/* Requirements Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{t('createArticle.requirements')}</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.requirements')}</h3>
                     </div>
-                    <div className="space-y-3 pl-7">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.title')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.title')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             10-{TITLE_MAX_LENGTH} {t('createArticle.charactersClearDescriptive')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.content')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.content')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.minWordsMaxChars', { max: CONTENT_MAX_LENGTH.toLocaleString() })}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.excerpt')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.excerpt')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.optionalUpToChars', { max: EXCERPT_MAX_LENGTH })}
                           </p>
                         </div>
@@ -2800,35 +2800,35 @@ export default function CreateArticlePage() {
                   <Separator />
 
                   {/* Guidelines Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Info className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{t('createArticle.guidelines')}</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Info className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.guidelines')}</h3>
                     </div>
-                    <div className="space-y-3 pl-7">
-                      <div className="flex items-start gap-3">
-                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.originality')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.originality')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.originalContentOrAttributed')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.quality')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.quality')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.wellWrittenInformative')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.formatting')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.formatting')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.properStructureHeadings')}
                           </p>
                         </div>
@@ -2839,44 +2839,44 @@ export default function CreateArticlePage() {
                   <Separator />
 
                   {/* Prohibited Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <XCircle className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{t('createArticle.prohibited')}</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.prohibited')}</h3>
                     </div>
-                    <div className="space-y-3 pl-7">
-                      <div className="flex items-start gap-3">
-                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.harmfulContent')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.harmfulContent')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.hatefulDiscriminatoryViolent')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.spamMisinformation')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.spamMisinformation')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.clickbaitSpamMisleading')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.copyright')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.copyright')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.noCopyrightViolations')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <XCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.inappropriateMedia')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.inappropriateMedia')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.explicitViolentInappropriate')}
                           </p>
                         </div>
@@ -2887,44 +2887,44 @@ export default function CreateArticlePage() {
                   <Separator />
 
                   {/* Publishing Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{t('createArticle.publishing')}</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.publishing')}</h3>
                     </div>
-                    <div className="space-y-3 pl-7">
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.reviewProcess')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.reviewProcess')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.allArticlesSubjectToReview')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.edits')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.edits')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.significantChangesMayRequireReview')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.tagsCategories')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.tagsCategories')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.useRelevantTagsDifficulty')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium">{t('createArticle.heroImage')}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.heroImage')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {t('createArticle.optionalButRecommended')}
                           </p>
                         </div>
@@ -2935,12 +2935,12 @@ export default function CreateArticlePage() {
                   <Separator />
 
                   {/* Important Notes */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{t('createArticle.important')}</h3>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.important')}</h3>
                     </div>
-                    <p className="text-sm text-foreground pl-7">
+                    <p className="text-xs sm:text-sm text-foreground pl-5 sm:pl-7 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       {t('createArticle.byPublishingYouConfirm')}
                     </p>
                   </div>
@@ -2948,24 +2948,25 @@ export default function CreateArticlePage() {
                   <Separator />
 
                   {/* Agreement Checkbox */}
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-start gap-3 sm:gap-4">
                       <Checkbox
                         id="agree-terms"
                         checked={agreedToTerms}
                         onCheckedChange={(checked) => {
                           setAgreedToTerms(checked === true)
                         }}
-                        className="mt-0.5"
+                        className="mt-1 h-4 w-4 sm:h-5 sm:w-5 shrink-0"
                       />
-                      <div className="space-y-1 flex-1">
+                      <div className="space-y-1 flex-1 min-w-0 pt-0.5">
                         <Label
                           htmlFor="agree-terms"
-                          className="text-sm font-medium leading-tight cursor-pointer"
+                          className="text-xs sm:text-sm font-medium leading-relaxed cursor-pointer break-words block"
+                          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                         >
                           {t('createArticle.agreeToGuidelines')}
                         </Label>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
                           {t('createArticle.mustAgree')}
                         </p>
                       </div>
@@ -2977,59 +2978,59 @@ export default function CreateArticlePage() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex items-center justify-between border-t pt-6">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t pt-4 sm:pt-6">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t('createArticle.previous')}
             </Button>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-center sm:justify-start">
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 {t('createArticle.stepCounter', { current: currentStep + 1, total: steps.length })}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 onClick={handleSaveDraft}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
                 disabled={isSavingDraft || isPublishing || isLoadingDraft}
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {isSavingDraft ? t('settings.profile.saving') : t('createArticle.saveDraft')}
               </Button>
               {currentStep === steps.length - 1 ? (
                 <Button
                   onClick={handlePublish}
                   disabled={isPublishing || isSavingDraft || isLoadingDraft || !canGoNext()}
-                  className="gap-2"
+                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {isPublishing ? t('createArticle.publishing') : t('createArticle.publish')}
                 </Button>
               ) : currentStep === steps.length - 2 ? (
                 <Button
                   onClick={handleNext}
                   disabled={!canGoNext()}
-                  className="gap-2"
+                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('createArticle.complete')}
                 </Button>
               ) : (
                 <Button
                   onClick={handleNext}
                   disabled={!canGoNext()}
-                  className="gap-2"
+                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
                 >
                   {t('createArticle.next')}
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               )}
             </div>
@@ -3038,15 +3039,15 @@ export default function CreateArticlePage() {
       </div>
 
       <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader className="space-y-2 text-left">
-            <DialogTitle>{t('createArticle.refineHeroImage')}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-full p-4 sm:p-6">
+          <DialogHeader className="space-y-1.5 sm:space-y-2 text-left">
+            <DialogTitle className="text-base sm:text-lg">{t('createArticle.refineHeroImage')}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               {t('createArticle.refineHeroImageDescription')}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="space-y-4">
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-muted/40">
                 {effectiveImageUrl ? (
@@ -3069,16 +3070,16 @@ export default function CreateArticlePage() {
                     {t('createArticle.waitingForImage')}
                   </div>
                 )}
-                <div className="pointer-events-none absolute left-4 top-4 hidden items-center gap-2 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
-                  <Badge variant="secondary" className="rounded-sm px-2 py-0.5 uppercase tracking-wide">
+                <div className="pointer-events-none absolute left-2 sm:left-4 top-2 sm:top-4 hidden items-center gap-1.5 sm:gap-2 rounded-full border border-border/40 bg-background/80 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
+                  <Badge variant="secondary" className="rounded-sm px-1.5 sm:px-2 py-0.5 uppercase tracking-wide text-[9px] sm:text-[10px]">
                     16:9
                   </Badge>
                   {t('createArticle.balancedFraming')}
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
-                <div className="flex items-center justify-between text-sm font-medium">
+              <div className="rounded-lg border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-medium">
                   <span>{t('createArticle.zoom')}</span>
                   <span className="text-muted-foreground">{zoom.toFixed(1)}×</span>
           </div>
@@ -3089,34 +3090,34 @@ export default function CreateArticlePage() {
               step={0.1}
               onValueChange={(value) => setZoom(value[0] ?? 1)}
                   disabled={isProcessingImage}
-                  className="mt-3"
+                  className="mt-2 sm:mt-3"
                 />
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <Card className="h-full border-border/60 bg-muted/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">{t('createArticle.croppingTips')}</CardTitle>
+                <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4">
+                  <CardTitle className="text-sm sm:text-base font-semibold">{t('createArticle.croppingTips')}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm text-muted-foreground">
-                  <div className="space-y-2">
+                <CardContent className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-muted-foreground p-3 sm:p-4 pt-0">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <p className="font-medium text-foreground">{t('createArticle.aimForClarity')}</p>
-                    <p>
+                    <p className="break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       {t('createArticle.aimForClarityDescription')}
                     </p>
                   </div>
                   <Separator className="bg-border/60" />
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <p className="font-medium text-foreground">{t('createArticle.resolutionMatters')}</p>
-                    <p>
+                    <p className="break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       {t('createArticle.resolutionMattersDescription')}
                     </p>
                   </div>
                   <Separator className="bg-border/60" />
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <p className="font-medium text-foreground">{t('createArticle.needAdjustmentsLater')}</p>
-                    <p>
+                    <p className="break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       {t('createArticle.needAdjustmentsLaterDescription')}
                     </p>
                   </div>
@@ -3125,23 +3126,23 @@ export default function CreateArticlePage() {
             </div>
           </div>
 
-          <DialogFooter className="mt-6">
-            <Button variant="ghost" onClick={handleCancelCrop} disabled={isProcessingImage}>
+          <DialogFooter className="mt-4 sm:mt-6 flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={handleCancelCrop} disabled={isProcessingImage} className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm">
               {t('common.cancel')}
             </Button>
             <Button
               onClick={handleConfirmCrop}
               disabled={isProcessingImage || !croppedAreaPixels}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
             >
               {isProcessingImage ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('createArticle.processing')}
                 </>
               ) : (
                 <>
-                  <Check className="h-4 w-4" />
+                  <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('createArticle.useImage')}
                 </>
               )}

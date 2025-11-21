@@ -114,6 +114,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 // settingsNav будет динамическим через useTranslation
 const settingsNavItems = [
@@ -292,7 +298,7 @@ function AppearanceOptionCard({
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
       className={cn(
-        'group relative flex h-full cursor-pointer flex-col gap-3 border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0 focus-visible:ring-0',
+        'group relative flex h-full cursor-pointer flex-col gap-2 sm:gap-3 border p-3 sm:p-4 text-left transition hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0 focus-visible:ring-0',
         disabled && 'pointer-events-none opacity-60',
         active && 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40'
       )}
@@ -300,22 +306,22 @@ function AppearanceOptionCard({
         borderRadius: 'var(--radius-md)',
       }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <div 
-            className="flex size-11 shrink-0 items-center justify-center border border-border/60 bg-background shadow-sm"
+            className="flex size-9 sm:size-11 shrink-0 items-center justify-center border border-border/60 bg-background shadow-sm"
             style={{
               borderRadius: 'var(--radius-sm)',
             }}
           >
             {leading}
           </div>
-          <div>
-            <p className="text-sm font-semibold">{label}</p>
-            <p className="text-xs text-muted-foreground">{description}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-semibold break-words">{label}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground break-words">{description}</p>
           </div>
         </div>
-        {active && <Check className="h-4 w-4 text-primary" />}
+        {active && <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />}
       </div>
       {preview ? (
         <div 
@@ -371,51 +377,99 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBack}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
             >
-              <ArrowLeft className="h-4 w-4" />
-              {t('common.back')}
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">{t('common.back')}</span>
             </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{t('settings.title')}</h1>
+            <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-semibold truncate">{t('settings.title')}</h1>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
             <AccountSheet />
           </div>
         </div>
       </header>
 
-      <div className="container pt-8 pb-6">
-        <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-          {/* Sidebar Navigation */}
-          <aside className="space-y-1">
-            {settingsNav.map((item) => {
-              const Icon = item.icon
-              const isActive = currentSection === item.id
-              
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  className="w-full justify-start gap-2"
-                  onClick={() => handleSectionNavigate(item.id)}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              )
-            })}
+      <div className="container pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6">
+        <div className="grid gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-[180px_1fr] xl:grid-cols-[220px_1fr]">
+          {/* Sidebar Navigation - All screens */}
+          <aside className="space-y-0.5 sm:space-y-1">
+            {/* Mobile: Dropdown menu */}
+            <div className="lg:hidden mb-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-9 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const Icon = settingsNav.find(item => item.id === currentSection)?.icon || Settings
+                        return <Icon className="h-4 w-4" />
+                      })()}
+                      <span className="truncate">
+                        {settingsNav.find(item => item.id === currentSection)?.label || t('settings.title')}
+                      </span>
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[200px]">
+                  {settingsNav.map((item) => {
+                    const Icon = item.icon
+                    const isActive = currentSection === item.id
+                    return (
+                      <DropdownMenuItem
+                        key={item.id}
+                        onClick={() => handleSectionNavigate(item.id)}
+                        className={cn(
+                          "flex items-center gap-2 cursor-pointer",
+                          isActive && "bg-accent"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                        {isActive && <Check className="h-3.5 w-3.5 ml-auto" />}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            
+            {/* Desktop: Full sidebar */}
+            <nav className="hidden lg:flex flex-col gap-0.5">
+              {settingsNav.map((item) => {
+                const Icon = item.icon
+                const isActive = currentSection === item.id
+                
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    className="w-full justify-start gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+                    onClick={() => handleSectionNavigate(item.id)}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </Button>
+                )
+              })}
+            </nav>
           </aside>
 
           {/* Main Content */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-4 sm:space-y-6">
             {currentSection === 'profile' && <ProfileSettings />}
             {currentSection === 'appearance' && <AppearanceSettings />}
             {currentSection === 'language' && <LanguageSettings />}
@@ -1241,40 +1295,40 @@ function ProfileSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.profile.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.profile.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.profile.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <Tabs defaultValue="basics" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
-            <TabsTrigger value="basics" className="text-xs sm:text-sm py-2">
-              <User className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.profile.basics')}</span>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
+            <TabsTrigger value="basics" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.profile.basics')}</span>
             </TabsTrigger>
-            <TabsTrigger value="contact" className="text-xs sm:text-sm py-2">
-              <Mail className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.profile.contact')}</span>
+            <TabsTrigger value="contact" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.profile.contact')}</span>
             </TabsTrigger>
-            <TabsTrigger value="professional" className="text-xs sm:text-sm py-2">
-              <Briefcase className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.profile.professional')}</span>
+            <TabsTrigger value="professional" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.profile.professional')}</span>
             </TabsTrigger>
-            <TabsTrigger value="social" className="text-xs sm:text-sm py-2">
-              <Users className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.profile.social')}</span>
+            <TabsTrigger value="social" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.profile.social')}</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basics" className="space-y-6 mt-6">
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold tracking-wide text-muted-foreground">
+          <TabsContent value="basics" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+        <section className="space-y-2 sm:space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <Label className="text-xs sm:text-sm font-semibold tracking-wide text-muted-foreground">
               {t('settings.profile.cover')}
             </Label>
-            <span className="text-xs text-muted-foreground">{t('settings.profile.coverRecommended')}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{t('settings.profile.coverRecommended')}</span>
           </div>
           <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50">
             <div className="aspect-[4/1] w-full">
@@ -1285,112 +1339,178 @@ function ProfileSettings() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/60">
-                    <ImagePlus className="h-8 w-8" />
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 sm:gap-3 text-muted-foreground p-4">
+                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted/60">
+                    <ImagePlus className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
-                  <p className="text-sm font-medium">{t('settings.profile.noCover')}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs sm:text-sm font-medium">{t('settings.profile.noCover')}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
                     {t('settings.profile.addCover')}
                   </p>
                 </div>
               )}
             </div>
-            <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-2 bg-gradient-to-t from-background/95 via-background/40 to-transparent p-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => coverInputRef.current?.click()}
-                disabled={isSaving || isCoverProcessing}
-              >
-                <Camera className="h-4 w-4" />
-                {coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}
-              </Button>
+            <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 bg-gradient-to-t from-background/95 via-background/40 to-transparent p-2 sm:p-3">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                      onClick={() => coverInputRef.current?.click()}
+                      disabled={isSaving || isCoverProcessing}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {coverPreview?.startsWith('blob:') && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={handleAdjustCoverCrop}
-                  disabled={isSaving || isCoverProcessing}
-                >
-                  <Crop className="h-4 w-4" />
-                  {t('settings.profile.adjustCrop')}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                        onClick={handleAdjustCoverCrop}
+                        disabled={isSaving || isCoverProcessing}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.adjustCrop')}</span>
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('settings.profile.adjustCrop')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {coverPreview && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-destructive hover:text-destructive"
-                  onClick={handleRemoveCover}
-                  disabled={isSaving || isCoverProcessing}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t('settings.profile.remove')}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive hover:text-destructive"
+                        onClick={handleRemoveCover}
+                        disabled={isSaving || isCoverProcessing}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('settings.profile.remove')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
         </section>
 
-        <section className="space-y-3">
-          <Label className="text-sm font-semibold tracking-wide text-muted-foreground">
+        <section className="space-y-2 sm:space-y-3">
+          <Label className="text-xs sm:text-sm font-semibold tracking-wide text-muted-foreground">
             {t('settings.profile.avatar')}
           </Label>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-border/70 bg-muted/60">
+          <div className="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 bg-muted/60">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-muted-foreground">
                   {(nickname || initialNickname).charAt(0).toUpperCase() || 'A'}
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={isSaving || isAvatarProcessing}
-              >
-                <Camera className="h-4 w-4" />
-                {avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}
-              </Button>
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isSaving || isAvatarProcessing}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {avatarPreview?.startsWith('blob:') && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={handleAdjustAvatarCrop}
-                  disabled={isSaving || isAvatarProcessing}
-                >
-                  <Crop className="h-4 w-4" />
-                  {t('settings.profile.adjustCrop')}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                        onClick={handleAdjustAvatarCrop}
+                        disabled={isSaving || isAvatarProcessing}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.adjustCrop')}</span>
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('settings.profile.adjustCrop')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {avatarPreview && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-destructive hover:text-destructive"
-                  onClick={handleRemoveAvatar}
-                  disabled={isSaving || isAvatarProcessing}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t('settings.profile.remove')}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive hover:text-destructive"
+                        onClick={handleRemoveAvatar}
+                        disabled={isSaving || isAvatarProcessing}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('settings.profile.remove')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
         </section>
 
-        <section className="space-y-4">
-        <div className="space-y-2">
-            <Label htmlFor="settings-nickname">{t('settings.profile.nickname')}</Label>
+        <section className="space-y-3 sm:space-y-4">
+        <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="settings-nickname" className="text-xs sm:text-sm">{t('settings.profile.nickname')}</Label>
             <Input
               id="settings-nickname"
               value={nickname}
@@ -1398,12 +1518,13 @@ function ProfileSettings() {
               placeholder="fluy1337"
               maxLength={60}
               disabled={isSaving}
+              className="h-9 sm:h-10 text-sm"
             />
         </div>
-        <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="settings-bio">{t('settings.profile.bio')}</Label>
-              <span className="text-xs text-muted-foreground">
+        <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="settings-bio" className="text-xs sm:text-sm">{t('settings.profile.bio')}</Label>
+              <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">
                 {bioRemaining} {t('settings.profile.charactersLeft')}
               </span>
             </div>
@@ -1412,25 +1533,30 @@ function ProfileSettings() {
               value={bio}
               onChange={(event) => setBio(event.target.value)}
               placeholder={t('settings.profile.bioPlaceholder')}
-              className="min-h-[140px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[100px] sm:min-h-[140px] w-full resize-none rounded-lg border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               maxLength={BIO_LIMIT + 10}
               disabled={isSaving}
             />
           </div>
         </section>
 
-        <div className="flex flex-col gap-2 border-t border-dashed pt-6 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={handleCancel} disabled={isSaving || !hasChanges}>
+        <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:pt-6 sm:flex-row sm:justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={handleCancel} 
+            disabled={isSaving || !hasChanges}
+            className="h-9 sm:h-10 text-xs sm:text-sm"
+          >
             {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || !hasChanges}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
           >
             {isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 {t('settings.profile.saving')}
               </>
             ) : (
@@ -1440,82 +1566,85 @@ function ProfileSettings() {
         </div>
           </TabsContent>
 
-          <TabsContent value="contact" className="space-y-6 mt-6">
-            <section className="space-y-4">
+          <TabsContent value="contact" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">{t('settings.profile.contactDetails')}</Label>
-            <p className="text-sm text-muted-foreground">
+                <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.contactDetails')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {t('settings.profile.contactDetailsDescription')}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-              <Label htmlFor="settings-first-name">{t('settings.profile.firstName')}</Label>
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+        <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-first-name" className="text-xs sm:text-sm">{t('settings.profile.firstName')}</Label>
               <Input
                 id="settings-first-name"
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
                 placeholder="Alex"
+                className="h-9 sm:h-10 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-last-name">{t('settings.profile.lastName')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-last-name" className="text-xs sm:text-sm">{t('settings.profile.lastName')}</Label>
               <Input
                 id="settings-last-name"
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
                 placeholder="Rivera"
+                className="h-9 sm:h-10 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-contact-email">{t('settings.profile.contactEmail')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-contact-email" className="text-xs sm:text-sm">{t('settings.profile.contactEmail')}</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-contact-email"
                   value={contactEmail}
                   onChange={(event) => setContactEmail(event.target.value)}
                   placeholder="hello@aetheris.dev"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {t('settings.profile.contactEmailDescription')}
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-website">{t('settings.profile.website')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-website" className="text-xs sm:text-sm">{t('settings.profile.website')}</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Globe className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-website"
                   value={website}
                   onChange={(event) => setWebsite(event.target.value)}
                   placeholder="https://aetheris.dev"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-location">{t('settings.profile.location')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-location" className="text-xs sm:text-sm">{t('settings.profile.location')}</Label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <MapPin className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-location"
                   value={locationValue}
                   onChange={(event) => setLocationValue(event.target.value)}
                   placeholder="Valencia, Spain"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+          <div className="flex flex-col gap-2 border-t border-dashed pt-3 sm:pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleContactReset}
               disabled={!contactHasChanges || contactSaving}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             >
               {t('common.reset')}
             </Button>
@@ -1523,11 +1652,11 @@ function ProfileSettings() {
               size="sm"
               onClick={handleContactSave}
               disabled={!contactHasChanges || contactSaving}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
             >
               {contactSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('settings.profile.saving')}
                 </>
               ) : (
@@ -1538,74 +1667,75 @@ function ProfileSettings() {
             </section>
           </TabsContent>
 
-          <TabsContent value="social" className="space-y-6 mt-6">
-            <section className="space-y-4">
+          <TabsContent value="social" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">{t('settings.profile.socialProfiles')}</Label>
-            <p className="text-sm text-muted-foreground">
+                <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.socialProfiles')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {t('settings.profile.socialProfilesDescription')}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="settings-twitter">{t('settings.profile.twitter')}</Label>
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-twitter" className="text-xs sm:text-sm">{t('settings.profile.twitter')}</Label>
               <div className="relative">
-                <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Twitter className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-twitter"
                   value={twitterHandle}
                   onChange={(event) => setTwitterHandle(event.target.value)}
                   placeholder="@aetheris"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-github">{t('settings.profile.github')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-github" className="text-xs sm:text-sm">{t('settings.profile.github')}</Label>
               <div className="relative">
-                <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Github className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-github"
                   value={githubHandle}
                   onChange={(event) => setGithubHandle(event.target.value)}
                   placeholder="github.com/aetheris"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-linkedin">{t('settings.profile.linkedin')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-linkedin" className="text-xs sm:text-sm">{t('settings.profile.linkedin')}</Label>
               <div className="relative">
-                <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Linkedin className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-linkedin"
                   value={linkedinUrl}
                   onChange={(event) => setLinkedinUrl(event.target.value)}
                   placeholder="linkedin.com/in/aetheris"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-portfolio">{t('settings.profile.portfolio')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-portfolio" className="text-xs sm:text-sm">{t('settings.profile.portfolio')}</Label>
               <div className="relative">
-                <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <AtSign className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="settings-portfolio"
                   value={portfolioUrl}
                   onChange={(event) => setPortfolioUrl(event.target.value)}
                   placeholder="dribbble.com/aetheris"
-                  className="pl-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+          <div className="flex flex-col gap-2 border-t border-dashed pt-3 sm:pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSocialReset}
               disabled={!socialHasChanges || socialSaving}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             >
               {t('common.reset')}
             </Button>
@@ -1613,11 +1743,11 @@ function ProfileSettings() {
               size="sm"
               onClick={handleSocialSave}
               disabled={!socialHasChanges || socialSaving}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
             >
               {socialSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('settings.profile.saving')}
                 </>
               ) : (
@@ -1628,88 +1758,94 @@ function ProfileSettings() {
             </section>
           </TabsContent>
 
-          <TabsContent value="professional" className="space-y-6 mt-6">
-            <section className="space-y-4">
+          <TabsContent value="professional" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">{t('settings.profile.professionalProfile')}</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.professionalProfile')}</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {t('settings.profile.professionalProfileDescription')}
                 </p>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="settings-headline">{t('settings.profile.headline')}</Label>
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+                  <Label htmlFor="settings-headline" className="text-xs sm:text-sm">{t('settings.profile.headline')}</Label>
                   <Input
                     id="settings-headline"
                     value={headline}
                     onChange={(event) => setHeadline(event.target.value)}
                     placeholder={t('settings.profile.headlinePlaceholder')}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-role">{t('settings.profile.currentRole')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="settings-role" className="text-xs sm:text-sm">{t('settings.profile.currentRole')}</Label>
                   <Input
                     id="settings-role"
                     value={currentRole}
                     onChange={(event) => setCurrentRole(event.target.value)}
                     placeholder="Design Director"
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-company">{t('settings.profile.currentCompany')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="settings-company" className="text-xs sm:text-sm">{t('settings.profile.currentCompany')}</Label>
                   <Input
                     id="settings-company"
                     value={currentCompany}
                     onChange={(event) => setCurrentCompany(event.target.value)}
                     placeholder="Aetheris Studio"
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-experience">{t('settings.profile.experience')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="settings-experience" className="text-xs sm:text-sm">{t('settings.profile.experience')}</Label>
                   <Input
                     id="settings-experience"
                     value={experienceLevel}
                     onChange={(event) => setExperienceLevel(event.target.value)}
                     placeholder="8+ years in product design"
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-timezone">{t('settings.profile.timezone')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="settings-timezone" className="text-xs sm:text-sm">{t('settings.profile.timezone')}</Label>
                   <Input
                     id="settings-timezone"
                     value={timezone}
                     onChange={(event) => setTimezone(event.target.value)}
                     placeholder="UTC+1 · CET"
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-pronouns">{t('settings.profile.pronouns')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="settings-pronouns" className="text-xs sm:text-sm">{t('settings.profile.pronouns')}</Label>
                   <Input
                     id="settings-pronouns"
                     value={pronouns}
                     onChange={(event) => setPronouns(event.target.value)}
                     placeholder="she/they"
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="settings-availability">{t('settings.profile.availabilityNote')}</Label>
+                <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+                  <Label htmlFor="settings-availability" className="text-xs sm:text-sm">{t('settings.profile.availabilityNote')}</Label>
                   <textarea
                     id="settings-availability"
                     value={availability}
                     onChange={(event) => setAvailability(event.target.value)}
                     placeholder={t('settings.profile.availabilityPlaceholder')}
-                    className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="min-h-[80px] sm:min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     maxLength={200}
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-2 border-t border-dashed pt-4 sm:flex-row sm:justify-end">
+              <div className="flex flex-col gap-2 border-t border-dashed pt-3 sm:pt-4 sm:flex-row sm:justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleProfessionalReset}
                   disabled={!professionalHasChanges || professionalSaving}
-                  className="shrink-0"
+                  className="shrink-0 h-9 sm:h-10 text-xs sm:text-sm"
                 >
                   {t('common.reset')}
                 </Button>
@@ -1717,11 +1853,11 @@ function ProfileSettings() {
                   size="sm"
                   onClick={handleProfessionalSave}
                   disabled={!professionalHasChanges || professionalSaving}
-                  className="gap-2 shrink-0"
+                  className="gap-1.5 sm:gap-2 shrink-0 h-9 sm:h-10 text-xs sm:text-sm"
                 >
                   {professionalSaving ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                      <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin shrink-0" />
                       <span>{t('settings.profile.saving')}</span>
                     </>
                   ) : (
@@ -1733,110 +1869,115 @@ function ProfileSettings() {
 
             <Separator />
 
-            <section className="space-y-4">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">{t('settings.profile.focusVisibility')}</Label>
-            <p className="text-sm text-muted-foreground">
+                <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.focusVisibility')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {t('settings.profile.focusVisibilityDescription')}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-languages">{t('settings.profile.languages')}</Label>
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+            <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+              <Label htmlFor="settings-languages" className="text-xs sm:text-sm">{t('settings.profile.languages')}</Label>
               <Input
                 id="settings-languages"
                 value={languages}
                 onChange={(event) => setLanguages(event.target.value)}
                 placeholder="English, Spanish (ES), Catalan"
+                className="h-9 sm:h-10 text-sm"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-focus">{t('settings.profile.focusAreas')}</Label>
+            <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+              <Label htmlFor="settings-focus" className="text-xs sm:text-sm">{t('settings.profile.focusAreas')}</Label>
           <textarea
                 id="settings-focus"
                 value={focusAreas}
                 onChange={(event) => setFocusAreas(event.target.value)}
                 placeholder="Calm product strategy, accessibility systems, editorial tooling, long-form craft."
-                className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[100px] sm:min-h-[120px] w-full resize-none rounded-lg border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 maxLength={320}
           />
         </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-learning">{t('settings.profile.currentlyLearning')}</Label>
+            <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+              <Label htmlFor="settings-learning" className="text-xs sm:text-sm">{t('settings.profile.currentlyLearning')}</Label>
               <textarea
                 id="settings-learning"
                 value={currentlyLearning}
                 onChange={(event) => setCurrentlyLearning(event.target.value)}
                 placeholder="Studying tactile motion systems and authoring workflows for multi-sensory mediums."
-                className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[80px] sm:min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 maxLength={280}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-office-hours">{t('settings.profile.officeHours')}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="settings-office-hours" className="text-xs sm:text-sm">{t('settings.profile.officeHours')}</Label>
               <Input
                 id="settings-office-hours"
                 value={officeHours}
                 onChange={(event) => setOfficeHours(event.target.value)}
                 placeholder="Replies within 48h · Best between 10:00 and 16:00 CET"
+                className="h-9 sm:h-10 text-sm"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="settings-collaboration">{t('settings.profile.collaborationNotes')}</Label>
+            <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+              <Label htmlFor="settings-collaboration" className="text-xs sm:text-sm">{t('settings.profile.collaborationNotes')}</Label>
               <textarea
                 id="settings-collaboration"
                 value={collaborationNotes}
                 onChange={(event) => setCollaborationNotes(event.target.value)}
                 placeholder="Open to paired writing, guest lectures, and design audits for creator platforms."
-                className="min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[80px] sm:min-h-[90px] w-full resize-none rounded-lg border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 maxLength={240}
               />
             </div>
           </div>
 
-          <div className="space-y-4 rounded-lg border border-dashed bg-muted/20 p-4">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.availability')}</p>
-              <div className="flex flex-wrap gap-2">
+          <div className="space-y-3 sm:space-y-4 rounded-lg border border-dashed bg-muted/20 p-3 sm:p-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.availability')}</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 <Button
                   type="button"
                   variant={openToMentoring ? 'secondary' : 'outline'}
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                   onClick={() => setOpenToMentoring((value) => !value)}
                   aria-pressed={openToMentoring}
                 >
-                  <Users className="h-4 w-4" />
-                  {t('settings.profile.openToMentoring')}
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.profile.openToMentoring')}</span>
+                  <span className="sm:hidden">{t('settings.profile.mentoring')}</span>
                 </Button>
                 <Button
                   type="button"
                   variant={openToConsulting ? 'secondary' : 'outline'}
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                   onClick={() => setOpenToConsulting((value) => !value)}
                   aria-pressed={openToConsulting}
                 >
-                  <Briefcase className="h-4 w-4" />
-                  {t('settings.profile.openToConsulting')}
+                  <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.profile.openToConsulting')}</span>
+                  <span className="sm:hidden">{t('settings.profile.consulting')}</span>
                 </Button>
                 <Button
                   type="button"
                   variant={openToSpeaking ? 'secondary' : 'outline'}
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                   onClick={() => setOpenToSpeaking((value) => !value)}
                   aria-pressed={openToSpeaking}
                 >
-                  <Sparkles className="h-4 w-4" />
-                  {t('settings.profile.openToSpeaking')}
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.profile.openToSpeaking')}</span>
+                  <span className="sm:hidden">{t('settings.profile.speaking')}</span>
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.preferredContactMethod')}</p>
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.profile.preferredContactMethod')}</p>
+              <div className="grid gap-2 sm:gap-2 sm:grid-cols-2">
                 {contactMethodOptions.map((option) => {
                   const isSelected = preferredContactMethod === option.value
                   return (
@@ -1847,7 +1988,7 @@ function ProfileSettings() {
                     type="button"
                             variant={isSelected ? 'default' : 'outline'}
                     className={cn(
-                              'h-full justify-start gap-1 py-3 text-left min-w-0 w-full',
+                              'h-full justify-start gap-1 py-2 sm:py-3 px-2 sm:px-3 text-left min-w-0 w-full',
                               isSelected && 'border-primary'
                     )}
                     onClick={() => setPreferredContactMethod(option.value)}
@@ -1855,13 +1996,13 @@ function ProfileSettings() {
                           >
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1 overflow-hidden">
                               <span className={cn(
-                                'text-sm font-semibold truncate',
+                                'text-xs sm:text-sm font-semibold truncate',
                                 isSelected ? 'text-primary-foreground' : 'text-foreground'
                               )}>
                                 {option.label}
                               </span>
                               <span className={cn(
-                                'text-xs truncate',
+                                'text-[10px] sm:text-xs truncate',
                                 isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                               )}>
                                 {option.helper}
@@ -3540,47 +3681,47 @@ function AppearanceSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.appearance.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.appearance.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.appearance.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <Tabs defaultValue="colors" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
-            <TabsTrigger value="colors" className="text-xs sm:text-sm py-2">
-              <Sliders className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.appearance.general')}</span>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
+            <TabsTrigger value="colors" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Sliders className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.appearance.general')}</span>
             </TabsTrigger>
-            <TabsTrigger value="themes" className="text-xs sm:text-sm py-2">
-              <Palette className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.appearance.themesTab')}</span>
+            <TabsTrigger value="themes" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.appearance.themesTab')}</span>
             </TabsTrigger>
-            <TabsTrigger value="style" className="text-xs sm:text-sm py-2">
-              <Settings className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.appearance.style')}</span>
+            <TabsTrigger value="style" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.appearance.style')}</span>
             </TabsTrigger>
-            <TabsTrigger value="layout" className="text-xs sm:text-sm py-2">
-              <LayoutGrid className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('settings.appearance.layout')}</span>
+            <TabsTrigger value="layout" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
+              <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
+              <span className="hidden sm:inline truncate">{t('settings.appearance.layout')}</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="colors" className="space-y-6 mt-6">
-        <section className="space-y-4">
+          <TabsContent value="colors" className="space-y-3 sm:space-y-4 mt-3 sm:mt-6">
+        <section className="space-y-3 sm:space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-                  <Label className="text-sm font-semibold">{t('settings.appearance.themeMode')}</Label>
-              <p className="text-sm text-muted-foreground">
+                  <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeMode')}</Label>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                     {t('settings.appearance.themeModeDescription')}
               </p>
             </div>
-            <Badge variant="outline" className="self-start">
+            <Badge variant="outline" className="self-start text-[10px] sm:text-xs">
                   {theme === 'system' ? `${t('settings.appearance.system')} (${resolvedTheme})` : `${t(`settings.appearance.${theme}`)} ${t('settings.appearance.theme')}`}
             </Badge>
           </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 sm:grid-cols-3">
                 {themeModeOptions.map((option) => (
                   <AppearanceOptionCard
                   key={option.value}
@@ -3596,19 +3737,19 @@ function AppearanceSettings() {
 
             <Separator />
 
-            <section className="space-y-4">
+            <section className="space-y-3 sm:space-y-4">
               <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="live-preview" className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:outline-none">
-              <AccordionTrigger className="px-4 py-3 text-left hover:no-underline focus-visible:outline-none">
-                <div className="flex w-full flex-col gap-0.5 pr-6">
-                  <span className="text-sm font-semibold">{t('settings.appearance.livePreviewTitle')}</span>
-                  <span className="text-xs font-normal text-muted-foreground">
+              <AccordionTrigger className="px-3 sm:px-4 py-2.5 sm:py-3 text-left hover:no-underline focus-visible:outline-none">
+                <div className="flex w-full flex-col gap-0.5 pr-4 sm:pr-6">
+                  <span className="text-xs sm:text-sm font-semibold">{t('settings.appearance.livePreviewTitle')}</span>
+                  <span className="text-[10px] sm:text-xs font-normal text-muted-foreground">
                     {t('settings.appearance.livePreviewSubtitle')}
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-2">
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2">
+                <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div
               className="rounded-xl border border-border/70 bg-background/95 text-foreground shadow-lg ring-1 ring-border/30 backdrop-blur-sm"
               style={{
@@ -3790,15 +3931,15 @@ function AppearanceSettings() {
             </section>
           </TabsContent>
 
-          <TabsContent value="layout" className="space-y-6 mt-6">
-            <section className="space-y-4">
+          <TabsContent value="layout" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">{t('settings.appearance.articleLayout')}</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.articleLayout')}</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {t('settings.appearance.articleLayoutDescription')}
                 </p>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
                 {viewModeOptions(t).map((option) => {
                   const Icon = option.icon
                   const isActive = viewMode === option.value
@@ -3885,13 +4026,13 @@ function AppearanceSettings() {
             </section>
           </TabsContent>
 
-          <TabsContent value="style" className="space-y-6 mt-6">
+          <TabsContent value="style" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
             <Card className="border-2 border-dashed border-primary/20 bg-muted/5">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base font-semibold">{t('settings.appearance.themeBuilder')}</CardTitle>
-                    <CardDescription className="text-xs">
+              <CardHeader className="pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <CardTitle className="text-sm sm:text-base font-semibold">{t('settings.appearance.themeBuilder')}</CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
                       {t('settings.appearance.themeBuilderDescription')}
                     </CardDescription>
                   </div>
@@ -3899,18 +4040,18 @@ function AppearanceSettings() {
                     variant="outline"
                     size="sm"
                     onClick={handleResetToDefault}
-                    className="gap-2 shrink-0"
+                    className="gap-1.5 sm:gap-2 shrink-0 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm self-start sm:self-auto"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t('settings.appearance.resetToDefault')}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-        <section className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
+        <section className="space-y-3 sm:space-y-4">
           <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.accentColor')}</Label>
-            <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.accentColor')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.accentColorDescription')}
             </p>
           </div>
@@ -3918,35 +4059,35 @@ function AppearanceSettings() {
                 <button
                   type="button"
                   onClick={() => setIsAccentDropdownOpen(!isAccentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   style={{
                     borderRadius: 'var(--radius-md)',
                   }}
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                         <span
-                      className="block size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
+                      className="block size-5 sm:size-6 rounded-full shadow-sm ring-1 ring-border/40 shrink-0"
                       style={{ background: `hsl(${activeAccent?.tone ?? '221.2 83.2% 53.3%'})` }}
                     />
-                    <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{activeAccent?.label ?? t('settings.appearance.custom')}</span>
-                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeAccent')}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                          <span className="text-xs sm:text-sm font-semibold truncate">{activeAccent?.label ?? t('settings.appearance.custom')}</span>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('settings.appearance.clickToChangeAccent')}</span>
                       </div>
                     </div>
                   {isAccentDropdownOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                    <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 transition-transform" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                    <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 transition-transform" />
                   )}
                 </button>
                 {isAccentDropdownOpen && (
                   <div 
-                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    className="absolute top-full left-0 right-0 mt-2 p-3 sm:p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[70vh] sm:max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
                     style={{
                       borderRadius: 'var(--radius-md)',
                     }}
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                           {getAccentGroups(t).map((group) => {
                         const groupAccents = group.accents
                           .map((value) => accentOptionsByValue[value])
@@ -3955,12 +4096,12 @@ function AppearanceSettings() {
                         if (groupAccents.length === 0) return null
 
                         return (
-                          <div key={group.id} className="space-y-3">
+                          <div key={group.id} className="space-y-2 sm:space-y-3">
                             <div className="space-y-1">
-                              <p className="text-sm font-semibold">{group.label}</p>
-                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                              <p className="text-xs sm:text-sm font-semibold">{group.label}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">{group.description}</p>
                             </div>
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                               {groupAccents.map((option) => (
                                 <AppearanceOptionCard
                                   key={option.value}
@@ -3985,12 +4126,12 @@ function AppearanceSettings() {
                         )
                       })}
                       {customAccentOption && (
-                        <div className="space-y-3 pt-2 border-t border-border/60">
+                        <div className="space-y-2 sm:space-y-3 pt-2 border-t border-border/60">
                           <div className="space-y-1">
-                                <p className="text-sm font-semibold">{t('settings.appearance.custom')}</p>
-                                <p className="text-xs text-muted-foreground">{t('settings.appearance.createYourOwnAccent')}</p>
+                                <p className="text-xs sm:text-sm font-semibold">{t('settings.appearance.custom')}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">{t('settings.appearance.createYourOwnAccent')}</p>
                           </div>
-                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                          <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             <AppearanceOptionCard
                               key={customAccentOption.value}
                               active={accent === customAccentOption.value}
@@ -4008,9 +4149,9 @@ function AppearanceSettings() {
                               }}
                               preview={<div className="h-2 w-full rounded-full" style={{ background: customAccentOption.gradient }} />}
                               footer={
-                                <div className="space-y-3" onClick={(event) => event.stopPropagation()}>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="space-y-2 sm:space-y-3" onClick={(event) => event.stopPropagation()}>
+                                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                                    <label className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                                           <span className="uppercase tracking-wide">{t('settings.appearance.light')}</span>
                                       <input
                                         type="color"
@@ -4019,11 +4160,11 @@ function AppearanceSettings() {
                                           setAccent('custom')
                                           setCustomAccentColor('light', event.target.value)
                                         }}
-                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                        className="h-7 w-7 sm:h-8 sm:w-8 cursor-pointer rounded border border-border bg-transparent"
                                             aria-label={t('settings.appearance.pickAccentColorLight')}
                                       />
                                     </label>
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <label className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                                           <span className="uppercase tracking-wide">{t('settings.appearance.dark')}</span>
                                       <input
                                         type="color"
@@ -4032,7 +4173,7 @@ function AppearanceSettings() {
                                           setAccent('custom')
                                           setCustomAccentColor('dark', event.target.value)
                                         }}
-                                        className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent"
+                                        className="h-7 w-7 sm:h-8 sm:w-8 cursor-pointer rounded border border-border bg-transparent"
                                             aria-label={t('settings.appearance.pickAccentColorDark')}
                                       />
                                     </label>
@@ -4051,10 +4192,10 @@ function AppearanceSettings() {
 
         <Separator />
 
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.surfacePalette')}</Label>
-                <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.surfacePalette')}</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.surfacePaletteDescription')}
                 </p>
               </div>
@@ -4062,35 +4203,35 @@ function AppearanceSettings() {
                 <button
                   type="button"
                   onClick={() => setIsSurfaceDropdownOpen(!isSurfaceDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-border/60 bg-muted/10 hover:bg-muted/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   style={{
                     borderRadius: 'var(--radius-md)',
                   }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <span
-                      className="block size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
+                      className="block size-5 sm:size-6 rounded-md shadow-sm ring-1 ring-border/40 shrink-0"
                       style={{ backgroundColor: activeSurface ? `hsl(${activeSurface.tone.background})` : 'hsl(var(--background))' }}
                     />
-                    <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold">{activeSurface?.label ?? t('settings.appearance.custom')}</span>
-                          <span className="text-xs text-muted-foreground">{t('settings.appearance.clickToChangeSurface')}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                          <span className="text-xs sm:text-sm font-semibold truncate">{activeSurface?.label ?? t('settings.appearance.custom')}</span>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{t('settings.appearance.clickToChangeSurface')}</span>
                     </div>
                   </div>
                   {isSurfaceDropdownOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                    <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 transition-transform" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform" />
+                    <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 transition-transform" />
                   )}
                 </button>
                 {isSurfaceDropdownOpen && (
                   <div 
-                    className="absolute top-full left-0 right-0 mt-2 p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                    className="absolute top-full left-0 right-0 mt-2 p-3 sm:p-4 border border-border/60 bg-background shadow-lg z-50 max-h-[70vh] sm:max-h-[600px] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
                     style={{
                       borderRadius: 'var(--radius-md)',
                     }}
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                           {getSurfaceGroups(t).map((group) => {
                         const palettes = group.palettes
                           .map((value) => surfaceOptionsByValue[value])
@@ -4099,12 +4240,12 @@ function AppearanceSettings() {
                         if (palettes.length === 0) return null
 
                         return (
-                          <div key={group.id} className="space-y-3">
+                          <div key={group.id} className="space-y-2 sm:space-y-3">
                             <div className="space-y-1">
-                              <p className="text-sm font-semibold">{group.label}</p>
-                              <p className="text-xs text-muted-foreground">{group.description}</p>
+                              <p className="text-xs sm:text-sm font-semibold">{group.label}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">{group.description}</p>
                             </div>
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                               {palettes.map((option) => (
                                 <AppearanceOptionCard
                                   key={option.value}
@@ -4141,29 +4282,30 @@ function AppearanceSettings() {
               </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-3 sm:space-y-4">
               <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1">
-                      <Label className="text-sm font-semibold">{t('settings.appearance.interfaceShape')}</Label>
-            <p className="text-sm text-muted-foreground">
+          <div className="space-y-1 min-w-0 flex-1">
+                      <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.interfaceShape')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
                         {t('settings.appearance.interfaceShapeDescription')}
             </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                   onClick={() => setRadius(DEFAULT_RADIUS)}
                   disabled={radiusIsDefault}
                       aria-label={t('settings.appearance.resetRadiusToDefault')}
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
           </div>
-          <div className="space-y-3 rounded-lg border border-dashed p-4">
-                <div className="flex flex-1 items-center justify-between text-xs text-muted-foreground sm:text-sm">
-                      <span>{t('settings.appearance.sharper')}</span>
-                      <span>{Math.round(radius * 16)}px {t('settings.appearance.radius')}</span>
-                      <span>{t('settings.appearance.softer')}</span>
+          <div className="space-y-2 sm:space-y-3 rounded-lg border border-dashed p-3 sm:p-4">
+                <div className="flex flex-1 items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                      <span className="truncate">{t('settings.appearance.sharper')}</span>
+                      <span className="shrink-0 px-2">{Math.round(radius * 16)}px {t('settings.appearance.radius')}</span>
+                      <span className="truncate">{t('settings.appearance.softer')}</span>
             </div>
             <Slider
               value={[radius]}
@@ -4176,14 +4318,14 @@ function AppearanceSettings() {
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-3 sm:space-y-4">
           <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.typographyScale')}</Label>
-            <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.typographyScale')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.typographyScaleDescription')}
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {typographyOptions.map((option) => (
                   <AppearanceOptionCard
                   key={option.value}
@@ -4205,14 +4347,14 @@ function AppearanceSettings() {
 
                 <Separator />
 
-            <section className="space-y-4">
+            <section className="space-y-3 sm:space-y-4">
               <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.contrastTitle')}</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.contrastTitle')}</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.contrastDescription')}
                     </p>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
                     {contrastOptions.map((option) => (
                       <AppearanceOptionCard
                         key={option.value}
@@ -4228,14 +4370,14 @@ function AppearanceSettings() {
 
                 <Separator />
 
-                <section className="space-y-4">
+                <section className="space-y-3 sm:space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.depthShadows')}</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.depthShadows')}</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.depthShadowsDescription')}
                     </p>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-3">
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 md:grid-cols-3">
                     {depthOptions.map((option) => (
                       <AppearanceOptionCard
                         key={option.value}
@@ -4251,14 +4393,14 @@ function AppearanceSettings() {
 
                 <Separator />
 
-                <section className="space-y-4">
+                <section className="space-y-3 sm:space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.motionTitle')}</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.motionTitle')}</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {t('settings.appearance.motionDescription')}
                     </p>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
                     {motionOptions.map((option) => (
                       <AppearanceOptionCard
                         key={option.value}
@@ -4274,23 +4416,23 @@ function AppearanceSettings() {
 
                 <Separator />
 
-                <section className="space-y-4">
+                <section className="space-y-3 sm:space-y-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">{t('settings.appearance.themeBuilder')}</Label>
-                <p className="text-xs text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeBuilder')}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                       {t('settings.appearance.themeBuilderDescription')}
                 </p>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                 <Card className="border-dashed">
-                  <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-semibold">{t('settings.appearance.createTheme')}</CardTitle>
-                    <CardDescription className="text-xs">
+                  <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4">
+                        <CardTitle className="text-sm sm:text-base font-semibold">{t('settings.appearance.createTheme')}</CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
                           {t('settings.appearance.createThemeDescription')}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-4 pt-0">
                     <div className="space-y-2">
                       <div className="flex flex-col gap-2 sm:flex-row">
                         <div className="flex-1 relative">
@@ -4299,54 +4441,54 @@ function AppearanceSettings() {
                             onChange={(event) => setThemeName(event.target.value)}
                                 placeholder={t('settings.appearance.myCustomTheme')}
                             maxLength={40}
-                            className="sm:flex-1 pr-12"
+                            className="h-9 sm:h-10 text-sm sm:flex-1 pr-10 sm:pr-12"
                           />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                          <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-muted-foreground pointer-events-none">
                             {themeName.length}/40
                           </div>
                         </div>
-                        <Button onClick={handleCreateTheme} className="sm:w-auto">
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                        <Button onClick={handleCreateTheme} className="h-9 sm:h-10 text-xs sm:text-sm sm:w-auto">
+                          <CheckCircle2 className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               {t('settings.appearance.create')}
                         </Button>
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-2.5 sm:p-3 text-[10px] sm:text-xs">
                           <p className="font-medium text-foreground mb-1">{t('settings.appearance.currentSettings')}:</p>
-                      <div className="space-y-1 text-muted-foreground">
-                            <p>{t('settings.appearance.accent')}: {activeAccent?.label ?? t('settings.appearance.custom')}</p>
-                            <p>{t('settings.appearance.surface')}: {activeSurface?.label ?? t('settings.appearance.custom')}</p>
+                      <div className="space-y-0.5 sm:space-y-1 text-muted-foreground">
+                            <p className="break-words">{t('settings.appearance.accent')}: {activeAccent?.label ?? t('settings.appearance.custom')}</p>
+                            <p className="break-words">{t('settings.appearance.surface')}: {activeSurface?.label ?? t('settings.appearance.custom')}</p>
                             <p>{t('settings.appearance.radius')}: {Math.round(radius * 16)}px</p>
-                            <p>{t('settings.appearance.typography')}: {typographyLabel}</p>
-                            <p>{t('settings.appearance.contrastTitle')}: {contrastOptions.find(o => o.value === contrast)?.label ?? contrast}</p>
-                            <p>{t('settings.appearance.density')}: {densityLabel}</p>
-                            <p>{t('settings.appearance.depth')}: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
-                            <p>{t('settings.appearance.motionTitle')}: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
+                            <p className="break-words">{t('settings.appearance.typography')}: {typographyLabel}</p>
+                            <p className="break-words">{t('settings.appearance.contrastTitle')}: {contrastOptions.find(o => o.value === contrast)?.label ?? contrast}</p>
+                            <p className="break-words">{t('settings.appearance.density')}: {densityLabel}</p>
+                            <p className="break-words">{t('settings.appearance.depth')}: {depthOptions.find(o => o.value === depth)?.label ?? depth}</p>
+                            <p className="break-words">{t('settings.appearance.motionTitle')}: {motionOptions.find(o => o.value === motion)?.label ?? motion}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="border-dashed">
-                  <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-semibold">{t('settings.appearance.importExport')}</CardTitle>
-                    <CardDescription className="text-xs">
+                  <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4">
+                        <CardTitle className="text-sm sm:text-base font-semibold">{t('settings.appearance.importExport')}</CardTitle>
+                    <CardDescription className="text-[10px] sm:text-xs">
                           {t('settings.appearance.importExportDescription')}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 pt-0">
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
                         onClick={() => setShowImportDialog(true)}
                       >
-                        <Download className="mr-2 h-4 w-4" />
+                        <Download className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             {t('settings.appearance.importJson')}
                       </Button>
                       <Button
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
                         onClick={() => {
                           const themeConfig = {
                             accent,
@@ -4366,13 +4508,13 @@ function AppearanceSettings() {
                           })
                         }}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
+                        <Copy className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             {t('settings.appearance.exportJson')}
                       </Button>
                       </div>
                     <Button
                       variant="outline"
-                      className="w-full"
+                      className="w-full h-9 sm:h-10 text-xs sm:text-sm"
                       onClick={() => {
                         const cssVars = `--radius: ${radius * 16}px;
 --accent: ${activeAccent?.tone ?? 'hsl(221.2 83.2% 53.3%)'};
@@ -4397,14 +4539,14 @@ function AppearanceSettings() {
             {customThemes.length > 0 && (
               <>
             <Separator />
-            <section className="space-y-4">
+            <section className="space-y-3 sm:space-y-4">
                 <div>
-                    <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
-                  <p className="text-xs text-muted-foreground">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                       {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
                   </p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {customThemes.map((theme) => {
                       const themeAccent = accentOptionsByValue[theme.accent]
                       const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
@@ -4635,22 +4777,22 @@ function AppearanceSettings() {
                                     {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
                                   </Badge>
                                </div>
-                               <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                               <div className="flex items-center gap-1.5 sm:gap-2 pt-2 border-t border-border/60">
                                  <Button
                                    variant={isActive ? 'default' : 'outline'}
                                    size="sm"
-                                   className="flex-1"
+                                   className="flex-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0"
                                    onClick={() => handleApplyTheme(theme)}
                                  >
                                    {isActive ? (
                                      <>
-                                       <Check className="mr-2 h-3 w-3" />
-                                       Active
+                                       <Check className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                       <span className="truncate">{t('settings.appearance.active')}</span>
                                      </>
                                    ) : (
                                      <>
-                                       <Download className="mr-2 h-3 w-3" />
-                                       Apply
+                                       <Download className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                       <span className="truncate">{t('settings.appearance.apply')}</span>
                                      </>
                                    )}
                                  </Button>
@@ -4658,10 +4800,10 @@ function AppearanceSettings() {
                                    <Button
                                      variant="ghost"
                                      size="icon"
-                                     className="h-8 w-8"
+                                     className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
                                      onClick={() => handleDeleteTheme(theme.id)}
                                    >
-                                     <Trash2 className="h-3 w-3" />
+                                     <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                    </Button>
                                  )}
                                </div>
@@ -4676,29 +4818,29 @@ function AppearanceSettings() {
               )}
           </TabsContent>
 
-          <TabsContent value="themes" className="space-y-6 mt-6">
-            <section className="space-y-6">
+          <TabsContent value="themes" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
+            <section className="space-y-4 sm:space-y-6">
               {/* Basic Themes */}
               {officialThemesGroups.basic.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <button
                     onClick={() => toggleGroup('basic')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
                   >
-                  <div>
-                    <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
                       {officialThemesGroups.basic.length} {officialThemesGroups.basic.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
                     </p>
                   </div>
                     {collapsedGroups['basic'] ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     )}
                   </button>
                   {!collapsedGroups['basic'] && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {officialThemesGroups.basic.map((theme) => {
                   const themeAccent = accentOptionsByValue[theme.accent]
                   const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
@@ -4735,14 +4877,14 @@ function AppearanceSettings() {
                       onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
                       onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
                     >
-                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
+                      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4 min-h-[3rem] sm:min-h-[3.5rem] shrink-0">
                         <div className="flex items-start justify-between gap-2 h-full">
                           <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <CardTitle className="text-sm font-semibold">
-                              <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle className="text-xs sm:text-sm font-semibold">
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                 <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
                                 {theme.official && (
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
+                                  <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 shrink-0 whitespace-nowrap">
                                     {t('settings.appearance.official')}
                                   </Badge>
                         )}
@@ -4750,14 +4892,14 @@ function AppearanceSettings() {
                             </CardTitle>
                         </div>
                           <div className="flex items-center gap-1.5 shrink-0">
-                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                          {isActive && <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0 mt-0.5" />}
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col">
-                        <div className="flex flex-col space-y-3 mt-auto">
+                      <CardContent className="flex-1 flex flex-col p-3 sm:p-4 pt-0">
+                        <div className="flex flex-col space-y-2 sm:space-y-3 mt-auto">
                         <div 
-                          className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
+                          className="border border-border/60 p-2.5 sm:p-4 aspect-video relative overflow-hidden transition-transform duration-300"
                           style={{ 
                             borderRadius: `min(${theme.radius * 16}px, 24px)`,
                             backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
@@ -4933,49 +5075,49 @@ function AppearanceSettings() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
                             {Math.round(theme.radius * 16)}px
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
                             {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
                             {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
                             {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
                             {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                        <div className="flex items-center gap-1.5 sm:gap-2 pt-2 border-t border-border/60">
                           {theme.description && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
                               onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
                             >
-                              <Info className="h-3 w-3" />
+                              <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </Button>
                           )}
                           <Button
                             variant={isActive ? 'default' : 'outline'}
                             size="sm"
-                            className="flex-1"
+                            className="flex-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0"
                             onClick={() => handleApplyTheme(theme)}
                           >
                             {isActive ? (
                               <>
-                                <Check className="mr-2 h-3 w-3" />
-                                {t('settings.appearance.active')}
+                                <Check className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span className="truncate">{t('settings.appearance.active')}</span>
                               </>
                             ) : (
                               <>
-                                <Download className="mr-2 h-3 w-3" />
-                                {t('settings.appearance.apply')}
+                                <Download className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span className="truncate">{t('settings.appearance.apply')}</span>
                               </>
                             )}
                           </Button>
@@ -4983,10 +5125,10 @@ function AppearanceSettings() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
                               onClick={() => handleDeleteTheme(theme.id)}
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </Button>
                       )}
                     </div>
@@ -5005,22 +5147,22 @@ function AppearanceSettings() {
                 <div className="space-y-4">
                   <button
                     onClick={() => toggleGroup('games')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
                   >
-                  <div>
-                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
-                <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                      <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
               </p>
             </div>
                     {collapsedGroups['games'] ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     )}
                   </button>
                   {!collapsedGroups['games'] && (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {officialThemesGroups.games.map((theme) => {
                       const themeAccent = accentOptionsByValue[theme.accent]
                       const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
@@ -5277,10 +5419,10 @@ function AppearanceSettings() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
                                     onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
                                   >
-                                    <Info className="h-3 w-3" />
+                                    <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                   </Button>
                                 )}
                                 <Button
@@ -5327,22 +5469,22 @@ function AppearanceSettings() {
                 <div className="space-y-4">
                   <button
                     onClick={() => toggleGroup('extraordinary')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
                         >
-                          <div>
-                      <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
-                            <p className="text-xs text-muted-foreground">
+                          <div className="min-w-0 flex-1">
+                      <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {officialThemesGroups.extraordinary.length} {officialThemesGroups.extraordinary.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
                             </p>
                           </div>
                     {collapsedGroups['extraordinary'] ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                     )}
                   </button>
                   {!collapsedGroups['extraordinary'] && (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {officialThemesGroups.extraordinary.map((theme) => {
                       const themeAccent = accentOptionsByValue[theme.accent]
                       const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
@@ -6024,14 +6166,14 @@ function PrivacySettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.privacy.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.privacy.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.privacy.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
+        <div className="space-y-2 sm:space-y-3">
           <ToggleRow
             label={t('settings.privacy.publicProfile')}
             description={t('settings.privacy.publicProfileDescription')}
@@ -6122,13 +6264,22 @@ function PrivacySettings() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
+          <Button 
+            variant="ghost" 
+            onClick={handleReset} 
+            disabled={!hasChanges || saving}
+            className="h-9 sm:h-10 text-xs sm:text-sm"
+          >
             {t('common.reset')}
           </Button>
-          <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges || saving} 
+            className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+          >
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 {t('settings.profile.saving')}
               </>
             ) : (
@@ -6208,15 +6359,15 @@ function NotificationsSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.notifications.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.notifications.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.notifications.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t('settings.notifications.emailUpdates')}
           </h3>
           <ToggleRow
@@ -6240,7 +6391,7 @@ function NotificationsSettings() {
             value={preferences.emailDigest}
             onChange={handleToggle('emailDigest')}
             meta={
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {(['daily', 'weekly', 'monthly'] as NotificationState['digestFrequency'][]).map(
                   (option) => (
                     <Button
@@ -6248,7 +6399,7 @@ function NotificationsSettings() {
                       type="button"
                       variant={preferences.digestFrequency === option ? 'default' : 'outline'}
                       size="sm"
-                      className="h-7 px-3 text-xs capitalize"
+                      className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs capitalize"
                       onClick={() => handleDigestChange(option)}
                     >
                       {t(`settings.notifications.frequency.${option}`)}
@@ -6262,8 +6413,8 @@ function NotificationsSettings() {
 
         <Separator className="border-dashed" />
 
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t('settings.notifications.pushNotifications')}
           </h3>
           <ToggleRow
@@ -6323,13 +6474,22 @@ function NotificationsSettings() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={handleReset} disabled={!hasChanges || saving}>
+          <Button 
+            variant="ghost" 
+            onClick={handleReset} 
+            disabled={!hasChanges || saving}
+            className="h-9 sm:h-10 text-xs sm:text-sm"
+          >
             {t('common.reset')}
           </Button>
-          <Button onClick={handleSave} disabled={!hasChanges || saving} className="gap-2">
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges || saving} 
+            className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+          >
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 {t('settings.profile.saving')}
               </>
             ) : (
@@ -6416,33 +6576,33 @@ function SessionsSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.sessions.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.sessions.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.sessions.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
+      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
+        <div className="space-y-2 sm:space-y-3">
           {sessions.map((session) => {
             const Icon = session.platform === 'mobile' ? Smartphone : Laptop
             return (
               <div
                 key={session.id}
-                className="flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/10 p-4 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-2 sm:gap-3 rounded-lg border border-border/70 bg-muted/10 p-3 sm:p-4 md:flex-row md:items-center md:justify-between"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <span>{session.device}</span>
+                <div className="space-y-1.5 sm:space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold flex-wrap">
+                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{session.device}</span>
                     {session.current ? (
-                      <Badge variant="secondary" className="flex items-center gap-1">
+                      <Badge variant="secondary" className="flex items-center gap-1 text-[10px] sm:text-xs shrink-0">
                         <ShieldCheck className="h-3 w-3" />
                         {t('settings.sessions.currentSession')}
                       </Badge>
                     ) : null}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <LogOut className="h-3 w-3" />
                       {session.browser}
@@ -6466,18 +6626,18 @@ function SessionsSettings() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2 md:w-auto"
+                    className="w-full gap-1.5 sm:gap-2 md:w-auto h-8 sm:h-9 text-xs sm:text-sm"
                     onClick={() => handleSignOut(session.id)}
                     disabled={signingOutId === session.id || signingOutId === 'all'}
                   >
                     {signingOutId === session.id ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                         {t('settings.sessions.signingOut')}
                       </>
                     ) : (
                       <>
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {t('accountSheet.signOut')}
                       </>
                     )}
@@ -6491,28 +6651,29 @@ function SessionsSettings() {
         <Separator className="border-dashed" />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="text-sm font-medium text-foreground">{t('settings.sessions.secureAccount')}</p>
-            <p>
+          <div className="space-y-1 text-[10px] sm:text-xs text-muted-foreground min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-foreground">{t('settings.sessions.secureAccount')}</p>
+            <p className="break-words">
               {t('settings.sessions.secureAccountDescription')}
             </p>
           </div>
           <Button
             variant="destructive"
             size="sm"
-            className="gap-2"
+            className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm shrink-0"
             onClick={handleSignOutOthers}
             disabled={signingOutId === 'all' || sessions.length <= 1}
           >
             {signingOutId === 'all' ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 {t('settings.sessions.signingOut')}
               </>
             ) : (
               <>
-                <Shield className="h-4 w-4" />
-                {t('settings.sessions.signOutOtherSessions')}
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.sessions.signOutOtherSessions')}</span>
+                <span className="sm:hidden">{t('settings.sessions.signOutOthers')}</span>
               </>
             )}
           </Button>
@@ -6572,11 +6733,11 @@ function LanguageSettings() {
   
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.language.title')}</CardTitle>
-        <CardDescription>{t('settings.language.description')}</CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.language.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">{t('settings.language.description')}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <section className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             {languageOptions.map((option) => {
@@ -6661,35 +6822,35 @@ function BillingSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.billing.title')}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.billing.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           {t('settings.billing.description')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <section className="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4">
+      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
+        <section className="space-y-2 sm:space-y-3 rounded-lg border border-border/70 bg-muted/10 p-3 sm:p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Crown className="h-4 w-4 text-primary" />
-                {t('settings.billing.creatorPro')}
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-foreground">
+                <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
+                <span className="break-words">{t('settings.billing.creatorPro')}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground break-words">
                 {t('settings.billing.creatorProDescription')}
               </p>
             </div>
-            <Badge variant="secondary" className="w-fit">
+            <Badge variant="secondary" className="w-fit text-[10px] sm:text-xs shrink-0">
               {t('settings.billing.active', { amount: '$18' })}
             </Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <CalendarClock className="h-3 w-3" />
+              <CalendarClock className="h-3 w-3 shrink-0" />
               {t('settings.billing.nextInvoice', { date: `${t('settings.billing.months.december')} 10, 2025` })}
             </span>
             <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3 text-primary" />
+              <ShieldCheck className="h-3 w-3 text-primary shrink-0" />
               {t('settings.billing.trialCreditsApplied')}
             </span>
           </div>
@@ -6697,18 +6858,18 @@ function BillingSettings() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
               onClick={() => handlePlanAction('manage')}
               disabled={processingAction !== null}
             >
               {processingAction === 'manage' ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('settings.billing.openingPortal')}
                 </>
               ) : (
                 <>
-                  <Crown className="h-4 w-4" />
+                  <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('settings.billing.manageSubscription')}
                 </>
               )}
@@ -6716,18 +6877,18 @@ function BillingSettings() {
           </div>
         </section>
 
-        <section className="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                {t('settings.billing.paymentMethod')}
+        <section className="space-y-2 sm:space-y-3 rounded-lg border border-border/70 bg-muted/10 p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-foreground">
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                <span className="break-words">{t('settings.billing.paymentMethod')}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground break-words">
                 {t('settings.billing.paymentMethodDescription')}
               </p>
             </div>
-            <Badge variant="outline" className="px-3 py-1 text-[11px] uppercase tracking-wide">
+            <Badge variant="outline" className="px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] uppercase tracking-wide shrink-0">
               {t('settings.billing.primary')}
             </Badge>
           </div>
@@ -6735,18 +6896,18 @@ function BillingSettings() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
               onClick={() => handlePlanAction('payment')}
               disabled={processingAction !== null}
             >
               {processingAction === 'payment' ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('settings.billing.updating')}
                 </>
               ) : (
                 <>
-                  <Wallet className="h-4 w-4" />
+                  <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('settings.billing.updatePaymentMethod')}
                 </>
               )}
@@ -6754,12 +6915,12 @@ function BillingSettings() {
           </div>
         </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <section className="space-y-2 sm:space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t('settings.billing.invoices')}
             </h3>
-            <Badge variant="secondary" className="px-3 py-1 text-[11px] uppercase tracking-wide">
+            <Badge variant="secondary" className="px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] uppercase tracking-wide shrink-0">
               {t('settings.billing.latest12Months')}
             </Badge>
           </div>
@@ -6769,15 +6930,15 @@ function BillingSettings() {
                 key={invoice.id}
                 className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card/80 p-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="space-y-1 text-sm">
-                  <div className="font-medium text-foreground">{invoice.period}</div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span>{invoice.id}</span>
+                <div className="space-y-1 text-xs sm:text-sm min-w-0 flex-1">
+                  <div className="font-medium text-foreground break-words">{invoice.period}</div>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
+                    <span className="break-words">{invoice.id}</span>
                     <span className="font-medium text-foreground">{invoice.amount}</span>
                     <Badge
                       variant={invoice.status === 'Paid' ? 'secondary' : 'outline'}
                       className={cn(
-                        'px-2 py-0.5 text-[10px] uppercase tracking-wide',
+                        'px-2 py-0.5 text-[10px] uppercase tracking-wide shrink-0',
                         invoice.status === 'Refunded' && 'bg-muted text-muted-foreground'
                       )}
                     >
@@ -6785,8 +6946,8 @@ function BillingSettings() {
                     </Badge>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
-                  <Download className="h-4 w-4" />
+                <Button variant="outline" size="sm" className="w-full gap-1.5 sm:gap-2 sm:w-auto h-9 sm:h-10 text-xs sm:text-sm shrink-0">
+                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t('settings.billing.downloadPDF')}
                 </Button>
               </div>
@@ -6794,9 +6955,9 @@ function BillingSettings() {
           </div>
         </section>
 
-        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">{t('settings.billing.needHelp')}</p>
-          <p className="mt-1">
+        <div className="rounded-lg border border-dashed bg-muted/20 p-3 sm:p-4 text-[10px] sm:text-xs text-muted-foreground">
+          <p className="font-medium text-foreground break-words">{t('settings.billing.needHelp')}</p>
+          <p className="mt-1 break-words">
             {t('settings.billing.needHelpDescription')}
           </p>
         </div>
@@ -6817,14 +6978,14 @@ interface ToggleRowProps {
 
 function ToggleRow({ label, description, icon: Icon, value, onChange, meta, disabled }: ToggleRowProps) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-border/60 bg-background p-4 shadow-sm">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-          <span>{label}</span>
+    <div className="flex items-start justify-between gap-3 sm:gap-4 rounded-lg border border-border/60 bg-background p-3 sm:p-4 shadow-sm">
+      <div className="space-y-1 min-w-0 flex-1">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-foreground">
+          {Icon && <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />}
+          <span className="break-words">{label}</span>
         </div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-        {meta && <div className="pt-1 text-xs text-muted-foreground/90">{meta}</div>}
+        <p className="text-[10px] sm:text-xs text-muted-foreground break-words">{description}</p>
+        {meta && <div className="pt-1 text-[10px] sm:text-xs text-muted-foreground/90">{meta}</div>}
       </div>
       <button
         type="button"
