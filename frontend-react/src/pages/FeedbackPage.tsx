@@ -157,96 +157,96 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate(-1)}
-              className="gap-2"
+              className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0"
             >
-              <ArrowLeft className="h-4 w-4" />
-              {t('common.back')}
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('common.back')}</span>
             </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{t('feedback.pageTitle')}</h1>
+            <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+            <h1 className="text-sm sm:text-lg font-semibold truncate">{t('feedback.pageTitle')}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
             <AccountSheet />
           </div>
         </div>
       </header>
-      <main className="container space-y-8 sm:space-y-8 lg:space-y-10 pb-6 sm:pb-6 pt-6 sm:pt-6 px-4 sm:px-6">
+      <main className="container space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-10 pb-4 sm:pb-6 pt-4 sm:pt-6 px-4 sm:px-6">
         {/* Header */}
-        <div className="space-y-6 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-3 sm:space-y-3">
-              <h1 className="text-3xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{t('feedback.title')}</h1>
-              <p className="text-sm sm:text-sm text-muted-foreground">{t('feedback.description')}</p>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="space-y-2 sm:space-y-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">{t('feedback.title')}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t('feedback.description')}</p>
             </div>
             {user && (
-              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm w-full sm:w-auto">
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {t('feedback.createNew')}
               </Button>
             )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Card className="border-border/40 bg-card hover:border-border transition-all">
-              <CardContent className="p-5 sm:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
-                    <Bug className="h-5 w-5 text-red-600" />
+              <CardContent className="p-3 sm:p-4 md:p-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                    <Bug className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{mockBugs.length}</p>
-                    <p className="text-xs text-muted-foreground">{t('feedback.bugs')}</p>
+                    <p className="text-xl sm:text-2xl font-bold">{mockBugs.length}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.bugs')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-border/40 bg-card hover:border-border transition-all">
-              <CardContent className="p-5 sm:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Sparkles className="h-5 w-5 text-primary" />
+              <CardContent className="p-3 sm:p-4 md:p-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{mockFeatures.length}</p>
-                    <p className="text-xs text-muted-foreground">{t('feedback.features')}</p>
+                    <p className="text-xl sm:text-2xl font-bold">{mockFeatures.length}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.features')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-border/40 bg-card hover:border-border transition-all">
-              <CardContent className="p-5 sm:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CardContent className="p-3 sm:p-4 md:p-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl sm:text-2xl font-bold">
                       {[...mockBugs, ...mockFeatures].filter((f) => f.status === 'resolved').length}
                     </p>
-                    <p className="text-xs text-muted-foreground">{t('feedback.resolved')}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.resolved')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-border/40 bg-card hover:border-border transition-all">
-              <CardContent className="p-5 sm:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10">
-                    <Clock className="h-5 w-5 text-yellow-600" />
+              <CardContent className="p-3 sm:p-4 md:p-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl sm:text-2xl font-bold">
                       {[...mockBugs, ...mockFeatures].filter((f) => f.status === 'in-progress').length}
                     </p>
-                    <p className="text-xs text-muted-foreground">{t('feedback.inProgress')}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.inProgress')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -264,34 +264,34 @@ export default function FeedbackPage() {
             setPriorityFilter('all')
             setSearchQuery('')
           }}
-          className="space-y-6 sm:space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
-          <div className="space-y-4 sm:space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <TabsList className="grid w-full sm:w-auto grid-cols-2">
-                <TabsTrigger value="bugs" className="gap-2">
-                  <Bug className="h-4 w-4" />
-                  {t('feedback.bugs')} ({mockBugs.length})
+              <TabsList className="grid w-full sm:w-auto grid-cols-2 h-auto">
+                <TabsTrigger value="bugs" className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+                  <Bug className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="truncate">{t('feedback.bugs')} ({mockBugs.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="features" className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  {t('feedback.features')} ({mockFeatures.length})
+                <TabsTrigger value="features" className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="truncate">{t('feedback.features')} ({mockFeatures.length})</span>
                 </TabsTrigger>
               </TabsList>
 
               <div className="flex items-center gap-2 shrink-0">
                 <div className="relative flex-1 sm:flex-initial sm:w-[200px]">
-                  <Search className="absolute left-3 top-1/2 h-5 w-5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <Search className="absolute left-2.5 sm:left-3 top-1/2 h-4 w-4 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground z-10" />
                   <Input
                     type="text"
                     placeholder={t('feedback.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-11 sm:pl-9 h-11 sm:h-10 text-base sm:text-sm"
+                    className="pl-9 sm:pl-9 h-9 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>
-                <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-                  <SlidersHorizontal className="h-4 w-4" />
+                <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)} className="h-9 w-9 sm:h-10 sm:w-10">
+                  <SlidersHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -299,11 +299,11 @@ export default function FeedbackPage() {
             {/* Filters Panel */}
             {showFilters && (
               <Card className="border-border/40 bg-card">
-                <CardContent className="p-4 sm:p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-2">
                     <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FeedbackStatus | 'all')}>
-                      <SelectTrigger className="w-full sm:w-[140px] h-9 sm:h-9">
-                        <Filter className="h-4 w-4 mr-2" />
+                      <SelectTrigger className="w-full sm:w-[140px] h-9 sm:h-9 text-xs sm:text-sm">
+                        <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -316,8 +316,8 @@ export default function FeedbackPage() {
                     </Select>
                     {activeTab === 'bugs' && (
                       <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as FeedbackPriority | 'all')}>
-                        <SelectTrigger className="w-full sm:w-[140px] h-9 sm:h-9">
-                          <AlertTriangle className="h-4 w-4 mr-2" />
+                        <SelectTrigger className="w-full sm:w-[140px] h-9 sm:h-9 text-xs sm:text-sm">
+                          <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -330,8 +330,8 @@ export default function FeedbackPage() {
                       </Select>
                     )}
                     <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-                      <SelectTrigger className="w-full sm:w-[160px] h-9 sm:h-9">
-                        <ArrowUpDown className="h-4 w-4 mr-2" />
+                      <SelectTrigger className="w-full sm:w-[160px] h-9 sm:h-9 text-xs sm:text-sm">
+                        <ArrowUpDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -347,12 +347,12 @@ export default function FeedbackPage() {
             )}
           </div>
 
-          <TabsContent value="bugs" className="space-y-4 sm:space-y-4">
+          <TabsContent value="bugs" className="space-y-3 sm:space-y-4">
             {filteredFeedback.length === 0 ? (
               <Card className="border-dashed border-border/40">
-                <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12 text-center px-4">
-                  <p className="text-lg sm:text-lg font-medium">{t('feedback.noResults')}</p>
-                  <p className="mt-2 text-sm sm:text-sm text-muted-foreground">{t('feedback.noResultsDescription')}</p>
+                <CardContent className="flex flex-col items-center justify-center py-10 sm:py-12 text-center px-4 sm:px-6">
+                  <p className="text-base sm:text-lg font-medium">{t('feedback.noResults')}</p>
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground">{t('feedback.noResultsDescription')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -366,12 +366,12 @@ export default function FeedbackPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="features" className="space-y-4 sm:space-y-4">
+          <TabsContent value="features" className="space-y-3 sm:space-y-4">
             {filteredFeedback.length === 0 ? (
               <Card className="border-dashed border-border/40">
-                <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12 text-center px-4">
-                  <p className="text-lg sm:text-lg font-medium">{t('feedback.noResults')}</p>
-                  <p className="mt-2 text-sm sm:text-sm text-muted-foreground">{t('feedback.noResultsDescription')}</p>
+                <CardContent className="flex flex-col items-center justify-center py-10 sm:py-12 text-center px-4 sm:px-6">
+                  <p className="text-base sm:text-lg font-medium">{t('feedback.noResults')}</p>
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground">{t('feedback.noResultsDescription')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -425,29 +425,29 @@ function FeedbackCard({ feedback, onReaction }: FeedbackCardProps) {
 
   return (
     <Card className="group relative overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300">
-      <CardHeader className="pb-3">
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-start gap-3">
+      <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+              <div className="flex items-start gap-2 sm:gap-3">
                 {feedback.type === 'bug' ? (
-                  <Bug className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                  <Bug className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 shrink-0 mt-0.5" />
                 ) : (
-                  <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 mt-0.5" />
                 )}
-                <CardTitle className="text-xl sm:text-2xl font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+                <CardTitle className="text-base sm:text-xl md:text-2xl font-semibold tracking-tight group-hover:text-primary transition-colors line-clamp-2">
                   {feedback.title}
                 </CardTitle>
               </div>
-              <CardDescription className="line-clamp-2 text-sm">{feedback.description}</CardDescription>
+              <CardDescription className="line-clamp-2 text-xs sm:text-sm">{feedback.description}</CardDescription>
             </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Badge variant="outline" className={cn('gap-1.5', statusConfig[feedback.status].color)}>
-                <StatusIcon className="h-3 w-3" />
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0 w-full sm:w-auto">
+              <Badge variant="outline" className={cn('gap-1 text-[10px] sm:text-xs', statusConfig[feedback.status].color)}>
+                <StatusIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 {statusConfig[feedback.status].label}
               </Badge>
               {feedback.priority && (
-                <Badge variant="outline" className={priorityConfig[feedback.priority].color}>
+                <Badge variant="outline" className={cn('text-[10px] sm:text-xs', priorityConfig[feedback.priority].color)}>
                   {priorityConfig[feedback.priority].label}
                 </Badge>
               )}
@@ -455,15 +455,15 @@ function FeedbackCard({ feedback, onReaction }: FeedbackCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 pt-0">
+      <CardContent className="space-y-3 sm:space-y-4 pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
         {/* Steps to Reproduce (only for bugs) */}
         {feedback.type === 'bug' && feedback.stepsToReproduce && (
-          <div className="rounded-lg border border-border/40 bg-muted/10 p-4 space-y-2.5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <AlertCircle className="h-4 w-4 text-primary" />
+          <div className="rounded-lg border border-border/40 bg-muted/10 p-3 sm:p-4 space-y-2 sm:space-y-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-foreground">
+              <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
               {t('feedback.stepsToReproduce')}
             </div>
-            <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed pl-6">
+            <div className="text-xs sm:text-sm text-muted-foreground whitespace-pre-line leading-relaxed pl-4 sm:pl-6">
               {feedback.stepsToReproduce}
             </div>
           </div>
@@ -471,12 +471,12 @@ function FeedbackCard({ feedback, onReaction }: FeedbackCardProps) {
 
         {/* Tags */}
         {feedback.tags && feedback.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {feedback.tags.map((tag) => (
               <Badge
                 key={tag}
                 variant="secondary"
-                className="cursor-pointer rounded-md text-xs transition-colors bg-primary/10 text-primary hover:bg-primary/15"
+                className="cursor-pointer rounded-md text-[10px] sm:text-xs transition-colors bg-primary/10 text-primary hover:bg-primary/15"
               >
                 {tag}
               </Badge>
@@ -485,7 +485,7 @@ function FeedbackCard({ feedback, onReaction }: FeedbackCardProps) {
         )}
 
         {/* Reactions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <ReactionButton
             feedbackId={feedback.id}
             type="upvote"
@@ -532,27 +532,27 @@ function FeedbackCard({ feedback, onReaction }: FeedbackCardProps) {
           )}
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-3 sm:my-4" />
 
         {/* Footer */}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5" />
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs md:text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             <span className="font-medium text-foreground">{feedback.author.username}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             <span>{formatTimeAgo(new Date(feedback.createdAt))}</span>
           </div>
           {feedback.views && (
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>{feedback.views}</span>
             </div>
           )}
           {feedback.commentsCount !== undefined && (
-            <div className="flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <MessageSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>{feedback.commentsCount}</span>
             </div>
           )}
@@ -589,14 +589,14 @@ function ReactionButton({ type, count, isActive, onClick, disabled }: ReactionBu
       variant={isActive ? 'default' : 'outline'}
       size="sm"
       className={cn(
-        'gap-1.5 h-8',
+        'gap-1 sm:gap-1.5 h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3',
         isActive && 'bg-primary text-primary-foreground'
       )}
       onClick={onClick}
       disabled={disabled}
       title={label}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
       <span>{count}</span>
     </Button>
   )
@@ -667,47 +667,47 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{t('feedback.createNew')}</DialogTitle>
-          <DialogDescription>{t('feedback.createDescription')}</DialogDescription>
+          <DialogTitle className="text-base sm:text-lg">{t('feedback.createNew')}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">{t('feedback.createDescription')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Type Selection */}
           <div className="space-y-2">
-            <Label>{t('feedback.form.type')}</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <Label className="text-xs sm:text-sm">{t('feedback.form.type')}</Label>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setType('bug')}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-all',
+                  'flex items-center gap-2 sm:gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all',
                   type === 'bug'
                     ? 'border-red-500/50 bg-red-500/10'
                     : 'border-border hover:border-border/80 hover:bg-muted/50'
                 )}
               >
-                <Bug className={cn('h-5 w-5 shrink-0', type === 'bug' ? 'text-red-600' : 'text-muted-foreground')} />
+                <Bug className={cn('h-4 w-4 sm:h-5 sm:w-5 shrink-0', type === 'bug' ? 'text-red-600' : 'text-muted-foreground')} />
                 <div>
-                  <div className="font-semibold text-foreground">{t('feedback.bugs')}</div>
-                  <div className="text-xs text-muted-foreground">{t('feedback.form.bugDescription')}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-foreground">{t('feedback.bugs')}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.form.bugDescription')}</div>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setType('feature')}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-all',
+                  'flex items-center gap-2 sm:gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all',
                   type === 'feature'
                     ? 'border-primary/50 bg-primary/10'
                     : 'border-border hover:border-border/80 hover:bg-muted/50'
                 )}
               >
-                <Sparkles className={cn('h-5 w-5 shrink-0', type === 'feature' ? 'text-primary' : 'text-muted-foreground')} />
+                <Sparkles className={cn('h-4 w-4 sm:h-5 sm:w-5 shrink-0', type === 'feature' ? 'text-primary' : 'text-muted-foreground')} />
                 <div>
-                  <div className="font-semibold text-foreground">{t('feedback.features')}</div>
-                  <div className="text-xs text-muted-foreground">{t('feedback.form.featureDescription')}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-foreground">{t('feedback.features')}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.form.featureDescription')}</div>
                 </div>
               </button>
             </div>
@@ -716,51 +716,52 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
           <Separator />
 
           <div className="space-y-2">
-            <Label htmlFor="title">{t('feedback.form.title')}</Label>
+            <Label htmlFor="title" className="text-xs sm:text-sm">{t('feedback.form.title')}</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('feedback.form.titlePlaceholder')}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">{t('feedback.form.description')}</Label>
+            <Label htmlFor="description" className="text-xs sm:text-sm">{t('feedback.form.description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('feedback.form.descriptionPlaceholder')}
-              rows={6}
-              className="resize-none"
+              rows={5}
+              className="resize-none text-xs sm:text-sm"
             />
           </div>
 
           {/* Steps to Reproduce (only for bugs) */}
           {type === 'bug' && (
             <div className="space-y-2">
-              <Label htmlFor="stepsToReproduce" className="flex items-center gap-2">
+              <Label htmlFor="stepsToReproduce" className="flex items-center gap-2 text-xs sm:text-sm">
                 {t('feedback.form.stepsToReproduce')}
-                <span className="text-xs text-muted-foreground font-normal">({t('common.optional')})</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({t('common.optional')})</span>
               </Label>
               <Textarea
                 id="stepsToReproduce"
                 value={stepsToReproduce}
                 onChange={(e) => setStepsToReproduce(e.target.value)}
                 placeholder={t('feedback.form.stepsToReproducePlaceholder')}
-                rows={4}
-                className="resize-none"
+                rows={3}
+                className="resize-none text-xs sm:text-sm"
               />
-              <p className="text-xs text-muted-foreground">{t('feedback.form.stepsToReproduceHint')}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('feedback.form.stepsToReproduceHint')}</p>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="priority">{t('feedback.form.priority')}</Label>
+              <Label htmlFor="priority" className="text-xs sm:text-sm">{t('feedback.form.priority')}</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as FeedbackPriority)}>
-                <SelectTrigger id="priority">
+                <SelectTrigger id="priority" className="h-9 sm:h-10 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -774,7 +775,7 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tags">{t('feedback.form.tags')}</Label>
+            <Label htmlFor="tags" className="text-xs sm:text-sm">{t('feedback.form.tags')}</Label>
             <div className="flex gap-2">
               <Input
                 id="tags"
@@ -787,22 +788,23 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
                   }
                 }}
                 placeholder={t('feedback.form.tagsPlaceholder')}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
               />
-              <Button type="button" variant="outline" onClick={handleAddTag}>
+              <Button type="button" variant="outline" onClick={handleAddTag} className="h-9 sm:h-10 text-xs sm:text-sm px-3 sm:px-4">
                 {t('feedback.form.addTag')}
               </Button>
             </div>
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
                 {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1.5">
+                  <Badge key={tag} variant="secondary" className="gap-1 text-[10px] sm:text-xs">
                     {tag}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
                       className="ml-1 hover:bg-muted rounded-full p-0.5"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     </button>
                   </Badge>
                 ))}
@@ -811,11 +813,11 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting} className="h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={!title.trim() || !description.trim() || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!title.trim() || !description.trim() || isSubmitting} className="h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto">
             {isSubmitting ? t('common.loading') : type === 'bug' ? t('feedback.form.submitBug') : t('feedback.form.submitFeature')}
           </Button>
         </DialogFooter>

@@ -981,6 +981,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         id: 'code-block',
         title: 'Code block',
         description: 'Блок кода с подсветкой',
+        hint: 'В разработке',
+        disabled: true,
         icon: <Braces className="h-4 w-4" />,
         keywords: ['code', 'snippet'],
         command: ({ editor, range }) => {

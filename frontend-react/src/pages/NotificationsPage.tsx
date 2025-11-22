@@ -320,10 +320,33 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen app-surface">
-        <div className="container py-8">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('notifications.back')}</span>
+              </Button>
+              <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-semibold truncate">{t('notifications.title')}</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <ThemeToggle />
+              <AccountSheet />
+            </div>
+          </div>
+        </header>
+        <div className="container py-4 sm:py-6 md:py-8 px-4 sm:px-6">
           <Card>
-            <CardContent className="flex items-center justify-center py-16">
-              <p className="text-muted-foreground">{t('common.loading') || 'Loading...'}</p>
+            <CardContent className="flex items-center justify-center py-8 sm:py-12 md:py-16">
+              <p className="text-xs sm:text-sm text-muted-foreground">{t('common.loading') || 'Loading...'}</p>
             </CardContent>
           </Card>
         </div>
@@ -334,20 +357,20 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen app-surface">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate(-1)}
-              className="gap-1 sm:gap-2 shrink-0"
+              className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{t('notifications.back')}</span>
             </Button>
             <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold truncate">{t('notifications.title')}</h1>
+              <h1 className="text-sm sm:text-lg font-semibold truncate">{t('notifications.title')}</h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
                 {t('notifications.description')}
               </p>
@@ -358,7 +381,7 @@ export default function NotificationsPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1 sm:gap-2 text-xs sm:text-sm"
+              className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
               onClick={handleMarkAllAsRead}
               disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
             >
@@ -371,33 +394,33 @@ export default function NotificationsPage() {
         </div>
       </header>
 
-      <main className="container py-4 sm:py-6 md:py-8 px-3 sm:px-4">
-        <section className="space-y-4 sm:space-y-6">
+      <main className="container py-4 sm:py-6 pt-4 sm:pt-6 px-4 sm:px-6">
+        <section className="space-y-3 sm:space-y-4 md:space-y-6">
           <Card className="border-border/70 bg-muted/30">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 gap-2 sm:gap-0">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 gap-2 sm:gap-0 p-3 sm:p-4 md:p-6">
               <div className="min-w-0 flex-1">
-                <CardTitle className="text-sm sm:text-base font-semibold">{t('notifications.inboxOverview')}</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
+                <CardTitle className="text-xs sm:text-sm md:text-base font-semibold">{t('notifications.inboxOverview')}</CardTitle>
+                <CardDescription className="text-[10px] sm:text-xs md:text-sm mt-0.5 sm:mt-1">
                   {unreadCount > 0
                     ? t('notifications.unreadCount', { count: unreadCount })
                     : t('notifications.allCaughtUp')}
                 </CardDescription>
               </div>
-              <Badge variant={unreadCount > 0 ? 'default' : 'secondary'} className="rounded-md shrink-0">
+              <Badge variant={unreadCount > 0 ? 'default' : 'secondary'} className="rounded-md shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 h-5 sm:h-6">
                 {unreadCount > 0 ? t('notifications.new', { count: unreadCount }) : t('notifications.zeroNew')}
               </Badge>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-2 sm:gap-3 text-xs text-muted-foreground">
-              <Badge variant="secondary" className="rounded-md px-2 sm:px-3 py-1 text-xs">
+            <CardContent className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 text-xs p-3 sm:p-4 md:p-6 pt-0">
+              <Badge variant="secondary" className="rounded-md px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs">
                 {t('notifications.categories.comments')}
               </Badge>
-              <Badge variant="secondary" className="rounded-md px-2 sm:px-3 py-1 text-xs">
+              <Badge variant="secondary" className="rounded-md px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs">
                 {t('notifications.categories.reactions')}
               </Badge>
-              <Badge variant="secondary" className="rounded-md px-2 sm:px-3 py-1 text-xs">
+              <Badge variant="secondary" className="rounded-md px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs">
                 {t('notifications.categories.editorial')}
               </Badge>
-              <Badge variant="secondary" className="rounded-md px-2 sm:px-3 py-1 text-xs">
+              <Badge variant="secondary" className="rounded-md px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs">
                 {t('notifications.categories.followers')}
               </Badge>
             </CardContent>
@@ -410,14 +433,14 @@ export default function NotificationsPage() {
             }
 
             return (
-              <div key={category} className="space-y-3 sm:space-y-4">
+              <div key={category} className="space-y-2 sm:space-y-3 md:space-y-4">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  <h2 className="text-[10px] sm:text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                     {categoryLabels[category]}
                   </h2>
                   <Separator className="flex-1" />
                 </div>
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
                   {notifications.map((notification) => (
                     <NotificationRow
                       key={notification.id}
@@ -432,13 +455,13 @@ export default function NotificationsPage() {
 
           {enrichedNotifications.length === 0 && (
             <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Bell className="mb-4 h-10 w-10 text-muted-foreground" />
-                <CardTitle className="text-lg">{t('notifications.noNotifications')}</CardTitle>
-                <CardDescription className="mt-2 max-w-sm">
+              <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 text-center px-4">
+                <Bell className="mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+                <CardTitle className="text-sm sm:text-base md:text-lg">{t('notifications.noNotifications')}</CardTitle>
+                <CardDescription className="mt-2 max-w-sm text-xs sm:text-sm">
                   {t('notifications.noNotificationsDescription')}
                 </CardDescription>
-                <Button className="mt-6" onClick={() => navigate('/')}>
+                <Button className="mt-4 sm:mt-6 h-8 sm:h-9 md:h-10 text-xs sm:text-sm" onClick={() => navigate('/')}>
                   {t('notifications.browseArticles')}
                 </Button>
               </CardContent>
@@ -521,19 +544,19 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
         notification.isRead && 'opacity-75'
       )}
     >
-      <CardContent className="flex flex-col gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20">
+      <CardContent className="flex flex-col gap-1.5 sm:gap-2 md:gap-3 px-2.5 sm:px-3 md:px-4 py-2.5 sm:py-3 md:py-4 pr-12 sm:pr-16 md:pr-20">
         <div className="flex flex-1 items-start gap-2 sm:gap-3 md:gap-4">
-          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 shrink-0">
+          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 shrink-0">
             <AvatarImage src={notification.actor.avatar} alt={notification.actor.username} />
             <AvatarFallback className="bg-primary/10 text-primary">
-            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 sm:gap-y-1">
-              <span className="text-xs sm:text-sm font-semibold text-foreground">{notification.actor.username}</span>
-              <span className="text-xs text-muted-foreground/60">·</span>
-              <span className="text-xs text-muted-foreground/60">
+            <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 sm:gap-x-2 gap-y-0.5 sm:gap-y-1">
+              <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-foreground">{notification.actor.username}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground/60">·</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground/60">
                 {new Date(notification.createdAt).toLocaleString(undefined, {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -542,17 +565,17 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
                 })}
               </span>
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">
+            <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground leading-relaxed break-words">
               {notification.message}
               {shouldShowArticleTitleInline && notification.article?.title && (
-                <span className="ml-1.5 sm:ml-2 font-medium text-foreground/90">
-                  "{truncateTitle(notification.article.title)}"
+                <span className="ml-1 sm:ml-1.5 md:ml-2 font-medium text-foreground/90">
+                  "{truncateTitle(notification.article.title, 40)}"
                 </span>
               )}
             </div>
             {notification.comment?.text && (
-              <div className="mt-1.5 sm:mt-2 rounded-md bg-muted/40 px-2 sm:px-3 py-1.5 sm:py-2">
-                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground line-clamp-2">
+              <div className="mt-1 sm:mt-1.5 md:mt-2 rounded-md bg-muted/40 px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2">
+                <p className="text-[10px] sm:text-xs md:text-sm leading-relaxed text-muted-foreground line-clamp-2 break-words">
                   {notification.comment.text}
                 </p>
               </div>
@@ -562,11 +585,11 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
       </CardContent>
 
       {/* Кнопки в правом верхнем углу */}
-      <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 sm:gap-2">
+      <div className="absolute top-1.5 sm:top-2 md:top-3 right-1.5 sm:right-2 md:right-3 flex items-center gap-0.5 sm:gap-1 md:gap-2">
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs h-6 sm:h-7 px-1.5 sm:px-2 gap-1"
+          className="text-[10px] sm:text-xs h-6 sm:h-7 px-1 sm:px-1.5 md:px-2 gap-0.5 sm:gap-1"
           onClick={handleView}
         >
           <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />

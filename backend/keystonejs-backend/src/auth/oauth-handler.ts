@@ -74,10 +74,13 @@ export async function findOrCreateGoogleUser(
 
     // Создаем нового пользователя
     // Генерируем username из email или displayName
+    // ИСПРАВЛЕНИЕ: Проверяем существование displayName перед вызовом методов
     const baseUsername = profile.displayName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .substring(0, 20) || email.split('@')[0].substring(0, 20);
+      ? profile.displayName
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')
+          .substring(0, 20)
+      : email.split('@')[0].substring(0, 20);
 
     let username = baseUsername;
     let counter = 1;
@@ -132,5 +135,11 @@ export async function findOrCreateGoogleUser(
     return null;
   }
 }
+
+
+
+
+
+
 
 

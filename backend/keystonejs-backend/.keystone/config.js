@@ -34,7 +34,7 @@ __export(keystone_exports, {
 });
 module.exports = __toCommonJS(keystone_exports);
 var import_config = require("dotenv/config");
-var import_core12 = require("@keystone-6/core");
+var import_core13 = require("@keystone-6/core");
 
 // schemas/User.ts
 var import_core = require("@keystone-6/core");
@@ -1335,7 +1335,7 @@ async function findOrCreateGoogleUser(context, profile) {
         avatar: user.avatar || profile.avatar
       };
     }
-    const baseUsername = profile.displayName.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 20) || email.split("@")[0].substring(0, 20);
+    const baseUsername = profile.displayName ? profile.displayName.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 20) : email.split("@")[0].substring(0, 20);
     let username = baseUsername;
     let counter = 1;
     while (true) {
@@ -1809,6 +1809,17 @@ async function extendExpressApp(app, context) {
         }
         req.session.oauthUserId = keystoneUser.id;
         req.session.oauthEmail = keystoneUser.email;
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              logger_default.error("Failed to save session with oauthUserId:", err);
+              reject(err);
+            } else {
+              logger_default.debug("Session saved with oauthUserId:", keystoneUser.id);
+              resolve();
+            }
+          });
+        });
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         res.redirect(`${frontendUrl}/auth/callback?oauth=success&userId=${keystoneUser.id}`);
       } catch (error) {
@@ -1824,12 +1835,12 @@ async function extendExpressApp(app, context) {
       if (!ctx) {
         return res.status(500).json({ error: "KeystoneJS context not available" });
       }
-      const { z } = await import("zod");
-      const setupSchema = z.object({
-        email: z.string().email("Invalid email format").min(5).max(255),
-        password: z.string().min(8, "Password must be at least 8 characters").max(128),
-        username: z.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores and hyphens"),
-        name: z.string().min(1, "Name is required").max(100)
+      const { z: z2 } = await import("zod");
+      const setupSchema = z2.object({
+        email: z2.string().email("Invalid email format").min(5).max(255),
+        password: z2.string().min(8, "Password must be at least 8 characters").max(128),
+        username: z2.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores and hyphens"),
+        name: z2.string().min(1, "Name is required").max(100)
       });
       const validationResult = setupSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -2256,7 +2267,7 @@ async function extendExpressApp(app, context) {
                 continue;
               }
               const textContent = cleanPara.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-              const lines = textContent.split("\n").filter((line) => line.trim() || textContent.includes("\n"));
+              const lines = textContent.split("\n").filter((line) => line.trim());
               if (lines.length === 0) {
                 content.push({ type: "paragraph" });
               } else {
@@ -2401,7 +2412,7 @@ async function extendExpressApp(app, context) {
               continue;
             }
             const textContent = cleanPara.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-            const lines = textContent.split("\n").filter((line) => line.trim() || textContent.includes("\n"));
+            const lines = textContent.split("\n").filter((line) => line.trim());
             if (lines.length === 0) {
               content.push({ type: "paragraph" });
             } else {
@@ -2556,21 +2567,235 @@ async function extendExpressApp(app, context) {
   logger_default.info("\u2705 Express middleware configured");
 }
 
-// src/graphql/reactions.ts
+// src/graphql/combined.ts
+var import_core12 = require("@keystone-6/core");
+
+// src/graphql/articles.ts
 var import_core11 = require("@keystone-6/core");
-var extendGraphqlSchema = import_core11.graphql.extend((base) => {
-  const ReactionType = import_core11.graphql.enum({
+var import_zod = require("zod");
+var SearchArticlesInputSchema = import_zod.z.object({
+  search: import_zod.z.string().optional(),
+  tags: import_zod.z.array(import_zod.z.string()).optional(),
+  difficulty: import_zod.z.enum(["easy", "medium", "hard", "beginner", "intermediate", "advanced"]).optional(),
+  sort: import_zod.z.enum(["newest", "oldest", "popular"]).optional(),
+  skip: import_zod.z.number().int().min(0).optional(),
+  take: import_zod.z.number().int().min(1).max(100).optional()
+});
+function extractTextFromSlateDocument(document2) {
+  if (!document2) return "";
+  let text4 = "";
+  if (Array.isArray(document2)) {
+    for (const node of document2) {
+      if (node.type === "paragraph" || node.type === "heading") {
+        if (Array.isArray(node.children)) {
+          for (const child of node.children) {
+            if (typeof child === "object" && child.text) {
+              text4 += child.text + " ";
+            }
+          }
+        }
+      }
+    }
+  } else if (typeof document2 === "object" && document2.children) {
+    if (Array.isArray(document2.children)) {
+      for (const node of document2.children) {
+        if (node.type === "paragraph" || node.type === "heading") {
+          if (Array.isArray(node.children)) {
+            for (const child of node.children) {
+              if (typeof child === "object" && child.text) {
+                text4 += child.text + " ";
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return text4.trim();
+}
+function hasAllTags(articleTags, filterTags) {
+  if (!Array.isArray(articleTags) || filterTags.length === 0) {
+    return filterTags.length === 0;
+  }
+  const normalizedArticleTags = articleTags.map(
+    (tag) => String(tag).toLowerCase().trim()
+  );
+  const normalizedFilterTags = filterTags.map((tag) => tag.toLowerCase().trim());
+  return normalizedFilterTags.every(
+    (filterTag) => normalizedArticleTags.includes(filterTag)
+  );
+}
+function matchesSearch(text4, searchQuery) {
+  if (!searchQuery || !text4) return true;
+  const normalizedText = text4.toLowerCase();
+  const normalizedSearch = searchQuery.toLowerCase();
+  return normalizedText.includes(normalizedSearch);
+}
+async function searchAndFilterArticles(context, args) {
+  const validatedArgs = SearchArticlesInputSchema.parse({
+    search: args.search || void 0,
+    tags: args.tags || void 0,
+    difficulty: args.difficulty || void 0,
+    sort: args.sort || "newest",
+    skip: args.skip || 0,
+    take: args.take || 10
+  });
+  logger_default.info("[searchArticles] Query received:", {
+    search: validatedArgs.search,
+    tags: validatedArgs.tags,
+    difficulty: validatedArgs.difficulty,
+    sort: validatedArgs.sort,
+    skip: validatedArgs.skip,
+    take: validatedArgs.take
+  });
+  const where = {
+    publishedAt: { not: null }
+  };
+  if (validatedArgs.difficulty) {
+    let difficultyValue = validatedArgs.difficulty;
+    if (difficultyValue === "beginner") {
+      difficultyValue = "easy";
+    } else if (difficultyValue === "intermediate") {
+      difficultyValue = "medium";
+    } else if (difficultyValue === "advanced") {
+      difficultyValue = "hard";
+    }
+    where.difficulty = { equals: difficultyValue };
+  }
+  const allArticles = await context.sudo().query.Article.findMany({
+    where,
+    query: `
+      id
+      title
+      content {
+        document
+      }
+      excerpt
+      author {
+        id
+        username
+        avatar
+      }
+      previewImage
+      tags
+      difficulty
+      likes_count
+      dislikes_count
+      views
+      publishedAt
+      createdAt
+      updatedAt
+      userReaction
+    `
+  });
+  logger_default.debug(`[searchArticles] Found ${allArticles.length} articles before filtering`);
+  let filteredArticles = allArticles;
+  if (validatedArgs.tags && validatedArgs.tags.length > 0) {
+    filteredArticles = filteredArticles.filter(
+      (article) => hasAllTags(article.tags, validatedArgs.tags)
+    );
+    logger_default.debug(`[searchArticles] After tags filter: ${filteredArticles.length} articles`);
+  }
+  if (validatedArgs.search && validatedArgs.search.trim().length > 0) {
+    const searchQuery = validatedArgs.search.trim();
+    filteredArticles = filteredArticles.filter((article) => {
+      const titleMatch = matchesSearch(article.title || "", searchQuery);
+      const excerptMatch = matchesSearch(article.excerpt || "", searchQuery);
+      let contentMatch = false;
+      if (article.content && article.content.document) {
+        const contentText = extractTextFromSlateDocument(article.content.document);
+        contentMatch = matchesSearch(contentText, searchQuery);
+      }
+      return titleMatch || excerptMatch || contentMatch;
+    });
+    logger_default.debug(`[searchArticles] After search filter: ${filteredArticles.length} articles`);
+  }
+  let sortedArticles = [...filteredArticles];
+  if (validatedArgs.sort === "newest") {
+    sortedArticles.sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  } else if (validatedArgs.sort === "oldest") {
+    sortedArticles.sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateA - dateB;
+    });
+  } else if (validatedArgs.sort === "popular") {
+    sortedArticles.sort((a, b) => {
+      const likesA = (a.likes_count || 0) - (a.dislikes_count || 0);
+      const likesB = (b.likes_count || 0) - (b.dislikes_count || 0);
+      return likesB - likesA;
+    });
+  }
+  const total = sortedArticles.length;
+  const skip = validatedArgs.skip || 0;
+  const take = validatedArgs.take || 10;
+  const paginatedArticles = sortedArticles.slice(skip, skip + take);
+  const serializedArticles = paginatedArticles.map((article) => {
+    const serialized = { ...article };
+    if (article.id !== null && article.id !== void 0) {
+      const idNum = typeof article.id === "string" ? parseInt(article.id, 10) : typeof article.id === "number" ? article.id : null;
+      if (idNum !== null && !isNaN(idNum)) {
+        serialized.id = idNum;
+      }
+    }
+    return serialized;
+  });
+  logger_default.info(`[searchArticles] Returning ${serializedArticles.length} articles (total: ${total})`);
+  if (!Array.isArray(serializedArticles)) {
+    logger_default.error("[searchArticles] serializedArticles is not an array:", typeof serializedArticles);
+    return {
+      articles: [],
+      total: 0
+    };
+  }
+  return {
+    articles: serializedArticles,
+    total
+  };
+}
+
+// src/graphql/combined.ts
+var extendGraphqlSchema = import_core12.graphql.extend((base) => {
+  const ReactionType = import_core12.graphql.enum({
     name: "ReactionType",
-    values: import_core11.graphql.enumValues(["like", "dislike"])
+    values: import_core12.graphql.enumValues(["like", "dislike"])
   });
   return {
+    query: {
+      // Query для поиска и фильтрации статей
+      searchArticles: import_core12.graphql.field({
+        type: import_core12.graphql.list(base.object("Article")),
+        args: {
+          search: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          tags: import_core12.graphql.arg({ type: import_core12.graphql.list(import_core12.graphql.String) }),
+          difficulty: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          sort: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          skip: import_core12.graphql.arg({ type: import_core12.graphql.Int }),
+          take: import_core12.graphql.arg({ type: import_core12.graphql.Int })
+        },
+        async resolve(root, args, context) {
+          try {
+            const result = await searchAndFilterArticles(context, args);
+            return result.articles;
+          } catch (error) {
+            logger_default.error("[searchArticles] Error:", error);
+            throw error;
+          }
+        }
+      })
+    },
     mutation: {
-      reactToArticle: import_core11.graphql.field({
+      // Mutation для реакций на статьи
+      reactToArticle: import_core12.graphql.field({
         type: base.object("Article"),
         args: {
-          articleId: import_core11.graphql.arg({ type: import_core11.graphql.nonNull(import_core11.graphql.ID) }),
-          reaction: import_core11.graphql.arg({
-            type: import_core11.graphql.nonNull(ReactionType)
+          articleId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+          reaction: import_core12.graphql.arg({
+            type: import_core12.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { articleId, reaction }, context) {
@@ -2586,7 +2811,6 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
             logger_default.error(`[reactToArticle] Invalid reaction type: ${reaction}`);
             throw new Error("Invalid reaction type");
           }
-          logger_default.info(`[reactToArticle] Finding article: articleId=${articleId}`);
           const article = await context.query.Article.findOne({
             where: { id: articleId },
             query: `
@@ -2598,12 +2822,10 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               }
             `
           });
-          logger_default.info(`[reactToArticle] Article found:`, { id: article?.id, likes: article?.likes_count, dislikes: article?.dislikes_count });
           if (!article) {
             logger_default.error(`[reactToArticle] Article not found: articleId=${articleId}`);
             throw new Error("Article not found");
           }
-          logger_default.info(`[reactToArticle] Checking existing reaction: articleId=${articleId}, userId=${userId}`);
           const existingReaction = await context.query.ArticleReaction.findMany({
             where: {
               article: { id: { equals: articleId } },
@@ -2612,42 +2834,23 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
             query: "id reaction",
             take: 1
           });
-          logger_default.info(`[reactToArticle] Existing reaction:`, existingReaction);
           let finalUserReaction = null;
-          let newLikes = article.likes_count || 0;
-          let newDislikes = article.dislikes_count || 0;
-          const previousLikes = newLikes;
+          const previousLikes = article.likes_count || 0;
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
-            logger_default.info(`[reactToArticle] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             if (currentReaction === reaction) {
-              logger_default.info(`[reactToArticle] Removing reaction: reactionId=${existingReaction[0].id}`);
               await context.sudo().query.ArticleReaction.deleteOne({
                 where: { id: existingReaction[0].id }
               });
               finalUserReaction = null;
-              if (reaction === "like") {
-                newLikes = Math.max(0, newLikes - 1);
-              } else {
-                newDislikes = Math.max(0, newDislikes - 1);
-              }
             } else {
-              logger_default.info(`[reactToArticle] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
               await context.sudo().query.ArticleReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction }
               });
               finalUserReaction = reaction;
-              if (reaction === "like") {
-                newLikes = newLikes + 1;
-                newDislikes = Math.max(0, newDislikes - 1);
-              } else {
-                newDislikes = newDislikes + 1;
-                newLikes = Math.max(0, newLikes - 1);
-              }
             }
           } else {
-            logger_default.info(`[reactToArticle] Creating new reaction: articleId=${articleId}, userId=${userId}, reaction=${reaction}`);
             await context.query.ArticleReaction.createOne({
               data: {
                 article: { connect: { id: articleId } },
@@ -2656,14 +2859,21 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               }
             });
             finalUserReaction = reaction;
-            if (reaction === "like") {
-              newLikes = newLikes + 1;
-            } else {
-              newDislikes = newDislikes + 1;
-            }
           }
-          logger_default.info(`[reactToArticle] New counts: likes=${newLikes}, dislikes=${newDislikes}`);
-          logger_default.info(`[reactToArticle] Updating article counts: articleId=${articleId}`);
+          const likeReactions = await context.sudo().query.ArticleReaction.count({
+            where: {
+              article: { id: { equals: articleId } },
+              reaction: { equals: "like" }
+            }
+          });
+          const dislikeReactions = await context.sudo().query.ArticleReaction.count({
+            where: {
+              article: { id: { equals: articleId } },
+              reaction: { equals: "dislike" }
+            }
+          });
+          const newLikes = likeReactions;
+          const newDislikes = dislikeReactions;
           await context.sudo().query.Article.updateOne({
             where: { id: articleId },
             data: {
@@ -2671,9 +2881,7 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               dislikes_count: newDislikes
             },
             query: "id"
-            // Минимальный запрос для обновления
           });
-          logger_default.info(`[reactToArticle] Article counts updated`);
           if (reaction === "like" && finalUserReaction === "like" && article.author?.id) {
             try {
               const thresholds = [1, 5, 10, 50, 100, 500, 1e3];
@@ -2707,56 +2915,37 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
                       likesCount: newLikes
                     }
                   }, true);
-                  logger_default.info(`[reactToArticle] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
-                } else {
-                  logger_default.debug(`[reactToArticle] Notification already exists for threshold: ${threshold}`);
                 }
               }
             } catch (error) {
-              logger_default.error(`[reactToArticle] Failed to create like notification:`, {
-                error: error.message,
-                stack: error.stack
-              });
+              logger_default.error(`[reactToArticle] Failed to create like notification:`, error);
             }
           }
-          logger_default.info(`[reactToArticle] Fetching updated article: articleId=${articleId}`);
-          try {
-            const updatedArticle = await context.sudo().query.Article.findOne({
-              where: { id: articleId },
-              query: `
-                id
-                title
-                excerpt
-                previewImage
-                tags
-                difficulty
-                likes_count
-                dislikes_count
-                views
-                userReaction
-              `
-            });
-            logger_default.info(`[reactToArticle] Article fetched successfully:`, {
-              id: updatedArticle?.id,
-              title: updatedArticle?.title,
-              likes: updatedArticle?.likes_count,
-              dislikes: updatedArticle?.dislikes_count,
-              userReaction: updatedArticle?.userReaction
-            });
-            logger_default.info(`[reactToArticle] SUCCESS: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
-            return updatedArticle;
-          } catch (error) {
-            logger_default.error(`[reactToArticle] Error fetching article:`, error);
-            throw error;
-          }
+          const updatedArticle = await context.sudo().query.Article.findOne({
+            where: { id: articleId },
+            query: `
+              id
+              title
+              excerpt
+              previewImage
+              tags
+              difficulty
+              likes_count
+              dislikes_count
+              views
+              userReaction
+            `
+          });
+          return updatedArticle;
         }
       }),
-      reactToComment: import_core11.graphql.field({
+      // Mutation для реакций на комментарии
+      reactToComment: import_core12.graphql.field({
         type: base.object("Comment"),
         args: {
-          commentId: import_core11.graphql.arg({ type: import_core11.graphql.nonNull(import_core11.graphql.ID) }),
-          reaction: import_core11.graphql.arg({
-            type: import_core11.graphql.nonNull(ReactionType)
+          commentId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+          reaction: import_core12.graphql.arg({
+            type: import_core12.graphql.nonNull(ReactionType)
           })
         },
         async resolve(root, { commentId, reaction }, context) {
@@ -2767,12 +2956,10 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
             throw new Error("Authentication required");
           }
           const userId = session2.itemId;
-          logger_default.info(`[reactToComment] userId=${userId}`);
           if (reaction !== "like" && reaction !== "dislike") {
             logger_default.error(`[reactToComment] Invalid reaction type: ${reaction}`);
             throw new Error("Invalid reaction type");
           }
-          logger_default.info(`[reactToComment] Finding comment: commentId=${commentId}`);
           const comment = await context.query.Comment.findOne({
             where: { id: commentId },
             query: `
@@ -2787,12 +2974,10 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               }
             `
           });
-          logger_default.info(`[reactToComment] Comment found:`, { id: comment?.id, likes: comment?.likes_count, dislikes: comment?.dislikes_count });
           if (!comment) {
             logger_default.error(`[reactToComment] Comment not found: commentId=${commentId}`);
             throw new Error("Comment not found");
           }
-          logger_default.info(`[reactToComment] Checking existing reaction: commentId=${commentId}, userId=${userId}`);
           const existingReaction = await context.query.CommentReaction.findMany({
             where: {
               comment: { id: { equals: commentId } },
@@ -2801,42 +2986,23 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
             query: "id reaction",
             take: 1
           });
-          logger_default.info(`[reactToComment] Existing reaction:`, existingReaction);
           let finalUserReaction = null;
-          let newLikes = comment.likes_count || 0;
-          let newDislikes = comment.dislikes_count || 0;
-          const previousLikes = newLikes;
+          const previousLikes = comment.likes_count || 0;
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
-            logger_default.info(`[reactToComment] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             if (currentReaction === reaction) {
-              logger_default.info(`[reactToComment] Removing reaction: reactionId=${existingReaction[0].id}`);
               await context.sudo().query.CommentReaction.deleteOne({
                 where: { id: existingReaction[0].id }
               });
               finalUserReaction = null;
-              if (reaction === "like") {
-                newLikes = Math.max(0, newLikes - 1);
-              } else {
-                newDislikes = Math.max(0, newDislikes - 1);
-              }
             } else {
-              logger_default.info(`[reactToComment] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
               await context.sudo().query.CommentReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction }
               });
               finalUserReaction = reaction;
-              if (reaction === "like") {
-                newLikes = newLikes + 1;
-                newDislikes = Math.max(0, newDislikes - 1);
-              } else {
-                newDislikes = newDislikes + 1;
-                newLikes = Math.max(0, newLikes - 1);
-              }
             }
           } else {
-            logger_default.info(`[reactToComment] Creating new reaction: commentId=${commentId}, userId=${userId}, reaction=${reaction}`);
             await context.query.CommentReaction.createOne({
               data: {
                 comment: { connect: { id: commentId } },
@@ -2845,14 +3011,21 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               }
             });
             finalUserReaction = reaction;
-            if (reaction === "like") {
-              newLikes = newLikes + 1;
-            } else {
-              newDislikes = newDislikes + 1;
-            }
           }
-          logger_default.info(`[reactToComment] New counts: likes=${newLikes}, dislikes=${newDislikes}`);
-          logger_default.info(`[reactToComment] Updating comment counts: commentId=${commentId}`);
+          const likeReactions = await context.sudo().query.CommentReaction.count({
+            where: {
+              comment: { id: { equals: commentId } },
+              reaction: { equals: "like" }
+            }
+          });
+          const dislikeReactions = await context.sudo().query.CommentReaction.count({
+            where: {
+              comment: { id: { equals: commentId } },
+              reaction: { equals: "dislike" }
+            }
+          });
+          const newLikes = likeReactions;
+          const newDislikes = dislikeReactions;
           await context.sudo().query.Comment.updateOne({
             where: { id: commentId },
             data: {
@@ -2860,9 +3033,7 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               dislikes_count: newDislikes
             },
             query: "id"
-            // Минимальный запрос для обновления
           });
-          logger_default.info(`[reactToComment] Comment counts updated`);
           if (reaction === "like" && finalUserReaction === "like" && comment.author?.id) {
             try {
               const thresholds = [1, 3, 5, 10, 25];
@@ -2897,20 +3068,13 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
                       likesCount: newLikes
                     }
                   }, true);
-                  logger_default.info(`[reactToComment] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
-                } else {
-                  logger_default.debug(`[reactToComment] Notification already exists for threshold: ${threshold}`);
                 }
               }
             } catch (error) {
-              logger_default.error(`[reactToComment] Failed to create like notification:`, {
-                error: error.message,
-                stack: error.stack
-              });
+              logger_default.error(`[reactToComment] Failed to create like notification:`, error);
             }
           }
-          logger_default.info(`[reactToComment] Fetching updated comment: commentId=${commentId}`);
-          let updatedComment = await context.sudo().query.Comment.findOne({
+          const updatedComment = await context.sudo().query.Comment.findOne({
             where: { id: commentId },
             query: `
               id
@@ -2931,17 +3095,6 @@ var extendGraphqlSchema = import_core11.graphql.extend((base) => {
               }
             `
           });
-          logger_default.info(`[reactToComment] Comment fetched successfully:`, {
-            id: updatedComment?.id,
-            text: updatedComment?.text,
-            author: updatedComment?.author?.id,
-            parent: updatedComment?.parent?.id,
-            article: updatedComment?.article?.id,
-            likes: updatedComment?.likes_count,
-            dislikes: updatedComment?.dislikes_count,
-            userReaction: updatedComment?.userReaction
-          });
-          logger_default.info(`[reactToComment] SUCCESS: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
           return updatedComment;
         }
       })
@@ -2966,7 +3119,7 @@ if (!sessionSecret || sessionSecret.length < 32) {
   logger_default.info("\u2705 SESSION_SECRET is secure (length: " + sessionSecret.length + " characters)");
 }
 var keystone_default = withAuth(
-  (0, import_core12.config)({
+  (0, import_core13.config)({
     db: {
       provider: "sqlite",
       url: databaseURL,

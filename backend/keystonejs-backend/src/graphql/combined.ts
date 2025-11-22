@@ -1,20 +1,47 @@
 /**
- * Custom GraphQL mutations for reactions
- * Кастомные mutations для реакций на статьи и комментарии
+ * Объединение всех GraphQL resolver'ов в один
+ * Правильный способ объединения без вложенных graphql.extend
  */
 import { graphql } from '@keystone-6/core';
 import logger from '../lib/logger';
 import { createNotification, shouldNotifyAboutLike } from '../lib/notifications';
+import { 
+  searchAndFilterArticles
+} from './articles';
 
 export const extendGraphqlSchema = graphql.extend((base) => {
-  // Определяем enum сначала
+  // Определяем enum для реакций
   const ReactionType = graphql.enum({
     name: 'ReactionType',
     values: graphql.enumValues(['like', 'dislike']),
   });
 
   return {
+    query: {
+      // Query для поиска и фильтрации статей
+      searchArticles: graphql.field({
+        type: graphql.list(base.object('Article')),
+        args: {
+          search: graphql.arg({ type: graphql.String }),
+          tags: graphql.arg({ type: graphql.list(graphql.String) }),
+          difficulty: graphql.arg({ type: graphql.String }),
+          sort: graphql.arg({ type: graphql.String }),
+          skip: graphql.arg({ type: graphql.Int }),
+          take: graphql.arg({ type: graphql.Int }),
+        },
+        async resolve(root, args, context) {
+          try {
+            const result = await searchAndFilterArticles(context, args);
+            return result.articles;
+          } catch (error: any) {
+            logger.error('[searchArticles] Error:', error);
+            throw error;
+          }
+        },
+      }),
+    },
     mutation: {
+      // Mutation для реакций на статьи
       reactToArticle: graphql.field({
         type: base.object('Article'),
         args: {
@@ -35,14 +62,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           const userId = session.itemId;
           logger.info(`[reactToArticle] userId=${userId}`);
 
-          // Проверяем, что реакция валидна
           if (reaction !== 'like' && reaction !== 'dislike') {
             logger.error(`[reactToArticle] Invalid reaction type: ${reaction}`);
             throw new Error('Invalid reaction type');
           }
 
-          // Находим статью
-          logger.info(`[reactToArticle] Finding article: articleId=${articleId}`);
           const article = await context.query.Article.findOne({
             where: { id: articleId },
             query: `
@@ -54,15 +78,12 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               }
             `,
           });
-          logger.info(`[reactToArticle] Article found:`, { id: article?.id, likes: article?.likes_count, dislikes: article?.dislikes_count });
 
           if (!article) {
             logger.error(`[reactToArticle] Article not found: articleId=${articleId}`);
             throw new Error('Article not found');
           }
 
-          // Проверяем существующую реакцию
-          logger.info(`[reactToArticle] Checking existing reaction: articleId=${articleId}, userId=${userId}`);
           const existingReaction = await context.query.ArticleReaction.findMany({
             where: {
               article: { id: { equals: articleId } },
@@ -71,25 +92,19 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             query: 'id reaction',
             take: 1,
           });
-          logger.info(`[reactToArticle] Existing reaction:`, existingReaction);
 
           let finalUserReaction: 'like' | 'dislike' | null = null;
-          const previousLikes = article.likes_count || 0; // Сохраняем предыдущее значение для проверки порогов
+          const previousLikes = article.likes_count || 0;
 
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
-            logger.info(`[reactToArticle] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             
             if (currentReaction === reaction) {
-              // Удаляем реакцию (toggle off)
-              logger.info(`[reactToArticle] Removing reaction: reactionId=${existingReaction[0].id}`);
               await context.sudo().query.ArticleReaction.deleteOne({
                 where: { id: existingReaction[0].id },
               });
               finalUserReaction = null;
             } else {
-              // Меняем реакцию
-              logger.info(`[reactToArticle] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
               await context.sudo().query.ArticleReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction },
@@ -97,8 +112,6 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               finalUserReaction = reaction;
             }
           } else {
-            // Создаем новую реакцию
-            logger.info(`[reactToArticle] Creating new reaction: articleId=${articleId}, userId=${userId}, reaction=${reaction}`);
             await context.query.ArticleReaction.createOne({
               data: {
                 article: { connect: { id: articleId } },
@@ -109,9 +122,7 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             finalUserReaction = reaction;
           }
 
-          // ИСПРАВЛЕНИЕ RACE CONDITION: Пересчитываем счетчики на основе фактических записей реакций
-          // Это гарантирует консистентность даже при одновременных запросах
-          logger.info(`[reactToArticle] Recalculating counts from actual reactions: articleId=${articleId}`);
+          // Пересчитываем счетчики
           const likeReactions = await context.sudo().query.ArticleReaction.count({
             where: {
               article: { id: { equals: articleId } },
@@ -127,31 +138,24 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           
           const newLikes = likeReactions;
           const newDislikes = dislikeReactions;
-          logger.info(`[reactToArticle] Recalculated counts: likes=${newLikes}, dislikes=${newDislikes}`);
 
-          // Обновляем счетчики в статье через sudo (обход access control)
-          logger.info(`[reactToArticle] Updating article counts: articleId=${articleId}`);
           await context.sudo().query.Article.updateOne({
             where: { id: articleId },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes,
             },
-            query: 'id', // Минимальный запрос для обновления
+            query: 'id',
           });
-          logger.info(`[reactToArticle] Article counts updated`);
 
-          // Создаем уведомление о лайке, если нужно (только для лайков, не для дизлайков)
+          // Создаем уведомление о лайке
           if (reaction === 'like' && finalUserReaction === 'like' && article.author?.id) {
             try {
-              // Пороги для статей: 1, 5, 10, 50, 100, 500, 1000
               const thresholds = [1, 5, 10, 50, 100, 500, 1000];
               const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
 
               if (threshold !== null) {
-                // Для первого лайка (threshold=1) проверяем дубликаты за последний час
-                // Для остальных порогов проверяем все существующие уведомления
-                const timeWindow = threshold === 1 ? 60 * 60 * 1000 : undefined; // 1 час для первого лайка
+                const timeWindow = threshold === 1 ? 60 * 60 * 1000 : undefined;
                 const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
 
                 const where: any = {
@@ -164,13 +168,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
                   where.createdAt = { gte: cutoffTime.toISOString() };
                 }
 
-                // Проверяем, не было ли уже уведомления для этого порога
                 const existingNotifications = await context.sudo().query.Notification.findMany({
                   where,
                   query: 'id metadata createdAt',
                 });
 
-                // Проверяем, есть ли уже уведомление с этим порогом в metadata
                 const hasNotificationForThreshold = existingNotifications.some(
                   (notif: any) => notif.metadata?.threshold === threshold
                 );
@@ -185,57 +187,35 @@ export const extendGraphqlSchema = graphql.extend((base) => {
                       threshold,
                       likesCount: newLikes,
                     },
-                  }, true); // Пропускаем проверку дубликатов, так как уже проверили выше
-                  logger.info(`[reactToArticle] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
-                } else {
-                  logger.debug(`[reactToArticle] Notification already exists for threshold: ${threshold}`);
+                  }, true);
                 }
               }
             } catch (error: any) {
-              logger.error(`[reactToArticle] Failed to create like notification:`, {
-                error: error.message,
-                stack: error.stack,
-              });
+              logger.error(`[reactToArticle] Failed to create like notification:`, error);
             }
           }
 
-          // Получаем обновленную статью (без author, так как он не запрашивается в GraphQL запросе)
-          // Убираем DateTime поля, так как они вызывают проблемы с сериализацией
-          logger.info(`[reactToArticle] Fetching updated article: articleId=${articleId}`);
-          try {
-            const updatedArticle = await context.sudo().query.Article.findOne({
-              where: { id: articleId },
-              query: `
-                id
-                title
-                excerpt
-                previewImage
-                tags
-                difficulty
-                likes_count
-                dislikes_count
-                views
-                userReaction
-              `,
-            });
-            
-            logger.info(`[reactToArticle] Article fetched successfully:`, {
-              id: updatedArticle?.id,
-              title: updatedArticle?.title,
-              likes: updatedArticle?.likes_count,
-              dislikes: updatedArticle?.dislikes_count,
-              userReaction: updatedArticle?.userReaction,
-            });
+          const updatedArticle = await context.sudo().query.Article.findOne({
+            where: { id: articleId },
+            query: `
+              id
+              title
+              excerpt
+              previewImage
+              tags
+              difficulty
+              likes_count
+              dislikes_count
+              views
+              userReaction
+            `,
+          });
 
-            logger.info(`[reactToArticle] SUCCESS: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
-            return updatedArticle;
-          } catch (error) {
-            logger.error(`[reactToArticle] Error fetching article:`, error);
-            throw error;
-          }
+          return updatedArticle;
         },
       }),
 
+      // Mutation для реакций на комментарии
       reactToComment: graphql.field({
         type: base.object('Comment'),
         args: {
@@ -254,16 +234,12 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           }
 
           const userId = session.itemId;
-          logger.info(`[reactToComment] userId=${userId}`);
 
-          // Проверяем, что реакция валидна
           if (reaction !== 'like' && reaction !== 'dislike') {
             logger.error(`[reactToComment] Invalid reaction type: ${reaction}`);
             throw new Error('Invalid reaction type');
           }
 
-          // Находим комментарий
-          logger.info(`[reactToComment] Finding comment: commentId=${commentId}`);
           const comment = await context.query.Comment.findOne({
             where: { id: commentId },
             query: `
@@ -278,15 +254,12 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               }
             `,
           });
-          logger.info(`[reactToComment] Comment found:`, { id: comment?.id, likes: comment?.likes_count, dislikes: comment?.dislikes_count });
 
           if (!comment) {
             logger.error(`[reactToComment] Comment not found: commentId=${commentId}`);
             throw new Error('Comment not found');
           }
 
-          // Проверяем существующую реакцию
-          logger.info(`[reactToComment] Checking existing reaction: commentId=${commentId}, userId=${userId}`);
           const existingReaction = await context.query.CommentReaction.findMany({
             where: {
               comment: { id: { equals: commentId } },
@@ -295,25 +268,19 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             query: 'id reaction',
             take: 1,
           });
-          logger.info(`[reactToComment] Existing reaction:`, existingReaction);
 
           let finalUserReaction: 'like' | 'dislike' | null = null;
-          const previousLikes = comment.likes_count || 0; // Сохраняем предыдущее значение для проверки порогов
+          const previousLikes = comment.likes_count || 0;
 
           if (existingReaction.length > 0) {
             const currentReaction = existingReaction[0].reaction;
-            logger.info(`[reactToComment] Existing reaction found: current=${currentReaction}, new=${reaction}`);
             
             if (currentReaction === reaction) {
-              // Удаляем реакцию (toggle off)
-              logger.info(`[reactToComment] Removing reaction: reactionId=${existingReaction[0].id}`);
               await context.sudo().query.CommentReaction.deleteOne({
                 where: { id: existingReaction[0].id },
               });
               finalUserReaction = null;
             } else {
-              // Меняем реакцию
-              logger.info(`[reactToComment] Updating reaction: reactionId=${existingReaction[0].id}, newReaction=${reaction}`);
               await context.sudo().query.CommentReaction.updateOne({
                 where: { id: existingReaction[0].id },
                 data: { reaction },
@@ -321,8 +288,6 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               finalUserReaction = reaction;
             }
           } else {
-            // Создаем новую реакцию
-            logger.info(`[reactToComment] Creating new reaction: commentId=${commentId}, userId=${userId}, reaction=${reaction}`);
             await context.query.CommentReaction.createOne({
               data: {
                 comment: { connect: { id: commentId } },
@@ -333,9 +298,7 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             finalUserReaction = reaction;
           }
 
-          // ИСПРАВЛЕНИЕ RACE CONDITION: Пересчитываем счетчики на основе фактических записей реакций
-          // Это гарантирует консистентность даже при одновременных запросах
-          logger.info(`[reactToComment] Recalculating counts from actual reactions: commentId=${commentId}`);
+          // Пересчитываем счетчики
           const likeReactions = await context.sudo().query.CommentReaction.count({
             where: {
               comment: { id: { equals: commentId } },
@@ -351,31 +314,24 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           
           const newLikes = likeReactions;
           const newDislikes = dislikeReactions;
-          logger.info(`[reactToComment] Recalculated counts: likes=${newLikes}, dislikes=${newDislikes}`);
 
-          // Обновляем счетчики в комментарии через sudo (обход access control)
-          logger.info(`[reactToComment] Updating comment counts: commentId=${commentId}`);
           await context.sudo().query.Comment.updateOne({
             where: { id: commentId },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes,
             },
-            query: 'id', // Минимальный запрос для обновления
+            query: 'id',
           });
-          logger.info(`[reactToComment] Comment counts updated`);
 
-          // Создаем уведомление о лайке, если нужно (только для лайков, не для дизлайков)
+          // Создаем уведомление о лайке
           if (reaction === 'like' && finalUserReaction === 'like' && comment.author?.id) {
             try {
-              // Пороги для комментариев: 1, 3, 5, 10, 25
               const thresholds = [1, 3, 5, 10, 25];
               const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
 
               if (threshold !== null) {
-                // Для первого лайка (threshold=1) проверяем дубликаты за последний час
-                // Для остальных порогов проверяем все существующие уведомления
-                const timeWindow = threshold === 1 ? 60 * 60 * 1000 : undefined; // 1 час для первого лайка
+                const timeWindow = threshold === 1 ? 60 * 60 * 1000 : undefined;
                 const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
 
                 const where: any = {
@@ -388,13 +344,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
                   where.createdAt = { gte: cutoffTime.toISOString() };
                 }
 
-                // Проверяем, не было ли уже уведомления для этого порога
                 const existingNotifications = await context.sudo().query.Notification.findMany({
                   where,
                   query: 'id metadata createdAt',
                 });
 
-                // Проверяем, есть ли уже уведомление с этим порогом в metadata
                 const hasNotificationForThreshold = existingNotifications.some(
                   (notif: any) => notif.metadata?.threshold === threshold
                 );
@@ -410,24 +364,15 @@ export const extendGraphqlSchema = graphql.extend((base) => {
                       threshold,
                       likesCount: newLikes,
                     },
-                  }, true); // Пропускаем проверку дубликатов, так как уже проверили выше
-                  logger.info(`[reactToComment] Created notification for threshold: ${threshold}, likes: ${newLikes}`);
-                } else {
-                  logger.debug(`[reactToComment] Notification already exists for threshold: ${threshold}`);
+                  }, true);
                 }
               }
             } catch (error: any) {
-              logger.error(`[reactToComment] Failed to create like notification:`, {
-                error: error.message,
-                stack: error.stack,
-              });
+              logger.error(`[reactToComment] Failed to create like notification:`, error);
             }
           }
 
-          // Получаем обновленный комментарий с необходимыми полями через KeystoneJS API
-          // Используем правильный синтаксис для получения связей через KeystoneJS
-          logger.info(`[reactToComment] Fetching updated comment: commentId=${commentId}`);
-          let updatedComment = await context.sudo().query.Comment.findOne({
+          const updatedComment = await context.sudo().query.Comment.findOne({
             where: { id: commentId },
             query: `
               id
@@ -448,19 +393,6 @@ export const extendGraphqlSchema = graphql.extend((base) => {
               }
             `,
           });
-
-          logger.info(`[reactToComment] Comment fetched successfully:`, {
-            id: updatedComment?.id,
-            text: updatedComment?.text,
-            author: updatedComment?.author?.id,
-            parent: updatedComment?.parent?.id,
-            article: updatedComment?.article?.id,
-            likes: updatedComment?.likes_count,
-            dislikes: updatedComment?.dislikes_count,
-            userReaction: updatedComment?.userReaction,
-          });
-
-          logger.info(`[reactToComment] SUCCESS: commentId=${commentId}, userId=${userId}, reaction=${finalUserReaction}`);
 
           return updatedComment;
         },

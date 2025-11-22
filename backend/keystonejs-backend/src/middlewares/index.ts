@@ -382,6 +382,20 @@ export async function extendExpressApp(
         (req.session as any).oauthUserId = keystoneUser.id;
         (req.session as any).oauthEmail = keystoneUser.email;
         
+        // ВАЖНО: Явно сохраняем session перед редиректом
+        // Это гарантирует, что oauthUserId и oauthEmail будут доступны в последующем запросе
+        await new Promise<void>((resolve, reject) => {
+          (req.session as any).save((err: any) => {
+            if (err) {
+              logger.error('Failed to save session with oauthUserId:', err);
+              reject(err);
+            } else {
+              logger.debug('Session saved with oauthUserId:', keystoneUser.id);
+              resolve();
+            }
+          });
+        });
+        
         // Редиректим на frontend, который вызовет GraphQL mutation для создания session
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/auth/callback?oauth=success&userId=${keystoneUser.id}`);
@@ -996,7 +1010,8 @@ export async function extendExpressApp(
                 .replace(/&#39;/g, "'");
               
               // Разбиваем на строки и создаем параграфы
-              const lines = textContent.split('\n').filter(line => line.trim() || textContent.includes('\n'));
+              // ИСПРАВЛЕНИЕ: Убираем неработающий фильтр - вторая часть OR всегда true
+              const lines = textContent.split('\n').filter(line => line.trim());
               
               if (lines.length === 0) {
                 content.push({ type: 'paragraph' });
@@ -1181,7 +1196,8 @@ export async function extendExpressApp(
               .replace(/&quot;/g, '"')
               .replace(/&#39;/g, "'");
             
-            const lines = textContent.split('\n').filter(line => line.trim() || textContent.includes('\n'));
+            // ИСПРАВЛЕНИЕ: Убираем неработающий фильтр - вторая часть OR всегда true
+            const lines = textContent.split('\n').filter(line => line.trim());
             
             if (lines.length === 0) {
               content.push({ type: 'paragraph' });
@@ -1371,4 +1387,8 @@ export async function extendExpressApp(
 
   logger.info('✅ Express middleware configured');
 }
+
+
+
+
 

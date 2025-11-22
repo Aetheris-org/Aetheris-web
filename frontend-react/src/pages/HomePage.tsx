@@ -97,6 +97,7 @@ export default function HomePage() {
   ]
   // State
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [isViewModeExpanded, setIsViewModeExpanded] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -153,6 +154,7 @@ export default function HomePage() {
       selectedTags.slice().sort().join(','),
       difficultyFilter,
       sortOption,
+      debouncedSearchQuery,
     ],
     queryFn: () =>
       getArticles({
@@ -161,6 +163,7 @@ export default function HomePage() {
         tags: selectedTags.length ? selectedTags : undefined,
         difficulty: difficultyFilter,
         sort: sortOption,
+        search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
       }),
     // Кэшируем на 5 минут (данные статей не меняются часто)
     staleTime: 5 * 60 * 1000,
@@ -189,9 +192,7 @@ export default function HomePage() {
     },
   })
 
-  // Debounced search query
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-
+  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
@@ -331,8 +332,11 @@ export default function HomePage() {
 
   // Handlers
   const handleSearch = useCallback(() => {
-    console.log('Search:', searchQuery)
-  }, [searchQuery])
+    // При нажатии Enter применяем поиск к основному списку статей
+    // Поиск уже применяется через debouncedSearchQuery в queryKey
+    // Просто сбрасываем страницу на первую
+    setPage(1)
+  }, [])
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -496,12 +500,15 @@ export default function HomePage() {
                     onFocus={handleSearchInputFocus}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault()
                         handleSearch()
                         setShowSearchResults(false)
                         setSearchInputFocused(false)
+                        // Фокус убирается автоматически при закрытии результатов
                       } else if (e.key === 'Escape') {
                         setShowSearchResults(false)
                         setSearchInputFocused(false)
+                        setSearchQuery('')
                       }
                     }}
                     className="pl-10 sm:pl-9 h-10 text-sm"

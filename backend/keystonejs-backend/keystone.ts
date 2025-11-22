@@ -5,11 +5,11 @@
 // Загружаем переменные окружения ПЕРВЫМ делом, до всех импортов
 import 'dotenv/config';
 
-import { config } from '@keystone-6/core';
+import { config, graphql } from '@keystone-6/core';
 import { lists } from './schemas';
 import { withAuth, session } from './src/auth/auth';
 import { extendExpressApp } from './src/middlewares';
-import { extendGraphqlSchema } from './src/graphql/reactions';
+import { extendGraphqlSchema } from './src/graphql/combined';
 import logger from './src/lib/logger';
 import { logAdminAccessDenied, logAdminAccessGranted } from './src/lib/security-logger';
 

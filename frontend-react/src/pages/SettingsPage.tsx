@@ -59,6 +59,8 @@ import {
   Languages,
   Info,
   Sliders,
+  Star,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -189,31 +191,31 @@ const getAccentGroups = (t: (key: string) => string): Array<{ id: string; label:
     id: 'vivid',
     label: t('settings.appearance.accentGroups.vivid.label') || 'Vivid energy',
     description: t('settings.appearance.accentGroups.vivid.description') || 'High-contrast tones that stand out in busy layouts.',
-    accents: ['red', 'crimson', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
+    accents: ['red', 'crimson', 'ruby', 'scarlet', 'cherry', 'burgundy', 'wine', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
   },
   {
     id: 'botanical',
     label: t('settings.appearance.accentGroups.botanical.label') || 'Fresh & botanical',
     description: t('settings.appearance.accentGroups.botanical.description') || 'Nature-inspired greens and blues suited to calm products.',
-    accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive'],
+    accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive', 'chartreuse', 'jade', 'aqua'],
   },
   {
     id: 'warm',
     label: t('settings.appearance.accentGroups.warm.label') || 'Warm & welcoming',
     description: t('settings.appearance.accentGroups.warm.description') || 'Sunset oranges and blush tones for storytelling moments.',
-    accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon'],
+    accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon', 'honey', 'butter', 'canary', 'lemon', 'copper', 'rust', 'khaki', 'tan', 'beige', 'vanilla', 'champagne'],
   },
   {
     id: 'cool',
     label: t('settings.appearance.accentGroups.cool.label') || 'Cool & calm',
     description: t('settings.appearance.accentGroups.cool.description') || 'Serene blues and purples for peaceful interfaces.',
-    accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky'],
+    accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky', 'cerulean', 'sapphire', 'royal', 'periwinkle', 'amethyst', 'mauve', 'lilac', 'wisteria'],
   },
   {
     id: 'muted',
     label: t('settings.appearance.accentGroups.muted.label') || 'Sophisticated neutrals',
     description: t('settings.appearance.accentGroups.muted.description') || 'Soft plums and greys that stay out of the way.',
-    accents: ['pure', 'silver', 'mono', 'graphite'],
+    accents: ['pure', 'silver', 'mono', 'graphite', 'platinum', 'titanium', 'steel', 'iron'],
   },
   {
     id: 'playful',
@@ -228,19 +230,19 @@ const getSurfaceGroups = (t: (key: string) => string): Array<{ id: string; label
     id: 'luminous',
     label: t('settings.appearance.surfaceGroups.luminous.label') || 'Bright & airy',
     description: t('settings.appearance.surfaceGroups.luminous.description') || 'High-key canvases for daylight dashboards and editorial homes.',
-    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud'],
+    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud', 'moonlight', 'luxury', 'tropical', 'marble'],
   },
   {
     id: 'earthy',
     label: t('settings.appearance.surfaceGroups.earthy.label') || 'Warm & grounded',
     description: t('settings.appearance.surfaceGroups.earthy.description') || 'Organic neutrals that pair well with writing-led experiences.',
-    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss'],
+    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss', 'wood'],
   },
   {
     id: 'expressive',
     label: t('settings.appearance.surfaceGroups.expressive.label') || 'Soft & expressive',
     description: t('settings.appearance.surfaceGroups.expressive.description') || 'Gradient-ready palettes with gentle colour cast for calm products.',
-    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice'],
+    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice', 'neon'],
   },
   {
     id: 'neutral',
@@ -2507,6 +2509,36 @@ function AppearanceSettings() {
     localStorage.setItem('aetheris-theme-groups-collapsed', JSON.stringify(newState))
   }
 
+  // Theme search and expanded groups state
+  const [themeSearchQuery, setThemeSearchQuery] = useState('')
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    basic: false,
+    games: false,
+    extraordinary: false,
+    nature: false,
+    corporate: false,
+    retro: false,
+  })
+
+  // Theme filters state
+  const [themeFilters, setThemeFilters] = useState<{
+    typography: TypographyScale | null
+    contrast: ContrastMode | null
+    depth: DepthStyle | null
+    motion: MotionPreference | null
+    radius: number | null
+    group: string | null
+  }>({
+    typography: null,
+    contrast: null,
+    depth: null,
+    motion: null,
+    radius: null,
+    group: null,
+  })
+  const [radiusInput, setRadiusInput] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
   const handleShowDescription = (e: React.MouseEvent | undefined, theme: { name: string; description: string }) => {
     if (e) {
       e.stopPropagation()
@@ -2751,6 +2783,875 @@ function AppearanceSettings() {
         motion: 'default' as MotionPreference,
         official: true,
       },
+      // Single accent themes
+      {
+        id: 'crimson-dawn',
+        name: t('settings.appearance.themes.crimsonDawn.name'),
+        description: t('settings.appearance.themes.crimsonDawn.description'),
+        accent: 'crimson' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lime-fresh',
+        name: t('settings.appearance.themes.limeFresh.name'),
+        description: t('settings.appearance.themes.limeFresh.description'),
+        accent: 'lime' as AccentColor,
+        surface: 'glacier' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'rose-garden',
+        name: t('settings.appearance.themes.roseGarden.name'),
+        description: t('settings.appearance.themes.roseGarden.description'),
+        accent: 'rose' as AccentColor,
+        surface: 'pearl' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mint-breeze',
+        name: t('settings.appearance.themes.mintBreeze.name'),
+        description: t('settings.appearance.themes.mintBreeze.description'),
+        accent: 'mint' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lavender-dreams',
+        name: t('settings.appearance.themes.lavenderDreams.name'),
+        description: t('settings.appearance.themes.lavenderDreams.description'),
+        accent: 'lavender' as AccentColor,
+        surface: 'mist' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'turquoise-waves',
+        name: t('settings.appearance.themes.turquoiseWaves.name'),
+        description: t('settings.appearance.themes.turquoiseWaves.description'),
+        accent: 'turquoise' as AccentColor,
+        surface: 'harbor' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sage-wisdom',
+        name: t('settings.appearance.themes.sageWisdom.name'),
+        description: t('settings.appearance.themes.sageWisdom.description'),
+        accent: 'sage' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'coral-reef',
+        name: t('settings.appearance.themes.coralReef.name'),
+        description: t('settings.appearance.themes.coralReef.description'),
+        accent: 'coral' as AccentColor,
+        surface: 'sunset' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'orchid-elegance',
+        name: t('settings.appearance.themes.orchidElegance.name'),
+        description: t('settings.appearance.themes.orchidElegance.description'),
+        accent: 'orchid' as AccentColor,
+        surface: 'aurora' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'seafoam-serene',
+        name: t('settings.appearance.themes.seafoamSerene.name'),
+        description: t('settings.appearance.themes.seafoamSerene.description'),
+        accent: 'seafoam' as AccentColor,
+        surface: 'zenith' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'saffron-gold',
+        name: t('settings.appearance.themes.saffronGold.name'),
+        description: t('settings.appearance.themes.saffronGold.description'),
+        accent: 'saffron' as AccentColor,
+        surface: 'ember' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'peach-blossom',
+        name: t('settings.appearance.themes.peachBlossom.name'),
+        description: t('settings.appearance.themes.peachBlossom.description'),
+        accent: 'peach' as AccentColor,
+        surface: 'cream' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'salmon-sunset',
+        name: t('settings.appearance.themes.salmonSunset.name'),
+        description: t('settings.appearance.themes.salmonSunset.description'),
+        accent: 'salmon' as AccentColor,
+        surface: 'canyon' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'olive-nature',
+        name: t('settings.appearance.themes.oliveNature.name'),
+        description: t('settings.appearance.themes.oliveNature.description'),
+        accent: 'olive' as AccentColor,
+        surface: 'terracotta' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'navy-professional',
+        name: t('settings.appearance.themes.navyProfessional.name'),
+        description: t('settings.appearance.themes.navyProfessional.description'),
+        accent: 'navy' as AccentColor,
+        surface: 'slate' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sky-open',
+        name: t('settings.appearance.themes.skyOpen.name'),
+        description: t('settings.appearance.themes.skyOpen.description'),
+        accent: 'sky' as AccentColor,
+        surface: 'cloud' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'ocean-deep',
+        name: t('settings.appearance.themes.oceanDeep.name'),
+        description: t('settings.appearance.themes.oceanDeep.description'),
+        accent: 'ocean' as AccentColor,
+        surface: 'abyss' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'bronze-vintage',
+        name: t('settings.appearance.themes.bronzeVintage.name'),
+        description: t('settings.appearance.themes.bronzeVintage.description'),
+        accent: 'bronze' as AccentColor,
+        surface: 'stone' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'silver-modern',
+        name: t('settings.appearance.themes.silverModern.name'),
+        description: t('settings.appearance.themes.silverModern.description'),
+        accent: 'silver' as AccentColor,
+        surface: 'ash' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'graphite-minimal',
+        name: t('settings.appearance.themes.graphiteMinimal.name'),
+        description: t('settings.appearance.themes.graphiteMinimal.description'),
+        accent: 'graphite' as AccentColor,
+        surface: 'charcoal' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      // Two accent themes
+      {
+        id: 'crimson-amber',
+        name: t('settings.appearance.themes.crimsonAmber.name'),
+        description: t('settings.appearance.themes.crimsonAmber.description'),
+        accent: 'crimson' as AccentColor,
+        secondaryAccent: 'amber' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lime-cyan',
+        name: t('settings.appearance.themes.limeCyan.name'),
+        description: t('settings.appearance.themes.limeCyan.description'),
+        accent: 'lime' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'glacier' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'rose-gold',
+        name: t('settings.appearance.themes.roseGold.name'),
+        description: t('settings.appearance.themes.roseGold.description'),
+        accent: 'rose' as AccentColor,
+        secondaryAccent: 'gold' as AccentColor,
+        surface: 'pearl' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mint-teal',
+        name: t('settings.appearance.themes.mintTeal.name'),
+        description: t('settings.appearance.themes.mintTeal.description'),
+        accent: 'mint' as AccentColor,
+        secondaryAccent: 'teal' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lavender-plum',
+        name: t('settings.appearance.themes.lavenderPlum.name'),
+        description: t('settings.appearance.themes.lavenderPlum.description'),
+        accent: 'lavender' as AccentColor,
+        secondaryAccent: 'plum' as AccentColor,
+        surface: 'mist' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'turquoise-azure',
+        name: t('settings.appearance.themes.turquoiseAzure.name'),
+        description: t('settings.appearance.themes.turquoiseAzure.description'),
+        accent: 'turquoise' as AccentColor,
+        secondaryAccent: 'azure' as AccentColor,
+        surface: 'harbor' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'coral-peach',
+        name: t('settings.appearance.themes.coralPeach.name'),
+        description: t('settings.appearance.themes.coralPeach.description'),
+        accent: 'coral' as AccentColor,
+        secondaryAccent: 'peach' as AccentColor,
+        surface: 'sunset' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'orchid-violet',
+        name: t('settings.appearance.themes.orchidViolet.name'),
+        description: t('settings.appearance.themes.orchidViolet.description'),
+        accent: 'orchid' as AccentColor,
+        secondaryAccent: 'violet' as AccentColor,
+        surface: 'aurora' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'seafoam-emerald',
+        name: t('settings.appearance.themes.seafoamEmerald.name'),
+        description: t('settings.appearance.themes.seafoamEmerald.description'),
+        accent: 'seafoam' as AccentColor,
+        secondaryAccent: 'emerald' as AccentColor,
+        surface: 'zenith' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sage-forest',
+        name: t('settings.appearance.themes.sageForest.name'),
+        description: t('settings.appearance.themes.sageForest.description'),
+        accent: 'sage' as AccentColor,
+        secondaryAccent: 'forest' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'ruby-dawn',
+        name: t('settings.appearance.themes.rubyDawn.name'),
+        description: t('settings.appearance.themes.rubyDawn.description'),
+        accent: 'ruby' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'scarlet-fire',
+        name: t('settings.appearance.themes.scarletFire.name'),
+        description: t('settings.appearance.themes.scarletFire.description'),
+        accent: 'scarlet' as AccentColor,
+        surface: 'ember' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'cherry-blossom',
+        name: t('settings.appearance.themes.cherryBlossom.name'),
+        description: t('settings.appearance.themes.cherryBlossom.description'),
+        accent: 'cherry' as AccentColor,
+        secondaryAccent: 'pink' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'burgundy-wine',
+        name: t('settings.appearance.themes.burgundyWine.name'),
+        description: t('settings.appearance.themes.burgundyWine.description'),
+        accent: 'burgundy' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'honey-gold',
+        name: t('settings.appearance.themes.honeyGold.name'),
+        description: t('settings.appearance.themes.honeyGold.description'),
+        accent: 'honey' as AccentColor,
+        surface: 'sunset' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'butter-sunshine',
+        name: t('settings.appearance.themes.butterSunshine.name'),
+        description: t('settings.appearance.themes.butterSunshine.description'),
+        accent: 'butter' as AccentColor,
+        surface: 'zenith' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'canary-bright',
+        name: t('settings.appearance.themes.canaryBright.name'),
+        description: t('settings.appearance.themes.canaryBright.description'),
+        accent: 'canary' as AccentColor,
+        surface: 'daylight' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lemon-fresh',
+        name: t('settings.appearance.themes.lemonFresh.name'),
+        description: t('settings.appearance.themes.lemonFresh.description'),
+        accent: 'lemon' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'chartreuse-energy',
+        name: t('settings.appearance.themes.chartreuseEnergy.name'),
+        description: t('settings.appearance.themes.chartreuseEnergy.description'),
+        accent: 'chartreuse' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'jade-luxury',
+        name: t('settings.appearance.themes.jadeLuxury.name'),
+        description: t('settings.appearance.themes.jadeLuxury.description'),
+        accent: 'jade' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'aqua-fresh',
+        name: t('settings.appearance.themes.aquaFresh.name'),
+        description: t('settings.appearance.themes.aquaFresh.description'),
+        accent: 'aqua' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'tropical' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'cerulean-sky',
+        name: t('settings.appearance.themes.ceruleanSky.name'),
+        description: t('settings.appearance.themes.ceruleanSky.description'),
+        accent: 'cerulean' as AccentColor,
+        surface: 'harbor' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sapphire-prestige',
+        name: t('settings.appearance.themes.sapphirePrestige.name'),
+        description: t('settings.appearance.themes.sapphirePrestige.description'),
+        accent: 'sapphire' as AccentColor,
+        surface: 'midnight' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'royal-elegance',
+        name: t('settings.appearance.themes.royalElegance.name'),
+        description: t('settings.appearance.themes.royalElegance.description'),
+        accent: 'royal' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'periwinkle-dream',
+        name: t('settings.appearance.themes.periwinkleDream.name'),
+        description: t('settings.appearance.themes.periwinkleDream.description'),
+        accent: 'periwinkle' as AccentColor,
+        surface: 'nebula' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'amethyst-mystic',
+        name: t('settings.appearance.themes.amethystMystic.name'),
+        description: t('settings.appearance.themes.amethystMystic.description'),
+        accent: 'amethyst' as AccentColor,
+        surface: 'twilight' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mauve-elegance',
+        name: t('settings.appearance.themes.mauveElegance.name'),
+        description: t('settings.appearance.themes.mauveElegance.description'),
+        accent: 'mauve' as AccentColor,
+        secondaryAccent: 'pink' as AccentColor,
+        surface: 'solstice' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'lilac-spring',
+        name: t('settings.appearance.themes.lilacSpring.name'),
+        description: t('settings.appearance.themes.lilacSpring.description'),
+        accent: 'lilac' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'wisteria-calm',
+        name: t('settings.appearance.themes.wisteriaCalm.name'),
+        description: t('settings.appearance.themes.wisteriaCalm.description'),
+        accent: 'wisteria' as AccentColor,
+        surface: 'aurora' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'wine-sophisticated',
+        name: t('settings.appearance.themes.wineSophisticated.name'),
+        description: t('settings.appearance.themes.wineSophisticated.description'),
+        accent: 'wine' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'copper-industrial',
+        name: t('settings.appearance.themes.copperIndustrial.name'),
+        description: t('settings.appearance.themes.copperIndustrial.description'),
+        accent: 'copper' as AccentColor,
+        surface: 'wood' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'rust-natural',
+        name: t('settings.appearance.themes.rustNatural.name'),
+        description: t('settings.appearance.themes.rustNatural.description'),
+        accent: 'rust' as AccentColor,
+        surface: 'canyon' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'khaki-outdoor',
+        name: t('settings.appearance.themes.khakiOutdoor.name'),
+        description: t('settings.appearance.themes.khakiOutdoor.description'),
+        accent: 'khaki' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'tan-comfort',
+        name: t('settings.appearance.themes.tanComfort.name'),
+        description: t('settings.appearance.themes.tanComfort.description'),
+        accent: 'tan' as AccentColor,
+        surface: 'sand' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'beige-minimal',
+        name: t('settings.appearance.themes.beigeMinimal.name'),
+        description: t('settings.appearance.themes.beigeMinimal.description'),
+        accent: 'beige' as AccentColor,
+        surface: 'cream' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'vanilla-sweet',
+        name: t('settings.appearance.themes.vanillaSweet.name'),
+        description: t('settings.appearance.themes.vanillaSweet.description'),
+        accent: 'vanilla' as AccentColor,
+        surface: 'ivory' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'champagne-celebration',
+        name: t('settings.appearance.themes.champagneCelebration.name'),
+        description: t('settings.appearance.themes.champagneCelebration.description'),
+        accent: 'champagne' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'platinum-modern',
+        name: t('settings.appearance.themes.platinumModern.name'),
+        description: t('settings.appearance.themes.platinumModern.description'),
+        accent: 'platinum' as AccentColor,
+        surface: 'moonlight' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'titanium-tech',
+        name: t('settings.appearance.themes.titaniumTech.name'),
+        description: t('settings.appearance.themes.titaniumTech.description'),
+        accent: 'titanium' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'steel-professional',
+        name: t('settings.appearance.themes.steelProfessional.name'),
+        description: t('settings.appearance.themes.steelProfessional.description'),
+        accent: 'steel' as AccentColor,
+        surface: 'mist' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'iron-strong',
+        name: t('settings.appearance.themes.ironStrong.name'),
+        description: t('settings.appearance.themes.ironStrong.description'),
+        accent: 'iron' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
     ],
       games: [
         {
@@ -2816,7 +3717,7 @@ function AppearanceSettings() {
         },
         {
           id: 'terraria',
-        name: 'Terraria',
+        name: t('settings.appearance.themes.terraria.name'),
         description: t('settings.appearance.themes.terraria.description'),
         accent: 'brown' as AccentColor,
         secondaryAccent: 'amber' as AccentColor, // Золото
@@ -2831,7 +3732,7 @@ function AppearanceSettings() {
         },
         {
           id: 'geometry-dash',
-        name: 'Geometry Dash',
+        name: t('settings.appearance.themes.geometryDash.name'),
         description: t('settings.appearance.themes.geometryDash.description'),
         accent: 'lime' as AccentColor,
         secondaryAccent: 'cyan' as AccentColor,
@@ -2845,38 +3746,8 @@ function AppearanceSettings() {
         official: true,
         },
         {
-          id: 'valorant',
-        name: 'VALORANT',
-        description: t('settings.appearance.themes.valorant.description'),
-        accent: 'red' as AccentColor,
-        secondaryAccent: 'crimson' as AccentColor,
-        surface: 'obsidian' as SurfaceStyle,
-        radius: 0.5,
-        typography: 'default' as TypographyScale,
-        contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'flat' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-        },
-        {
-          id: 'league-of-legends',
-        name: 'League of Legends',
-        description: t('settings.appearance.themes.leagueOfLegends.description'),
-        accent: 'gold' as AccentColor,
-        secondaryAccent: 'blue' as AccentColor,
-        surface: 'midnight' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-        },
-        {
           id: 'overwatch',
-        name: 'Overwatch',
+        name: t('settings.appearance.themes.overwatch.name'),
         description: t('settings.appearance.themes.overwatch.description'),
         accent: 'azure' as AccentColor,
         secondaryAccent: 'orange' as AccentColor,
@@ -2890,23 +3761,8 @@ function AppearanceSettings() {
         official: true,
         },
         {
-          id: 'apex-legends',
-        name: 'Apex Legends',
-        description: t('settings.appearance.themes.apexLegends.description'),
-        accent: 'crimson' as AccentColor,
-        secondaryAccent: 'orange' as AccentColor,
-        surface: 'void' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'default' as TypographyScale,
-        contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-        },
-        {
           id: 'fortnite',
-        name: 'Fortnite',
+        name: t('settings.appearance.themes.fortnite.name'),
         description: t('settings.appearance.themes.fortnite.description'),
         accent: 'magenta' as AccentColor,
         secondaryAccent: 'cyan' as AccentColor,
@@ -2921,7 +3777,7 @@ function AppearanceSettings() {
         },
         {
           id: 'among-us',
-        name: 'Among Us',
+        name: t('settings.appearance.themes.amongUs.name'),
           description: t('settings.appearance.themes.amongUs.description'),
         accent: 'red' as AccentColor,
         secondaryAccent: 'cyan' as AccentColor,
@@ -2936,7 +3792,7 @@ function AppearanceSettings() {
         },
       {
         id: 'pokemon',
-        name: 'Pokémon',
+        name: t('settings.appearance.themes.pokemon.name'),
         description: t('settings.appearance.themes.pokemon.description'),
         accent: 'yellow' as AccentColor,
         secondaryAccent: 'blue' as AccentColor,
@@ -2951,7 +3807,7 @@ function AppearanceSettings() {
       },
       {
         id: 'zelda',
-        name: 'The Legend of Zelda',
+        name: t('settings.appearance.themes.zelda.name'),
         description: t('settings.appearance.themes.zelda.description'),
         accent: 'gold' as AccentColor,
         secondaryAccent: 'emerald' as AccentColor,
@@ -2964,84 +3820,9 @@ function AppearanceSettings() {
         motion: 'default' as MotionPreference,
         official: true,
       },
-      {
-        id: 'portal',
-        name: 'Portal',
-        description: t('settings.appearance.themes.portal.description'),
-        accent: 'orange' as AccentColor,
-        secondaryAccent: 'azure' as AccentColor,
-        surface: 'noir' as SurfaceStyle,
-        radius: 0.5,
-        typography: 'default' as TypographyScale,
-        contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'flat' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
-      {
-        id: 'half-life',
-        name: 'Half-Life',
-        description: t('settings.appearance.themes.halfLife.description'),
-        accent: 'amber' as AccentColor,
-        secondaryAccent: 'orange' as AccentColor,
-        surface: 'eclipse' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'default' as TypographyScale,
-        contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
-      {
-        id: 'undertale',
-        name: 'Undertale',
-        description: t('settings.appearance.themes.undertale.description'),
-        accent: 'rose' as AccentColor,
-        secondaryAccent: 'yellow' as AccentColor,
-        surface: 'sand' as SurfaceStyle,
-        radius: 0.5,
-        typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
-      {
-        id: 'hollow-knight',
-        name: 'Hollow Knight',
-        description: t('settings.appearance.themes.hollowKnight.description'),
-        accent: 'silver' as AccentColor,
-        secondaryAccent: 'orange' as AccentColor,
-        surface: 'void' as SurfaceStyle,
-        radius: 0.75,
-        typography: 'default' as TypographyScale,
-        contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
-        official: true,
-      },
-        {
-          id: 'stardew-valley',
-          name: 'Stardew Valley',
-          description: t('settings.appearance.themes.stardewValley.description'),
-          accent: 'emerald' as AccentColor,
-          secondaryAccent: 'brown' as AccentColor,
-          surface: 'terraria' as SurfaceStyle,
-          radius: 1,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
-          motion: 'default' as MotionPreference,
-          official: true,
-        },
         {
           id: 'balatro',
-          name: 'Balatro',
+          name: t('settings.appearance.themes.balatro.name'),
           description: t('settings.appearance.themes.balatro.description'),
           accent: 'gold' as AccentColor,
           secondaryAccent: 'amber' as AccentColor,
@@ -3056,7 +3837,7 @@ function AppearanceSettings() {
         },
         {
           id: 'metro-last-light',
-          name: 'Metro Last Light',
+          name: t('settings.appearance.themes.metroLastLight.name'),
           description: t('settings.appearance.themes.metroLastLight.description'),
           accent: 'orange' as AccentColor,
           secondaryAccent: 'amber' as AccentColor,
@@ -3071,7 +3852,7 @@ function AppearanceSettings() {
         },
         {
           id: 'metro-exodus',
-          name: 'Metro Exodus',
+          name: t('settings.appearance.themes.metroExodus.name'),
           description: t('settings.appearance.themes.metroExodus.description'),
           accent: 'crimson' as AccentColor,
           secondaryAccent: 'orange' as AccentColor,
@@ -3086,7 +3867,7 @@ function AppearanceSettings() {
         },
         {
           id: 'war-thunder',
-          name: 'War Thunder',
+          name: t('settings.appearance.themes.warThunder.name'),
           description: t('settings.appearance.themes.warThunder.description'),
           accent: 'blue' as AccentColor,
           secondaryAccent: 'cobalt' as AccentColor,
@@ -3101,7 +3882,7 @@ function AppearanceSettings() {
         },
         {
           id: 'warhammer',
-          name: 'Warhammer',
+          name: t('settings.appearance.themes.warhammer.name'),
           description: t('settings.appearance.themes.warhammer.description'),
           accent: 'red' as AccentColor,
           secondaryAccent: 'gold' as AccentColor,
@@ -3116,7 +3897,7 @@ function AppearanceSettings() {
         },
         {
           id: 'clash-royale',
-          name: 'Clash Royale',
+          name: t('settings.appearance.themes.clashRoyale.name'),
           description: t('settings.appearance.themes.clashRoyale.description'),
           accent: 'magenta' as AccentColor,
           secondaryAccent: 'gold' as AccentColor,
@@ -3131,7 +3912,7 @@ function AppearanceSettings() {
         },
         {
           id: 'block-strike',
-          name: 'Block Strike',
+          name: t('settings.appearance.themes.blockStrike.name'),
           description: t('settings.appearance.themes.blockStrike.description'),
           accent: 'orange' as AccentColor,
           secondaryAccent: 'red' as AccentColor,
@@ -3144,11 +3925,497 @@ function AppearanceSettings() {
           motion: 'default' as MotionPreference,
           official: true,
         },
+        // Single accent game themes
+        {
+          id: 'doom-eternal',
+          name: t('settings.appearance.themes.doomEternal.name'),
+          description: t('settings.appearance.themes.doomEternal.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'tron-legacy',
+          name: t('settings.appearance.themes.tronLegacy.name'),
+          description: t('settings.appearance.themes.tronLegacy.description'),
+          accent: 'lime' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'mass-effect',
+          name: t('settings.appearance.themes.massEffect.name'),
+          description: t('settings.appearance.themes.massEffect.description'),
+          accent: 'indigo' as AccentColor,
+          surface: 'cosmos' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'borderlands',
+          name: t('settings.appearance.themes.borderlands.name'),
+          description: t('settings.appearance.themes.borderlands.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'canyon' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'bioshock',
+          name: t('settings.appearance.themes.bioshock.name'),
+          description: t('settings.appearance.themes.bioshock.description'),
+          accent: 'gold' as AccentColor,
+          surface: 'inkwell' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'fallout',
+          name: t('settings.appearance.themes.fallout.name'),
+          description: t('settings.appearance.themes.fallout.description'),
+          accent: 'lime' as AccentColor,
+          surface: 'storm' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'destiny',
+          name: t('settings.appearance.themes.destiny.name'),
+          description: t('settings.appearance.themes.destiny.description'),
+          accent: 'purple' as AccentColor,
+          surface: 'cosmos' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'dead-space',
+          name: t('settings.appearance.themes.deadSpace.name'),
+          description: t('settings.appearance.themes.deadSpace.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'pitch' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'mirrors-edge',
+          name: t('settings.appearance.themes.mirrorsEdge.name'),
+          description: t('settings.appearance.themes.mirrorsEdge.description'),
+          accent: 'red' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        // Two accent game themes
+        {
+          id: 'cyberpunk-2077',
+          name: t('settings.appearance.themes.cyberpunk2077.name'),
+          description: t('settings.appearance.themes.cyberpunk2077.description'),
+          accent: 'fuchsia' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor,
+          surface: 'cyberpunk' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'titanfall',
+          name: t('settings.appearance.themes.titanfall.name'),
+          description: t('settings.appearance.themes.titanfall.description'),
+          accent: 'orange' as AccentColor,
+          secondaryAccent: 'blue' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'overwatch-2',
+          name: t('settings.appearance.themes.overwatch2.name'),
+          description: t('settings.appearance.themes.overwatch2.description'),
+          accent: 'azure' as AccentColor,
+          secondaryAccent: 'orange' as AccentColor,
+          surface: 'nightfall' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'rainbow-six',
+          name: t('settings.appearance.themes.rainbowSix.name'),
+          description: t('settings.appearance.themes.rainbowSix.description'),
+          accent: 'blue' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor,
+          surface: 'slate' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'call-of-duty',
+          name: t('settings.appearance.themes.callOfDuty.name'),
+          description: t('settings.appearance.themes.callOfDuty.description'),
+          accent: 'orange' as AccentColor,
+          secondaryAccent: 'graphite' as AccentColor,
+          surface: 'charcoal' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'elden-ring',
+          name: t('settings.appearance.themes.eldenRing.name'),
+          description: t('settings.appearance.themes.eldenRing.description'),
+          accent: 'gold' as AccentColor,
+          secondaryAccent: 'amber' as AccentColor,
+          surface: 'ember' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'dark-souls',
+          name: t('settings.appearance.themes.darkSouls.name'),
+          description: t('settings.appearance.themes.darkSouls.description'),
+          accent: 'crimson' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'bloodborne',
+          name: t('settings.appearance.themes.bloodborne.name'),
+          description: t('settings.appearance.themes.bloodborne.description'),
+          accent: 'burgundy' as AccentColor,
+          secondaryAccent: 'crimson' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'sekiro',
+          name: t('settings.appearance.themes.sekiro.name'),
+          description: t('settings.appearance.themes.sekiro.description'),
+          accent: 'red' as AccentColor,
+          secondaryAccent: 'gold' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'hollow-knight',
+          name: t('settings.appearance.themes.hollowKnight.name'),
+          description: t('settings.appearance.themes.hollowKnight.description'),
+          accent: 'violet' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'celeste',
+          name: t('settings.appearance.themes.celeste.name'),
+          description: t('settings.appearance.themes.celeste.description'),
+          accent: 'pink' as AccentColor,
+          secondaryAccent: 'purple' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 1.25,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'ori',
+          name: t('settings.appearance.themes.ori.name'),
+          description: t('settings.appearance.themes.ori.description'),
+          accent: 'emerald' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor,
+          surface: 'moss' as SurfaceStyle,
+          radius: 1.25,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'cuphead',
+          name: t('settings.appearance.themes.cuphead.name'),
+          description: t('settings.appearance.themes.cuphead.description'),
+          accent: 'red' as AccentColor,
+          secondaryAccent: 'yellow' as AccentColor,
+          surface: 'cream' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'undertale',
+          name: t('settings.appearance.themes.undertale.name'),
+          description: t('settings.appearance.themes.undertale.description'),
+          accent: 'yellow' as AccentColor,
+          secondaryAccent: 'blue' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'stardew-valley',
+          name: t('settings.appearance.themes.stardewValley.name'),
+          description: t('settings.appearance.themes.stardewValley.description'),
+          accent: 'emerald' as AccentColor,
+          secondaryAccent: 'brown' as AccentColor,
+          surface: 'moss' as SurfaceStyle,
+          radius: 1,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'animal-crossing',
+          name: t('settings.appearance.themes.animalCrossing.name'),
+          description: t('settings.appearance.themes.animalCrossing.description'),
+          accent: 'emerald' as AccentColor,
+          secondaryAccent: 'sky' as AccentColor,
+          surface: 'daylight' as SurfaceStyle,
+          radius: 1.25,
+          typography: 'comfortable' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'minecraft-classic',
+          name: t('settings.appearance.themes.minecraftClassic.name'),
+          description: t('settings.appearance.themes.minecraftClassic.description'),
+          accent: 'emerald' as AccentColor,
+          secondaryAccent: 'brown' as AccentColor,
+          surface: 'minecraft' as SurfaceStyle,
+          radius: 0,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'flat' as DepthStyle,
+          motion: 'reduced' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'portal',
+          name: t('settings.appearance.themes.portal.name'),
+          description: t('settings.appearance.themes.portal.description'),
+          accent: 'orange' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'half-life',
+          name: t('settings.appearance.themes.halfLife.name'),
+          description: t('settings.appearance.themes.halfLife.description'),
+          accent: 'orange' as AccentColor,
+          surface: 'charcoal' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'team-fortress',
+          name: t('settings.appearance.themes.teamFortress.name'),
+          description: t('settings.appearance.themes.teamFortress.description'),
+          accent: 'red' as AccentColor,
+          secondaryAccent: 'blue' as AccentColor,
+          surface: 'snow' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'left-4-dead',
+          name: t('settings.appearance.themes.left4Dead.name'),
+          description: t('settings.appearance.themes.left4Dead.description'),
+          accent: 'crimson' as AccentColor,
+          secondaryAccent: 'orange' as AccentColor,
+          surface: 'void' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'apex-legends',
+          name: t('settings.appearance.themes.apexLegends.name'),
+          description: t('settings.appearance.themes.apexLegends.description'),
+          accent: 'orange' as AccentColor,
+          secondaryAccent: 'red' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'valorant',
+          name: t('settings.appearance.themes.valorant.name'),
+          description: t('settings.appearance.themes.valorant.description'),
+          accent: 'red' as AccentColor,
+          secondaryAccent: 'cyan' as AccentColor,
+          surface: 'obsidian' as SurfaceStyle,
+          radius: 0.5,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
+        {
+          id: 'league-of-legends',
+          name: t('settings.appearance.themes.leagueOfLegends.name'),
+          description: t('settings.appearance.themes.leagueOfLegends.description'),
+          accent: 'blue' as AccentColor,
+          secondaryAccent: 'gold' as AccentColor,
+          surface: 'noir' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'standard' as ContrastMode,
+          density: 1,
+          depth: 'soft' as DepthStyle,
+          motion: 'default' as MotionPreference,
+          official: true,
+        },
       ],
       extraordinary: [
         {
           id: 'scp',
-          name: 'SCP Foundation',
+          name: t('settings.appearance.themes.scp.name'),
           description: t('settings.appearance.themes.scp.description'),
           accent: 'red' as AccentColor,
           secondaryAccent: 'amber' as AccentColor,
@@ -3223,7 +4490,7 @@ function AppearanceSettings() {
         },
         {
           id: 'apple-inc',
-          name: 'Apple Inc.',
+          name: t('settings.appearance.themes.appleInc.name'),
           description: t('settings.appearance.themes.appleInc.description'),
           accent: 'mono' as AccentColor,
           surface: 'snow' as SurfaceStyle,
@@ -3237,7 +4504,7 @@ function AppearanceSettings() {
         },
         {
           id: 'arasaka',
-          name: 'Arasaka Inc.',
+          name: t('settings.appearance.themes.arasaka.name'),
           description: t('settings.appearance.themes.arasaka.description'),
           accent: 'red' as AccentColor,
           secondaryAccent: 'crimson' as AccentColor,
@@ -3252,7 +4519,7 @@ function AppearanceSettings() {
         },
         {
           id: 'aliexpress',
-          name: 'Aliexpress',
+          name: t('settings.appearance.themes.aliexpress.name'),
           description: t('settings.appearance.themes.aliexpress.description'),
           accent: 'orange' as AccentColor,
           secondaryAccent: 'red' as AccentColor,
@@ -3297,7 +4564,7 @@ function AppearanceSettings() {
         },
         {
           id: 'anime',
-          name: 'Anime',
+          name: t('settings.appearance.themes.anime.name'),
           description: t('settings.appearance.themes.anime.description'),
           accent: 'magenta' as AccentColor,
           secondaryAccent: 'fuchsia' as AccentColor,
@@ -3312,7 +4579,7 @@ function AppearanceSettings() {
         },
         {
           id: 'demon-slayer',
-          name: 'Demon Slayer',
+          name: t('settings.appearance.themes.demonSlayer.name'),
           description: t('settings.appearance.themes.demonSlayer.description'),
           accent: 'azure' as AccentColor,
           secondaryAccent: 'crimson' as AccentColor,
@@ -3357,7 +4624,7 @@ function AppearanceSettings() {
         },
         {
           id: 'calamity',
-          name: 'Calamity',
+          name: t('settings.appearance.themes.calamity.name'),
           description: t('settings.appearance.themes.calamity.description'),
           accent: 'violet' as AccentColor,
           secondaryAccent: 'magenta' as AccentColor,
@@ -3457,6 +4724,621 @@ function AppearanceSettings() {
         motion: 'default' as MotionPreference,
         official: true,
       },
+      // Single accent extraordinary themes
+      {
+        id: 'matrix',
+        name: t('settings.appearance.themes.matrix.name'),
+        description: t('settings.appearance.themes.matrix.description'),
+        accent: 'lime' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'blade-runner',
+        name: t('settings.appearance.themes.bladeRunner.name'),
+        description: t('settings.appearance.themes.bladeRunner.description'),
+        accent: 'crimson' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'star-wars',
+        name: t('settings.appearance.themes.starWars.name'),
+        description: t('settings.appearance.themes.starWars.description'),
+        accent: 'blue' as AccentColor,
+        secondaryAccent: 'red' as AccentColor,
+        surface: 'cosmos' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'google',
+        name: t('settings.appearance.themes.google.name'),
+        description: t('settings.appearance.themes.google.description'),
+        accent: 'blue' as AccentColor,
+        secondaryAccent: 'red' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'microsoft',
+        name: t('settings.appearance.themes.microsoft.name'),
+        description: t('settings.appearance.themes.microsoft.description'),
+        accent: 'blue' as AccentColor,
+        surface: 'cloud' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'netflix',
+        name: t('settings.appearance.themes.netflix.name'),
+        description: t('settings.appearance.themes.netflix.description'),
+        accent: 'red' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'spotify',
+        name: t('settings.appearance.themes.spotify.name'),
+        description: t('settings.appearance.themes.spotify.description'),
+        accent: 'lime' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'discord',
+        name: t('settings.appearance.themes.discord.name'),
+        description: t('settings.appearance.themes.discord.description'),
+        accent: 'indigo' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'github',
+        name: t('settings.appearance.themes.github.name'),
+        description: t('settings.appearance.themes.github.description'),
+        accent: 'emerald' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'twitter',
+        name: t('settings.appearance.themes.twitter.name'),
+        description: t('settings.appearance.themes.twitter.description'),
+        accent: 'sky' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'instagram',
+        name: t('settings.appearance.themes.instagram.name'),
+        description: t('settings.appearance.themes.instagram.description'),
+        accent: 'purple' as AccentColor,
+        secondaryAccent: 'pink' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'youtube',
+        name: t('settings.appearance.themes.youtube.name'),
+        description: t('settings.appearance.themes.youtube.description'),
+        accent: 'red' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'amazon',
+        name: t('settings.appearance.themes.amazon.name'),
+        description: t('settings.appearance.themes.amazon.description'),
+        accent: 'orange' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'tesla',
+        name: t('settings.appearance.themes.tesla.name'),
+        description: t('settings.appearance.themes.tesla.description'),
+        accent: 'red' as AccentColor,
+        surface: 'obsidian' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'nasa',
+        name: t('settings.appearance.themes.nasa.name'),
+        description: t('settings.appearance.themes.nasa.description'),
+        accent: 'blue' as AccentColor,
+        surface: 'cosmos' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'starbucks',
+        name: t('settings.appearance.themes.starbucks.name'),
+        description: t('settings.appearance.themes.starbucks.description'),
+        accent: 'emerald' as AccentColor,
+        surface: 'cream' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'coca-cola',
+        name: t('settings.appearance.themes.cocaCola.name'),
+        description: t('settings.appearance.themes.cocaCola.description'),
+        accent: 'red' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mcdonalds',
+        name: t('settings.appearance.themes.mcdonalds.name'),
+        description: t('settings.appearance.themes.mcdonalds.description'),
+        accent: 'gold' as AccentColor,
+        secondaryAccent: 'red' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
+    nature: [
+      {
+        id: 'forest-dawn',
+        name: t('settings.appearance.themes.forestDawn.name'),
+        description: t('settings.appearance.themes.forestDawn.description'),
+        accent: 'emerald' as AccentColor,
+        secondaryAccent: 'amber' as AccentColor,
+        surface: 'moss' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'ocean-depths',
+        name: t('settings.appearance.themes.oceanDepths.name'),
+        description: t('settings.appearance.themes.oceanDepths.description'),
+        accent: 'ocean' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'abyss' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sunset-beach',
+        name: t('settings.appearance.themes.sunsetBeach.name'),
+        description: t('settings.appearance.themes.sunsetBeach.description'),
+        accent: 'orange' as AccentColor,
+        secondaryAccent: 'coral' as AccentColor,
+        surface: 'sand' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mountain-peak',
+        name: t('settings.appearance.themes.mountainPeak.name'),
+        description: t('settings.appearance.themes.mountainPeak.description'),
+        accent: 'azure' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'glacier' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'autumn-leaves',
+        name: t('settings.appearance.themes.autumnLeaves.name'),
+        description: t('settings.appearance.themes.autumnLeaves.description'),
+        accent: 'orange' as AccentColor,
+        secondaryAccent: 'amber' as AccentColor,
+        surface: 'ember' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'spring-bloom',
+        name: t('settings.appearance.themes.springBloom.name'),
+        description: t('settings.appearance.themes.springBloom.description'),
+        accent: 'emerald' as AccentColor,
+        secondaryAccent: 'pink' as AccentColor,
+        surface: 'lumen' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'winter-frost',
+        name: t('settings.appearance.themes.winterFrost.name'),
+        description: t('settings.appearance.themes.winterFrost.description'),
+        accent: 'azure' as AccentColor,
+        secondaryAccent: 'silver' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
+    corporate: [
+      {
+        id: 'ibm',
+        name: t('settings.appearance.themes.ibm.name'),
+        description: t('settings.appearance.themes.ibm.description'),
+        accent: 'blue' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'oracle',
+        name: t('settings.appearance.themes.oracle.name'),
+        description: t('settings.appearance.themes.oracle.description'),
+        accent: 'red' as AccentColor,
+        surface: 'cloud' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'adobe',
+        name: t('settings.appearance.themes.adobe.name'),
+        description: t('settings.appearance.themes.adobe.description'),
+        accent: 'red' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'salesforce',
+        name: t('settings.appearance.themes.salesforce.name'),
+        description: t('settings.appearance.themes.salesforce.description'),
+        accent: 'blue' as AccentColor,
+        surface: 'cloud' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'paypal',
+        name: t('settings.appearance.themes.paypal.name'),
+        description: t('settings.appearance.themes.paypal.description'),
+        accent: 'blue' as AccentColor,
+        secondaryAccent: 'indigo' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'visa',
+        name: t('settings.appearance.themes.visa.name'),
+        description: t('settings.appearance.themes.visa.description'),
+        accent: 'blue' as AccentColor,
+        secondaryAccent: 'gold' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'mastercard',
+        name: t('settings.appearance.themes.mastercard.name'),
+        description: t('settings.appearance.themes.mastercard.description'),
+        accent: 'red' as AccentColor,
+        secondaryAccent: 'orange' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+    ],
+    retro: [
+      {
+        id: '80s-neon',
+        name: t('settings.appearance.themes.eightiesNeon.name'),
+        description: t('settings.appearance.themes.eightiesNeon.description'),
+        accent: 'magenta' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'vaporwave',
+        name: t('settings.appearance.themes.vaporwave.name'),
+        description: t('settings.appearance.themes.vaporwave.description'),
+        accent: 'pink' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'twilight' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'synthwave',
+        name: t('settings.appearance.themes.synthwave.name'),
+        description: t('settings.appearance.themes.synthwave.description'),
+        accent: 'orange' as AccentColor,
+        secondaryAccent: 'purple' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'retro-gaming',
+        name: t('settings.appearance.themes.retroGaming.name'),
+        description: t('settings.appearance.themes.retroGaming.description'),
+        accent: 'lime' as AccentColor,
+        secondaryAccent: 'magenta' as AccentColor,
+        surface: 'noir' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'marble-elegance',
+        name: t('settings.appearance.themes.marbleElegance.name'),
+        description: t('settings.appearance.themes.marbleElegance.description'),
+        accent: 'graphite' as AccentColor,
+        surface: 'marble' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'moonlight-serenity',
+        name: t('settings.appearance.themes.moonlightSerenity.name'),
+        description: t('settings.appearance.themes.moonlightSerenity.description'),
+        accent: 'azure' as AccentColor,
+        surface: 'moonlight' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'neon-cyberpunk',
+        name: t('settings.appearance.themes.neonCyberpunk.name'),
+        description: t('settings.appearance.themes.neonCyberpunk.description'),
+        accent: 'fuchsia' as AccentColor,
+        secondaryAccent: 'cyan' as AccentColor,
+        surface: 'neon' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'tropical-paradise',
+        name: t('settings.appearance.themes.tropicalParadise.name'),
+        description: t('settings.appearance.themes.tropicalParadise.description'),
+        accent: 'turquoise' as AccentColor,
+        secondaryAccent: 'coral' as AccentColor,
+        surface: 'tropical' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'luxury-gold',
+        name: t('settings.appearance.themes.luxuryGold.name'),
+        description: t('settings.appearance.themes.luxuryGold.description'),
+        accent: 'gold' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'wood-natural',
+        name: t('settings.appearance.themes.woodNatural.name'),
+        description: t('settings.appearance.themes.woodNatural.description'),
+        accent: 'brown' as AccentColor,
+        surface: 'wood' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
     ],
     }),
     [t]
@@ -3464,7 +5346,14 @@ function AppearanceSettings() {
 
   // Flatten official themes for compatibility
   const officialThemes = useMemo(
-    () => [...officialThemesGroups.basic, ...officialThemesGroups.games, ...officialThemesGroups.extraordinary],
+    () => [
+      ...officialThemesGroups.basic,
+      ...officialThemesGroups.games,
+      ...officialThemesGroups.extraordinary,
+      ...(officialThemesGroups.nature || []),
+      ...(officialThemesGroups.corporate || []),
+      ...(officialThemesGroups.retro || []),
+    ],
     [officialThemesGroups]
   )
 
@@ -3503,6 +5392,78 @@ function AppearanceSettings() {
     }),
     [officialThemes, customThemes]
   )
+
+  // Featured themes (recommended) - randomly selected on each page load, but default-theme is always first
+  const featuredThemes = useMemo(() => {
+    // Always include default-theme first
+    const defaultTheme = allThemes.find((theme) => theme.id === 'default-theme')
+    if (!defaultTheme) return []
+
+    // Get all other themes (excluding default-theme)
+    const otherThemes = allThemes.filter((theme) => theme.id !== 'default-theme')
+
+    // Shuffle array using Fisher-Yates algorithm
+    const shuffled = [...otherThemes]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
+    // Take first 7 random themes and combine with default-theme
+    const randomThemes = shuffled.slice(0, 7)
+    return [defaultTheme, ...randomThemes]
+  }, [allThemes])
+
+  // Filter themes by search query
+  const filterThemes = (themes: typeof officialThemesGroups.basic, query: string) => {
+    if (!query.trim()) return themes
+    const lowerQuery = query.toLowerCase()
+    return themes.filter(
+      (theme) =>
+        theme.name.toLowerCase().includes(lowerQuery) ||
+        (theme.description && theme.description.toLowerCase().includes(lowerQuery))
+    )
+  }
+
+  // Apply all filters to themes
+  const applyThemeFilters = (themes: typeof allThemes) => {
+    return themes.filter((theme) => {
+      // Typography filter
+      if (themeFilters.typography && theme.typography !== themeFilters.typography) return false
+
+      // Contrast filter
+      if (themeFilters.contrast && theme.contrast !== themeFilters.contrast) return false
+
+      // Depth filter
+      if (themeFilters.depth && theme.depth !== themeFilters.depth) return false
+
+      // Motion filter
+      if (themeFilters.motion && theme.motion !== themeFilters.motion) return false
+
+      // Radius filter (exact match)
+      if (themeFilters.radius !== null) {
+        const themeRadiusPx = Math.round(theme.radius * 16)
+        const filterRadiusPx = themeFilters.radius
+        // Exact match only
+        if (themeRadiusPx !== filterRadiusPx) return false
+      }
+
+      // Group filter (check which group the theme belongs to)
+      if (themeFilters.group) {
+        const inGroup =
+          (themeFilters.group === 'basic' && officialThemesGroups.basic.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'games' && officialThemesGroups.games.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'extraordinary' && officialThemesGroups.extraordinary.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'nature' && officialThemesGroups.nature?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'corporate' && officialThemesGroups.corporate?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'retro' && officialThemesGroups.retro?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'custom' && customThemes.some((t) => t.id === theme.id))
+        if (!inGroup) return false
+      }
+
+      return true
+    })
+  }
 
   const radiusIsDefault = Math.abs(radius - DEFAULT_RADIUS) < 0.005
   const densityIsDefault = Math.abs(density - 1) < 0.001
@@ -3630,6 +5591,335 @@ function AppearanceSettings() {
     }
   }
 
+  // Render theme card component
+  const renderThemeCard = (
+    theme: typeof allThemes[number],
+    isActive: boolean,
+    onApply: () => void,
+    onShowDescription?: (e: React.MouseEvent) => void
+  ) => {
+    const themeAccent = accentOptionsByValue[theme.accent]
+    const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+    const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+    const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
+    const themeSurface = surfaceOptionsByValue[theme.surface]
+    const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
+
+    return (
+      <Card
+        key={theme.id}
+        className={cn(
+          'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
+          isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
+        )}
+        style={{
+          transformStyle: 'preserve-3d',
+          perspective: '1000px',
+          willChange: 'transform',
+          position: 'relative',
+        }}
+        onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
+        onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
+        onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
+      >
+        <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4 min-h-[3rem] sm:min-h-[3.5rem] shrink-0">
+          <div className="flex items-start justify-between gap-2 h-full">
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <CardTitle className="text-xs sm:text-sm font-semibold">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    {theme.name}
+                  </span>
+                  {theme.official && (
+                    <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 shrink-0 whitespace-nowrap">
+                      {t('settings.appearance.official')}
+                    </Badge>
+                  )}
+                </div>
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isActive && <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0 mt-0.5" />}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col p-3 sm:p-4 pt-0">
+          <div className="flex flex-col space-y-2 sm:space-y-3 mt-auto">
+            <div
+              className="border border-border/60 p-2.5 sm:p-4 aspect-video relative overflow-hidden transition-transform duration-300 cursor-pointer"
+              onClick={onShowDescription}
+              style={{
+                borderRadius: `min(${theme.radius * 16}px, 24px)`,
+                backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
+                transform: 'translateZ(20px)',
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-5"
+                style={{
+                  background:
+                    allAccents.length > 0
+                      ? allAccents.length > 1
+                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
+                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
+                      : 'transparent',
+                }}
+              />
+              <div className="relative z-10 h-full flex flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {allAccents.map((acc, index) => (
+                      <div
+                        key={index}
+                        className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
+                        style={{
+                          backgroundColor: `hsl(${acc.tone})`,
+                          marginLeft: index > 0 ? '-8px' : '0',
+                          zIndex: allAccents.length - index,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div
+                        className="text-xs font-semibold truncate"
+                        style={{
+                          color: themeSurface ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})` : 'hsl(var(--foreground))',
+                        }}
+                      >
+                        Theme Preview
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {allAccents.map((acc, index) => (
+                          <div
+                            key={index}
+                            className="size-1.5 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: `hsl(${acc.tone})`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div
+                      className="text-[10px] truncate opacity-70"
+                      style={{
+                        color: themeSurface ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})` : 'hsl(var(--muted-foreground))',
+                      }}
+                    >
+                      {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className="flex-1 p-2.5 border"
+                  style={{
+                    backgroundColor: themeSurface ? `hsl(${themeSurface.tone.card})` : 'hsl(var(--card))',
+                    borderColor: themeSurface ? `hsl(${themeSurface.tone.border || '220 13% 91%'})` : 'hsl(var(--border))',
+                    borderRadius: `min(${theme.radius * 8}px, 8px)`,
+                  }}
+                >
+                  <div className="flex flex-col gap-1.5 h-full">
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="h-1.5 rounded-sm flex-1"
+                        style={{
+                          background:
+                            allAccents.length > 1
+                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                              : `hsl(${allAccents[0]?.tone})`,
+                          opacity: 0.3,
+                        }}
+                      />
+                      <div
+                        className="h-1.5 w-4 rounded-sm"
+                        style={{
+                          background:
+                            allAccents.length > 1
+                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
+                              : `hsl(${allAccents[0]?.tone})`,
+                          opacity: 0.5,
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-1.5 flex-1">
+                      <div
+                        className="flex-1 rounded-sm"
+                        style={{
+                          backgroundColor: themeSurface ? `hsl(${themeSurface.tone.muted})` : 'hsl(var(--muted))',
+                          opacity: 0.4,
+                        }}
+                      />
+                      <div className="flex flex-col gap-0.5 w-3">
+                        {allAccents.map((acc, index) => (
+                          <div
+                            key={index}
+                            className="h-1.5 rounded-sm flex-1"
+                            style={{
+                              backgroundColor: `hsl(${acc.tone})`,
+                              opacity: 0.2,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {allAccents.map((acc, index) => (
+                        <div
+                          key={index}
+                          className="h-1.5 flex-1 rounded-full"
+                          style={{
+                            backgroundColor: `hsl(${acc.tone})`,
+                            opacity: 0.6,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 justify-between">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="size-1.5 rounded-full"
+                        style={{
+                          backgroundColor: themeSurface
+                            ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
+                            : 'hsl(var(--secondary))',
+                          opacity: 0.5,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {allAccents.map((acc, index) => (
+                      <div
+                        key={index}
+                        className="size-1 rounded-full"
+                        style={{
+                          backgroundColor: `hsl(${acc.tone})`,
+                          opacity: 0.4,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {Math.round(theme.radius * 16)}px
+              </Badge>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
+              </Badge>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {contrastOptions.find((o) => o.value === theme.contrast)?.label ?? theme.contrast}
+              </Badge>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {depthOptions.find((o) => o.value === theme.depth)?.label ?? theme.depth}
+              </Badge>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {motionOptions.find((o) => o.value === theme.motion)?.label ?? theme.motion}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={onShowDescription}
+                title={t('settings.appearance.themeDescription')}
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={isActive ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={onApply}
+              >
+                {isActive ? (
+                  <>
+                    <Check className="mr-2 h-3 w-3" />
+                    <span className="truncate">{t('settings.appearance.active')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-3 w-3" />
+                    <span className="truncate">{t('settings.appearance.apply')}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Render theme group with limit
+  const renderThemeGroup = (
+    groupKey: string,
+    groupName: string,
+    themes: typeof officialThemesGroups.basic,
+    limit: number = 6
+  ) => {
+    const filteredThemes = filterThemes(themes, themeSearchQuery)
+    const isExpanded = expandedGroups[groupKey] || false
+    const displayedThemes = isExpanded || filteredThemes.length <= limit ? filteredThemes : filteredThemes.slice(0, limit)
+    const hasMore = filteredThemes.length > limit && !isExpanded
+
+    if (filteredThemes.length === 0 && themeSearchQuery) return null
+
+    return (
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-xs sm:text-sm font-semibold">{groupName}</Label>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {filteredThemes.length} {filteredThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {displayedThemes.map((theme) => {
+            const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+            const isActive =
+              accent === theme.accent &&
+              secondaryAccent === themeWithAccents.secondaryAccent &&
+              tertiaryAccent === themeWithAccents.tertiaryAccent &&
+              surface === theme.surface &&
+              Math.abs(radius - theme.radius) < 0.01 &&
+              typography === theme.typography &&
+              contrast === theme.contrast &&
+              depth === theme.depth &&
+              motion === theme.motion
+
+            return renderThemeCard(
+              theme,
+              isActive,
+              () => handleApplyTheme(theme),
+              (e) => handleShowDescription(e, { name: theme.name, description: theme.description || '' })
+            )
+          })}
+        </div>
+        {hasMore && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExpandedGroups((prev) => ({ ...prev, [groupKey]: true }))}
+            className="w-full"
+          >
+            {t('settings.appearance.showMore')} ({filteredThemes.length - limit} {t('settings.appearance.more')})
+          </Button>
+        )}
+      </div>
+    )
+  }
+
   const handleResetToDefault = () => {
     setAccent('pure')
     setSurface('obsidian')
@@ -3689,24 +5979,38 @@ function AppearanceSettings() {
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <Tabs defaultValue="colors" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
-            <TabsTrigger value="colors" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Sliders className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.appearance.general')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="themes" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.appearance.themesTab')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="style" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.appearance.style')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="layout" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.appearance.layout')}</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-wrap items-center gap-2">
+            <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-auto border-0 gap-2">
+              <TabsTrigger 
+                value="colors" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+              >
+                <Sliders className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t('settings.appearance.general')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="themes" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+              >
+                <Palette className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t('settings.appearance.themesTab')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="style" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+              >
+                <Settings className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t('settings.appearance.style')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="layout" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+              >
+                <LayoutGrid className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t('settings.appearance.layout')}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="colors" className="space-y-3 sm:space-y-4 mt-3 sm:mt-6">
         <section className="space-y-3 sm:space-y-4">
@@ -4820,990 +7124,355 @@ function AppearanceSettings() {
 
           <TabsContent value="themes" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
             <section className="space-y-4 sm:space-y-6">
-              {/* Basic Themes */}
-              {officialThemesGroups.basic.length > 0 && (
-                <div className="space-y-3 sm:space-y-4">
-                  <button
-                    onClick={() => toggleGroup('basic')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t('settings.appearance.searchThemes')}
+                  value={themeSearchQuery}
+                  onChange={(e) => setThemeSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {themeSearchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                    onClick={() => setThemeSearchQuery('')}
                   >
-                  <div className="min-w-0 flex-1">
-                    <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.basic')}</Label>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">
-                      {officialThemesGroups.basic.length} {officialThemesGroups.basic.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                    </p>
-                  </div>
-                    {collapsedGroups['basic'] ? (
-                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    )}
-                  </button>
-                  {!collapsedGroups['basic'] && (
-              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {officialThemesGroups.basic.map((theme) => {
-                  const themeAccent = accentOptionsByValue[theme.accent]
-                  const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
-                  const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
-                  const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
-                  const themeSurface = surfaceOptionsByValue[theme.surface]
-                  // Собираем все акцентные цвета для отображения
-                  const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
-                  const isActive =
-                    accent === theme.accent &&
-                    secondaryAccent === themeWithAccents.secondaryAccent &&
-                    tertiaryAccent === themeWithAccents.tertiaryAccent &&
-                    surface === theme.surface &&
-                    Math.abs(radius - theme.radius) < 0.01 &&
-                    typography === theme.typography &&
-                    contrast === theme.contrast &&
-                    depth === theme.depth &&
-                    motion === theme.motion
-
-                  return (
-                    <Card
-                      key={theme.id}
-                      className={cn(
-                        'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
-                        isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                      )}
-                      style={{
-                        transformStyle: 'preserve-3d',
-                        perspective: '1000px',
-                        willChange: 'transform',
-                        position: 'relative',
-                      }}
-                      onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
-                      onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
-                      onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
-                    >
-                      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4 min-h-[3rem] sm:min-h-[3.5rem] shrink-0">
-                        <div className="flex items-start justify-between gap-2 h-full">
-                          <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <CardTitle className="text-xs sm:text-sm font-semibold">
-                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                {theme.official && (
-                                  <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    {t('settings.appearance.official')}
-                                  </Badge>
-                        )}
-                      </div>
-                            </CardTitle>
-                        </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                          {isActive && <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0 mt-0.5" />}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col p-3 sm:p-4 pt-0">
-                        <div className="flex flex-col space-y-2 sm:space-y-3 mt-auto">
-                        <div 
-                          className="border border-border/60 p-2.5 sm:p-4 aspect-video relative overflow-hidden transition-transform duration-300"
-                          style={{ 
-                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
-                            transform: 'translateZ(20px)',
-                          }}
-                        >
-                          {/* Background gradient overlay */}
-                          <div 
-                            className="absolute inset-0 opacity-5"
-                            style={{
-                              background: allAccents.length > 0
-                                ? allAccents.length > 1
-                                  ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
-                                  : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
-                                : 'transparent'
-                            }}
-                          />
-                          
-                          <div className="relative z-10 h-full flex flex-col gap-2.5">
-                            {/* Header section */}
-                            <div className="flex items-center gap-2">
-                              {/* Показываем все акцентные цвета */}
-                              <div className="flex items-center gap-0.5 shrink-0">
-                                {allAccents.map((acc, index) => (
-                                  <div
-                                    key={index}
-                                    className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
-                                    style={{
-                                      backgroundColor: `hsl(${acc.tone})`,
-                                      marginLeft: index > 0 ? '-8px' : '0',
-                                      zIndex: allAccents.length - index,
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div 
-                                    className="text-xs font-semibold truncate"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                        : 'hsl(var(--foreground))'
-                                    }}
-                                  >
-                                    Theme Preview
-                                  </div>
-                                  <div className="flex items-center gap-0.5 shrink-0">
-                                    {allAccents.map((acc, index) => (
-                                      <div
-                                        key={index}
-                                        className="size-1.5 rounded-full shrink-0"
-                                        style={{
-                                          backgroundColor: `hsl(${acc.tone})`,
-                                        }}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                                <div 
-                                  className="text-[10px] truncate opacity-70"
-                                  style={{
-                                    color: themeSurface 
-                                      ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                      : 'hsl(var(--muted-foreground))'
-                                  }}
-                                >
-                                  {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Card preview */}
-                            <div 
-                              className="flex-1 p-2.5 border"
-                              style={{
-                                backgroundColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.card})`
-                                  : 'hsl(var(--card))',
-                                borderColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                  : 'hsl(var(--border))',
-                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                              }}
-                            >
-                              <div className="flex flex-col gap-1.5 h-full">
-                                <div className="flex items-center gap-1.5">
-                                  <div 
-                                    className="h-1.5 rounded-sm flex-1"
-                                    style={{
-                                      background: allAccents.length > 1
-                                        ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                        : `hsl(${allAccents[0]?.tone})`,
-                                      opacity: 0.3,
-                                    }}
-                                  />
-                                  <div 
-                                    className="h-1.5 w-4 rounded-sm"
-                                    style={{
-                                      background: allAccents.length > 1
-                                        ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                        : `hsl(${allAccents[0]?.tone})`,
-                                      opacity: 0.5,
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex gap-1.5 flex-1">
-                                  <div 
-                                    className="flex-1 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.muted})`
-                                        : 'hsl(var(--muted))',
-                                      opacity: 0.4,
-                                    }}
-                                  />
-                                  <div className="flex flex-col gap-0.5 w-3">
-                                    {allAccents.map((acc, index) => (
-                                      <div
-                                        key={index}
-                                        className="h-1.5 rounded-sm flex-1"
-                                        style={{
-                                          backgroundColor: `hsl(${acc.tone})`,
-                                          opacity: 0.2,
-                                        }}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-0.5">
-                                  {allAccents.map((acc, index) => (
-                                    <div
-                                      key={index}
-                                      className="h-1.5 flex-1 rounded-full"
-                                      style={{
-                                        backgroundColor: `hsl(${acc.tone})`,
-                                        opacity: 0.6,
-                                      }}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Bottom accent indicators */}
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3].map((i) => (
-                                  <div
-                                    key={i}
-                                    className="size-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                        : 'hsl(var(--secondary))',
-                                      opacity: 0.3 + (i * 0.1),
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-0.5">
-                                {allAccents.map((acc, index) => (
-                                  <div
-                                    key={index}
-                                    className="h-2 flex-1 rounded-sm"
-                                    style={{
-                                      backgroundColor: `hsl(${acc.tone})`,
-                                      opacity: 0.4,
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
-                            {Math.round(theme.radius * 16)}px
-                          </Badge>
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
-                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                          </Badge>
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
-                            {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                          </Badge>
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
-                            {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                          </Badge>
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0">
-                            {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 pt-2 border-t border-border/60">
-                          {theme.description && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
-                              onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
-                            >
-                              <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            variant={isActive ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0"
-                            onClick={() => handleApplyTheme(theme)}
-                          >
-                            {isActive ? (
-                              <>
-                                <Check className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                <span className="truncate">{t('settings.appearance.active')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                <span className="truncate">{t('settings.appearance.apply')}</span>
-                              </>
-                            )}
-                          </Button>
-                          {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
-                              onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                              <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                            </Button>
-                      )}
-                    </div>
-                  </div>
-                      </CardContent>
-                    </Card>
-              )
-            })}
-          </div>
-                  )}
-                </div>
-              )}
-
-              {/* Games Themes */}
-              {officialThemesGroups.games.length > 0 && (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => toggleGroup('games')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
-                  >
-                  <div className="min-w-0 flex-1">
-                      <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.games')}</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        {officialThemesGroups.games.length} {officialThemesGroups.games.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-              </p>
-            </div>
-                    {collapsedGroups['games'] ? (
-                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    )}
-                  </button>
-                  {!collapsedGroups['games'] && (
-              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {officialThemesGroups.games.map((theme) => {
-                      const themeAccent = accentOptionsByValue[theme.accent]
-                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
-                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
-                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
-                      const themeSurface = surfaceOptionsByValue[theme.surface]
-                      // Собираем все акцентные цвета для отображения
-                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
-                      const isActive =
-                        accent === theme.accent &&
-                        secondaryAccent === themeWithAccents.secondaryAccent &&
-                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
-                        surface === theme.surface &&
-                        Math.abs(radius - theme.radius) < 0.01 &&
-                        typography === theme.typography &&
-                        contrast === theme.contrast &&
-                        depth === theme.depth &&
-                        motion === theme.motion
-
-                      return (
-                        <Card
-                          key={theme.id}
-                          className={cn(
-                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
-                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                          )}
-                            style={{
-                              transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              willChange: 'transform',
-                              position: 'relative',
-                            }}
-                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
-                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
-                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
-                    >
-                      <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                        <div className="flex items-start justify-between gap-2 h-full">
-                          <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <CardTitle className="text-sm font-semibold">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                {theme.official && (
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    Official
-                                  </Badge>
-                        )}
-                      </div>
-                            </CardTitle>
-                        </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                              </div>
-                            </div>
-                </CardHeader>
-                          <CardContent className="flex-1 flex flex-col">
-                            <div className="flex flex-col space-y-3 mt-auto">
-                              <div 
-                                  className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
-                                style={{ 
-                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                                    backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
-                                    transform: 'translateZ(20px)',
-                                }}
-                              >
-                                {/* Background gradient overlay */}
-                                <div 
-                                  className="absolute inset-0 opacity-5"
-                                  style={{
-                                    background: allAccents.length > 0
-                                      ? allAccents.length > 1
-                                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
-                                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
-                                      : 'transparent'
-                                  }}
-                                />
-                                
-                                <div className="relative z-10 h-full flex flex-col gap-2.5">
-                                  {/* Header section */}
-                                  <div className="flex items-center gap-2">
-                                    {/* Показываем все акцентные цвета */}
-                                    <div className="flex items-center gap-0.5 shrink-0">
-                                      {allAccents.map((acc, index) => (
-                                        <div
-                                          key={index}
-                                          className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
-                                          style={{
-                                            backgroundColor: `hsl(${acc.tone})`,
-                                            marginLeft: index > 0 ? '-8px' : '0',
-                                            zIndex: allAccents.length - index,
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div 
-                                          className="text-xs font-semibold truncate"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                              : 'hsl(var(--foreground))'
-                                          }}
-                                        >
-                                          Theme Preview
-                                        </div>
-                                        <div className="flex items-center gap-0.5 shrink-0">
-                                          {allAccents.map((acc, index) => (
-                                            <div
-                                              key={index}
-                                              className="size-1.5 rounded-full shrink-0"
-                                              style={{
-                                                backgroundColor: `hsl(${acc.tone})`,
-                                              }}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <div 
-                                        className="text-[10px] truncate opacity-70"
-                                        style={{
-                                          color: themeSurface 
-                                            ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                            : 'hsl(var(--muted-foreground))'
-                                        }}
-                                      >
-                                        {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Card preview */}
-                                  <div 
-                                    className="flex-1 p-2.5 border"
-                                    style={{
-                                      backgroundColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.card})`
-                                        : 'hsl(var(--card))',
-                                      borderColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                        : 'hsl(var(--border))',
-                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                                    }}
-                                  >
-                                    <div className="flex flex-col gap-1.5 h-full">
-                                      <div className="flex items-center gap-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-sm flex-1"
-                                          style={{
-                                            background: allAccents.length > 1
-                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                              : `hsl(${allAccents[0]?.tone})`,
-                                            opacity: 0.3,
-                                          }}
-                                        />
-                                        <div 
-                                          className="h-1.5 w-4 rounded-sm"
-                                          style={{
-                                            background: allAccents.length > 1
-                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                              : `hsl(${allAccents[0]?.tone})`,
-                                            opacity: 0.5,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="flex gap-1.5 flex-1">
-                                        <div 
-                                          className="flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.muted})`
-                                              : 'hsl(var(--muted))',
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                        <div className="flex flex-col gap-0.5 w-3">
-                                          {allAccents.map((acc, index) => (
-                                            <div
-                                              key={index}
-                                              className="h-1.5 rounded-sm flex-1"
-                                              style={{
-                                                backgroundColor: `hsl(${acc.tone})`,
-                                                opacity: 0.2,
-                                              }}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-0.5">
-                                        {allAccents.map((acc, index) => (
-                                          <div
-                                            key={index}
-                                            className="h-1.5 flex-1 rounded-full"
-                                            style={{
-                                              backgroundColor: `hsl(${acc.tone})`,
-                                              opacity: 0.6,
-                                            }}
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Bottom accent indicators */}
-                                  <div className="flex items-center gap-1.5 justify-between">
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3].map((i) => (
-                                        <div
-                                          key={i}
-                                          className="size-1.5 rounded-full"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                              : 'hsl(var(--secondary))',
-                                            opacity: 0.3 + (i * 0.1),
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div className="flex items-center gap-0.5">
-                                      {allAccents.map((acc, index) => (
-                                        <div
-                                          key={index}
-                                          className="h-2 flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: `hsl(${acc.tone})`,
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {Math.round(theme.radius * 16)}px
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                                {theme.description && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
-                                    onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
-                                  >
-                                    <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant={isActive ? 'default' : 'outline'}
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleApplyTheme(theme)}
-                                >
-                                  {isActive ? (
-                                    <>
-                                      <Check className="mr-2 h-3 w-3" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Download className="mr-2 h-3 w-3" />
-                                      Apply
-                                    </>
-                                  )}
-                                </Button>
-                                {!theme.official && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleDeleteTheme(theme.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                  )}
-                </div>
-              )}
-
-              {/* Extraordinary Themes */}
-              {officialThemesGroups.extraordinary.length > 0 && (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => toggleGroup('extraordinary')}
-                    className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 sm:p-2.5 -mx-2 transition-colors"
-                        >
-                          <div className="min-w-0 flex-1">
-                      <Label className="text-xs sm:text-sm font-semibold">{t('settings.appearance.themeGroups.extraordinary')}</Label>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        {officialThemesGroups.extraordinary.length} {officialThemesGroups.extraordinary.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-                            </p>
-                          </div>
-                    {collapsedGroups['extraordinary'] ? (
-                      <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    )}
-                  </button>
-                  {!collapsedGroups['extraordinary'] && (
-              <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {officialThemesGroups.extraordinary.map((theme) => {
-                      const themeAccent = accentOptionsByValue[theme.accent]
-                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
-                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
-                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
-                      const themeSurface = surfaceOptionsByValue[theme.surface]
-                      // Собираем все акцентные цвета для отображения
-                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
-                      const isActive =
-                        accent === theme.accent &&
-                        secondaryAccent === themeWithAccents.secondaryAccent &&
-                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
-                        surface === theme.surface &&
-                        Math.abs(radius - theme.radius) < 0.01 &&
-                        typography === theme.typography &&
-                        contrast === theme.contrast &&
-                        depth === theme.depth &&
-                        motion === theme.motion
-
-                      return (
-                        <Card
-                          key={theme.id}
-                          className={cn(
-                              'relative border transition-all hover:border-primary/60 flex flex-col h-full group',
-                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                          )}
-                            style={{
-                              transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              willChange: 'transform',
-                              position: 'relative',
-                            }}
-                            onMouseEnter={(e) => handleCardMouseEnter(theme.id, e)}
-                            onMouseMove={(e) => handleCardMouseMove(theme.id, e)}
-                            onMouseLeave={(e) => handleCardMouseLeave(theme.id, e)}
-                        >
-                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                            <div className="flex items-start justify-between gap-2 h-full">
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <CardTitle className="text-sm font-semibold">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                    {theme.official && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                        Official
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </CardTitle>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                              {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="flex-1 flex flex-col">
-                            <div className="flex flex-col space-y-3 mt-auto">
-                              <div 
-                                className="border border-border/60 p-4 aspect-video relative overflow-hidden transition-transform duration-300"
-                                style={{ 
-                                  borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                                  backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))',
-                                  transform: 'translateZ(20px)',
-                                }}
-                              >
-                                {/* Background gradient overlay */}
-                                <div 
-                                  className="absolute inset-0 opacity-5"
-                                  style={{
-                                    background: allAccents.length > 0
-                                      ? allAccents.length > 1
-                                        ? `linear-gradient(135deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')}, transparent 100%)`
-                                        : `linear-gradient(135deg, hsl(${allAccents[0].tone}) 0%, transparent 100%)`
-                                      : 'transparent'
-                                  }}
-                                />
-                                
-                                <div className="relative z-10 h-full flex flex-col gap-2.5">
-                                  {/* Header section */}
-                                  <div className="flex items-center gap-2">
-                                    {/* Показываем все акцентные цвета */}
-                                    <div className="flex items-center gap-0.5 shrink-0">
-                                      {allAccents.map((acc, index) => (
-                                        <div
-                                          key={index}
-                                          className={`rounded-full shrink-0 border-2 border-background ${index === 0 ? 'size-6' : index === 1 ? 'size-4' : 'size-3'}`}
-                                          style={{
-                                            backgroundColor: `hsl(${acc.tone})`,
-                                            marginLeft: index > 0 ? '-8px' : '0',
-                                            zIndex: allAccents.length - index,
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div 
-                                          className="text-xs font-semibold truncate"
-                                          style={{
-                                            color: themeSurface 
-                                              ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                              : 'hsl(var(--foreground))'
-                                          }}
-                                        >
-                                          Theme Preview
-                                        </div>
-                                        <div className="flex items-center gap-0.5 shrink-0">
-                                          {allAccents.map((acc, index) => (
-                                            <div
-                                              key={index}
-                                              className="size-1.5 rounded-full shrink-0"
-                                              style={{
-                                                backgroundColor: `hsl(${acc.tone})`,
-                                              }}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <div 
-                                        className="text-[10px] truncate opacity-70"
-                                        style={{
-                                          color: themeSurface 
-                                            ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                            : 'hsl(var(--muted-foreground))'
-                                        }}
-                                      >
-                                        {allAccents.map((acc) => acc.label).join(' + ') || theme.accent}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Card preview */}
-                                  <div 
-                                    className="flex-1 p-2.5 border"
-                                    style={{
-                                      backgroundColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.card})`
-                                        : 'hsl(var(--card))',
-                                      borderColor: themeSurface 
-                                        ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                        : 'hsl(var(--border))',
-                                      borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                                    }}
-                                  >
-                                    <div className="flex flex-col gap-1.5 h-full">
-                                      <div className="flex items-center gap-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-sm flex-1"
-                                          style={{
-                                            background: allAccents.length > 1
-                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                              : allAccents.length > 0
-                                              ? `hsl(${allAccents[0].tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.3,
-                                          }}
-                                        />
-                                        <div 
-                                          className="h-1.5 w-4 rounded-sm"
-                                          style={{
-                                            background: allAccents.length > 1
-                                              ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                              : allAccents.length > 0
-                                              ? `hsl(${allAccents[0].tone})`
-                                              : 'hsl(var(--primary))',
-                                            opacity: 0.5,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="flex gap-1.5 flex-1">
-                                        <div 
-                                          className="flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.muted})`
-                                              : 'hsl(var(--muted))',
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                        <div className="flex flex-col gap-0.5 w-3">
-                                          {allAccents.map((acc, index) => (
-                                            <div
-                                              key={index}
-                                              className="h-1.5 rounded-sm flex-1"
-                                              style={{
-                                                backgroundColor: `hsl(${acc.tone})`,
-                                                opacity: 0.2 + (index * 0.1),
-                                              }}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <div 
-                                        className="h-1.5 rounded-full"
-                                        style={{
-                                          background: allAccents.length > 1
-                                            ? `linear-gradient(90deg, ${allAccents.map((acc, i) => `hsl(${acc.tone}) ${(i / (allAccents.length - 1)) * 100}%`).join(', ')})`
-                                            : allAccents.length > 0
-                                            ? `hsl(${allAccents[0].tone})`
-                                            : 'hsl(var(--primary))',
-                                          opacity: 0.6,
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Bottom accent indicators */}
-                                  <div className="flex items-center gap-1.5 justify-between">
-                                    <div className="flex items-center gap-1">
-                                      {[1, 2, 3].map((i) => (
-                                        <div
-                                          key={i}
-                                          className="size-1.5 rounded-full"
-                                          style={{
-                                            backgroundColor: themeSurface
-                                              ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                              : 'hsl(var(--secondary))',
-                                            opacity: 0.3 + (i * 0.1),
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div className="flex items-center gap-0.5">
-                                      {allAccents.map((acc, index) => (
-                                        <div
-                                          key={index}
-                                          className="h-2 flex-1 rounded-sm"
-                                          style={{
-                                            backgroundColor: `hsl(${acc.tone})`,
-                                            opacity: 0.4,
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {Math.round(theme.radius * 16)}px
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                                {theme.description && (
-                            <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleShowDescription(undefined, { name: theme.name, description: theme.description })}
-                                  >
-                                    <Info className="h-3 w-3" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant={isActive ? 'default' : 'outline'}
-                              size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleApplyTheme(theme)}
-                                >
-                                  {isActive ? (
-                                    <>
-                                      <Check className="mr-2 h-3 w-3" />
-                                      Active
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Download className="mr-2 h-3 w-3" />
-                              Apply
-                                    </>
-                                  )}
-                </Button>
-                                {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                                    <Trash2 className="h-3 w-3" />
-                </Button>
-                                )}
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
-            </div>
-                          </CardContent>
-                        </Card>
+
+              {/* Filters */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">{t('settings.appearance.filters')}</Label>
+                    {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                        {[
+                          themeFilters.typography ? 1 : 0,
+                          themeFilters.contrast ? 1 : 0,
+                          themeFilters.depth ? 1 : 0,
+                          themeFilters.motion ? 1 : 0,
+                          themeFilters.radius ? 1 : 0,
+                          themeFilters.group ? 1 : 0,
+                        ].reduce((a, b) => a + b, 0)}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          setRadiusInput('')
+                          setThemeFilters({ typography: null, contrast: null, depth: null, motion: null, radius: null, group: null })
+                        }}
+                      >
+                        {t('settings.appearance.clearFilters')}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setFiltersOpen(!filtersOpen)}
+                    >
+                      {filtersOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {filtersOpen && (
+                  <div className="space-y-4 pt-2 border-t border-border/40">
+
+                    {/* Typography */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">{t('settings.appearance.typography')}</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {typographyOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={themeFilters.typography === option.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs px-3"
+                            onClick={() => setThemeFilters((prev) => ({ ...prev, typography: prev.typography === option.value ? null : option.value }))}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Contrast */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">{t('settings.appearance.contrastLabel')}</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {contrastOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={themeFilters.contrast === option.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs px-3"
+                            onClick={() => setThemeFilters((prev) => ({ ...prev, contrast: prev.contrast === option.value ? null : option.value }))}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Depth */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">{t('settings.appearance.depth')}</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {depthOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={themeFilters.depth === option.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs px-3"
+                            onClick={() => setThemeFilters((prev) => ({ ...prev, depth: prev.depth === option.value ? null : option.value }))}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Motion */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">{t('settings.appearance.motionLabel')}</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {motionOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={themeFilters.motion === option.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs px-3"
+                            onClick={() => setThemeFilters((prev) => ({ ...prev, motion: prev.motion === option.value ? null : option.value }))}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Radius */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">{t('settings.appearance.radius')}</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Input
+                          type="number"
+                          placeholder={t('settings.appearance.radius') + ' (px)'}
+                          value={radiusInput}
+                          onChange={(e) => {
+                            const value = e.target.value.trim()
+                            setRadiusInput(value)
+                            if (value === '') {
+                              setThemeFilters((prev) => ({ ...prev, radius: null }))
+                            } else {
+                              const numValue = parseInt(value, 10)
+                              if (!isNaN(numValue) && numValue >= 0 && numValue <= 32) {
+                                setThemeFilters((prev) => ({ ...prev, radius: numValue }))
+                              } else {
+                                setThemeFilters((prev) => ({ ...prev, radius: null }))
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = e.target.value.trim()
+                            if (value !== '') {
+                              const numValue = parseInt(value, 10)
+                              if (isNaN(numValue) || numValue < 0 || numValue > 32) {
+                                setRadiusInput('')
+                                setThemeFilters((prev) => ({ ...prev, radius: null }))
+                              }
+                            }
+                          }}
+                          className="h-8 w-32 text-sm"
+                          min={0}
+                          max={32}
+                        />
+                        {themeFilters.radius !== null && (
+                          <Badge variant="secondary" className="h-8 px-3 text-xs">
+                            {themeFilters.radius}px
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Group filter */}
+                    {themeFilters.group && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">{t('settings.appearance.group')}</Label>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="gap-1.5 h-8 px-3 text-xs">
+                            <span>
+                              {themeFilters.group === 'custom'
+                                ? t('settings.appearance.themeGroups.yourThemes')
+                                : t(`settings.appearance.themeGroups.${themeFilters.group}`)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-transparent -mr-1"
+                              onClick={() => setThemeFilters((prev) => ({ ...prev, group: null }))}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Featured Themes */}
+              {!themeSearchQuery && !themeFilters.typography && !themeFilters.contrast && !themeFilters.depth && !themeFilters.motion && !themeFilters.radius && !themeFilters.group && featuredThemes.length > 0 && (
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary fill-primary" />
+                    <Label className="text-sm font-semibold">{t('settings.appearance.featuredThemes')}</Label>
+                  </div>
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {featuredThemes.map((theme) => {
+                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                      const isActive =
+                        accent === theme.accent &&
+                        secondaryAccent === themeWithAccents.secondaryAccent &&
+                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                        surface === theme.surface &&
+                        Math.abs(radius - theme.radius) < 0.01 &&
+                        typography === theme.typography &&
+                        contrast === theme.contrast &&
+                        depth === theme.depth &&
+                        motion === theme.motion
+
+                      return renderThemeCard(
+                        theme,
+                        isActive,
+                        () => handleApplyTheme(theme),
+                        (e) => handleShowDescription(e, { name: theme.name, description: theme.description || '' })
                       )
                     })}
-            </div>
-                  )}
+                  </div>
                 </div>
+              )}
+
+              {/* Main Groups */}
+              {!themeSearchQuery && !themeFilters.group && (
+                <>
+                  {officialThemesGroups.basic.length > 0 && renderThemeGroup('basic', t('settings.appearance.themeGroups.basic'), officialThemesGroups.basic)}
+                  {officialThemesGroups.games.length > 0 && renderThemeGroup('games', t('settings.appearance.themeGroups.games'), officialThemesGroups.games)}
+                  {officialThemesGroups.extraordinary.length > 0 && renderThemeGroup('extraordinary', t('settings.appearance.themeGroups.extraordinary'), officialThemesGroups.extraordinary)}
+                </>
+              )}
+
+              {/* Search Results */}
+              {(themeSearchQuery || themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold">
+                      {t('settings.appearance.searchResults')} ({(() => {
+                        let filtered = allThemes
+                        if (themeSearchQuery) {
+                          const query = themeSearchQuery.toLowerCase()
+                          filtered = filtered.filter(
+                            (t) =>
+                              t.name.toLowerCase().includes(query) ||
+                              (t.description && t.description.toLowerCase().includes(query))
+                          )
+                        }
+                        filtered = applyThemeFilters(filtered)
+                        return filtered.length
+                      })()})
+                    </Label>
+                  </div>
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {(() => {
+                      let filtered = allThemes
+                      if (themeSearchQuery) {
+                        const query = themeSearchQuery.toLowerCase()
+                        filtered = filtered.filter(
+                          (theme) =>
+                            theme.name.toLowerCase().includes(query) ||
+                            (theme.description && theme.description.toLowerCase().includes(query))
+                        )
+                      }
+                      filtered = applyThemeFilters(filtered)
+                      return filtered
+                    })().map((theme) => {
+                        const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                        const isActive =
+                          accent === theme.accent &&
+                          secondaryAccent === themeWithAccents.secondaryAccent &&
+                          tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                          surface === theme.surface &&
+                          Math.abs(radius - theme.radius) < 0.01 &&
+                          typography === theme.typography &&
+                          contrast === theme.contrast &&
+                          depth === theme.depth &&
+                          motion === theme.motion
+
+                        return renderThemeCard(
+                          theme,
+                          isActive,
+                          () => handleApplyTheme(theme),
+                          (e) => handleShowDescription(e, { name: theme.name, description: theme.description || '' })
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Categories */}
+              {!themeSearchQuery && !themeFilters.group && (
+                <>
+                  {officialThemesGroups.nature && officialThemesGroups.nature.length > 0 && (
+                    renderThemeGroup('nature', t('settings.appearance.themeGroups.nature'), officialThemesGroups.nature)
+                  )}
+                  {officialThemesGroups.corporate && officialThemesGroups.corporate.length > 0 && (
+                    renderThemeGroup('corporate', t('settings.appearance.themeGroups.corporate'), officialThemesGroups.corporate)
+                  )}
+                  {officialThemesGroups.retro && officialThemesGroups.retro.length > 0 && (
+                    renderThemeGroup('retro', t('settings.appearance.themeGroups.retro'), officialThemesGroups.retro)
+                  )}
+                </>
               )}
 
               {/* Your Themes */}
               {customThemes.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-4 pt-4 border-t">
                   <div>
                     <Label className="text-sm font-semibold">{t('settings.appearance.themeGroups.yourThemes')}</Label>
                     <p className="text-xs text-muted-foreground">
                       {customThemes.length} {customThemes.length === 1 ? t('settings.appearance.themeGroups.theme') : t('settings.appearance.themeGroups.themes')}
-              </p>
-            </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {customThemes.map((theme) => {
                       const themeAccent = accentOptionsByValue[theme.accent]
+                      const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                      const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
+                      const themeTertiaryAccent = themeWithAccents.tertiaryAccent ? accentOptionsByValue[themeWithAccents.tertiaryAccent] : null
                       const themeSurface = surfaceOptionsByValue[theme.surface]
+                      const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                       const isActive =
                         accent === theme.accent &&
+                        secondaryAccent === themeWithAccents.secondaryAccent &&
+                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&
@@ -5811,241 +7480,17 @@ function AppearanceSettings() {
                         depth === theme.depth &&
                         motion === theme.motion
 
-                      return (
-                        <Card
-                          key={theme.id}
-                          className={cn(
-                            'relative border transition-all hover:border-primary/60 flex flex-col h-full',
-                            isActive && 'border-primary bg-primary/5 ring-1 ring-primary/40'
-                          )}
-                        >
-                          <CardHeader className="pb-3 min-h-[3.5rem] shrink-0">
-                            <div className="flex items-start justify-between gap-2 h-full">
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <CardTitle className="text-sm font-semibold">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="break-words min-w-0" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{theme.name}</span>
-                                  </div>
-                                </CardTitle>
-                              </div>
-                          {isActive && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col">
-                        <div className="flex flex-col space-y-3 mt-auto">
-                        <div 
-                          className="border border-border/60 p-4 aspect-video relative overflow-hidden"
-                          style={{ 
-                            borderRadius: `min(${theme.radius * 16}px, 24px)`,
-                            backgroundColor: themeSurface ? `hsl(${themeSurface.tone.background})` : 'hsl(var(--background))'
-                          }}
-                        >
-                          {/* Background gradient overlay */}
-                          <div 
-                            className="absolute inset-0 opacity-5"
-                            style={{
-                              background: themeAccent 
-                                ? `linear-gradient(135deg, hsl(${themeAccent.tone}) 0%, transparent 100%)`
-                                : 'transparent'
-                            }}
-                          />
-                          
-                          <div className="relative z-10 h-full flex flex-col gap-2.5">
-                            {/* Header section */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <div 
-                                  className="size-6 rounded-full shrink-0"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                  }}
-                                />
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                  <div 
-                                    className="text-xs font-semibold truncate"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.foreground || '220 13% 18%'})`
-                                        : 'hsl(var(--foreground))'
-                                    }}
-                                  >
-                                    Theme Preview
-                                  </div>
-                                  <div 
-                                    className="text-[10px] truncate opacity-70"
-                                    style={{
-                                      color: themeSurface 
-                                        ? `hsl(${themeSurface.tone.muted || '220 9% 46%'})`
-                                        : 'hsl(var(--muted-foreground))'
-                                    }}
-                                  >
-                                    {themeAccent?.label ?? theme.accent}
-                                  </div>
-                                </div>
-                              </div>
-                              <div 
-                                className="size-1.5 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                }}
-                              />
-                            </div>
-
-                            {/* Card preview */}
-                            <div 
-                              className="flex-1 p-2.5 border"
-                              style={{
-                                backgroundColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.card})`
-                                  : 'hsl(var(--card))',
-                                borderColor: themeSurface 
-                                  ? `hsl(${themeSurface.tone.border || '220 13% 91%'})`
-                                  : 'hsl(var(--border))',
-                                borderRadius: `min(${theme.radius * 8}px, 8px)`,
-                              }}
-                            >
-                              <div className="flex flex-col gap-1.5 h-full">
-                                <div className="flex items-center gap-1.5">
-                                  <div 
-                                    className="h-1.5 rounded-sm flex-1"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.3,
-                                    }}
-                                  />
-                                  <div 
-                                    className="h-1.5 w-4 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.5,
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex gap-1.5 flex-1">
-                                  <div 
-                                    className="flex-1 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.muted})`
-                                        : 'hsl(var(--muted))',
-                                      opacity: 0.4,
-                                    }}
-                                  />
-                                  <div 
-                                    className="w-3 rounded-sm"
-                                    style={{
-                                      backgroundColor: themeAccent
-                                        ? `hsl(${themeAccent.tone})`
-                                        : 'hsl(var(--primary))',
-                                      opacity: 0.2,
-                                    }}
-                                  />
-                                </div>
-                                <div 
-                                  className="h-1.5 rounded-full"
-                                  style={{
-                                    backgroundColor: themeAccent
-                                      ? `hsl(${themeAccent.tone})`
-                                      : 'hsl(var(--primary))',
-                                    opacity: 0.6,
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Bottom accent indicators */}
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3].map((i) => (
-                                  <div
-                                    key={i}
-                                    className="size-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: themeSurface
-                                        ? `hsl(${themeSurface.tone.secondary || themeSurface.tone.muted})`
-                                        : 'hsl(var(--secondary))',
-                                      opacity: 0.3 + (i * 0.1),
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <div 
-                                className="h-2 w-8 rounded-sm"
-                                style={{
-                                  backgroundColor: themeAccent
-                                    ? `hsl(${themeAccent.tone})`
-                                    : 'hsl(var(--primary))',
-                                  opacity: 0.4,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {Math.round(theme.radius * 16)}px
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {TYPOGRAPHY_SCALES[theme.typography]?.label ?? theme.typography}
-                          </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {contrastOptions.find(o => o.value === theme.contrast)?.label ?? theme.contrast}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {depthOptions.find(o => o.value === theme.depth)?.label ?? theme.depth}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {motionOptions.find(o => o.value === theme.motion)?.label ?? theme.motion}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                          <Button
-                            variant={isActive ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleApplyTheme(theme)}
-                          >
-                            {isActive ? (
-                              <>
-                                <Check className="mr-2 h-3 w-3" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-3 w-3" />
-                                Apply
-                              </>
-                            )}
-                          </Button>
-                          {!theme.official && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleDeleteTheme(theme.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                      )}
-                    </div>
+                      return renderThemeCard(
+                        theme,
+                        isActive,
+                        () => handleApplyTheme(theme),
+                        (e) => handleShowDescription(e, { name: theme.name, description: theme.description || '' })
+                      )
+                    })}
                   </div>
-                      </CardContent>
-                    </Card>
-              )
-            })}
-          </div>
-            </div>
+                </div>
               )}
-        </section>
-
+            </section>
           </TabsContent>
         </Tabs>
 

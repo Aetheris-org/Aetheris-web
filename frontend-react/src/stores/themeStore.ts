@@ -57,6 +57,54 @@ export type SurfaceStyle =
   | 'dota'
   | 'terraria'
   | 'geometrydash'
+  | 'marble'
+  | 'granite'
+  | 'quartz'
+  | 'crystal'
+  | 'diamond'
+  | 'opal'
+  | 'moonlight'
+  | 'starlight'
+  | 'firelight'
+  | 'candlelight'
+  | 'neon'
+  | 'laser'
+  | 'plasma'
+  | 'hologram'
+  | 'matrix'
+  | 'cyber'
+  | 'retro'
+  | 'vintage'
+  | 'tropical'
+  | 'arctic'
+  | 'desert'
+  | 'jungle'
+  | 'lake'
+  | 'river'
+  | 'beach'
+  | 'mountain'
+  | 'valley'
+  | 'meadow'
+  | 'garden'
+  | 'city'
+  | 'urban'
+  | 'library'
+  | 'museum'
+  | 'gallery'
+  | 'studio'
+  | 'luxury'
+  | 'premium'
+  | 'royal'
+  | 'elegant'
+  | 'sophisticated'
+  | 'velvet'
+  | 'silk'
+  | 'leather'
+  | 'wood'
+  | 'oak'
+  | 'mahogany'
+  | 'cherrywood'
+  | 'maple'
 export type AccentColor =
   | 'indigo'
   | 'violet'
@@ -102,6 +150,42 @@ export type AccentColor =
   | 'sky'
   | 'forest'
   | 'ocean'
+  | 'ruby'
+  | 'scarlet'
+  | 'cherry'
+  | 'burgundy'
+  | 'maroon'
+  | 'carmine'
+  | 'vermillion'
+  | 'tangerine'
+  | 'apricot'
+  | 'honey'
+  | 'butter'
+  | 'canary'
+  | 'lemon'
+  | 'chartreuse'
+  | 'jade'
+  | 'aqua'
+  | 'cerulean'
+  | 'sapphire'
+  | 'royal'
+  | 'periwinkle'
+  | 'amethyst'
+  | 'mauve'
+  | 'lilac'
+  | 'wisteria'
+  | 'wine'
+  | 'copper'
+  | 'rust'
+  | 'khaki'
+  | 'tan'
+  | 'beige'
+  | 'vanilla'
+  | 'champagne'
+  | 'platinum'
+  | 'titanium'
+  | 'steel'
+  | 'iron'
   | 'custom'
 
 type ResolvedTheme = 'light' | 'dark'
@@ -244,6 +328,54 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
   'dota',
   'terraria',
   'geometrydash',
+  'marble',
+  'granite',
+  'quartz',
+  'crystal',
+  'diamond',
+  'opal',
+  'moonlight',
+  'starlight',
+  'firelight',
+  'candlelight',
+  'neon',
+  'laser',
+  'plasma',
+  'hologram',
+  'matrix',
+  'cyber',
+  'retro',
+  'vintage',
+  'tropical',
+  'arctic',
+  'desert',
+  'jungle',
+  'lake',
+  'river',
+  'beach',
+  'mountain',
+  'valley',
+  'meadow',
+  'garden',
+  'city',
+  'urban',
+  'library',
+  'museum',
+  'gallery',
+  'studio',
+  'luxury',
+  'premium',
+  'royal',
+  'elegant',
+  'sophisticated',
+  'velvet',
+  'silk',
+  'leather',
+  'wood',
+  'oak',
+  'mahogany',
+  'cherrywood',
+  'maple',
 ]
 
 const DEFAULT_PREFERENCES: StoredPreferences = {
@@ -1192,6 +1324,762 @@ export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig>
         accent: '192 65% 24%',
         accentForeground: '189 95% 90%',
         ring: '200 80% 58%',
+      },
+    },
+  },
+  ruby: {
+    label: 'Ruby',
+    description: 'Deep red gemstone for passionate, bold designs',
+    preview: '350 75% 50%',
+    values: {
+      light: {
+        primary: '350 75% 50%',
+        primaryForeground: '355 100% 96%',
+        accent: '350 85% 94%',
+        accentForeground: '350 70% 40%',
+        ring: '350 75% 50%',
+      },
+      dark: {
+        primary: '350 75% 65%',
+        primaryForeground: '354 82% 15%',
+        accent: '350 60% 28%',
+        accentForeground: '350 92% 92%',
+        ring: '350 75% 65%',
+      },
+    },
+  },
+  scarlet: {
+    label: 'Scarlet',
+    description: 'Bright red for energetic, attention-grabbing interfaces',
+    preview: '0 100% 50%',
+    values: {
+      light: {
+        primary: '0 100% 50%',
+        primaryForeground: '355 100% 96%',
+        accent: '0 100% 95%',
+        accentForeground: '0 90% 40%',
+        ring: '0 100% 50%',
+      },
+      dark: {
+        primary: '0 100% 65%',
+        primaryForeground: '354 82% 15%',
+        accent: '0 70% 30%',
+        accentForeground: '0 100% 92%',
+        ring: '0 100% 65%',
+      },
+    },
+  },
+  cherry: {
+    label: 'Cherry',
+    description: 'Sweet cherry red for friendly, approachable designs',
+    preview: '340 75% 55%',
+    values: {
+      light: {
+        primary: '340 75% 55%',
+        primaryForeground: '355 100% 96%',
+        accent: '340 85% 94%',
+        accentForeground: '340 70% 45%',
+        ring: '340 75% 55%',
+      },
+      dark: {
+        primary: '340 75% 70%',
+        primaryForeground: '354 82% 15%',
+        accent: '340 60% 30%',
+        accentForeground: '340 92% 92%',
+        ring: '340 75% 70%',
+      },
+    },
+  },
+  burgundy: {
+    label: 'Burgundy',
+    description: 'Rich wine red for sophisticated, elegant themes',
+    preview: '345 65% 40%',
+    values: {
+      light: {
+        primary: '345 65% 40%',
+        primaryForeground: '355 100% 96%',
+        accent: '345 75% 92%',
+        accentForeground: '345 60% 32%',
+        ring: '345 65% 40%',
+      },
+      dark: {
+        primary: '345 65% 60%',
+        primaryForeground: '354 82% 15%',
+        accent: '345 55% 26%',
+        accentForeground: '345 90% 92%',
+        ring: '345 65% 60%',
+      },
+    },
+  },
+  maroon: {
+    label: 'Maroon',
+    description: 'Deep brown-red for warm, grounded aesthetics',
+    preview: '0 60% 35%',
+    values: {
+      light: {
+        primary: '0 60% 35%',
+        primaryForeground: '355 100% 96%',
+        accent: '0 70% 90%',
+        accentForeground: '0 55% 28%',
+        ring: '0 60% 35%',
+      },
+      dark: {
+        primary: '0 60% 55%',
+        primaryForeground: '354 82% 15%',
+        accent: '0 50% 24%',
+        accentForeground: '0 90% 92%',
+        ring: '0 60% 55%',
+      },
+    },
+  },
+  carmine: {
+    label: 'Carmine',
+    description: 'Vibrant crimson for bold, dramatic statements',
+    preview: '350 85% 52%',
+    values: {
+      light: {
+        primary: '350 85% 52%',
+        primaryForeground: '355 100% 96%',
+        accent: '350 95% 94%',
+        accentForeground: '350 80% 42%',
+        ring: '350 85% 52%',
+      },
+      dark: {
+        primary: '350 85% 67%',
+        primaryForeground: '354 82% 15%',
+        accent: '350 65% 29%',
+        accentForeground: '350 95% 92%',
+        ring: '350 85% 67%',
+      },
+    },
+  },
+  vermillion: {
+    label: 'Vermillion',
+    description: 'Bright orange-red for energetic, fiery designs',
+    preview: '15 100% 55%',
+    values: {
+      light: {
+        primary: '15 100% 55%',
+        primaryForeground: '20 100% 96%',
+        accent: '15 100% 95%',
+        accentForeground: '15 90% 45%',
+        ring: '15 100% 55%',
+      },
+      dark: {
+        primary: '15 100% 70%',
+        primaryForeground: '24 98% 14%',
+        accent: '15 80% 32%',
+        accentForeground: '15 100% 92%',
+        ring: '15 100% 70%',
+      },
+    },
+  },
+  tangerine: {
+    label: 'Tangerine',
+    description: 'Vibrant orange for fresh, citrus-inspired themes',
+    preview: '30 100% 60%',
+    values: {
+      light: {
+        primary: '30 100% 60%',
+        primaryForeground: '20 100% 96%',
+        accent: '30 100% 95%',
+        accentForeground: '30 90% 50%',
+        ring: '30 100% 60%',
+      },
+      dark: {
+        primary: '30 100% 75%',
+        primaryForeground: '24 98% 14%',
+        accent: '30 80% 35%',
+        accentForeground: '30 100% 92%',
+        ring: '30 100% 75%',
+      },
+    },
+  },
+  apricot: {
+    label: 'Apricot',
+    description: 'Soft orange for warm, gentle interfaces',
+    preview: '25 75% 65%',
+    values: {
+      light: {
+        primary: '25 75% 65%',
+        primaryForeground: '20 100% 96%',
+        accent: '25 85% 94%',
+        accentForeground: '25 70% 55%',
+        ring: '25 75% 65%',
+      },
+      dark: {
+        primary: '25 75% 80%',
+        primaryForeground: '24 98% 14%',
+        accent: '25 65% 38%',
+        accentForeground: '25 95% 92%',
+        ring: '25 75% 80%',
+      },
+    },
+  },
+  honey: {
+    label: 'Honey',
+    description: 'Golden amber for sweet, inviting designs',
+    preview: '40 90% 60%',
+    values: {
+      light: {
+        primary: '40 90% 60%',
+        primaryForeground: '26 100% 12%',
+        accent: '40 100% 95%',
+        accentForeground: '40 85% 50%',
+        ring: '40 90% 60%',
+      },
+      dark: {
+        primary: '40 90% 75%',
+        primaryForeground: '30 100% 14%',
+        accent: '40 70% 36%',
+        accentForeground: '40 100% 92%',
+        ring: '40 90% 75%',
+      },
+    },
+  },
+  butter: {
+    label: 'Butter',
+    description: 'Soft yellow for cheerful, sunny themes',
+    preview: '50 95% 70%',
+    values: {
+      light: {
+        primary: '50 95% 70%',
+        primaryForeground: '26 100% 12%',
+        accent: '50 100% 96%',
+        accentForeground: '50 90% 60%',
+        ring: '50 95% 70%',
+      },
+      dark: {
+        primary: '50 95% 85%',
+        primaryForeground: '30 100% 14%',
+        accent: '50 75% 40%',
+        accentForeground: '50 100% 92%',
+        ring: '50 95% 85%',
+      },
+    },
+  },
+  canary: {
+    label: 'Canary',
+    description: 'Bright yellow for optimistic, energetic designs',
+    preview: '55 100% 65%',
+    values: {
+      light: {
+        primary: '55 100% 65%',
+        primaryForeground: '26 100% 12%',
+        accent: '55 100% 96%',
+        accentForeground: '55 90% 55%',
+        ring: '55 100% 65%',
+      },
+      dark: {
+        primary: '55 100% 80%',
+        primaryForeground: '30 100% 14%',
+        accent: '55 80% 42%',
+        accentForeground: '55 100% 92%',
+        ring: '55 100% 80%',
+      },
+    },
+  },
+  lemon: {
+    label: 'Lemon',
+    description: 'Fresh yellow-green for zesty, vibrant themes',
+    preview: '60 100% 60%',
+    values: {
+      light: {
+        primary: '60 100% 60%',
+        primaryForeground: '60 100% 12%',
+        accent: '60 100% 96%',
+        accentForeground: '60 90% 50%',
+        ring: '60 100% 60%',
+      },
+      dark: {
+        primary: '60 100% 75%',
+        primaryForeground: '60 100% 12%',
+        accent: '60 80% 38%',
+        accentForeground: '60 100% 92%',
+        ring: '60 100% 75%',
+      },
+    },
+  },
+  chartreuse: {
+    label: 'Chartreuse',
+    description: 'Vibrant yellow-green for bold, energetic interfaces',
+    preview: '75 100% 55%',
+    values: {
+      light: {
+        primary: '75 100% 55%',
+        primaryForeground: '75 100% 12%',
+        accent: '75 100% 95%',
+        accentForeground: '75 90% 45%',
+        ring: '75 100% 55%',
+      },
+      dark: {
+        primary: '75 100% 70%',
+        primaryForeground: '75 100% 12%',
+        accent: '75 80% 32%',
+        accentForeground: '75 100% 92%',
+        ring: '75 100% 70%',
+      },
+    },
+  },
+  jade: {
+    label: 'Jade',
+    description: 'Rich green gemstone for luxurious, natural themes',
+    preview: '150 50% 45%',
+    values: {
+      light: {
+        primary: '150 50% 45%',
+        primaryForeground: '142 82% 96%',
+        accent: '150 60% 92%',
+        accentForeground: '150 45% 35%',
+        ring: '150 50% 45%',
+      },
+      dark: {
+        primary: '150 50% 65%',
+        primaryForeground: '149 80% 8%',
+        accent: '150 40% 24%',
+        accentForeground: '152 75% 85%',
+        ring: '150 50% 65%',
+      },
+    },
+  },
+  aqua: {
+    label: 'Aqua',
+    description: 'Bright cyan-blue for fresh, aquatic themes',
+    preview: '180 100% 50%',
+    values: {
+      light: {
+        primary: '180 100% 50%',
+        primaryForeground: '192 100% 96%',
+        accent: '180 100% 95%',
+        accentForeground: '180 90% 40%',
+        ring: '180 100% 50%',
+      },
+      dark: {
+        primary: '180 100% 65%',
+        primaryForeground: '192 66% 16%',
+        accent: '180 70% 28%',
+        accentForeground: '189 95% 90%',
+        ring: '180 100% 65%',
+      },
+    },
+  },
+  cerulean: {
+    label: 'Cerulean',
+    description: 'Sky blue for calm, serene interfaces',
+    preview: '195 100% 55%',
+    values: {
+      light: {
+        primary: '195 100% 55%',
+        primaryForeground: '192 100% 96%',
+        accent: '195 100% 95%',
+        accentForeground: '195 90% 45%',
+        ring: '195 100% 55%',
+      },
+      dark: {
+        primary: '195 100% 70%',
+        primaryForeground: '192 66% 16%',
+        accent: '195 80% 32%',
+        accentForeground: '189 95% 90%',
+        ring: '195 100% 70%',
+      },
+    },
+  },
+  sapphire: {
+    label: 'Sapphire',
+    description: 'Deep blue gemstone for premium, trustworthy themes',
+    preview: '210 80% 45%',
+    values: {
+      light: {
+        primary: '210 80% 45%',
+        primaryForeground: '192 100% 96%',
+        accent: '210 90% 93%',
+        accentForeground: '210 75% 35%',
+        ring: '210 80% 45%',
+      },
+      dark: {
+        primary: '210 80% 63%',
+        primaryForeground: '192 66% 16%',
+        accent: '210 65% 26%',
+        accentForeground: '189 95% 90%',
+        ring: '210 80% 63%',
+      },
+    },
+  },
+  royal: {
+    label: 'Royal',
+    description: 'Regal blue for elegant, sophisticated designs',
+    preview: '225 70% 50%',
+    values: {
+      light: {
+        primary: '225 70% 50%',
+        primaryForeground: '192 100% 96%',
+        accent: '225 80% 93%',
+        accentForeground: '225 65% 40%',
+        ring: '225 70% 50%',
+      },
+      dark: {
+        primary: '225 70% 68%',
+        primaryForeground: '192 66% 16%',
+        accent: '225 60% 28%',
+        accentForeground: '189 95% 90%',
+        ring: '225 70% 68%',
+      },
+    },
+  },
+  periwinkle: {
+    label: 'Periwinkle',
+    description: 'Soft blue-purple for gentle, dreamy themes',
+    preview: '240 60% 65%',
+    values: {
+      light: {
+        primary: '240 60% 65%',
+        primaryForeground: '240 100% 96%',
+        accent: '240 70% 94%',
+        accentForeground: '240 55% 55%',
+        ring: '240 60% 65%',
+      },
+      dark: {
+        primary: '240 60% 80%',
+        primaryForeground: '240 66% 16%',
+        accent: '240 50% 30%',
+        accentForeground: '240 90% 92%',
+        ring: '240 60% 80%',
+      },
+    },
+  },
+  amethyst: {
+    label: 'Amethyst',
+    description: 'Rich purple gemstone for mystical, creative themes',
+    preview: '270 60% 55%',
+    values: {
+      light: {
+        primary: '270 60% 55%',
+        primaryForeground: '240 100% 96%',
+        accent: '270 70% 94%',
+        accentForeground: '270 55% 45%',
+        ring: '270 60% 55%',
+      },
+      dark: {
+        primary: '270 60% 72%',
+        primaryForeground: '240 66% 16%',
+        accent: '270 50% 30%',
+        accentForeground: '270 90% 92%',
+        ring: '270 60% 72%',
+      },
+    },
+  },
+  mauve: {
+    label: 'Mauve',
+    description: 'Soft purple-pink for elegant, refined designs',
+    preview: '280 50% 65%',
+    values: {
+      light: {
+        primary: '280 50% 65%',
+        primaryForeground: '240 100% 96%',
+        accent: '280 60% 94%',
+        accentForeground: '280 45% 55%',
+        ring: '280 50% 65%',
+      },
+      dark: {
+        primary: '280 50% 80%',
+        primaryForeground: '240 66% 16%',
+        accent: '280 40% 32%',
+        accentForeground: '280 88% 92%',
+        ring: '280 50% 80%',
+      },
+    },
+  },
+  lilac: {
+    label: 'Lilac',
+    description: 'Light purple for fresh, spring-inspired themes',
+    preview: '270 45% 70%',
+    values: {
+      light: {
+        primary: '270 45% 70%',
+        primaryForeground: '240 100% 96%',
+        accent: '270 55% 95%',
+        accentForeground: '270 40% 60%',
+        ring: '270 45% 70%',
+      },
+      dark: {
+        primary: '270 45% 85%',
+        primaryForeground: '240 66% 16%',
+        accent: '270 35% 36%',
+        accentForeground: '270 85% 92%',
+        ring: '270 45% 85%',
+      },
+    },
+  },
+  wisteria: {
+    label: 'Wisteria',
+    description: 'Soft lavender-purple for calm, peaceful interfaces',
+    preview: '275 40% 68%',
+    values: {
+      light: {
+        primary: '275 40% 68%',
+        primaryForeground: '240 100% 96%',
+        accent: '275 50% 94%',
+        accentForeground: '275 35% 58%',
+        ring: '275 40% 68%',
+      },
+      dark: {
+        primary: '275 40% 83%',
+        primaryForeground: '240 66% 16%',
+        accent: '275 30% 34%',
+        accentForeground: '275 83% 92%',
+        ring: '275 40% 83%',
+      },
+    },
+  },
+  wine: {
+    label: 'Wine',
+    description: 'Deep red-purple for sophisticated, mature themes',
+    preview: '330 55% 42%',
+    values: {
+      light: {
+        primary: '330 55% 42%',
+        primaryForeground: '355 100% 96%',
+        accent: '330 65% 91%',
+        accentForeground: '330 50% 34%',
+        ring: '330 55% 42%',
+      },
+      dark: {
+        primary: '330 55% 62%',
+        primaryForeground: '354 82% 15%',
+        accent: '330 45% 26%',
+        accentForeground: '330 88% 92%',
+        ring: '330 55% 62%',
+      },
+    },
+  },
+  copper: {
+    label: 'Copper',
+    description: 'Warm metallic for industrial, vintage themes',
+    preview: '20 65% 50%',
+    values: {
+      light: {
+        primary: '20 65% 50%',
+        primaryForeground: '20 100% 96%',
+        accent: '20 75% 92%',
+        accentForeground: '20 60% 40%',
+        ring: '20 65% 50%',
+      },
+      dark: {
+        primary: '20 65% 70%',
+        primaryForeground: '24 98% 14%',
+        accent: '20 55% 30%',
+        accentForeground: '20 95% 92%',
+        ring: '20 65% 70%',
+      },
+    },
+  },
+  rust: {
+    label: 'Rust',
+    description: 'Earthy orange-brown for weathered, natural themes',
+    preview: '15 50% 45%',
+    values: {
+      light: {
+        primary: '15 50% 45%',
+        primaryForeground: '20 100% 96%',
+        accent: '15 60% 90%',
+        accentForeground: '15 45% 35%',
+        ring: '15 50% 45%',
+      },
+      dark: {
+        primary: '15 50% 65%',
+        primaryForeground: '24 98% 14%',
+        accent: '15 40% 26%',
+        accentForeground: '15 90% 92%',
+        ring: '15 50% 65%',
+      },
+    },
+  },
+  khaki: {
+    label: 'Khaki',
+    description: 'Muted green-brown for military, outdoor themes',
+    preview: '45 30% 55%',
+    values: {
+      light: {
+        primary: '45 30% 55%',
+        primaryForeground: '60 100% 98%',
+        accent: '45 40% 92%',
+        accentForeground: '45 25% 45%',
+        ring: '45 30% 55%',
+      },
+      dark: {
+        primary: '45 30% 75%',
+        primaryForeground: '60 100% 12%',
+        accent: '45 20% 32%',
+        accentForeground: '45 85% 92%',
+        ring: '45 30% 75%',
+      },
+    },
+  },
+  tan: {
+    label: 'Tan',
+    description: 'Warm beige for neutral, comfortable themes',
+    preview: '30 25% 65%',
+    values: {
+      light: {
+        primary: '30 25% 65%',
+        primaryForeground: '20 100% 96%',
+        accent: '30 35% 93%',
+        accentForeground: '30 20% 55%',
+        ring: '30 25% 65%',
+      },
+      dark: {
+        primary: '30 25% 80%',
+        primaryForeground: '24 98% 14%',
+        accent: '30 15% 38%',
+        accentForeground: '30 90% 92%',
+        ring: '30 25% 80%',
+      },
+    },
+  },
+  beige: {
+    label: 'Beige',
+    description: 'Neutral tan for calm, minimalist themes',
+    preview: '35 20% 75%',
+    values: {
+      light: {
+        primary: '35 20% 75%',
+        primaryForeground: '20 100% 96%',
+        accent: '35 30% 94%',
+        accentForeground: '35 15% 65%',
+        ring: '35 20% 75%',
+      },
+      dark: {
+        primary: '35 20% 85%',
+        primaryForeground: '24 98% 14%',
+        accent: '35 10% 42%',
+        accentForeground: '35 88% 92%',
+        ring: '35 20% 85%',
+      },
+    },
+  },
+  vanilla: {
+    label: 'Vanilla',
+    description: 'Soft cream for sweet, gentle themes',
+    preview: '45 30% 85%',
+    values: {
+      light: {
+        primary: '45 30% 85%',
+        primaryForeground: '26 100% 12%',
+        accent: '45 40% 96%',
+        accentForeground: '45 25% 75%',
+        ring: '45 30% 85%',
+      },
+      dark: {
+        primary: '45 30% 90%',
+        primaryForeground: '30 100% 14%',
+        accent: '45 20% 48%',
+        accentForeground: '45 95% 92%',
+        ring: '45 30% 90%',
+      },
+    },
+  },
+  champagne: {
+    label: 'Champagne',
+    description: 'Elegant gold-white for luxurious, celebratory themes',
+    preview: '40 25% 80%',
+    values: {
+      light: {
+        primary: '40 25% 80%',
+        primaryForeground: '26 100% 12%',
+        accent: '40 35% 96%',
+        accentForeground: '40 20% 70%',
+        ring: '40 25% 80%',
+      },
+      dark: {
+        primary: '40 25% 88%',
+        primaryForeground: '30 100% 14%',
+        accent: '40 15% 50%',
+        accentForeground: '40 98% 92%',
+        ring: '40 25% 88%',
+      },
+    },
+  },
+  platinum: {
+    label: 'Platinum',
+    description: 'Cool metallic for modern, premium themes',
+    preview: '210 12% 70%',
+    values: {
+      light: {
+        primary: '210 12% 70%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '210 18% 93%',
+        accentForeground: '210 10% 60%',
+        ring: '210 12% 70%',
+      },
+      dark: {
+        primary: '210 12% 80%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '210 8% 32%',
+        accentForeground: '210 14% 88%',
+        ring: '210 12% 80%',
+      },
+    },
+  },
+  titanium: {
+    label: 'Titanium',
+    description: 'Strong metallic for industrial, tech themes',
+    preview: '200 10% 60%',
+    values: {
+      light: {
+        primary: '200 10% 60%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '200 15% 92%',
+        accentForeground: '200 8% 50%',
+        ring: '200 10% 60%',
+      },
+      dark: {
+        primary: '200 10% 75%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '200 6% 28%',
+        accentForeground: '200 12% 86%',
+        ring: '200 10% 75%',
+      },
+    },
+  },
+  steel: {
+    label: 'Steel',
+    description: 'Cool grey-blue for professional, industrial themes',
+    preview: '210 15% 55%',
+    values: {
+      light: {
+        primary: '210 15% 55%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '210 20% 91%',
+        accentForeground: '210 12% 45%',
+        ring: '210 15% 55%',
+      },
+      dark: {
+        primary: '210 15% 70%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '210 10% 26%',
+        accentForeground: '210 16% 84%',
+        ring: '210 15% 70%',
+      },
+    },
+  },
+  iron: {
+    label: 'Iron',
+    description: 'Dark metallic for strong, durable themes',
+    preview: '210 8% 40%',
+    values: {
+      light: {
+        primary: '210 8% 40%',
+        primaryForeground: FOREGROUND_LIGHT,
+        accent: '210 12% 88%',
+        accentForeground: '210 6% 32%',
+        ring: '210 8% 40%',
+      },
+      dark: {
+        primary: '210 8% 60%',
+        primaryForeground: FOREGROUND_DARK,
+        accent: '210 5% 22%',
+        accentForeground: '210 10% 80%',
+        ring: '210 8% 60%',
       },
     },
   },
@@ -2919,6 +3807,210 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
         secondaryForeground: '75 90% 95%',
         border: '75 40% 20%',
         input: '75 40% 20%',
+      },
+    },
+  },
+  marble: {
+    label: 'Marble',
+    description: 'Elegant white stone with subtle grey veins',
+    values: {
+      light: {
+        background: '0 0% 98%',
+        foreground: '0 0% 15%',
+        card: '0 0% 100%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 100%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 94%',
+        mutedForeground: '0 0% 45%',
+        secondary: '0 0% 90%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 88%',
+        input: '0 0% 88%',
+      },
+      dark: {
+        background: '0 0% 8%',
+        foreground: '0 0% 95%',
+        card: '0 0% 12%',
+        cardForeground: '0 0% 95%',
+        popover: '0 0% 12%',
+        popoverForeground: '0 0% 95%',
+        muted: '0 0% 20%',
+        mutedForeground: '0 0% 75%',
+        secondary: '0 0% 20%',
+        secondaryForeground: '0 0% 95%',
+        border: '0 0% 20%',
+        input: '0 0% 20%',
+      },
+    },
+  },
+  moonlight: {
+    label: 'Moonlight',
+    description: 'Soft silver-blue for peaceful night themes',
+    values: {
+      light: {
+        background: '220 30% 96%',
+        foreground: '220 50% 15%',
+        card: '220 25% 98%',
+        cardForeground: '220 50% 15%',
+        popover: '220 25% 98%',
+        popoverForeground: '220 50% 15%',
+        muted: '220 20% 92%',
+        mutedForeground: '220 40% 40%',
+        secondary: '220 18% 88%',
+        secondaryForeground: '220 50% 15%',
+        border: '220 25% 86%',
+        input: '220 25% 86%',
+      },
+      dark: {
+        background: '220 30% 10%',
+        foreground: '220 30% 94%',
+        card: '220 25% 14%',
+        cardForeground: '220 30% 94%',
+        popover: '220 25% 14%',
+        popoverForeground: '220 30% 94%',
+        muted: '220 20% 22%',
+        mutedForeground: '220 25% 78%',
+        secondary: '220 20% 22%',
+        secondaryForeground: '220 30% 94%',
+        border: '220 20% 22%',
+        input: '220 20% 22%',
+      },
+    },
+  },
+  neon: {
+    label: 'Neon',
+    description: 'Vibrant electric colors for cyberpunk themes',
+    values: {
+      light: {
+        background: '280 80% 5%',
+        foreground: '280 100% 95%',
+        card: '280 75% 8%',
+        cardForeground: '280 100% 95%',
+        popover: '280 75% 8%',
+        popoverForeground: '280 100% 95%',
+        muted: '280 70% 15%',
+        mutedForeground: '280 90% 85%',
+        secondary: '280 70% 15%',
+        secondaryForeground: '280 100% 95%',
+        border: '280 70% 20%',
+        input: '280 70% 20%',
+      },
+      dark: {
+        background: '280 85% 3%',
+        foreground: '280 100% 97%',
+        card: '280 80% 6%',
+        cardForeground: '280 100% 97%',
+        popover: '280 80% 6%',
+        popoverForeground: '280 100% 97%',
+        muted: '280 75% 12%',
+        mutedForeground: '280 95% 88%',
+        secondary: '280 75% 12%',
+        secondaryForeground: '280 100% 97%',
+        border: '280 75% 18%',
+        input: '280 75% 18%',
+      },
+    },
+  },
+  tropical: {
+    label: 'Tropical',
+    description: 'Warm ocean blues and greens for vacation vibes',
+    values: {
+      light: {
+        background: '180 40% 96%',
+        foreground: '180 60% 15%',
+        card: '180 35% 98%',
+        cardForeground: '180 60% 15%',
+        popover: '180 35% 98%',
+        popoverForeground: '180 60% 15%',
+        muted: '180 30% 92%',
+        mutedForeground: '180 50% 40%',
+        secondary: '180 25% 88%',
+        secondaryForeground: '180 60% 15%',
+        border: '180 35% 86%',
+        input: '180 35% 86%',
+      },
+      dark: {
+        background: '180 40% 10%',
+        foreground: '180 40% 94%',
+        card: '180 35% 14%',
+        cardForeground: '180 40% 94%',
+        popover: '180 35% 14%',
+        popoverForeground: '180 40% 94%',
+        muted: '180 30% 22%',
+        mutedForeground: '180 35% 78%',
+        secondary: '180 30% 22%',
+        secondaryForeground: '180 40% 94%',
+        border: '180 30% 22%',
+        input: '180 30% 22%',
+      },
+    },
+  },
+  luxury: {
+    label: 'Luxury',
+    description: 'Rich gold and deep blacks for premium experiences',
+    values: {
+      light: {
+        background: '45 20% 98%',
+        foreground: '45 50% 12%',
+        card: '45 15% 100%',
+        cardForeground: '45 50% 12%',
+        popover: '45 15% 100%',
+        popoverForeground: '45 50% 12%',
+        muted: '45 18% 94%',
+        mutedForeground: '45 40% 38%',
+        secondary: '45 15% 90%',
+        secondaryForeground: '45 50% 12%',
+        border: '45 20% 88%',
+        input: '45 20% 88%',
+      },
+      dark: {
+        background: '45 30% 8%',
+        foreground: '45 60% 95%',
+        card: '45 25% 12%',
+        cardForeground: '45 60% 95%',
+        popover: '45 25% 12%',
+        popoverForeground: '45 60% 95%',
+        muted: '45 20% 20%',
+        mutedForeground: '45 50% 80%',
+        secondary: '45 20% 20%',
+        secondaryForeground: '45 60% 95%',
+        border: '45 20% 20%',
+        input: '45 20% 20%',
+      },
+    },
+  },
+  wood: {
+    label: 'Wood',
+    description: 'Warm brown tones for natural, rustic themes',
+    values: {
+      light: {
+        background: '30 25% 94%',
+        foreground: '30 50% 12%',
+        card: '30 20% 96%',
+        cardForeground: '30 50% 12%',
+        popover: '30 20% 96%',
+        popoverForeground: '30 50% 12%',
+        muted: '30 22% 90%',
+        mutedForeground: '30 40% 38%',
+        secondary: '30 18% 86%',
+        secondaryForeground: '30 50% 12%',
+        border: '30 25% 84%',
+        input: '30 25% 84%',
+      },
+      dark: {
+        background: '30 30% 8%',
+        foreground: '30 50% 94%',
+        card: '30 25% 12%',
+        cardForeground: '30 50% 94%',
+        popover: '30 25% 12%',
+        popoverForeground: '30 50% 94%',
+        muted: '30 22% 20%',
+        mutedForeground: '30 40% 78%',
+        secondary: '30 22% 20%',
+        secondaryForeground: '30 50% 94%',
+        border: '30 22% 20%',
+        input: '30 22% 20%',
       },
     },
   },

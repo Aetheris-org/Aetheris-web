@@ -2430,19 +2430,19 @@ export default function CreateArticlePage() {
               <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
-                    <Input
+                <Input
                       placeholder={t('createArticle.tagsPlaceholder')}
-                      value={tagInput}
+                  value={tagInput}
                       onChange={(e) => {
                         const newValue = e.target.value.slice(0, TAG_MAX_LENGTH)
                         setTagInput(newValue)
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAddTag()
-                        }
-                      }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddTag()
+                    }
+                  }}
                       maxLength={TAG_MAX_LENGTH}
                       className="h-9 sm:h-10 text-sm pr-12 sm:pr-16"
                     />

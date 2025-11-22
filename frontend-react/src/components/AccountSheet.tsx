@@ -99,10 +99,9 @@ export function AccountSheet() {
             navigate('/auth')
           }
         }}
-        className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+        className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap"
       >
-        <span className="hidden sm:inline">{t('accountSheet.signIn')}</span>
-        <span className="sm:hidden">{t('accountSheet.signIn')?.slice(0, 3) || 'Вход'}</span>
+        {t('accountSheet.signIn')}
       </Button>
     )
   }

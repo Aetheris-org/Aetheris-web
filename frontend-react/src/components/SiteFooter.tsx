@@ -24,7 +24,7 @@ export function SiteFooter() {
   }, [isExpanded])
 
   const navItems = [
-    { icon: MessageSquare, label: t('header.forum'), path: '/' },
+    { icon: MessageSquare, label: t('header.forum'), path: '/forum' },
     { icon: UsersRound, label: t('header.networking'), path: '/networking' },
     { icon: GraduationCap, label: t('header.courses'), path: '/courses' },
     { icon: Code2, label: t('header.developers'), path: '/developers' },

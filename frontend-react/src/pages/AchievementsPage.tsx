@@ -573,31 +573,31 @@ export default function AchievementsPage() {
     return (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between px-4">
-            <div className="flex items-center gap-4">
+          <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(-1)}
-                className="gap-2"
+                className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0"
               >
-                <ArrowLeft className="h-4 w-4" />
-                {t('common.back')}
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('common.back')}</span>
               </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-lg font-semibold">{t('achievements.pageTitle')}</h1>
+              <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+              <h1 className="text-sm sm:text-lg font-semibold truncate">{t('achievements.pageTitle')}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <ThemeToggle />
               <AccountSheet />
             </div>
           </div>
         </header>
-        <main className="container flex min-h-[60vh] items-center justify-center pb-16 pt-6">
+        <main className="container flex min-h-[60vh] items-center justify-center pb-12 sm:pb-16 pt-4 sm:pt-6 px-4 sm:px-6">
           <Card className="w-full max-w-md border-border/60">
-            <CardHeader>
-              <CardTitle>{t('auth.title')}</CardTitle>
-              <CardDescription>{t('achievements.title')}</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">{t('auth.title')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">{t('achievements.title')}</CardDescription>
             </CardHeader>
           </Card>
         </main>
@@ -628,7 +628,7 @@ export default function AchievementsPage() {
           </div>
         </div>
       </header>
-      <main className="container space-y-8 pb-16 pt-6">
+      <main className="container space-y-4 sm:space-y-6 md:space-y-8 pb-12 sm:pb-16 pt-4 sm:pt-6 px-4 sm:px-6">
         <HeroSection
           stats={stats}
           isExpanded={isHeroExpanded}
@@ -636,8 +636,8 @@ export default function AchievementsPage() {
           t={t}
         />
 
-        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-          <aside className="space-y-6">
+        <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-[280px_1fr]">
+          <aside className="hidden lg:block space-y-4 sm:space-y-6">
             <CategoryFilters
               activeCategory={activeCategory}
               onCategoryChange={setActiveCategory}
@@ -649,27 +649,27 @@ export default function AchievementsPage() {
 
             {stats.recentUnlocks.length > 0 && (
               <Card className="border-border/60 bg-background/90 shadow-sm">
-                <CardHeader className="space-y-3">
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                    <Award className="h-4 w-4 text-primary" />
+                <CardHeader className="space-y-2 sm:space-y-3 px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-3">
+                  <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base font-semibold">
+                    <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                     {t('achievements.stats.recentUnlocks')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-1.5 sm:space-y-2 px-4 sm:px-6 pb-4 sm:pb-6">
                   {stats.recentUnlocks.map((achievement) => (
                     <div
                       key={achievement.id}
-                      className="flex items-start justify-between gap-2 rounded-lg border border-border/50 bg-muted/10 p-2"
+                      className="flex items-start justify-between gap-2 rounded-lg border border-border/50 bg-muted/10 p-2 sm:p-2.5"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{achievement.title}</p>
+                        <p className="truncate text-xs sm:text-sm font-medium text-foreground">{achievement.title}</p>
                         {achievement.unlockedAt && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
                             {new Date(achievement.unlockedAt).toLocaleDateString()}
                           </p>
                         )}
                       </div>
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-primary" />
                     </div>
                   ))}
                 </CardContent>
@@ -677,18 +677,18 @@ export default function AchievementsPage() {
             )}
           </aside>
 
-          <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-xl font-semibold tracking-tight">{t('achievements.title')}</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-base sm:text-lg md:text-xl font-semibold tracking-tight">{t('achievements.title')}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {filteredAchievements.length} {filteredAchievements.length === 1 ? t('achievements.title').toLowerCase() : t('achievements.title').toLowerCase()}
                   {activeCategory !== 'all' && ` ${t('common.in')} ${activeCategory}`}
                 </p>
               </div>
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-                <SelectTrigger className="w-[180px] border-border/60 bg-muted/20 hover:bg-muted/30">
-                  <ArrowUpDown className="mr-2 h-4 w-4 shrink-0" />
+                <SelectTrigger className="w-full sm:w-[180px] h-9 sm:h-10 border-border/60 bg-muted/20 hover:bg-muted/30 text-xs sm:text-sm">
+                  <ArrowUpDown className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <SelectValue placeholder={t('achievements.filters.sortBy')} />
                 </SelectTrigger>
                 <SelectContent className="!bg-card border-border/60">
@@ -730,65 +730,65 @@ function HeroSection({ stats, isExpanded, onToggle, t }: HeroSectionProps) {
   return (
     <section
       className={cn(
-        'rounded-3xl border border-border/60 bg-muted/20 shadow-sm transition-all duration-300 overflow-hidden',
-        isExpanded ? 'p-6 md:p-10 max-h-[1000px]' : 'px-6 py-3 max-h-14'
+        'rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/20 shadow-sm transition-all duration-300 overflow-hidden',
+        isExpanded ? 'p-4 sm:p-6 md:p-10 max-h-[1000px]' : 'px-4 sm:px-6 py-2.5 sm:py-3 max-h-12 sm:max-h-14'
       )}
     >
       {isExpanded ? (
-        <div className="space-y-5 relative">
+        <div className="space-y-4 sm:space-y-5 relative">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-0 top-0 h-8 w-8 rounded-full"
+            className="absolute right-0 top-0 h-7 w-7 sm:h-8 sm:w-8 rounded-full"
             onClick={onToggle}
             aria-label={t('achievements.hero.collapse')}
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
-          <Badge variant="outline" className="w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]">
+          <Badge variant="outline" className="w-fit rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs uppercase tracking-[0.3em]">
             {t('achievements.hero.badge')}
           </Badge>
-          <div className="space-y-3">
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+          <div className="space-y-2 sm:space-y-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight">
               {t('achievements.hero.title')}
             </h1>
-            <p className="max-w-2xl text-base text-muted-foreground">
+            <p className="max-w-2xl text-sm sm:text-base text-muted-foreground">
               {t('achievements.hero.description')}
             </p>
           </div>
 
           <Card className="border-border/60 bg-background/90 shadow-sm">
-            <CardHeader className="space-y-2 pb-3">
-              <CardDescription className="text-xs uppercase tracking-wide">{t('achievements.stats.completionRate')}</CardDescription>
-              <CardTitle className="text-3xl font-semibold">{stats.completionRate}%</CardTitle>
+            <CardHeader className="space-y-1.5 sm:space-y-2 pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardDescription className="text-[10px] sm:text-xs uppercase tracking-wide">{t('achievements.stats.completionRate')}</CardDescription>
+              <CardTitle className="text-2xl sm:text-3xl font-semibold">{stats.completionRate}%</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
-              <Progress value={stats.completionRate} className="h-2" />
-              <p className="mt-2 text-xs text-muted-foreground">
+            <CardContent className="pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
+              <Progress value={stats.completionRate} className="h-1.5 sm:h-2" />
+              <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">
                 {stats.totalUnlocked} {t('common.of')} {stats.totalAvailable} {t('achievements.title').toLowerCase()} {t('achievements.unlocked')}
               </p>
             </CardContent>
           </Card>
         </div>
       ) : (
-        <div className="flex items-center gap-3 w-full">
-          <Trophy className="h-4 w-4 shrink-0 text-primary" />
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm font-semibold text-foreground">{stats.completionRate}%</span>
-            <span className="text-xs text-muted-foreground">{t('common.complete')}</span>
+        <div className="flex items-center gap-2 sm:gap-3 w-full">
+          <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-primary" />
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span className="text-xs sm:text-sm font-semibold text-foreground">{stats.completionRate}%</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">{t('common.complete')}</span>
           </div>
-          <Progress value={stats.completionRate} className="h-2 flex-1 min-w-0" />
-          <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+          <Progress value={stats.completionRate} className="h-1.5 sm:h-2 flex-1 min-w-0" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0 whitespace-nowrap">
             {stats.totalUnlocked}/{stats.totalAvailable}
           </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0 rounded-full -mr-1"
+            className="h-6 w-6 sm:h-7 sm:w-7 shrink-0 rounded-full -mr-1"
             onClick={onToggle}
             aria-label={t('achievements.hero.expand')}
           >
-            <ChevronDown className="h-3.5 w-3.5" />
+            <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Button>
         </div>
       )}
@@ -815,10 +815,10 @@ function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCateg
 
   return (
     <Card className="border-border/60 bg-muted/20 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{t('common.categories')}</CardTitle>
+      <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+        <CardTitle className="text-sm sm:text-base font-semibold">{t('common.categories')}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1 pt-0">
+      <CardContent className="space-y-1 pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
         {categories.map((category) => {
           const Icon = category.icon
           const count =
@@ -837,17 +837,17 @@ function CategoryFilters({ activeCategory, onCategoryChange, achievementsByCateg
               key={category.id}
               variant={activeCategory === category.id ? 'secondary' : 'ghost'}
               className={cn(
-                'w-full justify-start gap-2 h-9',
+                'w-full justify-start gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm',
                 activeCategory === category.id && 'bg-primary/10 text-primary border-primary/20 shadow-sm'
               )}
               onClick={() => onCategoryChange(category.id)}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1 text-left">{category.label}</span>
+              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="flex-1 text-left truncate">{category.label}</span>
               <Badge
                 variant="outline"
                 className={cn(
-                  'ml-auto rounded-full text-xs border',
+                  'ml-auto rounded-full text-[10px] sm:text-xs border shrink-0',
                   activeCategory === category.id
                     ? 'bg-primary/10 text-primary border-primary/30'
                     : 'bg-muted/50 border-border/60'
@@ -880,25 +880,25 @@ function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
 
   return (
     <Card className="border-border/60 bg-muted/20 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{t('achievements.breakdown.title')}</CardTitle>
+      <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+        <CardTitle className="text-sm sm:text-base font-semibold">{t('achievements.breakdown.title')}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0">
+      <CardContent className="space-y-2.5 sm:space-y-3 pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
         {rarities.map((rarity) => {
           const rarityStats = stats.byRarity[rarity.id] ?? { unlocked: 0, total: 0 }
           const unlocked = rarityStats.unlocked
           const total = rarityStats.total
           const percentage = total > 0 ? (unlocked / total) * 100 : 0
           return (
-            <div key={rarity.id} className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-0.5">
+            <div key={rarity.id} className="space-y-1 sm:space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-0.5 shrink-0">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <Star
                         key={i}
                         className={cn(
-                          'h-3 w-3 transition-colors',
+                          'h-2.5 w-2.5 sm:h-3 sm:w-3 transition-colors',
                           i < rarity.style.filledStars
                             ? 'text-primary fill-primary'
                             : 'text-muted-foreground/30 fill-transparent'
@@ -906,11 +906,11 @@ function RarityBreakdown({ stats, t }: RarityBreakdownProps) {
                       />
                     ))}
                   </div>
-                  <span className="font-medium text-foreground">{rarity.label}</span>
+                  <span className="font-medium text-foreground truncate">{rarity.label}</span>
                 </div>
-                <span className="text-muted-foreground">{unlocked}/{total}</span>
+                <span className="text-muted-foreground shrink-0 ml-1">{unlocked}/{total}</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
+              <div className="h-1 sm:h-1.5 overflow-hidden rounded-full bg-muted/50">
                 <div
                   className={cn('h-full transition-all', rarity.style.badge.split(' ')[0])}
                   style={{ width: `${Math.min(100, percentage)}%` }}
@@ -942,11 +942,11 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
   if (achievements.length === 0) {
     return (
       <Card className="border-dashed border-border/60">
-        <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-          <Trophy className="h-12 w-12 text-muted-foreground/50" />
+        <CardContent className="flex flex-col items-center justify-center gap-3 sm:gap-4 py-10 sm:py-12 text-center px-4 sm:px-6">
+          <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
           <div>
-            <p className="font-medium text-foreground">{t('achievements.noAchievements')}</p>
-            <p className="text-sm text-muted-foreground">{t('achievements.noAchievementsDescription')}</p>
+            <p className="text-sm sm:text-base font-medium text-foreground">{t('achievements.noAchievements')}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t('achievements.noAchievementsDescription')}</p>
           </div>
         </CardContent>
       </Card>
@@ -954,7 +954,7 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {achievements.map((achievement) => {
         const CategoryIcon = categoryIcons[achievement.category as keyof typeof categoryIcons] ?? Trophy
         const rarityStyle = rarityStyles[achievement.rarity]
@@ -973,56 +973,56 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
               achievement.rarity === 'legendary' && 'animate-legendary-glow'
             )}
           >
-            <CardHeader className="space-y-3 pb-3">
-              <div className="flex items-start justify-between gap-3">
+            <CardHeader className="space-y-2 sm:space-y-3 pb-2 sm:pb-3 p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div
                   className={cn(
-                    'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 transition-colors',
+                    'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border-2 transition-colors',
                     achievement.unlocked
                       ? 'border-primary/50 bg-primary/10 text-primary'
                       : 'border-border/60 bg-muted text-muted-foreground'
                   )}
                 >
                   {achievement.unlocked ? (
-                    <CategoryIcon className="h-6 w-6" />
+                    <CategoryIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                   ) : (
-                    <Lock className="h-5 w-5" />
+                    <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
                   )}
                 </div>
                 {achievement.unlocked ? (
                   <Badge
                     variant="secondary"
                     className={cn(
-                      'flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wide',
+                      'flex items-center gap-0.5 sm:gap-1 rounded-full px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] uppercase tracking-wide shrink-0',
                       rarityStyle.badge
                     )}
                   >
-                    <CheckCircle2 className="h-3 w-3" />
+                    <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     {t('achievements.unlocked')}
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="rounded-full text-[10px] uppercase tracking-wide">
+                  <Badge variant="outline" className="rounded-full text-[9px] sm:text-[10px] uppercase tracking-wide shrink-0">
                     {t('achievements.locked')}
                   </Badge>
                 )}
               </div>
-              <div className="space-y-1">
-                <CardTitle className="text-base font-semibold leading-tight">
+              <div className="space-y-0.5 sm:space-y-1">
+                <CardTitle className="text-sm sm:text-base font-semibold leading-tight">
                   {achievement.title}
                 </CardTitle>
-                <CardDescription className="text-xs leading-relaxed">{achievement.description}</CardDescription>
+                <CardDescription className="text-[10px] sm:text-xs leading-relaxed">{achievement.description}</CardDescription>
               </div>
             </CardHeader>
-            <CardContent className="mt-auto space-y-3 pt-0">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <CategoryIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="text-muted-foreground capitalize shrink-0">{achievement.category}</span>
-                  <span className="text-muted-foreground shrink-0">•</span>
+            <CardContent className="mt-auto space-y-2 sm:space-y-3 pt-0 p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+                <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                  <CategoryIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="text-muted-foreground capitalize shrink-0 hidden sm:inline">{achievement.category}</span>
+                  <span className="text-muted-foreground shrink-0 hidden sm:inline">•</span>
                   <Badge
                     variant="outline"
                     className={cn(
-                      'rounded-full px-2 py-0.5 text-[10px] flex items-center gap-1 border shrink-0',
+                      'rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] flex items-center gap-0.5 sm:gap-1 border shrink-0',
                       achievement.unlocked ? rarityStyle.badge : 'bg-muted/50 text-muted-foreground border-border/60'
                     )}
                   >
@@ -1032,7 +1032,7 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
                         <Star
                           key={i}
                           className={cn(
-                            'h-2.5 w-2.5 transition-colors shrink-0',
+                            'h-2 w-2 sm:h-2.5 sm:w-2.5 transition-colors shrink-0',
                             i < rarityStyle.filledStars
                               ? achievement.unlocked
                                 ? 'text-primary fill-primary'
@@ -1045,15 +1045,15 @@ function AchievementsGrid({ achievements, t }: AchievementsGridProps) {
                   </Badge>
                 </div>
                 {achievement.xpReward && (
-                  <span className="flex items-center gap-1 font-medium text-foreground whitespace-nowrap shrink-0">
-                    <Zap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="flex items-center gap-0.5 sm:gap-1 font-medium text-foreground whitespace-nowrap shrink-0">
+                    <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 text-primary" />
                     +{formatXP(achievement.xpReward)} XP
                   </span>
                 )}
               </div>
               {achievement.unlocked && achievement.unlockedAt && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/10 px-2.5 py-1.5 text-xs text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-border/50 bg-muted/10 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   <span>{t('achievements.unlocked')} {new Date(achievement.unlockedAt).toLocaleDateString()}</span>
                 </div>
               )}

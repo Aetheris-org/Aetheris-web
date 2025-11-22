@@ -23,10 +23,46 @@ export function ArticleCardLine({
     })
   }
 
-  const estimateReadTime = (content: string) => {
+  // Функция для извлечения текста из Slate document
+  const extractTextFromSlate = (content: any): string => {
+    if (typeof content === 'string') {
+      return content
+    }
+    
+    // Если это объект Slate document
+    if (content && typeof content === 'object') {
+      // Проверяем формат Slate: { document: [...] }
+      const document = content.document || content
+      
+      if (Array.isArray(document)) {
+        const extractText = (node: any): string => {
+          if (typeof node === 'string') {
+            return node
+          }
+          if (node?.text) {
+            return node.text
+          }
+          if (node?.children && Array.isArray(node.children)) {
+            return node.children.map(extractText).join(' ')
+          }
+          if (node?.content && Array.isArray(node.content)) {
+            return node.content.map(extractText).join(' ')
+          }
+          return ''
+        }
+        return document.map(extractText).join(' ')
+      }
+    }
+    
+    return ''
+  }
+
+  const estimateReadTime = (content: any) => {
     const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    return Math.ceil(words / wordsPerMinute)
+    const text = extractTextFromSlate(content)
+    if (!text) return 1 // Минимум 1 минута
+    const words = text.split(/\s+/).filter(word => word.length > 0).length
+    return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
 
   return (

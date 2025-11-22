@@ -321,6 +321,7 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
       // Определяем язык только если содержимое не пустое, чтобы не блокировать UI при создании пустого блока
       const initialText = node.textContent.trim()
       let currentDisplayLanguage = 'plaintext'
+      let lastTextContent = initialText // Отслеживаем содержимое для оптимизации
       if (initialText.length >= 10) {
         currentDisplayLanguage = getDisplayLanguage(node)
       } else if (node.attrs.language && node.attrs.language !== 'plaintext') {
@@ -346,57 +347,9 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
         e.stopPropagation()
       }, true)
       
-      // Используем MutationObserver для применения подсветки при изменении содержимого
-      // Но только после того, как ProseMirror вставит содержимое
-      let observerTimeout: ReturnType<typeof setTimeout> | null = null
-      let isHighlighting = false
-      
-      const observer = new MutationObserver(() => {
-        // Игнорируем изменения, которые мы сами делаем (применение подсветки)
-        if (isHighlighting) {
-          return
-        }
-        
-        // Отменяем предыдущий таймер
-        if (observerTimeout) {
-          clearTimeout(observerTimeout)
-        }
-        
-        // Применяем подсветку с задержкой, чтобы избежать частых обновлений
-        observerTimeout = setTimeout(() => {
-          if (isHighlighting) {
-            return
-          }
-          
-          const text = code.textContent || ''
-          if (text && text.trim().length > 0) {
-            // Определяем язык только если содержимое достаточно длинное
-            let lang = currentDisplayLanguage
-            if (text.trim().length >= 10 && currentDisplayLanguage === 'plaintext') {
-              lang = detectLanguage(text)
-              if (lang !== 'plaintext' && lang !== currentDisplayLanguage) {
-                currentDisplayLanguage = lang
-                code.className = `hljs language-${currentDisplayLanguage}`
-                if (headerRoot) {
-                  headerRoot.render(<CodeBlockHeader node={node} language={currentDisplayLanguage} />)
-                }
-              }
-            }
-            
-            // Применяем подсветку
-            isHighlighting = true
-            applyHighlighting(text, currentDisplayLanguage)
-            isHighlighting = false
-          }
-        }, 150)
-      })
-      
-      // Наблюдаем за изменениями в pre элементе (но не в code, чтобы избежать рекурсии)
-      observer.observe(pre, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      })
+      // ВРЕМЕННО ОТКЛЮЧАЕМ MutationObserver, чтобы избежать зависания
+      // Подсветка будет применяться только через метод update
+      // Это предотвращает бесконечные циклы и зависания
       
       return {
         dom,
@@ -406,24 +359,59 @@ export const CodeBlockWithCopy = CodeBlockLowlight.extend({
             return false
           }
           
-          // Просто возвращаем true - не делаем ничего сложного в update
-          // Это предотвращает зависание при создании/выборе code block
-          // Подсветка применяется через MutationObserver
-            return true
-        },
-        destroy: () => {
-          // Останавливаем observer
-          observer.disconnect()
-          
-          // Отменяем таймер
-          if (observerTimeout) {
-            clearTimeout(observerTimeout)
+          // Обновляем язык и применяем подсветку с debounce
+          const newText = updatedNode.textContent.trim()
+          if (newText !== lastTextContent) {
+            lastTextContent = newText
+            
+            // Определяем язык только если содержимое достаточно длинное
+            if (newText.length >= 10) {
+              const newLang = getDisplayLanguage(updatedNode)
+              if (newLang !== currentDisplayLanguage) {
+                currentDisplayLanguage = newLang
+                if (currentDisplayLanguage && currentDisplayLanguage !== 'plaintext') {
+                  code.className = `hljs language-${currentDisplayLanguage}`
+                } else {
+                  code.className = 'hljs'
+                }
+                
+                // Обновляем header с новым языком
+                if (headerRoot) {
+                  headerRoot.render(<CodeBlockHeader node={updatedNode} language={currentDisplayLanguage} />)
+                }
+              }
+            } else if (newText.length === 0 && currentDisplayLanguage !== 'plaintext') {
+              // Сбрасываем язык только если содержимое полностью пустое
+              currentDisplayLanguage = 'plaintext'
+              code.className = 'hljs'
+              if (headerRoot) {
+                headerRoot.render(<CodeBlockHeader node={updatedNode} language={currentDisplayLanguage} />)
+              }
+            }
+            
+            // Применяем подсветку с debounce через requestAnimationFrame
+            // Это предотвращает зависание и дает ProseMirror время обновить DOM
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const text = code.textContent || pre.textContent || ''
+                if (text && currentDisplayLanguage !== 'plaintext') {
+                  applyHighlighting(text, currentDisplayLanguage)
+                }
+              })
+            })
           }
           
-          // Уничтожаем React root
+          return true
+        },
+        destroy: () => {
+          // Уничтожаем React root асинхронно, чтобы избежать предупреждений React
           if (headerRoot) {
-            headerRoot.unmount()
-            headerRoot = null
+            requestAnimationFrame(() => {
+              if (headerRoot) {
+                headerRoot.unmount()
+                headerRoot = null
+              }
+            })
           }
         },
       }

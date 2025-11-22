@@ -104,7 +104,7 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                     <span className="flex flex-col gap-1">
                       <span className="text-sm font-semibold leading-tight text-foreground">{item.label}</span>
                       {item.description && (
-                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                      <span className="text-xs text-muted-foreground">{item.description}</span>
                       )}
                     </span>
                   </DropdownMenuItem>
@@ -121,10 +121,9 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
               size="sm"
               variant="ghost"
               onClick={() => navigate('/pricing')}
-              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap"
             >
-              <span className="hidden sm:inline">Pricing</span>
-              <span className="sm:hidden">$</span>
+              Pricing
             </Button>
           )}
           {showCreateButton && (

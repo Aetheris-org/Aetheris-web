@@ -206,7 +206,7 @@
   @keyframes point-to-checkbox {
     0%, 100% {
       transform: translateX(0);
-    }
+}
     50% {
       transform: translateX(-8px);
     }

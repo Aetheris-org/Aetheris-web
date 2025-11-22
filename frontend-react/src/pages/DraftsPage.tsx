@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileText, Clock, PencilLine, Trash2 } from 'lucide-react'
+import { FileText, Clock, PencilLine, Trash2, ArrowLeft } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,13 +18,13 @@ import { useTranslation } from '@/hooks/useTranslation'
 function DraftSkeleton() {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex flex-col gap-3 p-5">
-        <div className="h-4 w-1/4 animate-pulse rounded bg-muted/30" />
-        <div className="h-6 w-2/3 animate-pulse rounded bg-muted/30" />
-        <div className="h-16 w-full animate-pulse rounded bg-muted/30" />
-        <div className="flex gap-3">
-          <div className="h-9 w-28 animate-pulse rounded bg-muted/30" />
-          <div className="h-9 w-28 animate-pulse rounded bg-muted/30" />
+      <CardContent className="flex flex-col gap-3 sm:gap-4 p-4 sm:p-5">
+        <div className="h-3 sm:h-4 w-1/4 animate-pulse rounded bg-muted/30" />
+        <div className="h-5 sm:h-6 w-2/3 animate-pulse rounded bg-muted/30" />
+        <div className="h-12 sm:h-16 w-full animate-pulse rounded bg-muted/30" />
+        <div className="flex gap-2 sm:gap-3">
+          <div className="h-8 sm:h-9 w-full sm:w-28 animate-pulse rounded bg-muted/30" />
+          <div className="h-8 sm:h-9 w-full sm:w-28 animate-pulse rounded bg-muted/30" />
         </div>
       </CardContent>
     </Card>
@@ -119,30 +119,31 @@ export default function DraftsPage() {
     return (
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-                {t('common.back')}
+          <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0">
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('common.back')}</span>
               </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-lg font-semibold">{t('drafts.title')}</h1>
+              <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+              <h1 className="text-sm sm:text-lg font-semibold truncate">{t('drafts.title')}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <ThemeToggle />
               <AccountSheet />
             </div>
           </div>
         </header>
 
-        <main className="container flex flex-col items-center justify-center py-16 text-center">
-          <Card className="max-w-md border-dashed bg-muted/20">
-            <CardContent className="flex flex-col items-center gap-4 py-10">
-              <FileText className="h-12 w-12 text-muted-foreground" />
-              <CardTitle className="text-xl">{t('drafts.signInToManage')}</CardTitle>
-              <CardDescription>
+        <main className="container flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4 sm:px-6">
+          <Card className="max-w-md w-full border-dashed bg-muted/20">
+            <CardContent className="flex flex-col items-center gap-3 sm:gap-4 py-8 sm:py-10 px-4 sm:px-6">
+              <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
+              <CardTitle className="text-base sm:text-xl">{t('drafts.signInToManage')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {t('drafts.signInDescription')}
               </CardDescription>
-              <Button onClick={() => navigate('/auth')}>{t('auth.signIn')}</Button>
+              <Button onClick={() => navigate('/auth')} className="h-9 sm:h-10 text-xs sm:text-sm">{t('auth.signIn')}</Button>
             </CardContent>
           </Card>
         </main>
@@ -153,18 +154,19 @@ export default function DraftsPage() {
   return (
     <div className="min-h-screen app-surface">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-              {t('common.back')}
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0">
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('common.back')}</span>
             </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{t('drafts.pageTitle')}</h1>
+            <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
+            <h1 className="text-sm sm:text-lg font-semibold truncate">{t('drafts.pageTitle')}</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={handleCreateDraft} className="gap-2">
-              <PencilLine className="h-4 w-4" />
-              {t('drafts.newDraft')}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <Button size="sm" onClick={handleCreateDraft} className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
+              <PencilLine className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('drafts.newDraft')}</span>
             </Button>
             <ThemeToggle />
             <AccountSheet />
@@ -172,42 +174,42 @@ export default function DraftsPage() {
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container py-4 sm:py-6 md:py-8 px-4 sm:px-6">
         {isLoading ? (
-          <div className="mx-auto max-w-4xl space-y-4">
+          <div className="mx-auto max-w-4xl space-y-3 sm:space-y-4">
             {Array.from({ length: 3 }).map((_, index) => (
               <DraftSkeleton key={index} />
             ))}
           </div>
         ) : isError ? (
-          <Card className="mx-auto max-w-2xl border-dashed bg-muted/30 text-center">
-            <CardContent className="flex flex-col items-center gap-4 py-12">
-              <FileText className="h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">{t('drafts.error')}</CardTitle>
-              <CardDescription>
+          <Card className="mx-auto max-w-2xl w-full border-dashed bg-muted/30 text-center">
+            <CardContent className="flex flex-col items-center gap-3 sm:gap-4 py-10 sm:py-12 px-4 sm:px-6">
+              <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+              <CardTitle className="text-base sm:text-xl">{t('drafts.error')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {error instanceof Error ? error.message : t('drafts.errorDescription')}
               </CardDescription>
-              <Button onClick={() => refetch()}>{t('common.retry')}</Button>
+              <Button onClick={() => refetch()} className="h-9 sm:h-10 text-xs sm:text-sm">{t('common.retry')}</Button>
             </CardContent>
           </Card>
         ) : formattedDrafts.length === 0 ? (
-          <Card className="mx-auto max-w-2xl border-dashed bg-muted/30 text-center">
-            <CardContent className="flex flex-col items-center gap-4 py-12">
-              <FileText className="h-10 w-10 text-muted-foreground" />
-              <CardTitle className="text-xl">{t('drafts.noDrafts')}</CardTitle>
-              <CardDescription>
+          <Card className="mx-auto max-w-2xl w-full border-dashed bg-muted/30 text-center">
+            <CardContent className="flex flex-col items-center gap-3 sm:gap-4 py-10 sm:py-12 px-4 sm:px-6">
+              <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+              <CardTitle className="text-base sm:text-xl">{t('drafts.noDrafts')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {t('drafts.noDraftsDescription')}
               </CardDescription>
-              <Button onClick={handleCreateDraft}>{t('drafts.startWriting')}</Button>
+              <Button onClick={handleCreateDraft} className="h-9 sm:h-10 text-xs sm:text-sm">{t('drafts.startWriting')}</Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="mx-auto max-w-4xl space-y-5">
+          <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
             <Card>
-              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6">
                 <div>
-                  <CardTitle>{t('drafts.yourDrafts')}</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-base sm:text-lg">{t('drafts.yourDrafts')}</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     {formattedDrafts.length === 1
                       ? t('drafts.oneDraftWaiting')
                       : t('drafts.draftsReady', { count: formattedDrafts.length })}
@@ -216,35 +218,35 @@ export default function DraftsPage() {
               </CardHeader>
             </Card>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {formattedDrafts.map((draft) => (
                 <Card key={draft.id} className="border-border/60">
-                  <CardContent className="flex flex-col gap-4 p-5">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="gap-1">
-                          <FileText className="h-3.5 w-3.5" />
+                  <CardContent className="flex flex-col gap-3 sm:gap-4 p-4 sm:p-5">
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
+                        <Badge variant="outline" className="gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-4 sm:h-5">
+                          <FileText className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                           {t('drafts.draft')}
                         </Badge>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
+                        <span className="flex items-center gap-0.5 sm:gap-1">
+                          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           {t('drafts.updated')} {new Date(draft.updatedAt || draft.createdAt).toLocaleString()}
                         </span>
                         {draft.difficulty && (
-                          <Badge variant="secondary" className="uppercase tracking-wide">
+                          <Badge variant="secondary" className="uppercase tracking-wide text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-4 sm:h-5">
                             {t(`createArticle.difficultyOptions.${getDifficultyKey(draft.difficulty)}`)}
                           </Badge>
                         )}
                       </div>
-                      <h2 className="text-xl font-semibold text-foreground">{draft.title || t('drafts.untitledDraft')}</h2>
-                      <p className="text-sm text-muted-foreground line-clamp-3">
+                      <h2 className="text-base sm:text-lg md:text-xl font-semibold text-foreground break-words">{draft.title || t('drafts.untitledDraft')}</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                         {draft.excerpt || draft.content.slice(0, 220) || t('drafts.emptyDraft')}
                         {draft.content.length > 220 ? '…' : ''}
                       </p>
                       {draft.tags?.length ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {draft.tags.slice(0, 4).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="rounded-md">
+                            <Badge key={tag} variant="secondary" className="rounded-md text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-4 sm:h-5">
                               {tag}
                             </Badge>
                           ))}
@@ -254,20 +256,20 @@ export default function DraftsPage() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         size="sm"
-                        className="gap-2 sm:w-auto"
+                        className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm w-full sm:w-auto"
                         onClick={() => handleContinueDraft(draft.id)}
                       >
-                        <PencilLine className="h-4 w-4" />
+                        <PencilLine className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {t('drafts.continueWriting')}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="gap-2 text-destructive hover:text-destructive"
+                        className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm text-destructive hover:text-destructive w-full sm:w-auto"
                         onClick={() => handleDeleteDraft(draft.id)}
                         disabled={deleteDraftMutation.isPending}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {t('drafts.delete')}
                       </Button>
                     </div>

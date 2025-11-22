@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils"
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring-secondary,var(--ring)))] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
-      variants: {
-        variant: {
-          default: "bg-primary text-primary-foreground hover:bg-primary/90",
-          destructive:
-            "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-          outline:
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
             "border border-input bg-background hover:bg-[hsl(var(--accent-secondary,var(--accent)))] hover:text-[hsl(var(--accent-secondary-foreground,var(--accent-foreground)))] active:bg-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--accent))))] active:text-[hsl(var(--accent-tertiary-foreground,var(--accent-secondary-foreground,var(--accent-foreground))))]",
-          secondary:
+        secondary:
             "bg-[hsl(var(--accent-secondary,var(--secondary)))] text-[hsl(var(--accent-secondary-foreground,var(--secondary-foreground)))] hover:bg-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--secondary))))] hover:text-[hsl(var(--accent-tertiary-foreground,var(--accent-secondary-foreground,var(--secondary-foreground))))]",
           ghost: "hover:bg-[hsl(var(--accent-secondary,var(--accent)))] hover:text-[hsl(var(--accent-secondary-foreground,var(--accent-foreground)))] active:bg-[hsl(var(--accent-tertiary,var(--accent-secondary,var(--accent))))] active:text-[hsl(var(--accent-tertiary-foreground,var(--accent-secondary-foreground,var(--accent-foreground))))]",
           link: "text-primary underline-offset-4 hover:underline hover:text-[hsl(var(--primary-secondary,var(--primary)))]",
-        },
+      },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 px-3",
