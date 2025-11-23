@@ -156,15 +156,27 @@ export default function HomePage() {
       sortOption,
       debouncedSearchQuery,
     ],
-    queryFn: () =>
-      getArticles({
+    queryFn: () => {
+      // Логирование для отладки
+      if (import.meta.env.DEV) {
+        logger.debug('[HomePage] Fetching articles with filters:', {
+          page,
+          pageSize,
+          tags: selectedTags,
+        difficulty: difficultyFilter,
+        sort: sortOption,
+          search: debouncedSearchQuery,
+        });
+      }
+      return getArticles({
         page,
         pageSize,
         tags: selectedTags.length ? selectedTags : undefined,
         difficulty: difficultyFilter,
         sort: sortOption,
         search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
-      }),
+      });
+    },
     // Кэшируем на 5 минут (данные статей не меняются часто)
     staleTime: 5 * 60 * 1000,
     // Храним в кэше 30 минут
@@ -901,7 +913,7 @@ export default function HomePage() {
           </div>
 
           <aside className="space-y-4 sm:space-y-6 order-1 lg:order-2 min-w-0 max-w-full">
-            <Card>
+            <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
               <CardHeader className="space-y-3 pb-3 sm:pb-4 p-4 sm:p-6">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -999,6 +1011,14 @@ export default function HomePage() {
         sortOption={sortOption}
         allTags={popularTags}
         onApply={({ tags, difficulty, sort }) => {
+          // Логирование для отладки
+          if (import.meta.env.DEV) {
+            logger.debug('[HomePage] Filters applied:', {
+              tags,
+              difficulty,
+              sort,
+            });
+          }
           setSelectedTags(tags)
           setDifficultyFilter(difficulty)
           setSortOption(sort)

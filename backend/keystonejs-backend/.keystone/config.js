@@ -197,14 +197,18 @@ var accessControl = {
       },
       update: () => false,
       // Закладки нельзя обновлять
-      delete: ({ session: session2, item }) => {
-        if (!session2?.itemId) return false;
-        if (!item) return false;
-        return String(item.user?.id || item.user) === String(session2.itemId);
+      delete: ({ session: session2 }) => {
+        return !!session2?.itemId;
       }
     },
     filter: {
       query: ({ session: session2 }) => {
+        if (!session2?.itemId) return false;
+        return {
+          user: { id: { equals: session2.itemId } }
+        };
+      },
+      delete: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
         return {
           user: { id: { equals: session2.itemId } }
@@ -1311,8 +1315,18 @@ async function findOrCreateGoogleUser(context, profile) {
       if (profile.displayName && user.name !== profile.displayName) {
         updateData.name = profile.displayName;
       }
-      if (profile.avatar && user.avatar !== profile.avatar) {
+      if (profile.avatar && (!user.avatar || user.avatar.trim() === "")) {
         updateData.avatar = profile.avatar;
+        logger_default.debug("Updating avatar from Google OAuth (user had no avatar)", {
+          userId: user.id,
+          googleAvatar: profile.avatar
+        });
+      } else if (profile.avatar && user.avatar && user.avatar !== profile.avatar) {
+        logger_default.debug("Skipping avatar update from Google OAuth (user has custom avatar)", {
+          userId: user.id,
+          currentAvatar: user.avatar,
+          googleAvatar: profile.avatar
+        });
       }
       if (user.provider !== "google") {
         updateData.provider = "google";
@@ -2073,17 +2087,27 @@ async function extendExpressApp(app, context) {
         }]);
       }
       const base64Image = file.buffer.toString("base64");
+      logger_default.debug("Preparing ImgBB upload:", {
+        filename: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        base64Length: base64Image.length,
+        hasApiKey: !!imgbbApiKey
+      });
       const formData = new URLSearchParams();
       formData.append("key", imgbbApiKey);
       formData.append("image", base64Image);
       if (file.originalname) {
         formData.append("name", file.originalname);
       }
+      const requestBody = formData.toString();
+      logger_default.debug("ImgBB request body length:", requestBody.length);
       const https = await import("https");
       const timeoutMs = 3e4;
       try {
+        const requestBody2 = formData.toString();
+        logger_default.debug("ImgBB request body length:", requestBody2.length);
         const imgbbResponse = await new Promise((resolve, reject) => {
-          const requestBody = formData.toString();
           let timeout;
           timeout = setTimeout(() => {
             reject(new Error("Request timeout"));
@@ -2095,16 +2119,37 @@ async function extendExpressApp(app, context) {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "Content-Length": Buffer.byteLength(requestBody)
+                "Content-Length": Buffer.byteLength(requestBody2)
               }
             },
             (res2) => {
               let data = "";
               res2.on("data", (chunk) => {
-                data += chunk;
+                data += chunk.toString();
               });
               res2.on("end", () => {
                 clearTimeout(timeout);
+                logger_default.debug("ImgBB API response:", {
+                  statusCode: res2.statusCode,
+                  headers: res2.headers,
+                  dataLength: data.length,
+                  dataPreview: data.substring(0, 200)
+                });
+                if (!data || data.trim().length === 0) {
+                  logger_default.error("ImgBB API returned empty response", {
+                    statusCode: res2.statusCode,
+                    headers: res2.headers
+                  });
+                  reject(new Error(`Empty response from ImgBB API (status: ${res2.statusCode})`));
+                  return;
+                }
+                if (res2.statusCode && (res2.statusCode < 200 || res2.statusCode >= 300)) {
+                  logger_default.error("ImgBB API returned error status:", {
+                    statusCode: res2.statusCode,
+                    data: data.substring(0, 1e3),
+                    headers: res2.headers
+                  });
+                }
                 try {
                   const jsonData = JSON.parse(data);
                   resolve({
@@ -2112,8 +2157,21 @@ async function extendExpressApp(app, context) {
                     data: jsonData
                   });
                 } catch (parseError) {
-                  reject(new Error(`Failed to parse response: ${parseError}`));
+                  logger_default.error("Failed to parse ImgBB response:", {
+                    error: parseError.message,
+                    dataLength: data.length,
+                    dataPreview: data.substring(0, 1e3),
+                    statusCode: res2.statusCode,
+                    headers: res2.headers,
+                    contentType: res2.headers["content-type"]
+                  });
+                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res2.statusCode}, Response preview: ${data.substring(0, 200)}`));
                 }
+              });
+              res2.on("error", (error) => {
+                clearTimeout(timeout);
+                logger_default.error("ImgBB API response error:", error);
+                reject(error);
               });
             }
           );
@@ -2126,7 +2184,7 @@ async function extendExpressApp(app, context) {
             clearTimeout(timeout);
             reject(new Error("Request timeout"));
           });
-          req2.write(requestBody);
+          req2.write(requestBody2);
           req2.end();
         });
         if (imgbbResponse.statusCode < 200 || imgbbResponse.statusCode >= 300) {
@@ -2584,31 +2642,36 @@ var SearchArticlesInputSchema = import_zod.z.object({
 function extractTextFromSlateDocument(document2) {
   if (!document2) return "";
   let text4 = "";
-  if (Array.isArray(document2)) {
-    for (const node of document2) {
-      if (node.type === "paragraph" || node.type === "heading") {
-        if (Array.isArray(node.children)) {
-          for (const child of node.children) {
-            if (typeof child === "object" && child.text) {
-              text4 += child.text + " ";
-            }
-          }
+  const extractTextFromNode = (node) => {
+    if (!node) return;
+    if (typeof node === "string") {
+      text4 += node + " ";
+      return;
+    }
+    if (typeof node === "object") {
+      if (node.text && typeof node.text === "string") {
+        text4 += node.text + " ";
+      }
+      if (Array.isArray(node.children)) {
+        for (const child of node.children) {
+          extractTextFromNode(child);
         }
+      } else if (node.children) {
+        extractTextFromNode(node.children);
       }
     }
-  } else if (typeof document2 === "object" && document2.children) {
+  };
+  if (Array.isArray(document2)) {
+    for (const node of document2) {
+      extractTextFromNode(node);
+    }
+  } else if (typeof document2 === "object") {
     if (Array.isArray(document2.children)) {
       for (const node of document2.children) {
-        if (node.type === "paragraph" || node.type === "heading") {
-          if (Array.isArray(node.children)) {
-            for (const child of node.children) {
-              if (typeof child === "object" && child.text) {
-                text4 += child.text + " ";
-              }
-            }
-          }
-        }
+        extractTextFromNode(node);
       }
+    } else {
+      extractTextFromNode(document2);
     }
   }
   return text4.trim();
@@ -2626,9 +2689,10 @@ function hasAllTags(articleTags, filterTags) {
   );
 }
 function matchesSearch(text4, searchQuery) {
-  if (!searchQuery || !text4) return true;
-  const normalizedText = text4.toLowerCase();
-  const normalizedSearch = searchQuery.toLowerCase();
+  if (!searchQuery || searchQuery.trim().length === 0) return true;
+  if (!text4 || text4.trim().length === 0) return false;
+  const normalizedText = text4.toLowerCase().trim();
+  const normalizedSearch = searchQuery.toLowerCase().trim();
   return normalizedText.includes(normalizedSearch);
 }
 async function searchAndFilterArticles(context, args) {
@@ -2653,6 +2717,7 @@ async function searchAndFilterArticles(context, args) {
   };
   if (validatedArgs.difficulty) {
     let difficultyValue = validatedArgs.difficulty;
+    const originalValue = difficultyValue;
     if (difficultyValue === "beginner") {
       difficultyValue = "easy";
     } else if (difficultyValue === "intermediate") {
@@ -2660,6 +2725,11 @@ async function searchAndFilterArticles(context, args) {
     } else if (difficultyValue === "advanced") {
       difficultyValue = "hard";
     }
+    logger_default.debug(`[searchArticles] Difficulty filter:`, {
+      original: originalValue,
+      mapped: difficultyValue,
+      whereFilter: { equals: difficultyValue }
+    });
     where.difficulty = { equals: difficultyValue };
   }
   const allArticles = await context.sudo().query.Article.findMany({
@@ -2689,6 +2759,14 @@ async function searchAndFilterArticles(context, args) {
     `
   });
   logger_default.debug(`[searchArticles] Found ${allArticles.length} articles before filtering`);
+  if (validatedArgs.difficulty) {
+    const difficultyCounts = allArticles.reduce((acc, article) => {
+      const diff = article.difficulty || "unknown";
+      acc[diff] = (acc[diff] || 0) + 1;
+      return acc;
+    }, {});
+    logger_default.debug(`[searchArticles] Articles by difficulty before filter:`, difficultyCounts);
+  }
   let filteredArticles = allArticles;
   if (validatedArgs.tags && validatedArgs.tags.length > 0) {
     filteredArticles = filteredArticles.filter(
@@ -2698,15 +2776,27 @@ async function searchAndFilterArticles(context, args) {
   }
   if (validatedArgs.search && validatedArgs.search.trim().length > 0) {
     const searchQuery = validatedArgs.search.trim();
+    logger_default.debug(`[searchArticles] Filtering by search query: "${searchQuery}"`);
     filteredArticles = filteredArticles.filter((article) => {
       const titleMatch = matchesSearch(article.title || "", searchQuery);
       const excerptMatch = matchesSearch(article.excerpt || "", searchQuery);
       let contentMatch = false;
+      let contentText = "";
       if (article.content && article.content.document) {
-        const contentText = extractTextFromSlateDocument(article.content.document);
+        contentText = extractTextFromSlateDocument(article.content.document);
         contentMatch = matchesSearch(contentText, searchQuery);
       }
-      return titleMatch || excerptMatch || contentMatch;
+      const matches = titleMatch || excerptMatch || contentMatch;
+      if (filteredArticles.indexOf(article) < 3) {
+        logger_default.debug(`[searchArticles] Article "${article.title?.substring(0, 50)}...":`, {
+          titleMatch,
+          excerptMatch,
+          contentMatch,
+          contentTextLength: contentText.length,
+          matches
+        });
+      }
+      return matches;
     });
     logger_default.debug(`[searchArticles] After search filter: ${filteredArticles.length} articles`);
   }
@@ -2734,16 +2824,99 @@ async function searchAndFilterArticles(context, args) {
   const skip = validatedArgs.skip || 0;
   const take = validatedArgs.take || 10;
   const paginatedArticles = sortedArticles.slice(skip, skip + take);
-  const serializedArticles = paginatedArticles.map((article) => {
-    const serialized = { ...article };
-    if (article.id !== null && article.id !== void 0) {
-      const idNum = typeof article.id === "string" ? parseInt(article.id, 10) : typeof article.id === "number" ? article.id : null;
-      if (idNum !== null && !isNaN(idNum)) {
-        serialized.id = idNum;
-      }
-    }
-    return serialized;
+  logger_default.debug("[searchArticles] Paginated articles:", {
+    count: paginatedArticles.length,
+    firstArticle: paginatedArticles[0] ? {
+      id: paginatedArticles[0].id,
+      idType: typeof paginatedArticles[0].id,
+      hasAuthor: !!paginatedArticles[0].author,
+      authorId: paginatedArticles[0].author?.id,
+      authorIdType: typeof paginatedArticles[0].author?.id
+    } : null
   });
+  const serializedArticles = await Promise.all(
+    paginatedArticles.map(async (article) => {
+      const articleId = typeof article.id === "string" ? parseInt(article.id, 10) : article.id;
+      if (!articleId || isNaN(articleId)) {
+        logger_default.warn(`[searchArticles] Invalid article ID: ${article.id}`);
+        return null;
+      }
+      try {
+        const fullArticle = await context.sudo().query.Article.findOne({
+          where: { id: String(articleId) },
+          query: `
+            id
+            title
+            content {
+              document
+            }
+            excerpt
+            author {
+              id
+              username
+              avatar
+            }
+            previewImage
+            tags
+            difficulty
+            likes_count
+            dislikes_count
+            views
+            publishedAt
+            createdAt
+            updatedAt
+            comments {
+              id
+            }
+            userReaction
+          `
+        });
+        if (!fullArticle) {
+          logger_default.warn(`[searchArticles] Article ${articleId} not found`);
+          return null;
+        }
+        const serialized = {
+          ...fullArticle,
+          id: articleId
+        };
+        if (serialized.author && serialized.author.id) {
+          const authorId = typeof serialized.author.id === "string" ? parseInt(serialized.author.id, 10) : serialized.author.id;
+          if (!isNaN(authorId)) {
+            serialized.author = {
+              ...serialized.author,
+              id: authorId
+            };
+          }
+        }
+        if (serialized.publishedAt && typeof serialized.publishedAt === "string") {
+          serialized.publishedAt = new Date(serialized.publishedAt);
+        }
+        if (serialized.createdAt && typeof serialized.createdAt === "string") {
+          serialized.createdAt = new Date(serialized.createdAt);
+        }
+        if (serialized.updatedAt && typeof serialized.updatedAt === "string") {
+          serialized.updatedAt = new Date(serialized.updatedAt);
+        }
+        if (serialized.comments && Array.isArray(serialized.comments)) {
+          serialized.comments = serialized.comments.map((comment) => {
+            if (comment && comment.id) {
+              const commentId = typeof comment.id === "string" ? parseInt(comment.id, 10) : comment.id;
+              if (!isNaN(commentId)) {
+                return { id: commentId };
+              }
+            }
+            return comment;
+          });
+        }
+        return serialized;
+      } catch (error) {
+        logger_default.error(`[searchArticles] Failed to load article ${articleId}:`, error);
+        return null;
+      }
+    })
+  );
+  const validArticles = serializedArticles.filter((article) => article !== null);
+  logger_default.debug(`[searchArticles] Loaded ${validArticles.length} full articles from ${paginatedArticles.length} filtered articles`);
   logger_default.info(`[searchArticles] Returning ${serializedArticles.length} articles (total: ${total})`);
   if (!Array.isArray(serializedArticles)) {
     logger_default.error("[searchArticles] serializedArticles is not an array:", typeof serializedArticles);
@@ -2764,11 +2937,126 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
     name: "ReactionType",
     values: import_core12.graphql.enumValues(["like", "dislike"])
   });
+  const SearchArticleAuthor = import_core12.graphql.object()({
+    name: "SearchArticleAuthor",
+    fields: {
+      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+      username: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      avatar: import_core12.graphql.field({ type: import_core12.graphql.String })
+    }
+  });
+  const ReactToArticleAuthor = import_core12.graphql.object()({
+    name: "ReactToArticleAuthor",
+    fields: {
+      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+      username: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      avatar: import_core12.graphql.field({ type: import_core12.graphql.String })
+    }
+  });
+  const ReactToArticleContent = import_core12.graphql.object()({
+    name: "ReactToArticleContent",
+    fields: {
+      document: import_core12.graphql.field({ type: import_core12.graphql.JSON })
+    }
+  });
+  const ReactToArticleResult = import_core12.graphql.object()({
+    name: "ReactToArticleResult",
+    fields: {
+      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+      title: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      content: import_core12.graphql.field({
+        type: ReactToArticleContent,
+        resolve: (article) => article.content
+      }),
+      excerpt: import_core12.graphql.field({ type: import_core12.graphql.String }),
+      author: import_core12.graphql.field({
+        type: ReactToArticleAuthor,
+        resolve: (article) => article.author
+      }),
+      previewImage: import_core12.graphql.field({ type: import_core12.graphql.String }),
+      tags: import_core12.graphql.field({ type: import_core12.graphql.list(import_core12.graphql.nonNull(import_core12.graphql.String)) }),
+      difficulty: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      likes_count: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      dislikes_count: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      views: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      publishedAt: import_core12.graphql.field({ type: import_core12.graphql.DateTime }),
+      createdAt: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.DateTime) }),
+      updatedAt: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.DateTime) }),
+      comments: import_core12.graphql.field({
+        type: import_core12.graphql.list(import_core12.graphql.object()({
+          name: "ReactToArticleComment",
+          fields: {
+            id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) })
+          }
+        })),
+        resolve: (article) => article.comments
+      }),
+      userReaction: import_core12.graphql.field({ type: import_core12.graphql.String })
+    }
+  });
+  const SearchArticleContent = import_core12.graphql.object()({
+    name: "SearchArticleContent",
+    fields: {
+      document: import_core12.graphql.field({
+        type: import_core12.graphql.JSON,
+        resolve: (content) => content?.document || content
+      })
+    }
+  });
+  const SearchArticle = import_core12.graphql.object()({
+    name: "SearchArticle",
+    fields: {
+      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+      title: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      content: import_core12.graphql.field({
+        type: SearchArticleContent,
+        resolve: (article) => article.content
+      }),
+      excerpt: import_core12.graphql.field({ type: import_core12.graphql.String }),
+      author: import_core12.graphql.field({
+        type: SearchArticleAuthor,
+        resolve: (article) => article.author
+      }),
+      previewImage: import_core12.graphql.field({ type: import_core12.graphql.String }),
+      tags: import_core12.graphql.field({ type: import_core12.graphql.list(import_core12.graphql.nonNull(import_core12.graphql.String)) }),
+      difficulty: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      likes_count: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      dislikes_count: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      views: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.Int) }),
+      publishedAt: import_core12.graphql.field({ type: import_core12.graphql.DateTime }),
+      createdAt: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.DateTime) }),
+      updatedAt: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.DateTime) }),
+      comments: import_core12.graphql.field({
+        type: import_core12.graphql.list(import_core12.graphql.object()({
+          name: "SearchArticleComment",
+          fields: {
+            id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) })
+          }
+        })),
+        resolve: (article) => article.comments || []
+      }),
+      userReaction: import_core12.graphql.field({ type: import_core12.graphql.String })
+    }
+  });
+  const SearchArticlesResult = import_core12.graphql.object()({
+    name: "SearchArticlesResult",
+    fields: {
+      articles: import_core12.graphql.field({
+        type: import_core12.graphql.list(SearchArticle),
+        resolve: (result) => result.articles
+      }),
+      total: import_core12.graphql.field({
+        type: import_core12.graphql.nonNull(import_core12.graphql.Int),
+        resolve: (result) => result.total
+      })
+    }
+  });
   return {
     query: {
       // Query для поиска и фильтрации статей
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Возвращаем объект с articles и total вместо просто массива
       searchArticles: import_core12.graphql.field({
-        type: import_core12.graphql.list(base.object("Article")),
+        type: SearchArticlesResult,
         args: {
           search: import_core12.graphql.arg({ type: import_core12.graphql.String }),
           tags: import_core12.graphql.arg({ type: import_core12.graphql.list(import_core12.graphql.String) }),
@@ -2779,8 +3067,38 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
         },
         async resolve(root, args, context) {
           try {
-            const result = await searchAndFilterArticles(context, args);
-            return result.articles;
+            logger_default.debug("[searchArticles] Resolver called with args:", args);
+            const normalizedArgs = {
+              search: args.search ?? void 0,
+              tags: args.tags ? args.tags.filter((tag) => tag !== null) : void 0,
+              difficulty: args.difficulty ?? void 0,
+              sort: args.sort ?? void 0,
+              skip: args.skip ?? void 0,
+              take: args.take ?? void 0
+            };
+            const result = await searchAndFilterArticles(context, normalizedArgs);
+            logger_default.debug("[searchArticles] Result from searchAndFilterArticles:", {
+              articlesCount: result.articles?.length || 0,
+              total: result.total,
+              firstArticleId: result.articles?.[0]?.id,
+              firstArticleIdType: typeof result.articles?.[0]?.id
+            });
+            if (result.articles && result.articles.length > 0) {
+              logger_default.debug("[searchArticles] First article before return:", {
+                id: result.articles[0].id,
+                idType: typeof result.articles[0].id,
+                hasAuthor: !!result.articles[0].author,
+                author: result.articles[0].author ? {
+                  id: result.articles[0].author.id,
+                  idType: typeof result.articles[0].author.id,
+                  username: result.articles[0].author.username
+                } : null
+              });
+            }
+            return {
+              articles: result.articles,
+              total: result.total
+            };
           } catch (error) {
             logger_default.error("[searchArticles] Error:", error);
             throw error;
@@ -2790,8 +3108,9 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
     },
     mutation: {
       // Mutation для реакций на статьи
+      // Используем кастомный тип, чтобы избежать автоматической загрузки связанных данных
       reactToArticle: import_core12.graphql.field({
-        type: base.object("Article"),
+        type: ReactToArticleResult,
         args: {
           articleId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
           reaction: import_core12.graphql.arg({
@@ -2806,13 +3125,23 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
             throw new Error("Authentication required");
           }
           const userId = session2.itemId;
-          logger_default.info(`[reactToArticle] userId=${userId}`);
+          const userIdNum = typeof userId === "string" ? parseInt(userId, 10) : userId;
+          if (isNaN(userIdNum)) {
+            logger_default.error(`[reactToArticle] Invalid userId: ${userId}`);
+            throw new Error("Invalid user ID");
+          }
+          logger_default.info(`[reactToArticle] userId=${userIdNum}`);
+          const articleIdNum = typeof articleId === "string" ? parseInt(articleId, 10) : articleId;
+          if (isNaN(articleIdNum)) {
+            logger_default.error(`[reactToArticle] Invalid articleId: ${articleId}`);
+            throw new Error("Invalid article ID");
+          }
           if (reaction !== "like" && reaction !== "dislike") {
             logger_default.error(`[reactToArticle] Invalid reaction type: ${reaction}`);
             throw new Error("Invalid reaction type");
           }
           const article = await context.query.Article.findOne({
-            where: { id: articleId },
+            where: { id: String(articleIdNum) },
             query: `
               id
               likes_count
@@ -2823,17 +3152,18 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
             `
           });
           if (!article) {
-            logger_default.error(`[reactToArticle] Article not found: articleId=${articleId}`);
+            logger_default.error(`[reactToArticle] Article not found: articleId=${articleIdNum}`);
             throw new Error("Article not found");
           }
-          const existingReaction = await context.query.ArticleReaction.findMany({
+          const existingReactionResult = await context.query.ArticleReaction.findMany({
             where: {
-              article: { id: { equals: articleId } },
-              user: { id: { equals: userId } }
+              article: { id: { equals: String(articleIdNum) } },
+              user: { id: { equals: userIdNum } }
             },
             query: "id reaction",
             take: 1
           });
+          const existingReaction = Array.isArray(existingReactionResult) ? existingReactionResult : [];
           let finalUserReaction = null;
           const previousLikes = article.likes_count || 0;
           if (existingReaction.length > 0) {
@@ -2853,8 +3183,8 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
           } else {
             await context.query.ArticleReaction.createOne({
               data: {
-                article: { connect: { id: articleId } },
-                user: { connect: { id: userId } },
+                article: { connect: { id: String(articleIdNum) } },
+                user: { connect: { id: userIdNum } },
                 reaction
               }
             });
@@ -2862,20 +3192,20 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
           }
           const likeReactions = await context.sudo().query.ArticleReaction.count({
             where: {
-              article: { id: { equals: articleId } },
+              article: { id: { equals: String(articleIdNum) } },
               reaction: { equals: "like" }
             }
           });
           const dislikeReactions = await context.sudo().query.ArticleReaction.count({
             where: {
-              article: { id: { equals: articleId } },
+              article: { id: { equals: String(articleIdNum) } },
               reaction: { equals: "dislike" }
             }
           });
           const newLikes = likeReactions;
           const newDislikes = dislikeReactions;
           await context.sudo().query.Article.updateOne({
-            where: { id: articleId },
+            where: { id: String(articleIdNum) },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes
@@ -2891,7 +3221,7 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
                 const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
                 const where = {
                   user: { id: { equals: String(article.author.id) } },
-                  article: { id: { equals: articleId } },
+                  article: { id: { equals: String(articleIdNum) } },
                   type: { equals: "article_like" }
                 };
                 if (cutoffTime) {
@@ -2908,8 +3238,8 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
                   await createNotification(context, {
                     type: "article_like",
                     userId: article.author.id,
-                    actorId: userId,
-                    articleId,
+                    actorId: userIdNum,
+                    articleId: String(articleIdNum),
                     metadata: {
                       threshold,
                       likesCount: newLikes
@@ -2921,21 +3251,59 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
               logger_default.error(`[reactToArticle] Failed to create like notification:`, error);
             }
           }
-          const updatedArticle = await context.sudo().query.Article.findOne({
-            where: { id: articleId },
-            query: `
-              id
-              title
-              excerpt
-              previewImage
-              tags
-              difficulty
-              likes_count
-              dislikes_count
-              views
-              userReaction
-            `
+          const articleData = await context.sudo().prisma.article.findUnique({
+            where: { id: articleIdNum },
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatar: true
+                }
+              },
+              comments: {
+                select: {
+                  id: true
+                }
+              }
+            }
           });
+          if (!articleData) {
+            logger_default.error(`[reactToArticle] Article not found after update: articleId=${articleIdNum}`);
+            throw new Error("Article not found");
+          }
+          const userReactionRecord = await context.sudo().prisma.articleReaction.findFirst({
+            where: {
+              articleId: articleIdNum,
+              userId: userIdNum
+            },
+            select: {
+              reaction: true
+            }
+          });
+          const userReaction = userReactionRecord?.reaction || null;
+          const updatedArticle = {
+            id: String(articleData.id),
+            title: articleData.title,
+            content: articleData.content,
+            excerpt: articleData.excerpt,
+            author: articleData.author ? {
+              id: String(articleData.author.id),
+              username: articleData.author.username,
+              avatar: articleData.author.avatar
+            } : null,
+            previewImage: articleData.previewImage,
+            tags: Array.isArray(articleData.tags) ? articleData.tags : [],
+            difficulty: articleData.difficulty,
+            likes_count: articleData.likes_count,
+            dislikes_count: articleData.dislikes_count,
+            views: articleData.views,
+            publishedAt: articleData.publishedAt,
+            createdAt: articleData.createdAt,
+            updatedAt: articleData.updatedAt,
+            comments: articleData.comments.map((c) => ({ id: String(c.id) })),
+            userReaction
+          };
           return updatedArticle;
         }
       }),
@@ -3096,6 +3464,117 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
             `
           });
           return updatedComment;
+        }
+      }),
+      // Mutation для обновления профиля пользователя
+      updateProfile: import_core12.graphql.field({
+        type: base.object("User"),
+        args: {
+          username: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          bio: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          avatar: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+          coverImage: import_core12.graphql.arg({ type: import_core12.graphql.String })
+        },
+        async resolve(root, args, context) {
+          logger_default.info("[updateProfile] START:", {
+            hasUsername: !!args.username,
+            hasBio: args.bio !== void 0,
+            hasAvatar: args.avatar !== void 0,
+            hasCoverImage: args.coverImage !== void 0
+          });
+          const session2 = context.session;
+          if (!session2?.itemId) {
+            logger_default.error("[updateProfile] Authentication required");
+            throw new Error("Authentication required");
+          }
+          const userId = session2.itemId;
+          logger_default.info(`[updateProfile] userId=${userId}`);
+          if (args.username !== void 0 && (args.username.length < 3 || args.username.length > 50)) {
+            throw new Error("Username must be between 3 and 50 characters");
+          }
+          if (args.bio !== void 0 && args.bio !== null && args.bio.length > 500) {
+            throw new Error("Bio must be 500 characters or less");
+          }
+          const updateData = {};
+          if (args.username !== void 0) {
+            updateData.username = args.username;
+          }
+          if (args.bio !== void 0) {
+            updateData.bio = args.bio === null || args.bio === "" ? null : args.bio.trim();
+          }
+          if (args.avatar !== void 0) {
+            updateData.avatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
+          }
+          if (args.coverImage !== void 0) {
+            updateData.coverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
+          }
+          logger_default.debug("[updateProfile] Update data prepared:", {
+            hasUsername: "username" in updateData,
+            hasBio: "bio" in updateData,
+            bioValue: "bio" in updateData ? updateData.bio === null ? "null" : `"${updateData.bio.substring(0, 50)}"` : "not set",
+            hasAvatar: "avatar" in updateData,
+            avatarValue: "avatar" in updateData ? updateData.avatar === null ? "null" : "url" : "not set",
+            hasCoverImage: "coverImage" in updateData,
+            coverImageValue: "coverImage" in updateData ? updateData.coverImage === null ? "null" : "url" : "not set"
+          });
+          logger_default.info(`[updateProfile] Updating user profile: userId=${userId}`);
+          logger_default.debug("[updateProfile] UpdateData before update:", JSON.stringify(updateData, null, 2));
+          const currentUser = await context.sudo().query.User.findOne({
+            where: { id: String(userId) },
+            query: "id username email bio avatar coverImage"
+          });
+          if (!currentUser) {
+            logger_default.error(`[updateProfile] User not found: userId=${userId}`);
+            throw new Error("User not found");
+          }
+          const finalUpdateData = {};
+          if (args.username !== void 0 && args.username !== currentUser.username) {
+            finalUpdateData.username = args.username;
+          }
+          if (args.bio !== void 0) {
+            const newBio = args.bio === null || args.bio === "" ? "" : args.bio.trim();
+            const currentBio = currentUser.bio || "";
+            if (newBio !== currentBio) {
+              finalUpdateData.bio = newBio;
+            }
+          }
+          if (args.avatar !== void 0) {
+            const newAvatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
+            if (newAvatar !== currentUser.avatar) {
+              finalUpdateData.avatar = newAvatar;
+            }
+          }
+          if (args.coverImage !== void 0) {
+            const newCoverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
+            if (newCoverImage !== currentUser.coverImage) {
+              finalUpdateData.coverImage = newCoverImage;
+            }
+          }
+          logger_default.debug("[updateProfile] Final update data:", JSON.stringify(finalUpdateData, null, 2));
+          let updatedUser;
+          if (Object.keys(finalUpdateData).length > 0) {
+            updatedUser = await context.sudo().query.User.updateOne({
+              where: { id: String(userId) },
+              data: finalUpdateData,
+              query: "id username email bio avatar coverImage createdAt updatedAt"
+            });
+          } else {
+            updatedUser = await context.sudo().query.User.findOne({
+              where: { id: String(userId) },
+              query: "id username email bio avatar coverImage createdAt updatedAt"
+            });
+          }
+          if (!updatedUser) {
+            logger_default.error(`[updateProfile] User not found after update: userId=${userId}`);
+            throw new Error("User not found");
+          }
+          const result = {
+            ...updatedUser,
+            createdAt: updatedUser.createdAt instanceof Date ? updatedUser.createdAt : new Date(updatedUser.createdAt),
+            updatedAt: updatedUser.updatedAt instanceof Date ? updatedUser.updatedAt : new Date(updatedUser.updatedAt)
+          };
+          logger_default.info(`[updateProfile] SUCCESS: userId=${userId}, username=${result.username}`);
+          return result;
         }
       })
     }

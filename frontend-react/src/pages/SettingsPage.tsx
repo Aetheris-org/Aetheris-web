@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, type ChangeEvent } from 'react'
+import { flushSync } from 'react-dom'
 import type { KeyboardEvent } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { useQueryClient } from '@tanstack/react-query'
@@ -61,6 +62,7 @@ import {
   Sliders,
   Star,
   X,
+  Wrench,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -74,7 +76,9 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileDetailsStore, type PreferredContactMethod } from '@/stores/profileDetailsStore'
-import { updateUserProfile, uploadProfileMedia } from '@/api/profile'
+import { updateUserProfile } from '@/api/profile-graphql'
+import apiClient from '@/lib/axios'
+import { logger } from '@/lib/logger'
 import {
   Dialog,
   DialogContent,
@@ -128,10 +132,10 @@ const settingsNavItems = [
   { id: 'profile', icon: User },
   { id: 'appearance', icon: Palette },
   { id: 'language', icon: Languages },
-  { id: 'privacy', icon: Shield },
-  { id: 'notifications', icon: Bell },
-  { id: 'sessions', icon: Monitor },
-  { id: 'billing', icon: CreditCard },
+  { id: 'privacy', icon: Shield, inDevelopment: true },
+  { id: 'notifications', icon: Bell, inDevelopment: true },
+  { id: 'sessions', icon: Monitor, inDevelopment: true },
+  { id: 'billing', icon: CreditCard, inDevelopment: true },
 ]
 
 const themeModeOptions: Array<{
@@ -191,37 +195,37 @@ const getAccentGroups = (t: (key: string) => string): Array<{ id: string; label:
     id: 'vivid',
     label: t('settings.appearance.accentGroups.vivid.label') || 'Vivid energy',
     description: t('settings.appearance.accentGroups.vivid.description') || 'High-contrast tones that stand out in busy layouts.',
-    accents: ['red', 'crimson', 'ruby', 'scarlet', 'cherry', 'burgundy', 'wine', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
+    accents: ['red', 'crimson', 'ruby', 'scarlet', 'cherry', 'burgundy', 'wine', 'maroon', 'vermillion', 'magenta', 'fuchsia', 'violet', 'indigo', 'cobalt', 'azure'],
   },
   {
     id: 'botanical',
     label: t('settings.appearance.accentGroups.botanical.label') || 'Fresh & botanical',
     description: t('settings.appearance.accentGroups.botanical.description') || 'Nature-inspired greens and blues suited to calm products.',
-    accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive', 'chartreuse', 'jade', 'aqua'],
+    accents: ['cyan', 'turquoise', 'seafoam', 'teal', 'emerald', 'mint', 'green', 'forest', 'sage', 'olive', 'chartreuse', 'jade', 'moss-green', 'aqua', 'cerulean', 'sapphire'],
   },
   {
     id: 'warm',
     label: t('settings.appearance.accentGroups.warm.label') || 'Warm & welcoming',
     description: t('settings.appearance.accentGroups.warm.description') || 'Sunset oranges and blush tones for storytelling moments.',
-    accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon', 'honey', 'butter', 'canary', 'lemon', 'copper', 'rust', 'khaki', 'tan', 'beige', 'vanilla', 'champagne'],
+    accents: ['rose', 'peach', 'coral', 'sunset', 'brown', 'bronze', 'amber', 'saffron', 'gold', 'salmon', 'honey', 'butter', 'canary', 'lemon', 'tangerine', 'apricot', 'copper', 'rust', 'khaki', 'tan', 'beige', 'vanilla', 'champagne'],
   },
   {
     id: 'cool',
     label: t('settings.appearance.accentGroups.cool.label') || 'Cool & calm',
     description: t('settings.appearance.accentGroups.cool.description') || 'Serene blues and purples for peaceful interfaces.',
-    accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky', 'cerulean', 'sapphire', 'royal', 'periwinkle', 'amethyst', 'mauve', 'lilac', 'wisteria'],
+    accents: ['orchid', 'plum', 'lavender', 'purple', 'navy', 'blue', 'ocean', 'sky', 'cerulean', 'sapphire', 'royal', 'periwinkle', 'amethyst', 'mauve', 'lilac', 'wisteria', 'aqua'],
   },
   {
     id: 'muted',
     label: t('settings.appearance.accentGroups.muted.label') || 'Sophisticated neutrals',
     description: t('settings.appearance.accentGroups.muted.description') || 'Soft plums and greys that stay out of the way.',
-    accents: ['pure', 'silver', 'mono', 'graphite', 'platinum', 'titanium', 'steel', 'iron'],
+    accents: ['pure', 'silver', 'mono', 'graphite', 'platinum', 'titanium', 'steel', 'iron', 'chrome', 'nickel', 'pewter', 'brass', 'aluminum'],
   },
   {
     id: 'playful',
     label: t('settings.appearance.accentGroups.playful.label') || 'Playful & vibrant',
     description: t('settings.appearance.accentGroups.playful.description') || 'Bright, fun colors for energetic and creative spaces.',
-    accents: ['pink', 'lime', 'yellow', 'orange'],
+    accents: ['pink', 'lime', 'yellow', 'orange', 'neon-pink', 'neon-green', 'neon-blue', 'neon-yellow', 'neon-cyan', 'neon-orange', 'neon-purple', 'pastel-pink', 'pastel-blue', 'pastel-green', 'pastel-yellow', 'pastel-purple', 'pastel-orange'],
   },
 ]
 
@@ -230,31 +234,49 @@ const getSurfaceGroups = (t: (key: string) => string): Array<{ id: string; label
     id: 'luminous',
     label: t('settings.appearance.surfaceGroups.luminous.label') || 'Bright & airy',
     description: t('settings.appearance.surfaceGroups.luminous.description') || 'High-key canvases for daylight dashboards and editorial homes.',
-    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud', 'moonlight', 'luxury', 'tropical', 'marble'],
+    palettes: ['snow', 'ivory', 'cream', 'daylight', 'geometrydash', 'glacier', 'zenith', 'harbor', 'lumen', 'pearl', 'cloud', 'moonlight', 'luxury', 'tropical', 'marble', 'granite', 'quartz', 'crystal', 'diamond', 'opal', 'starlight', 'firelight', 'candlelight'],
   },
   {
     id: 'earthy',
     label: t('settings.appearance.surfaceGroups.earthy.label') || 'Warm & grounded',
     description: t('settings.appearance.surfaceGroups.earthy.description') || 'Organic neutrals that pair well with writing-led experiences.',
-    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss', 'wood'],
+    palettes: ['canyon', 'terracotta', 'csgo', 'ember', 'terraria', 'sunset', 'sand', 'minecraft', 'moss', 'wood', 'oak', 'mahogany', 'cherrywood', 'maple', 'desert', 'valley', 'meadow', 'garden'],
   },
   {
     id: 'expressive',
     label: t('settings.appearance.surfaceGroups.expressive.label') || 'Soft & expressive',
     description: t('settings.appearance.surfaceGroups.expressive.description') || 'Gradient-ready palettes with gentle colour cast for calm products.',
-    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice', 'neon'],
+    palettes: ['aurora', 'mist', 'fog', 'smoke', 'nebula', 'twilight', 'cyberpunk', 'solstice', 'neon', 'laser', 'plasma', 'hologram', 'matrix', 'cyber', 'retro', 'vintage', 'balloons-festive'],
   },
   {
     id: 'neutral',
     label: t('settings.appearance.surfaceGroups.neutral.label') || 'Neutral greys',
     description: t('settings.appearance.surfaceGroups.neutral.description') || 'Versatile grey tones for balanced, professional interfaces.',
-    palettes: ['ash', 'slate', 'charcoal', 'stone'],
+    palettes: ['ash', 'slate', 'charcoal', 'stone', 'city', 'urban', 'library', 'museum', 'gallery', 'studio'],
   },
   {
     id: 'deep',
     label: t('settings.appearance.surfaceGroups.deep.label') || 'Deep focus',
     description: t('settings.appearance.surfaceGroups.deep.description') || 'Immersive dark surfaces for reading in low light.',
-    palettes: ['midnight', 'obsidian', 'noir', 'dota', 'onyx', 'shadow', 'storm', 'abyss', 'deep', 'pitch', 'coal', 'jet', 'carbon', 'void', 'nightfall', 'inkwell', 'eclipse', 'cosmos'],
+    palettes: ['midnight', 'obsidian', 'noir', 'dota', 'onyx', 'shadow', 'storm', 'abyss', 'deep', 'pitch', 'coal', 'jet', 'carbon', 'void', 'nightfall', 'inkwell', 'eclipse', 'cosmos', 'fnaf-dark', 'outlast-horror', 'phasmophobia-eerie'],
+  },
+  {
+    id: 'nature',
+    label: t('settings.appearance.surfaceGroups.nature.label') || 'Nature & landscapes',
+    description: t('settings.appearance.surfaceGroups.nature.description') || 'Natural environments and landscapes.',
+    palettes: ['arctic', 'jungle', 'lake', 'river', 'beach', 'mountain', 'garden'],
+  },
+  {
+    id: 'premium',
+    label: t('settings.appearance.surfaceGroups.premium.label') || 'Premium & elegant',
+    description: t('settings.appearance.surfaceGroups.premium.description') || 'Luxurious and sophisticated surfaces.',
+    palettes: ['premium', 'royal', 'elegant', 'sophisticated', 'velvet', 'silk', 'leather'],
+  },
+  {
+    id: 'gaming',
+    label: t('settings.appearance.surfaceGroups.gaming.label') || 'Gaming & anime',
+    description: t('settings.appearance.surfaceGroups.gaming.description') || 'Gaming and anime-inspired surfaces.',
+    palettes: ['jujutsu-kaisen', 'one-piece-joy', '90s-muted', 'programming-terminal'],
   },
 ]
 
@@ -413,20 +435,35 @@ export default function SettingsPage() {
                   <Button
                     variant="outline"
                     className="w-full justify-between h-9 text-xs"
+                    id="settings-dropdown-trigger"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                       {(() => {
                         const Icon = settingsNav.find(item => item.id === currentSection)?.icon || Settings
-                        return <Icon className="h-4 w-4" />
+                        return <Icon className="h-4 w-4 shrink-0" />
                       })()}
-                      <span className="truncate">
+                      <span className="truncate min-w-0">
                         {settingsNav.find(item => item.id === currentSection)?.label || t('settings.title')}
                       </span>
+                      {settingsNav.find(item => item.id === currentSection)?.inDevelopment && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex shrink-0" aria-label={t('settings.inDevelopment')}>
+                                <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{t('settings.inDevelopment')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
                   {settingsNav.map((item) => {
                     const Icon = item.icon
                     const isActive = currentSection === item.id
@@ -439,9 +476,25 @@ export default function SettingsPage() {
                           isActive && "bg-accent"
                         )}
                       >
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                        {isActive && <Check className="h-3.5 w-3.5 ml-auto" />}
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {item.inDevelopment && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex shrink-0" aria-label={t('settings.inDevelopment')}>
+                                    <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{t('settings.inDevelopment')}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {isActive && <Check className="h-3.5 w-3.5 shrink-0" />}
+                        </div>
                       </DropdownMenuItem>
                     )
                   })}
@@ -459,11 +512,14 @@ export default function SettingsPage() {
                   <Button
                     key={item.id}
                     variant={isActive ? 'secondary' : 'ghost'}
-                    className="w-full justify-start gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+                    className={cn(
+                      "w-full justify-start gap-2 h-9 sm:h-10 text-xs sm:text-sm relative",
+                      item.inDevelopment && "opacity-40 border-dashed border-muted-foreground/40 hover:opacity-100 transition-opacity"
+                    )}
                     onClick={() => handleSectionNavigate(item.id)}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate flex-1 text-left">{item.label}</span>
                   </Button>
                 )
               })}
@@ -1201,6 +1257,78 @@ function ProfileSettings() {
     })
   }
 
+  // Функция для загрузки изображения на imgBB
+  const uploadImageToImgBB = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('files', file, `profile-image-${Date.now()}.jpg`)
+
+    // Retry логика для отказоустойчивости
+    let lastError: any = null
+    const maxRetries = 3
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.debug('[SettingsPage] Uploading image, attempt:', attempt)
+        const uploadResponse = await apiClient.post('/upload/image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 90000, // 90 секунд таймаут
+        })
+
+        logger.debug('[SettingsPage] Upload response:', {
+          status: uploadResponse.status,
+          data: uploadResponse.data,
+        })
+
+        // Обрабатываем разные форматы ответа
+        let uploadedFile: any = null
+        if (Array.isArray(uploadResponse.data)) {
+          uploadedFile = uploadResponse.data[0]
+        } else if (uploadResponse.data && typeof uploadResponse.data === 'object') {
+          uploadedFile = uploadResponse.data
+        }
+
+        if (!uploadedFile) {
+          logger.error('[SettingsPage] Invalid upload response format:', uploadResponse.data)
+          throw new Error('Invalid response format from upload service')
+        }
+
+        if (!uploadedFile.url) {
+          logger.error('[SettingsPage] Upload response missing URL:', uploadedFile)
+          throw new Error('Invalid response from upload service: missing URL')
+        }
+
+        const imageUrl = uploadedFile.url
+        logger.debug('[SettingsPage] Image uploaded successfully:', { imageUrl })
+        return imageUrl
+      } catch (error: any) {
+        lastError = error
+        logger.error(`[SettingsPage] Upload attempt ${attempt} failed:`, {
+          error: error.message,
+          code: error.code,
+          status: error.response?.status,
+        })
+        
+        // Если это не сетевая ошибка или таймаут, не повторяем
+        if (error.code !== 'ECONNABORTED' && error.code !== 'ERR_NETWORK' && error.response?.status !== 408) {
+          logger.error('[SettingsPage] Non-retryable error, stopping retries')
+          break
+        }
+        
+        // Экспоненциальная задержка перед повтором
+        if (attempt < maxRetries) {
+          const delay = 1000 * attempt
+          logger.debug(`[SettingsPage] Retrying after ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+      }
+    }
+
+    logger.error('[SettingsPage] All upload attempts failed')
+    throw lastError || new Error('Failed to upload image after multiple attempts')
+  }
+
   const handleSave = async () => {
     if (!user) return
 
@@ -1226,28 +1354,26 @@ function ProfileSettings() {
     setIsSaving(true)
 
     try {
-      let avatarId: number | null | undefined
-      let coverImageId: number | null | undefined
+      let avatarUrl: string | null | undefined
+      let coverImageUrl: string | null | undefined
 
       if (avatarFile) {
-        const upload = await uploadProfileMedia(avatarFile)
-        avatarId = upload.id
+        avatarUrl = await uploadImageToImgBB(avatarFile)
       } else if (avatarRemoved) {
-        avatarId = null
+        avatarUrl = null
       }
 
       if (coverFile) {
-        const upload = await uploadProfileMedia(coverFile)
-        coverImageId = upload.id
+        coverImageUrl = await uploadImageToImgBB(coverFile)
       } else if (coverRemoved) {
-        coverImageId = null
+        coverImageUrl = null
       }
 
-      const updatedUser = await updateUserProfile(user.id, {
+      const updatedUser = await updateUserProfile({
         username: trimmedNickname,
-        bio: bio.trim() || null,
-        avatarId,
-        coverImageId,
+        bio: bio.trim() || '', // Используем пустую строку вместо null для bio
+        avatar: avatarUrl,
+        coverImage: coverImageUrl,
       })
 
       setUser({
@@ -1305,35 +1431,49 @@ function ProfileSettings() {
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <Tabs defaultValue="basics" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
-            <TabsTrigger value="basics" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.profile.basics')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="contact" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.profile.contact')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="professional" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.profile.professional')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="social" className="text-[10px] sm:text-xs md:text-sm py-1.5 sm:py-2 px-1.5 sm:px-3">
-              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 shrink-0" />
-              <span className="hidden sm:inline truncate">{t('settings.profile.social')}</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-wrap items-center gap-2">
+            <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-auto border-0 gap-2">
+              <TabsTrigger 
+                value="basics" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 max-w-[85px] sm:max-w-none"
+              >
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.profile.basics')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="contact" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 max-w-[85px] sm:max-w-none opacity-40 border-dashed border-muted-foreground/40 hover:opacity-100"
+              >
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.profile.contact')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="professional" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 max-w-[85px] sm:max-w-none opacity-40 border-dashed border-muted-foreground/40 hover:opacity-100"
+              >
+                <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.profile.professional')}</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="social" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 max-w-[85px] sm:max-w-none opacity-40 border-dashed border-muted-foreground/40 hover:opacity-100"
+              >
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.profile.social')}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="basics" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
-        <section className="space-y-2 sm:space-y-3">
+        <section className="space-y-2 sm:space-y-3 w-full">
           <div className="flex items-center justify-between gap-2">
             <Label className="text-xs sm:text-sm font-semibold tracking-wide text-muted-foreground">
               {t('settings.profile.cover')}
             </Label>
             <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{t('settings.profile.coverRecommended')}</span>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50">
-            <div className="aspect-[4/1] w-full">
+          <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50 w-full">
+            <div className="aspect-[4/1] w-full min-h-[120px] sm:min-h-[160px]">
               {coverPreview ? (
                 <img
                   src={coverPreview}
@@ -1341,8 +1481,8 @@ function ProfileSettings() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-2 sm:gap-3 text-muted-foreground p-4">
-                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted/60">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 sm:gap-3 text-muted-foreground p-4 sm:p-6">
+                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted/60 shrink-0">
                     <ImagePlus className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                   <p className="text-xs sm:text-sm font-medium">{t('settings.profile.noCover')}</p>
@@ -2304,6 +2444,7 @@ function AppearanceSettings() {
     setDepth,
     motion,
     setMotion,
+    applyTheme,
   } = useThemeStore((state) => ({
     theme: state.theme,
     resolvedTheme: state.resolvedTheme,
@@ -2330,6 +2471,7 @@ function AppearanceSettings() {
     setDepth: state.setDepth,
     motion: state.motion,
     setMotion: state.setMotion,
+    applyTheme: state.applyTheme,
   }))
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
 
@@ -2654,14 +2796,15 @@ function AppearanceSettings() {
         id: 'midnight-blue',
           name: t('settings.appearance.themes.midnightBlue.name'),
           description: t('settings.appearance.themes.midnightBlue.description'),
-        accent: 'cobalt' as AccentColor,
-        secondaryAccent: 'azure' as AccentColor,
-        surface: 'midnight' as SurfaceStyle,
-        radius: 1,
+        accent: 'sapphire' as AccentColor,
+        secondaryAccent: 'cerulean' as AccentColor,
+        tertiaryAccent: 'periwinkle' as AccentColor,
+        surface: 'nightfall' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2669,14 +2812,15 @@ function AppearanceSettings() {
         id: 'sunset-warm',
           name: t('settings.appearance.themes.sunsetWarm.name'),
           description: t('settings.appearance.themes.sunsetWarm.description'),
-        accent: 'amber' as AccentColor,
-          secondaryAccent: 'orange' as AccentColor,
-        surface: 'sunset' as SurfaceStyle,
-        radius: 1,
+        accent: 'tangerine' as AccentColor,
+          secondaryAccent: 'apricot' as AccentColor,
+          tertiaryAccent: 'honey' as AccentColor,
+        surface: 'firelight' as SurfaceStyle,
+        radius: 1.5,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2684,11 +2828,12 @@ function AppearanceSettings() {
         id: 'forest-green',
           name: t('settings.appearance.themes.forestGreen.name'),
           description: t('settings.appearance.themes.forestGreen.description'),
-        accent: 'emerald' as AccentColor,
-          secondaryAccent: 'forest' as AccentColor,
-        surface: 'moss' as SurfaceStyle,
-        radius: 1,
-        typography: 'comfortable' as TypographyScale,
+        accent: 'jade' as AccentColor,
+          secondaryAccent: 'moss-green' as AccentColor,
+          tertiaryAccent: 'chartreuse' as AccentColor,
+        surface: 'jungle' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
         contrast: 'standard' as ContrastMode,
         density: 1,
         depth: 'soft' as DepthStyle,
@@ -2713,14 +2858,15 @@ function AppearanceSettings() {
         id: 'cosmic-dark',
           name: t('settings.appearance.themes.cosmicDark.name'),
           description: t('settings.appearance.themes.cosmicDark.description'),
-        accent: 'violet' as AccentColor,
-          secondaryAccent: 'plum' as AccentColor,
-        surface: 'cosmos' as SurfaceStyle,
-        radius: 1.25,
+        accent: 'amethyst' as AccentColor,
+          secondaryAccent: 'wisteria' as AccentColor,
+          tertiaryAccent: 'lilac' as AccentColor,
+        surface: 'starlight' as SurfaceStyle,
+        radius: 1.5,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1.05,
-          depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -2728,13 +2874,14 @@ function AppearanceSettings() {
           id: 'ocean-breeze',
           name: t('settings.appearance.themes.oceanBreeze.name'),
           description: t('settings.appearance.themes.oceanBreeze.description'),
-          accent: 'azure' as AccentColor,
-          secondaryAccent: 'cyan' as AccentColor,
-          surface: 'harbor' as SurfaceStyle,
-          radius: 1,
+          accent: 'aqua' as AccentColor,
+          secondaryAccent: 'cerulean' as AccentColor,
+          tertiaryAccent: 'turquoise' as AccentColor,
+          surface: 'lake' as SurfaceStyle,
+          radius: 1.25,
           typography: 'comfortable' as TypographyScale,
           contrast: 'standard' as ContrastMode,
-          density: 1,
+          density: 1.05,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -2743,12 +2890,13 @@ function AppearanceSettings() {
           id: 'autumn-warmth',
           name: t('settings.appearance.themes.autumnWarmth.name'),
           description: t('settings.appearance.themes.autumnWarmth.description'),
-          accent: 'orange' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor,
-          surface: 'ember' as SurfaceStyle,
-          radius: 1,
-          typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
+          accent: 'vermillion' as AccentColor,
+          secondaryAccent: 'rust' as AccentColor,
+          tertiaryAccent: 'copper' as AccentColor,
+          surface: 'valley' as SurfaceStyle,
+          radius: 0.75,
+          typography: 'default' as TypographyScale,
+          contrast: 'bold' as ContrastMode,
           density: 1,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
@@ -2900,13 +3048,15 @@ function AppearanceSettings() {
         id: 'orchid-elegance',
         name: t('settings.appearance.themes.orchidElegance.name'),
         description: t('settings.appearance.themes.orchidElegance.description'),
-        accent: 'orchid' as AccentColor,
-        surface: 'aurora' as SurfaceStyle,
-        radius: 1.25,
+        accent: 'wisteria' as AccentColor,
+        secondaryAccent: 'lilac' as AccentColor,
+        tertiaryAccent: 'mauve' as AccentColor,
+        surface: 'velvet' as SurfaceStyle,
+        radius: 1.5,
         typography: 'comfortable' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -2914,27 +3064,30 @@ function AppearanceSettings() {
         id: 'seafoam-serene',
         name: t('settings.appearance.themes.seafoamSerene.name'),
         description: t('settings.appearance.themes.seafoamSerene.description'),
-        accent: 'seafoam' as AccentColor,
-        surface: 'zenith' as SurfaceStyle,
-        radius: 1,
+        accent: 'aqua' as AccentColor,
+        secondaryAccent: 'turquoise' as AccentColor,
+        surface: 'river' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
+        density: 1.05,
         depth: 'soft' as DepthStyle,
-        motion: 'default' as MotionPreference,
+        motion: 'reduced' as MotionPreference,
         official: true,
       },
       {
         id: 'saffron-gold',
         name: t('settings.appearance.themes.saffronGold.name'),
         description: t('settings.appearance.themes.saffronGold.description'),
-        accent: 'saffron' as AccentColor,
-        surface: 'ember' as SurfaceStyle,
-        radius: 1,
+        accent: 'honey' as AccentColor,
+        secondaryAccent: 'butter' as AccentColor,
+        tertiaryAccent: 'canary' as AccentColor,
+        surface: 'candlelight' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -3658,14 +3811,15 @@ function AppearanceSettings() {
           id: 'cyberpunk',
           name: t('settings.appearance.themes.cyberpunk.name'),
           description: t('settings.appearance.themes.cyberpunk.description'),
-          accent: 'fuchsia' as AccentColor,
-          secondaryAccent: 'cyan' as AccentColor,
-          surface: 'cyberpunk' as SurfaceStyle,
+          accent: 'neon-pink' as AccentColor,
+          secondaryAccent: 'neon-blue' as AccentColor,
+          tertiaryAccent: 'neon-cyan' as AccentColor,
+          surface: 'cyber' as SurfaceStyle,
           radius: 0.5,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3689,14 +3843,14 @@ function AppearanceSettings() {
           id: 'csgo',
         name: t('settings.appearance.themes.csgo.name'),
         description: t('settings.appearance.themes.csgo.description'),
-        accent: 'orange' as AccentColor,
-        secondaryAccent: 'amber' as AccentColor,
+        accent: 'tangerine' as AccentColor,
+        secondaryAccent: 'vermillion' as AccentColor,
         surface: 'csgo' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
+        contrast: 'bold' as ContrastMode,
         density: 1,
-        depth: 'soft' as DepthStyle,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -3704,14 +3858,15 @@ function AppearanceSettings() {
           id: 'dota',
         name: t('settings.appearance.themes.dota.name'),
         description: t('settings.appearance.themes.dota.description'),
-        accent: 'blue' as AccentColor,
-        secondaryAccent: 'red' as AccentColor, // Враги
+        accent: 'sapphire' as AccentColor,
+        secondaryAccent: 'crimson' as AccentColor,
+        tertiaryAccent: 'royal' as AccentColor,
         surface: 'dota' as SurfaceStyle,
-        radius: 0.75,
+        radius: 1,
         typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -3719,13 +3874,14 @@ function AppearanceSettings() {
           id: 'terraria',
         name: t('settings.appearance.themes.terraria.name'),
         description: t('settings.appearance.themes.terraria.description'),
-        accent: 'brown' as AccentColor,
-        secondaryAccent: 'amber' as AccentColor, // Золото
+        accent: 'copper' as AccentColor,
+        secondaryAccent: 'honey' as AccentColor,
+        tertiaryAccent: 'rust' as AccentColor,
         surface: 'terraria' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'comfortable' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
+        density: 1.05,
         depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -3734,13 +3890,14 @@ function AppearanceSettings() {
           id: 'geometry-dash',
         name: t('settings.appearance.themes.geometryDash.name'),
         description: t('settings.appearance.themes.geometryDash.description'),
-        accent: 'lime' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
+        accent: 'neon-green' as AccentColor,
+        secondaryAccent: 'neon-cyan' as AccentColor,
+        tertiaryAccent: 'chartreuse' as AccentColor,
         surface: 'geometrydash' as SurfaceStyle,
         radius: 0,
-        typography: 'default' as TypographyScale,
+        typography: 'compact' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -3749,14 +3906,15 @@ function AppearanceSettings() {
           id: 'overwatch',
         name: t('settings.appearance.themes.overwatch.name'),
         description: t('settings.appearance.themes.overwatch.description'),
-        accent: 'azure' as AccentColor,
-        secondaryAccent: 'orange' as AccentColor,
+        accent: 'cerulean' as AccentColor,
+        secondaryAccent: 'tangerine' as AccentColor,
+        tertiaryAccent: 'aqua' as AccentColor,
         surface: 'nightfall' as SurfaceStyle,
-        radius: 1,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -3764,14 +3922,15 @@ function AppearanceSettings() {
           id: 'fortnite',
         name: t('settings.appearance.themes.fortnite.name'),
         description: t('settings.appearance.themes.fortnite.description'),
-        accent: 'magenta' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
-        surface: 'twilight' as SurfaceStyle,
-        radius: 1.25,
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-cyan' as AccentColor,
+        tertiaryAccent: 'periwinkle' as AccentColor,
+        surface: 'laser' as SurfaceStyle,
+        radius: 1.5,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
         },
@@ -3779,13 +3938,14 @@ function AppearanceSettings() {
           id: 'among-us',
         name: t('settings.appearance.themes.amongUs.name'),
           description: t('settings.appearance.themes.amongUs.description'),
-        accent: 'red' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
+        accent: 'crimson' as AccentColor,
+        secondaryAccent: 'aqua' as AccentColor,
+        tertiaryAccent: 'lime' as AccentColor,
           surface: 'daylight' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-          density: 1,
+        contrast: 'bold' as ContrastMode,
+          density: 1.05,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
         official: true,
@@ -3794,13 +3954,14 @@ function AppearanceSettings() {
         id: 'pokemon',
         name: t('settings.appearance.themes.pokemon.name'),
         description: t('settings.appearance.themes.pokemon.description'),
-        accent: 'yellow' as AccentColor,
-        secondaryAccent: 'blue' as AccentColor,
-        surface: 'daylight' as SurfaceStyle,
-        radius: 0.75,
+        accent: 'canary' as AccentColor,
+        secondaryAccent: 'sapphire' as AccentColor,
+        tertiaryAccent: 'lemon' as AccentColor,
+        surface: 'meadow' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
+        density: 1.1,
         depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -3809,14 +3970,15 @@ function AppearanceSettings() {
         id: 'zelda',
         name: t('settings.appearance.themes.zelda.name'),
         description: t('settings.appearance.themes.zelda.description'),
-        accent: 'gold' as AccentColor,
-        secondaryAccent: 'emerald' as AccentColor,
-        surface: 'moss' as SurfaceStyle,
-        radius: 1,
+        accent: 'honey' as AccentColor,
+        secondaryAccent: 'jade' as AccentColor,
+        tertiaryAccent: 'chartreuse' as AccentColor,
+        surface: 'jungle' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -3824,14 +3986,15 @@ function AppearanceSettings() {
           id: 'balatro',
           name: t('settings.appearance.themes.balatro.name'),
           description: t('settings.appearance.themes.balatro.description'),
-          accent: 'gold' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor,
+          accent: 'butter' as AccentColor,
+          secondaryAccent: 'canary' as AccentColor,
+          tertiaryAccent: 'honey' as AccentColor,
           surface: 'noir' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3839,15 +4002,15 @@ function AppearanceSettings() {
           id: 'metro-last-light',
           name: t('settings.appearance.themes.metroLastLight.name'),
           description: t('settings.appearance.themes.metroLastLight.description'),
-          accent: 'orange' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor,
+          accent: 'vermillion' as AccentColor,
+          secondaryAccent: 'rust' as AccentColor,
           surface: 'eclipse' as SurfaceStyle,
           radius: 0.5,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
-          motion: 'default' as MotionPreference,
+          motion: 'reduced' as MotionPreference,
           official: true,
         },
         {
@@ -3931,25 +4094,29 @@ function AppearanceSettings() {
           name: t('settings.appearance.themes.doomEternal.name'),
           description: t('settings.appearance.themes.doomEternal.description'),
           accent: 'crimson' as AccentColor,
-          surface: 'void' as SurfaceStyle,
+          secondaryAccent: 'wine' as AccentColor,
+          tertiaryAccent: 'maroon' as AccentColor,
+          surface: 'abyss' as SurfaceStyle,
           radius: 0.5,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
-          motion: 'default' as MotionPreference,
+          motion: 'reduced' as MotionPreference,
           official: true,
         },
         {
           id: 'tron-legacy',
           name: t('settings.appearance.themes.tronLegacy.name'),
           description: t('settings.appearance.themes.tronLegacy.description'),
-          accent: 'lime' as AccentColor,
-          surface: 'noir' as SurfaceStyle,
+          accent: 'neon-cyan' as AccentColor,
+          secondaryAccent: 'neon-blue' as AccentColor,
+          tertiaryAccent: 'aqua' as AccentColor,
+          surface: 'matrix' as SurfaceStyle,
           radius: 0,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -3958,13 +4125,15 @@ function AppearanceSettings() {
           id: 'mass-effect',
           name: t('settings.appearance.themes.massEffect.name'),
           description: t('settings.appearance.themes.massEffect.description'),
-          accent: 'indigo' as AccentColor,
-          surface: 'cosmos' as SurfaceStyle,
-          radius: 0.75,
+          accent: 'royal' as AccentColor,
+          secondaryAccent: 'periwinkle' as AccentColor,
+          tertiaryAccent: 'amethyst' as AccentColor,
+          surface: 'starlight' as SurfaceStyle,
+          radius: 1,
           typography: 'default' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3972,13 +4141,15 @@ function AppearanceSettings() {
           id: 'borderlands',
           name: t('settings.appearance.themes.borderlands.name'),
           description: t('settings.appearance.themes.borderlands.description'),
-          accent: 'orange' as AccentColor,
-          surface: 'canyon' as SurfaceStyle,
+          accent: 'tangerine' as AccentColor,
+          secondaryAccent: 'vermillion' as AccentColor,
+          tertiaryAccent: 'rust' as AccentColor,
+          surface: 'desert' as SurfaceStyle,
           radius: 0.5,
           typography: 'default' as TypographyScale,
           contrast: 'bold' as ContrastMode,
           density: 1,
-          depth: 'soft' as DepthStyle,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -3986,13 +4157,15 @@ function AppearanceSettings() {
           id: 'bioshock',
           name: t('settings.appearance.themes.bioshock.name'),
           description: t('settings.appearance.themes.bioshock.description'),
-          accent: 'gold' as AccentColor,
-          surface: 'inkwell' as SurfaceStyle,
-          radius: 0.75,
+          accent: 'honey' as AccentColor,
+          secondaryAccent: 'butter' as AccentColor,
+          tertiaryAccent: 'champagne' as AccentColor,
+          surface: 'vintage' as SurfaceStyle,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -4417,29 +4590,31 @@ function AppearanceSettings() {
           id: 'scp',
           name: t('settings.appearance.themes.scp.name'),
           description: t('settings.appearance.themes.scp.description'),
-          accent: 'red' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor,
-          surface: 'noir' as SurfaceStyle,
+          accent: 'crimson' as AccentColor,
+          secondaryAccent: 'wine' as AccentColor,
+          tertiaryAccent: 'maroon' as AccentColor,
+          surface: 'abyss' as SurfaceStyle,
           radius: 0.5,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
-          motion: 'default' as MotionPreference,
+          motion: 'reduced' as MotionPreference,
           official: true,
         },
         {
           id: 'backrooms',
           name: t('settings.appearance.themes.backrooms.name'),
           description: t('settings.appearance.themes.backrooms.description'),
-          accent: 'yellow' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor, // Тусклый свет
+          accent: 'vanilla' as AccentColor,
+          secondaryAccent: 'beige' as AccentColor,
+          tertiaryAccent: 'tan' as AccentColor,
           surface: 'ivory' as SurfaceStyle,
           radius: 0.25,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
           density: 1.05,
-          depth: 'soft' as DepthStyle,
+          depth: 'flat' as DepthStyle,
           motion: 'reduced' as MotionPreference,
           official: true,
         },
@@ -4447,14 +4622,15 @@ function AppearanceSettings() {
           id: 'ussr',
           name: t('settings.appearance.themes.ussr.name'),
           description: t('settings.appearance.themes.ussr.description'),
-          accent: 'red' as AccentColor,
-          secondaryAccent: 'gold' as AccentColor,
+          accent: 'crimson' as AccentColor,
+          secondaryAccent: 'honey' as AccentColor,
+          tertiaryAccent: 'butter' as AccentColor,
           surface: 'charcoal' as SurfaceStyle,
           radius: 0.75,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -4462,14 +4638,15 @@ function AppearanceSettings() {
           id: 'china',
           name: t('settings.appearance.themes.china.name'),
           description: t('settings.appearance.themes.china.description'),
-          accent: 'crimson' as AccentColor,
-          secondaryAccent: 'gold' as AccentColor,
+          accent: 'wine' as AccentColor,
+          secondaryAccent: 'honey' as AccentColor,
+          tertiaryAccent: 'champagne' as AccentColor,
           surface: 'midnight' as SurfaceStyle,
-          radius: 0.75,
+          radius: 1,
           typography: 'comfortable' as TypographyScale,
-          contrast: 'standard' as ContrastMode,
-          density: 1,
-          depth: 'soft' as DepthStyle,
+          contrast: 'bold' as ContrastMode,
+          density: 1.05,
+          depth: 'elevated' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
         },
@@ -4477,13 +4654,14 @@ function AppearanceSettings() {
           id: 'banana',
           name: t('settings.appearance.themes.banana.name'),
           description: t('settings.appearance.themes.banana.description'),
-          accent: 'yellow' as AccentColor,
-          secondaryAccent: 'amber' as AccentColor,
-          surface: 'daylight' as SurfaceStyle,
-          radius: 1,
+          accent: 'lemon' as AccentColor,
+          secondaryAccent: 'canary' as AccentColor,
+          tertiaryAccent: 'butter' as AccentColor,
+          surface: 'meadow' as SurfaceStyle,
+          radius: 1.5,
           typography: 'comfortable' as TypographyScale,
           contrast: 'standard' as ContrastMode,
-          density: 1,
+          density: 1.1,
           depth: 'soft' as DepthStyle,
           motion: 'default' as MotionPreference,
           official: true,
@@ -4492,12 +4670,14 @@ function AppearanceSettings() {
           id: 'apple-inc',
           name: t('settings.appearance.themes.appleInc.name'),
           description: t('settings.appearance.themes.appleInc.description'),
-          accent: 'mono' as AccentColor,
+          accent: 'platinum' as AccentColor,
+          secondaryAccent: 'titanium' as AccentColor,
+          tertiaryAccent: 'steel' as AccentColor,
           surface: 'snow' as SurfaceStyle,
-          radius: 0.5,
+          radius: 1.25,
           typography: 'default' as TypographyScale,
           contrast: 'standard' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
           motion: 'reduced' as MotionPreference,
           official: true,
@@ -4506,15 +4686,16 @@ function AppearanceSettings() {
           id: 'arasaka',
           name: t('settings.appearance.themes.arasaka.name'),
           description: t('settings.appearance.themes.arasaka.description'),
-          accent: 'red' as AccentColor,
-          secondaryAccent: 'crimson' as AccentColor,
-          surface: 'obsidian' as SurfaceStyle,
+          accent: 'wine' as AccentColor,
+          secondaryAccent: 'maroon' as AccentColor,
+          tertiaryAccent: 'crimson' as AccentColor,
+          surface: 'abyss' as SurfaceStyle,
           radius: 0.5,
-          typography: 'default' as TypographyScale,
+          typography: 'compact' as TypographyScale,
           contrast: 'bold' as ContrastMode,
-          density: 1,
+          density: 0.95,
           depth: 'flat' as DepthStyle,
-          motion: 'default' as MotionPreference,
+          motion: 'reduced' as MotionPreference,
           official: true,
         },
         {
@@ -4987,14 +5168,15 @@ function AppearanceSettings() {
         id: 'forest-dawn',
         name: t('settings.appearance.themes.forestDawn.name'),
         description: t('settings.appearance.themes.forestDawn.description'),
-        accent: 'emerald' as AccentColor,
-        secondaryAccent: 'amber' as AccentColor,
-        surface: 'moss' as SurfaceStyle,
-        radius: 1,
+        accent: 'jade' as AccentColor,
+        secondaryAccent: 'moss-green' as AccentColor,
+        tertiaryAccent: 'chartreuse' as AccentColor,
+        surface: 'jungle' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5002,14 +5184,15 @@ function AppearanceSettings() {
         id: 'ocean-depths',
         name: t('settings.appearance.themes.oceanDepths.name'),
         description: t('settings.appearance.themes.oceanDepths.description'),
-        accent: 'ocean' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
-        surface: 'abyss' as SurfaceStyle,
-        radius: 1,
+        accent: 'sapphire' as AccentColor,
+        secondaryAccent: 'cerulean' as AccentColor,
+        tertiaryAccent: 'aqua' as AccentColor,
+        surface: 'lake' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5017,13 +5200,14 @@ function AppearanceSettings() {
         id: 'sunset-beach',
         name: t('settings.appearance.themes.sunsetBeach.name'),
         description: t('settings.appearance.themes.sunsetBeach.description'),
-        accent: 'orange' as AccentColor,
-        secondaryAccent: 'coral' as AccentColor,
-        surface: 'sand' as SurfaceStyle,
-        radius: 1,
+        accent: 'tangerine' as AccentColor,
+        secondaryAccent: 'apricot' as AccentColor,
+        tertiaryAccent: 'honey' as AccentColor,
+        surface: 'beach' as SurfaceStyle,
+        radius: 1.5,
         typography: 'comfortable' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
+        density: 1.1,
         depth: 'soft' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -5032,14 +5216,15 @@ function AppearanceSettings() {
         id: 'mountain-peak',
         name: t('settings.appearance.themes.mountainPeak.name'),
         description: t('settings.appearance.themes.mountainPeak.description'),
-        accent: 'azure' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
-        surface: 'glacier' as SurfaceStyle,
-        radius: 1,
+        accent: 'cerulean' as AccentColor,
+        secondaryAccent: 'aqua' as AccentColor,
+        tertiaryAccent: 'periwinkle' as AccentColor,
+        surface: 'mountain' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5047,14 +5232,15 @@ function AppearanceSettings() {
         id: 'autumn-leaves',
         name: t('settings.appearance.themes.autumnLeaves.name'),
         description: t('settings.appearance.themes.autumnLeaves.description'),
-        accent: 'orange' as AccentColor,
-        secondaryAccent: 'amber' as AccentColor,
-        surface: 'ember' as SurfaceStyle,
-        radius: 1,
+        accent: 'vermillion' as AccentColor,
+        secondaryAccent: 'rust' as AccentColor,
+        tertiaryAccent: 'copper' as AccentColor,
+        surface: 'valley' as SurfaceStyle,
+        radius: 1.25,
         typography: 'comfortable' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5094,12 +5280,14 @@ function AppearanceSettings() {
         id: 'ibm',
         name: t('settings.appearance.themes.ibm.name'),
         description: t('settings.appearance.themes.ibm.description'),
-        accent: 'blue' as AccentColor,
+        accent: 'sapphire' as AccentColor,
+        secondaryAccent: 'cerulean' as AccentColor,
+        tertiaryAccent: 'steel' as AccentColor,
         surface: 'snow' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'standard' as ContrastMode,
-        density: 1,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'reduced' as MotionPreference,
         official: true,
@@ -5108,12 +5296,14 @@ function AppearanceSettings() {
         id: 'oracle',
         name: t('settings.appearance.themes.oracle.name'),
         description: t('settings.appearance.themes.oracle.description'),
-        accent: 'red' as AccentColor,
+        accent: 'crimson' as AccentColor,
+        secondaryAccent: 'wine' as AccentColor,
+        tertiaryAccent: 'platinum' as AccentColor,
         surface: 'cloud' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
+        contrast: 'bold' as ContrastMode,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'reduced' as MotionPreference,
         official: true,
@@ -5122,12 +5312,14 @@ function AppearanceSettings() {
         id: 'adobe',
         name: t('settings.appearance.themes.adobe.name'),
         description: t('settings.appearance.themes.adobe.description'),
-        accent: 'red' as AccentColor,
+        accent: 'vermillion' as AccentColor,
+        secondaryAccent: 'rust' as AccentColor,
+        tertiaryAccent: 'titanium' as AccentColor,
         surface: 'snow' as SurfaceStyle,
-        radius: 0.5,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
-        contrast: 'standard' as ContrastMode,
-        density: 1,
+        contrast: 'bold' as ContrastMode,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'reduced' as MotionPreference,
         official: true,
@@ -5197,13 +5389,14 @@ function AppearanceSettings() {
         id: '80s-neon',
         name: t('settings.appearance.themes.eightiesNeon.name'),
         description: t('settings.appearance.themes.eightiesNeon.description'),
-        accent: 'magenta' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
-        surface: 'noir' as SurfaceStyle,
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-cyan' as AccentColor,
+        tertiaryAccent: 'neon-blue' as AccentColor,
+        surface: 'matrix' as SurfaceStyle,
         radius: 0,
-        typography: 'default' as TypographyScale,
+        typography: 'compact' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -5212,14 +5405,15 @@ function AppearanceSettings() {
         id: 'vaporwave',
         name: t('settings.appearance.themes.vaporwave.name'),
         description: t('settings.appearance.themes.vaporwave.description'),
-        accent: 'pink' as AccentColor,
-        secondaryAccent: 'cyan' as AccentColor,
-        surface: 'twilight' as SurfaceStyle,
-        radius: 0.5,
+        accent: 'pastel-pink' as AccentColor,
+        secondaryAccent: 'aqua' as AccentColor,
+        tertiaryAccent: 'periwinkle' as AccentColor,
+        surface: 'laser' as SurfaceStyle,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5227,14 +5421,15 @@ function AppearanceSettings() {
         id: 'synthwave',
         name: t('settings.appearance.themes.synthwave.name'),
         description: t('settings.appearance.themes.synthwave.description'),
-        accent: 'orange' as AccentColor,
-        secondaryAccent: 'purple' as AccentColor,
-        surface: 'void' as SurfaceStyle,
-        radius: 0.5,
+        accent: 'tangerine' as AccentColor,
+        secondaryAccent: 'amethyst' as AccentColor,
+        tertiaryAccent: 'wisteria' as AccentColor,
+        surface: 'plasma' as SurfaceStyle,
+        radius: 0.75,
         typography: 'default' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
-        depth: 'soft' as DepthStyle,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
       },
@@ -5242,13 +5437,14 @@ function AppearanceSettings() {
         id: 'retro-gaming',
         name: t('settings.appearance.themes.retroGaming.name'),
         description: t('settings.appearance.themes.retroGaming.description'),
-        accent: 'lime' as AccentColor,
-        secondaryAccent: 'magenta' as AccentColor,
-        surface: 'noir' as SurfaceStyle,
+        accent: 'neon-green' as AccentColor,
+        secondaryAccent: 'neon-pink' as AccentColor,
+        tertiaryAccent: 'neon-cyan' as AccentColor,
+        surface: 'matrix' as SurfaceStyle,
         radius: 0,
-        typography: 'default' as TypographyScale,
+        typography: 'compact' as TypographyScale,
         contrast: 'bold' as ContrastMode,
-        density: 1,
+        density: 0.95,
         depth: 'flat' as DepthStyle,
         motion: 'default' as MotionPreference,
         official: true,
@@ -5340,6 +5536,745 @@ function AppearanceSettings() {
         official: true,
       },
     ],
+    creative: [
+      {
+        id: 'artistic-vision',
+        name: t('settings.appearance.themes.artisticVision.name'),
+        description: t('settings.appearance.themes.artisticVision.description'),
+        accent: 'amethyst' as AccentColor,
+        secondaryAccent: 'orchid' as AccentColor,
+        tertiaryAccent: 'lavender' as AccentColor,
+        surface: 'gallery' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'colorful-canvas',
+        name: t('settings.appearance.themes.colorfulCanvas.name'),
+        description: t('settings.appearance.themes.colorfulCanvas.description'),
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-cyan' as AccentColor,
+        tertiaryAccent: 'neon-yellow' as AccentColor,
+        surface: 'artistic-creative' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'design-studio',
+        name: t('settings.appearance.themes.designStudio.name'),
+        description: t('settings.appearance.themes.designStudio.description'),
+        accent: 'cerulean' as AccentColor,
+        secondaryAccent: 'aqua' as AccentColor,
+        surface: 'studio' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'creative-spark',
+        name: t('settings.appearance.themes.creativeSpark.name'),
+        description: t('settings.appearance.themes.creativeSpark.description'),
+        accent: 'fuchsia' as AccentColor,
+        secondaryAccent: 'magenta' as AccentColor,
+        tertiaryAccent: 'violet' as AccentColor,
+        surface: 'aurora' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'pastel-dreams',
+        name: t('settings.appearance.themes.pastelDreams.name'),
+        description: t('settings.appearance.themes.pastelDreams.description'),
+        accent: 'pastel-pink' as AccentColor,
+        secondaryAccent: 'pastel-blue' as AccentColor,
+        tertiaryAccent: 'pastel-purple' as AccentColor,
+        surface: 'cloud' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.1,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'abstract-art',
+        name: t('settings.appearance.themes.abstractArt.name'),
+        description: t('settings.appearance.themes.abstractArt.description'),
+        accent: 'royal' as AccentColor,
+        secondaryAccent: 'periwinkle' as AccentColor,
+        surface: 'abstract-art' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
+    professional: [
+      {
+        id: 'executive-suite',
+        name: t('settings.appearance.themes.executiveSuite.name'),
+        description: t('settings.appearance.themes.executiveSuite.description'),
+        accent: 'navy' as AccentColor,
+        secondaryAccent: 'sapphire' as AccentColor,
+        surface: 'premium' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.95,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'corporate-power',
+        name: t('settings.appearance.themes.corporatePower.name'),
+        description: t('settings.appearance.themes.corporatePower.description'),
+        accent: 'graphite' as AccentColor,
+        secondaryAccent: 'steel' as AccentColor,
+        tertiaryAccent: 'iron' as AccentColor,
+        surface: 'professional-corporate' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'compact' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.9,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'business-class',
+        name: t('settings.appearance.themes.businessClass.name'),
+        description: t('settings.appearance.themes.businessClass.description'),
+        accent: 'royal' as AccentColor,
+        secondaryAccent: 'platinum' as AccentColor,
+        surface: 'elegant' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'boardroom',
+        name: t('settings.appearance.themes.boardroom.name'),
+        description: t('settings.appearance.themes.boardroom.description'),
+        accent: 'charcoal' as AccentColor,
+        secondaryAccent: 'slate' as AccentColor,
+        surface: 'sophisticated' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.95,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'prestige',
+        name: t('settings.appearance.themes.prestige.name'),
+        description: t('settings.appearance.themes.prestige.description'),
+        accent: 'gold' as AccentColor,
+        secondaryAccent: 'champagne' as AccentColor,
+        surface: 'luxury' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'enterprise',
+        name: t('settings.appearance.themes.enterprise.name'),
+        description: t('settings.appearance.themes.enterprise.description'),
+        accent: 'cobalt' as AccentColor,
+        secondaryAccent: 'azure' as AccentColor,
+        surface: 'city' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
+    minimalist: [
+      {
+        id: 'pure-minimal',
+        name: t('settings.appearance.themes.pureMinimal.name'),
+        description: t('settings.appearance.themes.pureMinimal.description'),
+        accent: 'pure' as AccentColor,
+        surface: 'snow' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'compact' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.9,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'clean-slate',
+        name: t('settings.appearance.themes.cleanSlate.name'),
+        description: t('settings.appearance.themes.cleanSlate.description'),
+        accent: 'graphite' as AccentColor,
+        surface: 'ivory' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.95,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'essence',
+        name: t('settings.appearance.themes.essence.name'),
+        description: t('settings.appearance.themes.essence.description'),
+        accent: 'mono' as AccentColor,
+        surface: 'minimal-clean' as SurfaceStyle,
+        radius: 0,
+        typography: 'compact' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.85,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'zen',
+        name: t('settings.appearance.themes.zen.name'),
+        description: t('settings.appearance.themes.zen.description'),
+        accent: 'sage' as AccentColor,
+        surface: 'mist' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'breath',
+        name: t('settings.appearance.themes.breath.name'),
+        description: t('settings.appearance.themes.breath.description'),
+        accent: 'silver' as AccentColor,
+        surface: 'pearl' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.05,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'void-minimal',
+        name: t('settings.appearance.themes.voidMinimal.name'),
+        description: t('settings.appearance.themes.voidMinimal.description'),
+        accent: 'pure' as AccentColor,
+        surface: 'void' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'compact' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 0.9,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+    ],
+    vibrant: [
+      {
+        id: 'neon-explosion',
+        name: t('settings.appearance.themes.neonExplosion.name'),
+        description: t('settings.appearance.themes.neonExplosion.description'),
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-green' as AccentColor,
+        tertiaryAccent: 'neon-blue' as AccentColor,
+        surface: 'neon' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.15,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'electric-vibe',
+        name: t('settings.appearance.themes.electricVibe.name'),
+        description: t('settings.appearance.themes.electricVibe.description'),
+        accent: 'neon-cyan' as AccentColor,
+        secondaryAccent: 'neon-yellow' as AccentColor,
+        surface: 'laser' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'rainbow-burst',
+        name: t('settings.appearance.themes.rainbowBurst.name'),
+        description: t('settings.appearance.themes.rainbowBurst.description'),
+        accent: 'fuchsia' as AccentColor,
+        secondaryAccent: 'lime' as AccentColor,
+        tertiaryAccent: 'cyan' as AccentColor,
+        surface: 'colorful-rainbow' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.15,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'sunset-fury',
+        name: t('settings.appearance.themes.sunsetFury.name'),
+        description: t('settings.appearance.themes.sunsetFury.description'),
+        accent: 'vermillion' as AccentColor,
+        secondaryAccent: 'tangerine' as AccentColor,
+        tertiaryAccent: 'canary' as AccentColor,
+        surface: 'firelight' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'plasma-core',
+        name: t('settings.appearance.themes.plasmaCore.name'),
+        description: t('settings.appearance.themes.plasmaCore.description'),
+        accent: 'neon-purple' as AccentColor,
+        secondaryAccent: 'neon-orange' as AccentColor,
+        surface: 'plasma' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'energy-rush',
+        name: t('settings.appearance.themes.energyRush.name'),
+        description: t('settings.appearance.themes.energyRush.description'),
+        accent: 'chartreuse' as AccentColor,
+        secondaryAccent: 'lime' as AccentColor,
+        tertiaryAccent: 'neon-green' as AccentColor,
+        surface: 'energetic-vibrant' as SurfaceStyle,
+        radius: 1.5,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.15,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
+    aesthetic: [
+      {
+        id: 'muted-90s',
+        name: t('settings.appearance.themes.muted90s.name'),
+        description: t('settings.appearance.themes.muted90s.description'),
+        accent: 'rust' as AccentColor,
+        secondaryAccent: 'khaki' as AccentColor,
+        surface: '90s-muted' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'dispatch',
+        name: t('settings.appearance.themes.dispatch.name'),
+        description: t('settings.appearance.themes.dispatch.description'),
+        accent: 'neon-cyan' as AccentColor,
+        secondaryAccent: 'neon-blue' as AccentColor,
+        tertiaryAccent: 'azure' as AccentColor,
+        surface: 'city' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'teardown',
+        name: t('settings.appearance.themes.teardown.name'),
+        description: t('settings.appearance.themes.teardown.description'),
+        accent: 'copper' as AccentColor,
+        secondaryAccent: 'rust' as AccentColor,
+        surface: 'retro' as SurfaceStyle,
+        radius: 0,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'drums-of-liberation',
+        name: t('settings.appearance.themes.drumsOfLiberation.name'),
+        description: t('settings.appearance.themes.drumsOfLiberation.description'),
+        accent: 'canary' as AccentColor,
+        secondaryAccent: 'tangerine' as AccentColor,
+        tertiaryAccent: 'vermillion' as AccentColor,
+        surface: 'energetic-vibrant' as SurfaceStyle,
+        radius: 1.75,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.15,
+        depth: 'hard' as DepthStyle,
+        motion: 'enhanced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'gear-5',
+        name: t('settings.appearance.themes.gear5.name'),
+        description: t('settings.appearance.themes.gear5.description'),
+        accent: 'lemon' as AccentColor,
+        secondaryAccent: 'honey' as AccentColor,
+        tertiaryAccent: 'butter' as AccentColor,
+        surface: 'one-piece-joy' as SurfaceStyle,
+        radius: 2,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'enhanced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'balloons',
+        name: t('settings.appearance.themes.balloons.name'),
+        description: t('settings.appearance.themes.balloons.description'),
+        accent: 'pastel-pink' as AccentColor,
+        secondaryAccent: 'pastel-blue' as AccentColor,
+        tertiaryAccent: 'pastel-purple' as AccentColor,
+        surface: 'balloons-festive' as SurfaceStyle,
+        radius: 2,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1.05,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'luck',
+        name: t('settings.appearance.themes.luck.name'),
+        description: t('settings.appearance.themes.luck.description'),
+        accent: 'chartreuse' as AccentColor,
+        secondaryAccent: 'gold' as AccentColor,
+        surface: 'starlight' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'jujutsu-kaisen',
+        name: t('settings.appearance.themes.jujutsuKaisen.name'),
+        description: t('settings.appearance.themes.jujutsuKaisen.description'),
+        accent: 'royal' as AccentColor,
+        secondaryAccent: 'amethyst' as AccentColor,
+        surface: 'jujutsu-kaisen' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'towel',
+        name: t('settings.appearance.themes.towel.name'),
+        description: t('settings.appearance.themes.towel.description'),
+        accent: 'beige' as AccentColor,
+        secondaryAccent: 'vanilla' as AccentColor,
+        surface: 'silk' as SurfaceStyle,
+        radius: 1,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'shit',
+        name: t('settings.appearance.themes.shit.name'),
+        description: t('settings.appearance.themes.shit.description'),
+        accent: 'rust' as AccentColor,
+        secondaryAccent: 'copper' as AccentColor,
+        surface: 'mahogany' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'flat' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'programming',
+        name: t('settings.appearance.themes.programming.name'),
+        description: t('settings.appearance.themes.programming.description'),
+        accent: 'chartreuse' as AccentColor,
+        surface: 'programming-terminal' as SurfaceStyle,
+        radius: 0,
+        typography: 'compact' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 0.9,
+        depth: 'flat' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'outlast',
+        name: t('settings.appearance.themes.outlast.name'),
+        description: t('settings.appearance.themes.outlast.description'),
+        accent: 'crimson' as AccentColor,
+        surface: 'outlast-horror' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'phasmophobia',
+        name: t('settings.appearance.themes.phasmophobia.name'),
+        description: t('settings.appearance.themes.phasmophobia.description'),
+        accent: 'periwinkle' as AccentColor,
+        secondaryAccent: 'amethyst' as AccentColor,
+        surface: 'phasmophobia-eerie' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'standard' as ContrastMode,
+        density: 1,
+        depth: 'soft' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-1',
+        name: t('settings.appearance.themes.fnaf1.name'),
+        description: t('settings.appearance.themes.fnaf1.description'),
+        accent: 'vermillion' as AccentColor,
+        secondaryAccent: 'tangerine' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-2',
+        name: t('settings.appearance.themes.fnaf2.name'),
+        description: t('settings.appearance.themes.fnaf2.description'),
+        accent: 'canary' as AccentColor,
+        secondaryAccent: 'tangerine' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-3',
+        name: t('settings.appearance.themes.fnaf3.name'),
+        description: t('settings.appearance.themes.fnaf3.description'),
+        accent: 'jade' as AccentColor,
+        secondaryAccent: 'chartreuse' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-4',
+        name: t('settings.appearance.themes.fnaf4.name'),
+        description: t('settings.appearance.themes.fnaf4.description'),
+        accent: 'royal' as AccentColor,
+        secondaryAccent: 'periwinkle' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-sister-location',
+        name: t('settings.appearance.themes.fnafSisterLocation.name'),
+        description: t('settings.appearance.themes.fnafSisterLocation.description'),
+        accent: 'cerulean' as AccentColor,
+        secondaryAccent: 'aqua' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-pizzeria-simulator',
+        name: t('settings.appearance.themes.fnafPizzeriaSimulator.name'),
+        description: t('settings.appearance.themes.fnafPizzeriaSimulator.description'),
+        accent: 'tangerine' as AccentColor,
+        secondaryAccent: 'vermillion' as AccentColor,
+        tertiaryAccent: 'canary' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.75,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-ultimate-custom-night',
+        name: t('settings.appearance.themes.fnafUltimateCustomNight.name'),
+        description: t('settings.appearance.themes.fnafUltimateCustomNight.description'),
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-green' as AccentColor,
+        tertiaryAccent: 'neon-blue' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-help-wanted',
+        name: t('settings.appearance.themes.fnafHelpWanted.name'),
+        description: t('settings.appearance.themes.fnafHelpWanted.description'),
+        accent: 'platinum' as AccentColor,
+        secondaryAccent: 'titanium' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-security-breach',
+        name: t('settings.appearance.themes.fnafSecurityBreach.name'),
+        description: t('settings.appearance.themes.fnafSecurityBreach.description'),
+        accent: 'neon-pink' as AccentColor,
+        secondaryAccent: 'neon-blue' as AccentColor,
+        tertiaryAccent: 'periwinkle' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 1.25,
+        typography: 'comfortable' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1.05,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-ruin',
+        name: t('settings.appearance.themes.fnafRuin.name'),
+        description: t('settings.appearance.themes.fnafRuin.description'),
+        accent: 'rust' as AccentColor,
+        secondaryAccent: 'copper' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 0.5,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'reduced' as MotionPreference,
+        official: true,
+      },
+      {
+        id: 'fnaf-help-wanted-2',
+        name: t('settings.appearance.themes.fnafHelpWanted2.name'),
+        description: t('settings.appearance.themes.fnafHelpWanted2.description'),
+        accent: 'platinum' as AccentColor,
+        secondaryAccent: 'titanium' as AccentColor,
+        tertiaryAccent: 'steel' as AccentColor,
+        surface: 'fnaf-dark' as SurfaceStyle,
+        radius: 1,
+        typography: 'default' as TypographyScale,
+        contrast: 'bold' as ContrastMode,
+        density: 1,
+        depth: 'elevated' as DepthStyle,
+        motion: 'default' as MotionPreference,
+        official: true,
+      },
+    ],
     }),
     [t]
   )
@@ -5353,6 +6288,11 @@ function AppearanceSettings() {
       ...(officialThemesGroups.nature || []),
       ...(officialThemesGroups.corporate || []),
       ...(officialThemesGroups.retro || []),
+      ...(officialThemesGroups.creative || []),
+      ...(officialThemesGroups.professional || []),
+      ...(officialThemesGroups.minimalist || []),
+      ...(officialThemesGroups.vibrant || []),
+      ...(officialThemesGroups.aesthetic || []),
     ],
     [officialThemesGroups]
   )
@@ -5380,6 +6320,38 @@ function AppearanceSettings() {
       return []
     }
   })
+
+  // Favorite themes (stored in localStorage)
+  const [favoriteThemeIds, setFavoriteThemeIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('aetheris-favorite-themes')
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
+
+  const toggleFavoriteTheme = (themeId: string) => {
+    const newFavorites = new Set(favoriteThemeIds)
+    const isFavorite = newFavorites.has(themeId)
+    
+    if (isFavorite) {
+      newFavorites.delete(themeId)
+      toast({
+        title: t('settings.appearance.themeRemovedFromFavorites'),
+        description: t('settings.appearance.themeRemovedFromFavoritesDescription'),
+      })
+    } else {
+      newFavorites.add(themeId)
+      toast({
+        title: t('settings.appearance.themeAddedToFavorites'),
+        description: t('settings.appearance.themeAddedToFavoritesDescription'),
+      })
+    }
+    
+    setFavoriteThemeIds(newFavorites)
+    localStorage.setItem('aetheris-favorite-themes', JSON.stringify(Array.from(newFavorites)))
+  }
 
   const allThemes = useMemo(
     () => [...officialThemes, ...customThemes].sort((a, b) => {
@@ -5457,6 +6429,11 @@ function AppearanceSettings() {
           (themeFilters.group === 'nature' && officialThemesGroups.nature?.some((t) => t.id === theme.id)) ||
           (themeFilters.group === 'corporate' && officialThemesGroups.corporate?.some((t) => t.id === theme.id)) ||
           (themeFilters.group === 'retro' && officialThemesGroups.retro?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'creative' && (officialThemesGroups.creative || [])?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'professional' && (officialThemesGroups.professional || [])?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'minimalist' && (officialThemesGroups.minimalist || [])?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'vibrant' && (officialThemesGroups.vibrant || [])?.some((t) => t.id === theme.id)) ||
+          (themeFilters.group === 'aesthetic' && (officialThemesGroups.aesthetic || [])?.some((t) => t.id === theme.id)) ||
           (themeFilters.group === 'custom' && customThemes.some((t) => t.id === theme.id))
         if (!inGroup) return false
       }
@@ -5524,18 +6501,23 @@ function AppearanceSettings() {
   }
 
   const handleApplyTheme = (theme: typeof allThemes[number]) => {
-    setAccent(theme.accent)
-    // Устанавливаем дополнительные акцентные цвета, если они есть в теме
+    // Применяем все параметры темы через метод applyTheme для атомарного обновления
     const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
-    setSecondaryAccent(themeWithAccents.secondaryAccent)
-    setTertiaryAccent(themeWithAccents.tertiaryAccent)
-    setSurface(theme.surface)
-    setRadius(theme.radius)
-    setTypography(theme.typography)
-    setContrast(theme.contrast)
+    
+    // Всегда используем applyTheme для атомарного обновления всех параметров
+    applyTheme({
+      accent: theme.accent,
+      secondaryAccent: themeWithAccents.secondaryAccent,
+      tertiaryAccent: themeWithAccents.tertiaryAccent,
+      surface: theme.surface,
+      radius: theme.radius,
+      typography: theme.typography,
+      contrast: theme.contrast,
+      depth: theme.depth,
+      motion: theme.motion,
+    })
     // Don't change density - keep user's current setting
-    setDepth(theme.depth)
-    setMotion(theme.motion)
+    
     toast({
       title: 'Theme applied',
       description: `"${theme.name}" is now active.`,
@@ -5598,6 +6580,7 @@ function AppearanceSettings() {
     onApply: () => void,
     onShowDescription?: (e: React.MouseEvent) => void
   ) => {
+    const isFavorite = favoriteThemeIds.has(theme.id)
     const themeAccent = accentOptionsByValue[theme.accent]
     const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
     const themeSecondaryAccent = themeWithAccents.secondaryAccent ? accentOptionsByValue[themeWithAccents.secondaryAccent] : null
@@ -5836,6 +6819,21 @@ function AppearanceSettings() {
                 <Info className="h-4 w-4" />
               </Button>
               <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8 shrink-0",
+                  isFavorite && "text-primary hover:text-primary/80"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFavoriteTheme(theme.id)
+                }}
+                title={isFavorite ? t('settings.appearance.removeFromFavorites') : t('settings.appearance.addToFavorites')}
+              >
+                <Star className={cn("h-4 w-4", isFavorite && "fill-current")} />
+              </Button>
+              <Button
                 variant={isActive ? 'default' : 'outline'}
                 size="sm"
                 className="flex-1"
@@ -5889,8 +6887,8 @@ function AppearanceSettings() {
             const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
             const isActive =
               accent === theme.accent &&
-              secondaryAccent === themeWithAccents.secondaryAccent &&
-              tertiaryAccent === themeWithAccents.tertiaryAccent &&
+              (secondaryAccent ?? undefined) === (themeWithAccents.secondaryAccent ?? undefined) &&
+              (tertiaryAccent ?? undefined) === (themeWithAccents.tertiaryAccent ?? undefined) &&
               surface === theme.surface &&
               Math.abs(radius - theme.radius) < 0.01 &&
               typography === theme.typography &&
@@ -5979,35 +6977,35 @@ function AppearanceSettings() {
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         <Tabs defaultValue="colors" className="w-full">
-          <div className="flex flex-wrap items-center gap-2">
-            <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-auto border-0 gap-2">
+          <div className="w-full min-w-0">
+            <TabsList className="flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-full border-0 gap-1.5 sm:gap-2">
               <TabsTrigger 
                 value="colors" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial max-w-[110px] sm:max-w-none"
               >
-                <Sliders className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t('settings.appearance.general')}</span>
+                <Sliders className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.appearance.general')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="themes" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial max-w-[110px] sm:max-w-none"
               >
-                <Palette className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t('settings.appearance.themesTab')}</span>
+                <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.appearance.themesTab')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="style" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial max-w-[110px] sm:max-w-none"
               >
-                <Settings className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t('settings.appearance.style')}</span>
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.appearance.style')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="layout" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-2"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial max-w-[110px] sm:max-w-none"
               >
-                <LayoutGrid className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t('settings.appearance.layout')}</span>
+                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">{t('settings.appearance.layout')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -6861,8 +7859,8 @@ function AppearanceSettings() {
                       const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                       const isActive =
                         accent === theme.accent &&
-                        secondaryAccent === themeWithAccents.secondaryAccent &&
-                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                        (secondaryAccent ?? undefined) === (themeWithAccents.secondaryAccent ?? undefined) &&
+                        (tertiaryAccent ?? undefined) === (themeWithAccents.tertiaryAccent ?? undefined) &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&
@@ -7124,49 +8122,55 @@ function AppearanceSettings() {
 
           <TabsContent value="themes" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
             <section className="space-y-4 sm:space-y-6">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t('settings.appearance.searchThemes')}
-                  value={themeSearchQuery}
-                  onChange={(e) => setThemeSearchQuery(e.target.value)}
-                  className="pl-9 pr-9"
-                />
-                {themeSearchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                    onClick={() => setThemeSearchQuery('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
+              {/* Search and Filters Button */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={t('settings.appearance.searchThemes')}
+                    value={themeSearchQuery}
+                    onChange={(e) => setThemeSearchQuery(e.target.value)}
+                    className="pl-9 pr-9"
+                  />
+                  {themeSearchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                      onClick={() => setThemeSearchQuery('')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  variant={filtersOpen ? 'default' : 'outline'}
+                  size="icon"
+                  className="h-10 w-10 shrink-0 relative"
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                  <Sliders className="h-4 w-4" />
+                  {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+                    <Badge variant={filtersOpen ? 'secondary' : 'default'} className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px] pointer-events-none">
+                      {[
+                        themeFilters.typography ? 1 : 0,
+                        themeFilters.contrast ? 1 : 0,
+                        themeFilters.depth ? 1 : 0,
+                        themeFilters.motion ? 1 : 0,
+                        themeFilters.radius ? 1 : 0,
+                        themeFilters.group ? 1 : 0,
+                      ].reduce((a, b) => a + b, 0)}
+                    </Badge>
+                  )}
+                </Button>
               </div>
 
-              {/* Filters */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sliders className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">{t('settings.appearance.filters')}</Label>
-                    {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
-                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                        {[
-                          themeFilters.typography ? 1 : 0,
-                          themeFilters.contrast ? 1 : 0,
-                          themeFilters.depth ? 1 : 0,
-                          themeFilters.motion ? 1 : 0,
-                          themeFilters.radius ? 1 : 0,
-                          themeFilters.group ? 1 : 0,
-                        ].reduce((a, b) => a + b, 0)}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+              {/* Filters Panel */}
+              {filtersOpen && (
+                <div className="space-y-4 pt-2 border-t border-border/40">
+                  {(themeFilters.typography || themeFilters.contrast || themeFilters.depth || themeFilters.motion || themeFilters.radius || themeFilters.group) && (
+                    <div className="flex justify-end pb-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -7178,23 +8182,8 @@ function AppearanceSettings() {
                       >
                         {t('settings.appearance.clearFilters')}
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setFiltersOpen(!filtersOpen)}
-                    >
-                      {filtersOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                {filtersOpen && (
-                  <div className="space-y-4 pt-2 border-t border-border/40">
+                    </div>
+                  )}
 
                     {/* Typography */}
                     <div className="space-y-2">
@@ -7335,9 +8324,42 @@ function AppearanceSettings() {
                         </div>
                       </div>
                     )}
+                </div>
+              )}
+
+              {/* Favorite Themes */}
+              {!themeSearchQuery && !themeFilters.typography && !themeFilters.contrast && !themeFilters.depth && !themeFilters.motion && !themeFilters.radius && !themeFilters.group && favoriteThemeIds.size > 0 && (
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary fill-primary" />
+                    <Label className="text-sm font-semibold">{t('settings.appearance.favoriteThemes')}</Label>
                   </div>
-                )}
-              </div>
+                  <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {allThemes
+                      .filter((theme) => favoriteThemeIds.has(theme.id))
+                      .map((theme) => {
+                        const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
+                        const isActive =
+                          accent === theme.accent &&
+                          secondaryAccent === themeWithAccents.secondaryAccent &&
+                          tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                          surface === theme.surface &&
+                          Math.abs(radius - theme.radius) < 0.01 &&
+                          typography === theme.typography &&
+                          contrast === theme.contrast &&
+                          depth === theme.depth &&
+                          motion === theme.motion
+
+                        return renderThemeCard(
+                          theme,
+                          isActive,
+                          () => handleApplyTheme(theme),
+                          (e) => handleShowDescription(e, { name: theme.name, description: theme.description || '' })
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* Featured Themes */}
               {!themeSearchQuery && !themeFilters.typography && !themeFilters.contrast && !themeFilters.depth && !themeFilters.motion && !themeFilters.radius && !themeFilters.group && featuredThemes.length > 0 && (
@@ -7351,8 +8373,8 @@ function AppearanceSettings() {
                       const themeWithAccents = theme as typeof theme & { secondaryAccent?: AccentColor; tertiaryAccent?: AccentColor }
                       const isActive =
                         accent === theme.accent &&
-                        secondaryAccent === themeWithAccents.secondaryAccent &&
-                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                        (secondaryAccent ?? undefined) === (themeWithAccents.secondaryAccent ?? undefined) &&
+                        (tertiaryAccent ?? undefined) === (themeWithAccents.tertiaryAccent ?? undefined) &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&
@@ -7377,6 +8399,14 @@ function AppearanceSettings() {
                   {officialThemesGroups.basic.length > 0 && renderThemeGroup('basic', t('settings.appearance.themeGroups.basic'), officialThemesGroups.basic)}
                   {officialThemesGroups.games.length > 0 && renderThemeGroup('games', t('settings.appearance.themeGroups.games'), officialThemesGroups.games)}
                   {officialThemesGroups.extraordinary.length > 0 && renderThemeGroup('extraordinary', t('settings.appearance.themeGroups.extraordinary'), officialThemesGroups.extraordinary)}
+                  {officialThemesGroups.nature && officialThemesGroups.nature.length > 0 && renderThemeGroup('nature', t('settings.appearance.themeGroups.nature'), officialThemesGroups.nature)}
+                  {officialThemesGroups.corporate && officialThemesGroups.corporate.length > 0 && renderThemeGroup('corporate', t('settings.appearance.themeGroups.corporate'), officialThemesGroups.corporate)}
+                  {officialThemesGroups.retro && officialThemesGroups.retro.length > 0 && renderThemeGroup('retro', t('settings.appearance.themeGroups.retro'), officialThemesGroups.retro)}
+                  {officialThemesGroups.creative && officialThemesGroups.creative.length > 0 && renderThemeGroup('creative', t('settings.appearance.themeGroups.creative'), officialThemesGroups.creative)}
+                  {officialThemesGroups.professional && officialThemesGroups.professional.length > 0 && renderThemeGroup('professional', t('settings.appearance.themeGroups.professional'), officialThemesGroups.professional)}
+                  {officialThemesGroups.minimalist && officialThemesGroups.minimalist.length > 0 && renderThemeGroup('minimalist', t('settings.appearance.themeGroups.minimalist'), officialThemesGroups.minimalist)}
+                  {officialThemesGroups.vibrant && officialThemesGroups.vibrant.length > 0 && renderThemeGroup('vibrant', t('settings.appearance.themeGroups.vibrant'), officialThemesGroups.vibrant)}
+                  {officialThemesGroups.aesthetic && officialThemesGroups.aesthetic.length > 0 && renderThemeGroup('aesthetic', t('settings.appearance.themeGroups.aesthetic'), officialThemesGroups.aesthetic)}
                 </>
               )}
 
@@ -7437,21 +8467,6 @@ function AppearanceSettings() {
                 </div>
               )}
 
-              {/* Additional Categories */}
-              {!themeSearchQuery && !themeFilters.group && (
-                <>
-                  {officialThemesGroups.nature && officialThemesGroups.nature.length > 0 && (
-                    renderThemeGroup('nature', t('settings.appearance.themeGroups.nature'), officialThemesGroups.nature)
-                  )}
-                  {officialThemesGroups.corporate && officialThemesGroups.corporate.length > 0 && (
-                    renderThemeGroup('corporate', t('settings.appearance.themeGroups.corporate'), officialThemesGroups.corporate)
-                  )}
-                  {officialThemesGroups.retro && officialThemesGroups.retro.length > 0 && (
-                    renderThemeGroup('retro', t('settings.appearance.themeGroups.retro'), officialThemesGroups.retro)
-                  )}
-                </>
-              )}
-
               {/* Your Themes */}
               {customThemes.length > 0 && (
                 <div className="space-y-4 pt-4 border-t">
@@ -7471,8 +8486,8 @@ function AppearanceSettings() {
                       const allAccents = [themeAccent, themeSecondaryAccent, themeTertiaryAccent].filter(Boolean) as NonNullable<typeof themeAccent>[]
                       const isActive =
                         accent === theme.accent &&
-                        secondaryAccent === themeWithAccents.secondaryAccent &&
-                        tertiaryAccent === themeWithAccents.tertiaryAccent &&
+                        (secondaryAccent ?? undefined) === (themeWithAccents.secondaryAccent ?? undefined) &&
+                        (tertiaryAccent ?? undefined) === (themeWithAccents.tertiaryAccent ?? undefined) &&
                         surface === theme.surface &&
                         Math.abs(radius - theme.radius) < 0.01 &&
                         typography === theme.typography &&

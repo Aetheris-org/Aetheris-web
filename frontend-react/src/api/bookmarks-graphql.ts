@@ -158,8 +158,9 @@ export async function removeBookmark(articleId: string): Promise<boolean> {
     });
 
     if (!findResponse.bookmarks || findResponse.bookmarks.length === 0) {
-      logger.warn(`Bookmark not found for article ${articleId}`);
-      return false;
+      // Закладки нет - это нормально, просто возвращаем true (уже удалено)
+      logger.debug(`Bookmark not found for article ${articleId} - already removed or never existed`);
+      return true;
     }
 
     const bookmarkId = findResponse.bookmarks[0].id;
@@ -173,8 +174,14 @@ export async function removeBookmark(articleId: string): Promise<boolean> {
     `;
 
     await mutate(deleteBookmarkMutation, { id: bookmarkId });
+    logger.debug(`Bookmark ${bookmarkId} for article ${articleId} successfully removed.`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    // Если ошибка "Access denied" или "may not exist" - закладки уже нет, это нормально
+    if (error.message?.includes('Access denied') || error.message?.includes('may not exist')) {
+      logger.debug(`Bookmark already removed or doesn't exist for article ${articleId}`);
+      return true;
+    }
     logger.error(`Failed to remove bookmark for article ${articleId}:`, error);
     throw error;
   }
@@ -182,22 +189,27 @@ export async function removeBookmark(articleId: string): Promise<boolean> {
 
 /**
  * Проверить, находится ли статья в избранном
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем bookmarks с take: 1 вместо bookmarksCount,
+ * чтобы гарантировать, что фильтр по пользователю применяется через access control
  */
 export async function isBookmarked(articleId: string): Promise<boolean> {
   const checkBookmarkQuery = `
     query CheckBookmark($articleId: ID!) {
-      bookmarksCount(
+      bookmarks(
         where: { article: { id: { equals: $articleId } } }
-      )
+        take: 1
+      ) {
+        id
+      }
     }
   `;
 
   try {
-    const response = await query<{ bookmarksCount: number }>(checkBookmarkQuery, {
+    const response = await query<{ bookmarks: { id: string }[] }>(checkBookmarkQuery, {
       articleId,
     });
 
-    return response.bookmarksCount > 0;
+    return response.bookmarks && response.bookmarks.length > 0;
   } catch (error) {
     logger.error(`Failed to check bookmark for article ${articleId}:`, error);
     return false;

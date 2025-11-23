@@ -913,8 +913,42 @@ type Mutation {
   redeemUserPasswordResetToken(email: String!, token: String!, password: String!): RedeemUserPasswordResetTokenResult
   sendUserMagicAuthLink(email: String!): Boolean!
   redeemUserMagicAuthToken(email: String!, token: String!): RedeemUserMagicAuthTokenResult!
-  reactToArticle(articleId: ID!, reaction: ReactionType!): Article
+  reactToArticle(articleId: ID!, reaction: ReactionType!): ReactToArticleResult
   reactToComment(commentId: ID!, reaction: ReactionType!): Comment
+  updateProfile(username: String, bio: String, avatar: String, coverImage: String): User
+}
+
+type ReactToArticleResult {
+  id: ID!
+  title: String!
+  content: ReactToArticleContent
+  excerpt: String
+  author: ReactToArticleAuthor
+  previewImage: String
+  tags: [String!]
+  difficulty: String!
+  likes_count: Int!
+  dislikes_count: Int!
+  views: Int!
+  publishedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  comments: [ReactToArticleComment]
+  userReaction: String
+}
+
+type ReactToArticleContent {
+  document: JSON
+}
+
+type ReactToArticleAuthor {
+  id: ID!
+  username: String!
+  avatar: String
+}
+
+type ReactToArticleComment {
+  id: ID!
 }
 
 enum ReactionType {
@@ -990,7 +1024,45 @@ type Query {
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
   validateUserPasswordResetToken(email: String!, token: String!): ValidateUserPasswordResetTokenResult
-  searchArticles(search: String, tags: [String], difficulty: String, sort: String, skip: Int, take: Int): [Article]
+  searchArticles(search: String, tags: [String], difficulty: String, sort: String, skip: Int, take: Int): SearchArticlesResult
+}
+
+type SearchArticlesResult {
+  articles: [SearchArticle]
+  total: Int!
+}
+
+type SearchArticle {
+  id: ID!
+  title: String!
+  content: SearchArticleContent
+  excerpt: String
+  author: SearchArticleAuthor
+  previewImage: String
+  tags: [String!]
+  difficulty: String!
+  likes_count: Int!
+  dislikes_count: Int!
+  views: Int!
+  publishedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  comments: [SearchArticleComment]
+  userReaction: String
+}
+
+type SearchArticleContent {
+  document: JSON
+}
+
+type SearchArticleAuthor {
+  id: ID!
+  username: String!
+  avatar: String
+}
+
+type SearchArticleComment {
+  id: ID!
 }
 
 union AuthenticatedItem = User

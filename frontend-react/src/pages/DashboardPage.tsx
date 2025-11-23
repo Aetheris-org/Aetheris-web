@@ -47,6 +47,7 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import {
   Settings,
   Trophy,
@@ -528,6 +529,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </header>
+        <DevelopmentBanner storageKey="dashboard-dev-banner" />
         <main className="container flex min-h-[60vh] items-center justify-center pb-16 pt-6">
           <Card className="w-full max-w-md border-border/60">
             <CardHeader>

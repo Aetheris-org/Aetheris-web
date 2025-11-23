@@ -72,13 +72,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -153,7 +146,7 @@ function LevelCard({
 }) {
   const { t } = useTranslation()
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -315,7 +308,7 @@ function AudienceInsightsCard({ insights }: { insights: MockAudienceInsight[] })
   if (insights.length === 0) return null
 
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -361,7 +354,7 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
   if (mix.length === 0) return null
 
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -404,7 +397,7 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
   }
 
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -439,7 +432,7 @@ function CreatorGoalsCard({ goals }: { goals: MockCreatorGoal[] }) {
   if (goals.length === 0) return null
 
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -531,7 +524,7 @@ function PinnedCollectionsCard({
   if (collections.length === 0) return null
 
   return (
-    <Card>
+    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -874,21 +867,21 @@ export default function ProfilePage() {
         {/* Основная панель профиля */}
         <Card className="mb-4 sm:mb-4 md:mb-6 border-border/60 bg-card shadow-sm">
           <CardContent className="p-4 sm:p-4 md:p-6">
-            {/* Мобильный лайаут: компактный горизонтальный */}
-            <div className="flex flex-col gap-2 sm:gap-5 sm:hidden">
+            {/* Мобильный лайаут: улучшенный */}
+            <div className="flex flex-col gap-3 sm:gap-5 sm:hidden">
               {/* Верхняя строка: аватар, имя, бейдж, меню */}
-              <div className="flex items-start gap-2.5 w-full">
+              <div className="flex items-start gap-3 w-full">
                 {/* Аватар */}
                 {profile.user.avatarUrl ? (
                   <img
                     src={profile.user.avatarUrl}
                     alt={profile.user.username}
-                    className="h-14 w-14 rounded-full border-2 object-cover shadow-md shrink-0"
+                    className="h-16 w-16 rounded-full border-2 object-cover shadow-md shrink-0"
                     style={{ borderColor: 'hsl(var(--border))' }}
                         />
                       ) : (
                   <div
-                    className="flex h-14 w-14 items-center justify-center rounded-full border-2 bg-primary/15 text-xl font-semibold text-primary shadow-md shrink-0"
+                    className="flex h-16 w-16 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md shrink-0"
                     style={{ borderColor: 'hsl(var(--border))' }}
                   >
                     {profile.user.username.charAt(0).toUpperCase()}
@@ -896,20 +889,20 @@ export default function ProfilePage() {
                       )}
 
                 {/* Имя, бейдж и меню */}
-                <div className="flex-1 min-w-0 flex flex-col gap-1">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <h1 className="text-base font-bold tracking-tight truncate">{profile.user.username}</h1>
-                      <Badge variant="default" className="gap-0.5 shrink-0 text-[9px] px-1.5 py-0 h-4">
-                        <Trophy className="h-2.5 w-2.5" />
+                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username}</h1>
+                      <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
+                        <Trophy className="h-3 w-3" />
                         <span>{level}</span>
                         </Badge>
                       </div>
                     {/* Дропдаун меню */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                          <MoreVertical className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                          <MoreVertical className="h-4 w-4" />
                           <span className="sr-only">{t('profile.additionalActions')}</span>
                         </Button>
                       </DropdownMenuTrigger>
@@ -944,63 +937,63 @@ export default function ProfilePage() {
                     </DropdownMenu>
                         </div>
                   {/* Дата регистрации */}
-                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 w-fit">
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
                     {formatDate(profile.user.memberSince)}
                   </Badge>
                 </div>
               </div>
 
-              {/* Статистика - компактная горизонтальная строка */}
-              <div className="flex items-center justify-center gap-3 text-[10px] w-full px-1 py-1.5 border-y border-border/50">
-                <div className="flex items-center gap-1">
-                  <NotebookPen className="h-3 w-3 text-muted-foreground/70" />
+              {/* Статистика - улучшенная горизонтальная строка */}
+              <div className="flex items-center justify-center gap-4 text-xs w-full px-2 py-2.5 border-y border-border/50">
+                <div className="flex items-center gap-1.5">
+                  <NotebookPen className="h-3.5 w-3.5 text-muted-foreground/70" />
                   <span className="font-semibold text-foreground">{profile.stats.publishedArticles}</span>
                 </div>
-                <Separator orientation="vertical" className="h-3" />
-                <div className="flex items-center gap-1">
-                  <Heart className="h-3 w-3 text-muted-foreground/70" />
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-muted-foreground/70" />
                   <span className="font-semibold text-foreground">{profile.stats.totalLikes}</span>
                 </div>
-                <Separator orientation="vertical" className="h-3" />
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3 text-muted-foreground/70" />
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/70" />
                   <span className="font-semibold text-foreground">{profile.stats.totalComments}</span>
                 </div>
               </div>
 
               {/* Био */}
               {profile.user.bio && (
-                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed px-1">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {profile.user.bio}
                 </p>
               )}
 
-              {/* Кнопки действий - компактные */}
-              <div className="flex gap-1.5 w-full pt-1.5">
+              {/* Кнопки действий - улучшенные */}
+              <div className="flex gap-2 w-full pt-1">
                     <Button
                       variant="outline"
                       size="sm"
                   onClick={() => navigate('/forum')}
-                  className="gap-1 flex-1 h-8 text-[10px]"
+                  className="gap-1.5 flex-1 h-9 text-xs"
                     >
-                  <ArrowLeft className="h-3 w-3" />
+                  <ArrowLeft className="h-3.5 w-3.5" />
                   <span className="truncate">{t('profile.openArticles')}</span>
                     </Button>
                 {isOwnProfile ? (
                     <Button
                       size="sm"
                     variant="default"
-                    className="gap-1 flex-1 h-8 text-[10px]"
+                    className="gap-1.5 flex-1 h-9 text-xs"
                     onClick={() => navigate('/settings/profile', { state: { from: location.pathname } })}
                   >
-                    <Settings className="h-3 w-3" />
+                    <Settings className="h-3.5 w-3.5" />
                     <span className="truncate">{t('profile.settings')}</span>
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     variant={followStatus ? 'outline' : 'default'}
-                    className="gap-1 flex-1 h-8 text-[10px]"
+                    className="gap-1.5 flex-1 h-9 text-xs"
                     onClick={() => {
                       if (followStatus) {
                         unfollowMutation.mutate()
@@ -1012,12 +1005,12 @@ export default function ProfilePage() {
                   >
                     {followStatus ? (
                       <>
-                        <UserMinus className="h-3 w-3" />
+                        <UserMinus className="h-3.5 w-3.5" />
                         <span className="truncate">{t('profile.unfollow') || 'Отписаться'}</span>
                         </>
                       ) : (
                         <>
-                        <UserPlus className="h-3 w-3" />
+                        <UserPlus className="h-3.5 w-3.5" />
                         <span className="truncate">{t('profile.follow') || 'Подписаться'}</span>
                         </>
                       )}
@@ -1235,115 +1228,49 @@ export default function ProfilePage() {
             )}
 
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
-              {/* Мобильный Select */}
-              <div className="sm:hidden mb-4">
-                <Select value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-                  <SelectTrigger className="h-9 w-full pl-2 pr-8">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {activeTab === 'articles' && <NotebookPen className="h-4 w-4 shrink-0" />}
-                      {activeTab === 'comments' && <MessageSquare className="h-4 w-4 shrink-0" />}
-                      {activeTab === 'bookmarks' && <Bookmark className="h-4 w-4 shrink-0" />}
-                      <SelectValue className="flex-1 min-w-0 text-left">
-                        {activeTab === 'articles' && t('profile.articlesTab')}
-                        {activeTab === 'comments' && t('profile.commentsTab')}
-                        {activeTab === 'bookmarks' && t('profile.bookmarksTab')}
-                      </SelectValue>
-                      {activeTab === 'articles' && publishedArticles.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4 mr-1">
-                          {publishedArticles.length}
-                        </Badge>
-                      )}
-                      {activeTab === 'comments' && comments.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4 mr-1">
-                          {comments.length}
-                        </Badge>
-                      )}
-                      {activeTab === 'bookmarks' && bookmarks.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4 mr-1">
-                          {bookmarks.length}
-                        </Badge>
-                      )}
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="articles">
-                      <div className="flex items-center gap-2 w-full">
-                        <NotebookPen className="h-4 w-4 shrink-0" />
-                        <span className="flex-1">{t('profile.articlesTab')}</span>
-                        {publishedArticles.length > 0 && (
-                          <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4">
-                            {publishedArticles.length}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="comments">
-                      <div className="flex items-center gap-2 w-full">
-                        <MessageSquare className="h-4 w-4 shrink-0" />
-                        <span className="flex-1">{t('profile.commentsTab')}</span>
-                        {comments.length > 0 && (
-                          <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4">
-                            {comments.length}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="bookmarks">
-                      <div className="flex items-center gap-2 w-full">
-                        <Bookmark className="h-4 w-4 shrink-0" />
-                        <span className="flex-1">{t('profile.bookmarksTab')}</span>
-                        {bookmarks.length > 0 && (
-                          <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] px-1.5 h-4">
-                            {bookmarks.length}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Десктопные вкладки */}
-              <TabsList className="hidden sm:grid w-full grid-cols-3 h-9 sm:h-10 gap-1">
+              {/* Вкладки для всех экранов */}
+              <div className="w-full min-w-0 mb-4 sm:mb-6">
+                <TabsList className="flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-full border-0 gap-1 sm:gap-2">
                     <TabsTrigger 
                       value="articles" 
-                      className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-full"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial"
                     >
                       <NotebookPen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="truncate">{t('profile.articlesTab')}</span>
+                      <span className="truncate min-w-0">{t('profile.articlesTab')}</span>
                       {publishedArticles.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
+                        <Badge variant="secondary" className="ml-0.5 sm:ml-1 shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
                           {publishedArticles.length}
                         </Badge>
                       )}
                     </TabsTrigger>
                     <TabsTrigger 
                       value="comments" 
-                      className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-full"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial"
                     >
                       <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="truncate">{t('profile.commentsTab')}</span>
+                      <span className="truncate min-w-0">{t('profile.commentsTab')}</span>
                       {comments.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
+                        <Badge variant="secondary" className="ml-0.5 sm:ml-1 shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
                           {comments.length}
                         </Badge>
                       )}
                     </TabsTrigger>
                     <TabsTrigger 
                       value="bookmarks" 
-                      className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-full"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial"
                     >
                       <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="truncate">{t('profile.bookmarksTab')}</span>
+                      <span className="truncate min-w-0">{t('profile.bookmarksTab')}</span>
                       {bookmarks.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
+                        <Badge variant="secondary" className="ml-0.5 sm:ml-1 shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
                           {bookmarks.length}
                         </Badge>
                       )}
                     </TabsTrigger>
                   </TabsList>
+              </div>
 
-              <TabsContent value="articles" className="mt-0 sm:mt-6">
+              <TabsContent value="articles" className="mt-0">
                     {publishedArticles.length === 0 ? (
                       <Card className="border-dashed">
                     <CardContent className="py-8 sm:py-12 text-center px-4">
@@ -1376,14 +1303,14 @@ export default function ProfilePage() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="comments" className="mt-0 sm:mt-6">
+                  <TabsContent value="comments" className="mt-0">
                 <CommentsTab
                   comments={comments}
                   onArticleClick={(articleId) => navigate(`/article/${articleId}`)}
                 />
                   </TabsContent>
 
-                  <TabsContent value="bookmarks" className="mt-0 sm:mt-6">
+                  <TabsContent value="bookmarks" className="mt-0">
                 <BookmarksTab
                   bookmarks={bookmarks}
                   onArticleClick={(articleId) => navigate(`/article/${articleId}`)}

@@ -16,6 +16,7 @@ import {
 } from '@/data/mockSections'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import {
   Rocket,
   TrendingUp,
@@ -179,7 +180,7 @@ export default function DevelopersPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-
+      <DevelopmentBanner storageKey="developers-dev-banner" />
       <main className="container space-y-10 pb-6 pt-6">
         {/* Hero Section */}
         <HeroSection

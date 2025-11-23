@@ -32,6 +32,7 @@
   },
   "settings": {
     "title": "Settings",
+    "inDevelopment": "In Development",
     "profile": {
       "title": "Profile Settings",
       "description": "Update how your profile appears to other readers",
@@ -342,6 +343,18 @@
         "deep": {
           "label": "Deep focus",
           "description": "Immersive dark surfaces for reading in low light."
+        },
+        "nature": {
+          "label": "Nature & landscapes",
+          "description": "Natural environments and landscapes."
+        },
+        "premium": {
+          "label": "Premium & elegant",
+          "description": "Luxurious and sophisticated surfaces."
+        },
+        "gaming": {
+          "label": "Gaming & anime",
+          "description": "Gaming and anime-inspired surfaces."
         }
       },
       "accents": {
@@ -664,6 +677,190 @@
         "iron": {
           "name": "Iron",
           "description": "Dark metallic for strong, durable themes"
+        },
+        "neon-pink": {
+          "name": "Neon Pink",
+          "description": "Electric pink for vibrant, energetic themes"
+        },
+        "neon-green": {
+          "name": "Neon Green",
+          "description": "Bright green for cyberpunk and tech themes"
+        },
+        "neon-blue": {
+          "name": "Neon Blue",
+          "description": "Electric blue for futuristic, digital themes"
+        },
+        "neon-yellow": {
+          "name": "Neon Yellow",
+          "description": "Vibrant yellow for attention-grabbing themes"
+        },
+        "neon-cyan": {
+          "name": "Neon Cyan",
+          "description": "Bright cyan for modern, tech-forward themes"
+        },
+        "neon-orange": {
+          "name": "Neon Orange",
+          "description": "Electric orange for energetic, bold themes"
+        },
+        "neon-purple": {
+          "name": "Neon Purple",
+          "description": "Vibrant purple for creative, artistic themes"
+        },
+        "moss-green": {
+          "name": "Moss Green",
+          "description": "Natural green for earthy, organic themes"
+        },
+        "earth-brown": {
+          "name": "Earth Brown",
+          "description": "Rich brown for grounded, natural themes"
+        },
+        "forest-deep": {
+          "name": "Deep Forest",
+          "description": "Dark green for mysterious, woodland themes"
+        },
+        "river-blue": {
+          "name": "River Blue",
+          "description": "Calm blue for peaceful, flowing themes"
+        },
+        "chrome": {
+          "name": "Chrome",
+          "description": "Shiny metallic for sleek, modern themes"
+        },
+        "nickel": {
+          "name": "Nickel",
+          "description": "Cool silver for industrial, tech themes"
+        },
+        "pewter": {
+          "name": "Pewter",
+          "description": "Muted gray-blue for sophisticated themes"
+        },
+        "brass": {
+          "name": "Brass",
+          "description": "Warm golden metal for vintage, classic themes"
+        },
+        "aluminum": {
+          "name": "Aluminum",
+          "description": "Light metallic for clean, minimal themes"
+        },
+        "pastel-pink": {
+          "name": "Pastel Pink",
+          "description": "Soft pink for gentle, feminine themes"
+        },
+        "pastel-blue": {
+          "name": "Pastel Blue",
+          "description": "Light blue for calm, peaceful themes"
+        },
+        "pastel-green": {
+          "name": "Pastel Green",
+          "description": "Soft green for fresh, natural themes"
+        },
+        "pastel-yellow": {
+          "name": "Pastel Yellow",
+          "description": "Light yellow for cheerful, sunny themes"
+        },
+        "pastel-purple": {
+          "name": "Pastel Purple",
+          "description": "Soft purple for dreamy, creative themes"
+        },
+        "pastel-orange": {
+          "name": "Pastel Orange",
+          "description": "Warm orange for cozy, inviting themes"
+        },
+        "terminal-green": {
+          "name": "Terminal Green",
+          "description": "Classic green-on-black for programming themes"
+        },
+        "horror-red": {
+          "name": "Horror Red",
+          "description": "Dark red for horror and thriller themes"
+        },
+        "fnaf-yellow": {
+          "name": "FNAF Yellow",
+          "description": "Unsettling yellow for Five Nights at Freddy's themes"
+        },
+        "outlast-dark": {
+          "name": "Outlast Dark",
+          "description": "Deep dark for Outlast horror atmosphere"
+        },
+        "jujutsu-purple": {
+          "name": "Jujutsu Purple",
+          "description": "Mystical purple for Jujutsu Kaisen themes"
+        },
+        "one-piece-white": {
+          "name": "One Piece White",
+          "description": "Pure white for Gear 5 liberation theme"
+        },
+        "balloon-red": {
+          "name": "Balloon Red",
+          "description": "Bright red for festive balloon themes"
+        },
+        "balloon-blue": {
+          "name": "Balloon Blue",
+          "description": "Vibrant blue for celebratory themes"
+        },
+        "balloon-yellow": {
+          "name": "Balloon Yellow",
+          "description": "Cheerful yellow for party themes"
+        },
+        "luck-green": {
+          "name": "Luck Green",
+          "description": "Fortune green for lucky themes"
+        },
+        "towel-beige": {
+          "name": "Towel Beige",
+          "description": "Soft beige for textile, comfort themes"
+        },
+        "shit-brown": {
+          "name": "Shit Brown",
+          "description": "Earthy brown for humorous, down-to-earth themes"
+        },
+        "programming-green": {
+          "name": "Programming Green",
+          "description": "Classic terminal green for coding themes"
+        },
+        "phasmophobia-blue": {
+          "name": "Phasmophobia Blue",
+          "description": "Eerie blue for ghost hunting themes"
+        },
+        "teardown-orange": {
+          "name": "Teardown Orange",
+          "description": "Voxel orange for destruction themes"
+        },
+        "dispatch-blue": {
+          "name": "Dispatch Blue",
+          "description": "Modern blue for Dispatch game themes"
+        },
+        "90s-muted": {
+          "name": "90s Muted",
+          "description": "Muted colors for 90s retro aesthetic"
+        },
+        "electric-blue": {
+          "name": "Electric Blue",
+          "description": "Vibrant blue for energetic, dynamic themes"
+        },
+        "fire-orange": {
+          "name": "Fire Orange",
+          "description": "Intense orange for passionate, fiery themes"
+        },
+        "ice-blue": {
+          "name": "Ice Blue",
+          "description": "Cool blue for frozen, crisp themes"
+        },
+        "lava-red": {
+          "name": "Lava Red",
+          "description": "Molten red for intense, powerful themes"
+        },
+        "storm-gray": {
+          "name": "Storm Gray",
+          "description": "Dark gray for dramatic, moody themes"
+        },
+        "sunshine-yellow": {
+          "name": "Sunshine Yellow",
+          "description": "Bright yellow for cheerful, optimistic themes"
+        },
+        "moonlight-silver": {
+          "name": "Moonlight Silver",
+          "description": "Soft silver for nocturnal, elegant themes"
         }
       },
       "surfaces": {
@@ -890,6 +1087,238 @@
         "wood": {
           "name": "Wood",
           "description": "Warm brown tones for natural, rustic themes"
+        },
+        "fnaf-dark": {
+          "name": "FNAF Dark",
+          "description": "Dark pizzeria atmosphere for Five Nights at Freddy's"
+        },
+        "fnaf-bright": {
+          "name": "FNAF Bright",
+          "description": "Brighter but still unsettling FNAF atmosphere"
+        },
+        "fnaf-springtrap": {
+          "name": "FNAF Springtrap",
+          "description": "Green-tinted horror for Springtrap theme"
+        },
+        "fnaf-nightmare": {
+          "name": "FNAF Nightmare",
+          "description": "Dark nightmare atmosphere for FNAF 4"
+        },
+        "fnaf-sister-location": {
+          "name": "FNAF Sister Location",
+          "description": "Futuristic blue tones for Sister Location"
+        },
+        "fnaf-pizzeria": {
+          "name": "FNAF Pizzeria Simulator",
+          "description": "Mixed aesthetic for Pizzeria Simulator"
+        },
+        "fnaf-ucn": {
+          "name": "FNAF Ultimate Custom Night",
+          "description": "Chaotic mixed colors for UCN"
+        },
+        "fnaf-help-wanted": {
+          "name": "FNAF Help Wanted",
+          "description": "VR aesthetic for Help Wanted"
+        },
+        "fnaf-security-breach": {
+          "name": "FNAF Security Breach",
+          "description": "Bright mall colors for Security Breach"
+        },
+        "fnaf-ruin": {
+          "name": "FNAF Ruin",
+          "description": "Destroyed dark version for Ruin DLC"
+        },
+        "fnaf-help-wanted-2": {
+          "name": "FNAF Help Wanted 2",
+          "description": "Enhanced VR aesthetic for Help Wanted 2"
+        },
+        "outlast-horror": {
+          "name": "Outlast Horror",
+          "description": "Dark horror atmosphere for Outlast"
+        },
+        "phasmophobia-eerie": {
+          "name": "Phasmophobia Eerie",
+          "description": "Eerie blue atmosphere for ghost hunting"
+        },
+        "jujutsu-kaisen": {
+          "name": "Jujutsu Kaisen",
+          "description": "Mystical dark purple for Jujutsu Kaisen"
+        },
+        "one-piece-joy": {
+          "name": "One Piece Joy",
+          "description": "Bright joyful colors for Gear 5 liberation"
+        },
+        "90s-muted": {
+          "name": "90s Muted",
+          "description": "Muted retro colors of the 90s"
+        },
+        "programming-terminal": {
+          "name": "Programming Terminal",
+          "description": "Classic terminal green-on-black aesthetic"
+        },
+        "balloons-festive": {
+          "name": "Balloons Festive",
+          "description": "Bright festive colors for celebration"
+        },
+        "teardown-voxel": {
+          "name": "Teardown Voxel",
+          "description": "Voxel destruction aesthetic for Teardown"
+        },
+        "dispatch-modern": {
+          "name": "Dispatch Modern",
+          "description": "Modern blue aesthetic for Dispatch game"
+        },
+        "horror-dark": {
+          "name": "Horror Dark",
+          "description": "Deep dark for horror themes"
+        },
+        "terminal-green": {
+          "name": "Terminal Green",
+          "description": "Classic green terminal aesthetic"
+        },
+        "neon-cyber": {
+          "name": "Neon Cyber",
+          "description": "Cyberpunk neon aesthetic"
+        },
+        "pastel-dream": {
+          "name": "Pastel Dream",
+          "description": "Soft pastel colors for dreamy themes"
+        },
+        "metallic-shine": {
+          "name": "Metallic Shine",
+          "description": "Shiny metallic surfaces"
+        },
+        "nature-forest": {
+          "name": "Nature Forest",
+          "description": "Deep forest green atmosphere"
+        },
+        "ocean-deep": {
+          "name": "Ocean Deep",
+          "description": "Deep ocean blue atmosphere"
+        },
+        "sunset-warm": {
+          "name": "Sunset Warm",
+          "description": "Warm sunset orange tones"
+        },
+        "moonlight-cool": {
+          "name": "Moonlight Cool",
+          "description": "Cool moonlight silver tones"
+        },
+        "fire-passion": {
+          "name": "Fire Passion",
+          "description": "Intense fire red-orange"
+        },
+        "ice-frozen": {
+          "name": "Ice Frozen",
+          "description": "Frozen ice blue-white"
+        },
+        "storm-dramatic": {
+          "name": "Storm Dramatic",
+          "description": "Dramatic storm gray atmosphere"
+        },
+        "calm-serene": {
+          "name": "Calm Serene",
+          "description": "Calm and serene atmosphere"
+        },
+        "energetic-vibrant": {
+          "name": "Energetic Vibrant",
+          "description": "High energy vibrant colors"
+        },
+        "minimal-clean": {
+          "name": "Minimal Clean",
+          "description": "Ultra clean minimal aesthetic"
+        },
+        "luxury-gold": {
+          "name": "Luxury Gold",
+          "description": "Luxurious gold tones"
+        },
+        "tech-futuristic": {
+          "name": "Tech Futuristic",
+          "description": "Futuristic tech aesthetic"
+        },
+        "retro-vintage": {
+          "name": "Retro Vintage",
+          "description": "Vintage retro aesthetic"
+        },
+        "artistic-creative": {
+          "name": "Artistic Creative",
+          "description": "Creative artistic atmosphere"
+        },
+        "professional-corporate": {
+          "name": "Professional Corporate",
+          "description": "Professional corporate aesthetic"
+        },
+        "gaming-arcade": {
+          "name": "Gaming Arcade",
+          "description": "Bright arcade gaming aesthetic"
+        },
+        "anime-colorful": {
+          "name": "Anime Colorful",
+          "description": "Bright colorful anime aesthetic"
+        },
+        "horror-eerie": {
+          "name": "Horror Eerie",
+          "description": "Eerie horror atmosphere"
+        },
+        "festive-celebration": {
+          "name": "Festive Celebration",
+          "description": "Bright festive celebration colors"
+        },
+        "mystical-magic": {
+          "name": "Mystical Magic",
+          "description": "Mystical magical atmosphere"
+        },
+        "industrial-raw": {
+          "name": "Industrial Raw",
+          "description": "Raw industrial aesthetic"
+        },
+        "organic-natural": {
+          "name": "Organic Natural",
+          "description": "Natural organic tones"
+        },
+        "digital-pixel": {
+          "name": "Digital Pixel",
+          "description": "Pixel art digital aesthetic"
+        },
+        "abstract-art": {
+          "name": "Abstract Art",
+          "description": "Abstract artistic atmosphere"
+        },
+        "classic-elegant": {
+          "name": "Classic Elegant",
+          "description": "Classic elegant aesthetic"
+        },
+        "modern-sleek": {
+          "name": "Modern Sleek",
+          "description": "Sleek modern aesthetic"
+        },
+        "rustic-wooden": {
+          "name": "Rustic Wooden",
+          "description": "Rustic wooden texture"
+        },
+        "crystal-clear": {
+          "name": "Crystal Clear",
+          "description": "Crystal clear transparent aesthetic"
+        },
+        "smoky-mysterious": {
+          "name": "Smoky Mysterious",
+          "description": "Mysterious smoky atmosphere"
+        },
+        "bright-sunny": {
+          "name": "Bright Sunny",
+          "description": "Bright sunny atmosphere"
+        },
+        "dark-moody": {
+          "name": "Dark Moody",
+          "description": "Dark moody atmosphere"
+        },
+        "colorful-rainbow": {
+          "name": "Colorful Rainbow",
+          "description": "Rainbow colorful aesthetic"
+        },
+        "monochrome-minimal": {
+          "name": "Monochrome Minimal",
+          "description": "Pure monochrome minimal"
         }
       },
       "themeGroups": {
@@ -900,12 +1329,24 @@
         "nature": "Nature",
         "corporate": "Corporate",
         "retro": "Retro",
+        "creative": "Creative",
+        "professional": "Professional",
+        "minimalist": "Minimalist",
+        "vibrant": "Vibrant",
+        "aesthetic": "Aesthetic",
         "yourThemes": "Your themes",
         "theme": "theme",
         "themes": "themes"
       },
       "searchThemes": "Search themes...",
       "featuredThemes": "Featured",
+      "favoriteThemes": "Favorites",
+      "addToFavorites": "Add to favorites",
+      "removeFromFavorites": "Remove from favorites",
+      "themeAddedToFavorites": "Theme added to favorites",
+      "themeAddedToFavoritesDescription": "Theme saved locally to your favorites.",
+      "themeRemovedFromFavorites": "Theme removed from favorites",
+      "themeRemovedFromFavoritesDescription": "Theme removed from your local favorites.",
       "searchResults": "Search Results",
       "moreCategories": "More Categories",
       "showMore": "Show more",
@@ -950,15 +1391,15 @@
         },
         "midnightBlue": {
           "name": "Midnight Blue",
-          "description": "Dive into the depths of productivity. Deep, calming blues that whisper focus and command attention."
+          "description": "Plunge into the abyss of focus. Sapphire depths meet cerulean brilliance under the nightfall sky — where productivity becomes an art form."
         },
         "sunsetWarm": {
           "name": "Sunset Warm",
-          "description": "Where creativity meets warmth. Golden hour vibes that spark inspiration and wrap you in cozy amber glow."
+          "description": "Bask in the firelight of inspiration. Tangerine flames dance with apricot embers and honeyed warmth — where every moment feels like golden hour."
         },
         "forestGreen": {
           "name": "Forest Green",
-          "description": "Nature's embrace in digital form. Fresh greens that breathe life into your workspace and calm your mind."
+          "description": "Lost in the jungle of creativity. Jade shadows mingle with moss-green whispers and chartreuse bursts — where nature's wild heart beats in every pixel."
         },
         "minimalLight": {
           "name": "Minimal Light",
@@ -966,15 +1407,15 @@
         },
         "cosmicDark": {
           "name": "Cosmic Dark",
-          "description": "Journey through the stars. Deep space aesthetics that transform your screen into a portal to the cosmos."
+          "description": "Wander among starlight dreams. Amethyst galaxies swirl with wisteria nebulae and lilac constellations — where the universe whispers secrets in purple hues."
         },
         "oceanBreeze": {
           "name": "Ocean Breeze",
-          "description": "Feel the gentle waves. Serene blue-greens that wash over you like a calm ocean, perfect for deep reading."
+          "description": "Drift on lake serenity. Aqua currents flow through cerulean depths and turquoise shallows — where calm waters reflect infinite peace."
         },
         "autumnWarmth": {
           "name": "Autumn Warmth",
-          "description": "Cozy up with autumn's finest. Rich oranges and reds that feel like a warm blanket on a crisp day."
+          "description": "Embrace the valley's embrace. Vermillion leaves rustle with copper whispers and rust memories — where autumn's fire burns eternal."
         },
         "snowWhite": {
           "name": "Snow White",
@@ -982,11 +1423,11 @@
         },
         "deepPurple": {
           "name": "Deep Purple",
-          "description": "Royal creativity unleashed. Rich purples that channel your inner artist and inspire bold thinking."
+          "description": "Reign under eclipse majesty. Royal power meets mauve elegance and wisteria dreams — where purple passion rules supreme."
         },
         "cyberpunk": {
           "name": "Cyberpunk 2077",
-          "description": "Wake up, samurai. Neon-drenched streets, electric dreams, and the pink-purple glow of Night City's endless night."
+          "description": "Wake up, samurai. Neon-pink streets bleed into neon-blue dreams under cyber's electric sky — where the future screams in technicolor."
         },
         "minecraft": {
           "name": "Minecraft",
@@ -994,11 +1435,11 @@
         },
         "csgo": {
           "name": "CS:GO",
-          "description": "Lock and load. Tactical orange cuts through darkness — built for precision, designed for victory."
+          "description": "Lock and load. Tangerine precision meets vermillion intensity — where every shot counts and victory tastes like fire."
         },
         "dota": {
           "name": "Dota 2",
-          "description": "The ancient calls. Mystical blues and reds clash in eternal battle — where legends are forged."
+          "description": "The ancient calls. Sapphire wisdom clashes with crimson fury and royal power — where legends are forged in eternal conflict."
         },
         "anime1": {
           "name": "Studio Ghibli",
@@ -1013,11 +1454,11 @@
           "description": "Set sail for adventure. Vibrant blues and warm oranges that capture the spirit of the Grand Line."
         },
         "terraria": {
-          "description": "Dig deep, build high. Earthy tones that capture the spirit of endless adventure and discovery.",
+          "description": "Dig deep, build high. Copper treasures gleam with honey warmth and rust memories — where adventure never ends.",
           "name": "Terraria"
         },
         "geometryDash": {
-          "description": "Feel the beat. Electric neons pulse with rhythm — pure energy that makes every click count.",
+          "description": "Feel the beat. Neon-green chaos meets neon-cyan rhythm and chartreuse explosions — where every click is pure electric energy.",
           "name": "Geometry Dash"
         },
         "valorant": {
@@ -1029,7 +1470,7 @@
           "name": "League of Legends"
         },
         "overwatch": {
-          "description": "Heroes never die. Bright blue-orange energy that powers every epic moment and legendary play.",
+          "description": "Heroes never die. Cerulean courage meets tangerine power and aqua brilliance — where every play becomes legendary.",
           "name": "Overwatch"
         },
         "apexLegends": {
@@ -1037,19 +1478,19 @@
           "name": "Apex Legends"
         },
         "fortnite": {
-          "description": "Victory royale vibes. Vibrant purple-pink explosions of color that celebrate every win in style.",
+          "description": "Victory royale vibes. Neon-pink celebrations explode with neon-cyan energy and periwinkle dreams — where every win is a party.",
           "name": "Fortnite"
         },
         "amongUs": {
-          "description": "Sus vibes only. Colorful space chaos where trust is optional and fun is mandatory.",
+          "description": "Sus vibes only. Crimson suspicion meets aqua innocence and lime chaos — where trust is dead and fun is mandatory.",
           "name": "Among Us"
         },
         "pokemon": {
-          "description": "Gotta catch 'em all! Electric yellow-blue energy that captures the spirit of adventure and friendship.",
+          "description": "Gotta catch 'em all! Canary joy meets sapphire adventure and lemon sunshine — where friendship and adventure never end.",
           "name": "Pokémon"
         },
         "zelda": {
-          "description": "Courage, wisdom, power. Emerald greens and golden light that echo the hero's journey through Hyrule.",
+          "description": "Courage, wisdom, power. Honey treasures gleam with jade wisdom and chartreuse magic — where the hero's journey never ends.",
           "name": "The Legend of Zelda"
         },
         "portal": {
@@ -1074,11 +1515,11 @@
         },
         "balatro": {
           "name": "Balatro",
-          "description": "All in. Vintage casino elegance meets roguelike chaos — dark green-gold that screams high stakes."
+          "description": "All in. Butter luck meets canary fortune and honey riches — where every hand is a gamble and every win is golden."
         },
         "metroLastLight": {
           "name": "Metro Last Light",
-          "description": "Survive the tunnels. Post-apocalyptic darkness where every flicker of light is a beacon of hope."
+          "description": "Survive the tunnels. Vermillion desperation burns with rust decay under eclipse darkness — where hope flickers in the void."
         },
         "metroExodus": {
           "name": "Metro Exodus",
@@ -1102,31 +1543,31 @@
         },
         "scp": {
           "name": "SCP Foundation",
-          "description": "[REDACTED]. Secure. Contain. Protect. Classified aesthetics for those who know too much."
+          "description": "[REDACTED]. Crimson warnings bleed into wine secrets and maroon containment — where knowledge is dangerous and silence is golden."
         },
         "backrooms": {
           "name": "Backrooms",
-          "description": "You've nocliped out of reality. Liminal yellow fluorescent hell where time has no meaning."
+          "description": "You've nocliped out of reality. Vanilla walls stretch into beige infinity and tan liminal hell — where time is meaningless and escape is impossible."
         },
         "ussr": {
           "name": "USSR",
-          "description": "Союз нерушимый. Soviet power in red and gold — where history meets aesthetics."
+          "description": "Союз нерушимый. Crimson power meets honey glory and butter warmth — where history's red banner flies eternal."
         },
         "china": {
           "name": "China",
-          "description": "Ancient wisdom, modern elegance. Traditional red-gold harmony that honors millennia of culture."
+          "description": "Ancient wisdom, modern elegance. Wine traditions flow with honey prosperity and champagne luxury — where millennia of culture shine."
         },
         "banana": {
           "name": "Banana",
-          "description": "Peel back the ordinary. Bright yellow tropical energy that's simply bananas — in the best way."
+          "description": "Peel back the ordinary. Lemon sunshine bursts with canary joy and butter sweetness — where tropical energy goes absolutely bananas."
         },
         "appleInc": {
           "name": "Apple Inc.",
-          "description": "Think different. Iconic minimalism — clean whites and grays that define modern elegance."
+          "description": "Think different. Platinum precision meets titanium perfection and steel minimalism — where elegance is engineered, not designed."
         },
         "arasaka": {
           "name": "Arasaka Inc.",
-          "description": "Corporate power, absolute control. Red-black dominance that screams megacorp authority."
+          "description": "Corporate power, absolute control. Wine authority bleeds into maroon dominance and crimson control — where megacorp rules with iron fist."
         },
         "aliexpress": {
           "name": "Aliexpress",
@@ -1446,23 +1887,23 @@
         },
         "forestDawn": {
           "name": "Forest Dawn",
-          "description": "Morning light through trees that breathes life into everything. Nature's awakening, captured in pixels. Fresh, vibrant, and absolutely alive."
+          "description": "Lost in jungle dreams. Jade shadows dance with moss-green whispers and chartreuse dawn — where nature's wild heart beats eternal."
         },
         "oceanDepths": {
           "name": "Ocean Depths",
-          "description": "Deep blue underwater that pulls you into tranquility. Mysterious, calming, and absolutely immersive. Dive deep, stay calm."
+          "description": "Dive into lake serenity. Sapphire depths flow through cerulean currents and aqua tranquility — where peace runs deep and calm never ends."
         },
         "sunsetBeach": {
           "name": "Sunset Beach",
-          "description": "Warm colors on sand that feel like vacation. Golden hour, eternal. Relax, recharge, and let the warmth wash over you."
+          "description": "Bask on beach paradise. Tangerine sunsets melt into apricot waves and honeyed sands — where vacation never ends and warmth is eternal."
         },
         "mountainPeak": {
           "name": "Mountain Peak",
-          "description": "Cool blues and whites that reach for the sky. Crisp, clear, and absolutely majestic. The summit is calling."
+          "description": "Reach for mountain heights. Cerulean peaks pierce aqua skies with periwinkle majesty — where the summit calls and clarity reigns supreme."
         },
         "autumnLeaves": {
           "name": "Autumn Leaves",
-          "description": "Fall colors that blaze with intensity. Orange, red, gold — nature's final show before winter. Bold, beautiful, and absolutely breathtaking."
+          "description": "Embrace the valley's fire. Vermillion leaves burn with rust memories and copper warmth — where autumn's blaze never fades."
         },
         "springBloom": {
           "name": "Spring Bloom",
@@ -1474,15 +1915,15 @@
         },
         "ibm": {
           "name": "IBM",
-          "description": "Professional blue that's been trusted for decades. Enterprise-grade reliability meets timeless design. Built to last, designed to impress."
+          "description": "Enterprise precision, engineered. Sapphire trust meets cerulean reliability and steel perfection — where decades of excellence shine."
         },
         "oracle": {
           "name": "Oracle",
-          "description": "Corporate red that commands respect. Powerful, authoritative, and absolutely unapologetic. When you mean business, this is how you show it."
+          "description": "Corporate power, absolute authority. Crimson dominance meets wine prestige and platinum excellence — where business means everything."
         },
         "adobe": {
           "name": "Adobe",
-          "description": "Creative red that ignites inspiration. Where artistry meets innovation, and creativity knows no bounds. Design, create, dominate."
+          "description": "Creative fire, innovation's spark. Vermillion passion burns with rust intensity and titanium precision — where artistry meets excellence."
         },
         "salesforce": {
           "name": "Salesforce",
@@ -1502,19 +1943,19 @@
         },
         "eightiesNeon": {
           "name": "80s Neon",
-          "description": "Retro neon vibes that never go out of style. Electric, vibrant, and absolutely iconic. The 80s called — they want their aesthetic back, and it's better than ever."
+          "description": "The 80s called — they want their aesthetic back. Neon-pink dreams bleed into neon-cyan nights and neon-blue futures — where retro never dies."
         },
         "vaporwave": {
           "name": "Vaporwave",
-          "description": "Aesthetic pink and blue that screams nostalgia. Dreamy, surreal, and absolutely mesmerizing. A E S T H E T I C perfection."
+          "description": "A E S T H E T I C perfection. Pastel-pink dreams float through aqua waves and periwinkle skies — where nostalgia meets surreal beauty."
         },
         "synthwave": {
           "name": "Synthwave",
-          "description": "Sunset orange and purple that pulses with retro-futurism. Neon-soaked nights, synth-driven dreams. The future that never was, now on your screen."
+          "description": "The future that never was, now on your screen. Tangerine sunsets pulse with amethyst dreams and wisteria nights — where synth-driven nostalgia never ends."
         },
         "retroGaming": {
           "name": "Retro Gaming",
-          "description": "Classic arcade colors that bring back the glory days. Pixel-perfect nostalgia meets modern design. Game over? Never. Game on? Always."
+          "description": "Game over? Never. Game on? Always. Neon-green pixels clash with neon-pink chaos and neon-cyan glory — where arcade perfection lives forever."
         },
         "crimsonDawn": {
           "name": "Crimson Dawn",
@@ -1638,23 +2079,23 @@
         },
         "doomEternal": {
           "name": "Doom Eternal",
-          "description": "Hellish red fury"
+          "description": "Rip and tear, until it is done. Crimson hellfire burns with wine darkness and maroon fury — where demons fear to tread."
         },
         "tronLegacy": {
           "name": "Tron Legacy",
-          "description": "Neon blue grid"
+          "description": "Enter the grid. Neon-cyan circuits pulse with neon-blue energy and aqua brilliance — where digital dreams become reality."
         },
         "massEffect": {
           "name": "Mass Effect",
-          "description": "Sci-fi blue space"
+          "description": "Commander, the galaxy awaits. Royal majesty meets periwinkle stars and amethyst nebulas — where space opera dreams come true."
         },
         "borderlands": {
           "name": "Borderlands",
-          "description": "Cell-shaded wasteland"
+          "description": "Welcome to Pandora. Tangerine wastelands burn with vermillion chaos and rust decay — where cell-shaded madness never ends."
         },
         "bioshock": {
           "name": "BioShock",
-          "description": "Art deco underwater"
+          "description": "Would you kindly? Honey elegance flows with butter luxury and champagne decadence — where art deco meets underwater dreams."
         },
         "fallout": {
           "name": "Fallout",
@@ -1695,6 +2136,198 @@
         "matrix": {
           "name": "The Matrix",
           "description": "Green code reality"
+        },
+        "muted90s": {
+          "name": "Muted 90s",
+          "description": "Dusty colors of a forgotten decade. Retro vibes that hit different. When dial-up was king and aesthetics were simpler. Throwback to the good old days."
+        },
+        "dispatch": {
+          "name": "Dispatch",
+          "description": "Terminal aesthetics meet tactical precision. Clean, functional, and absolutely no-nonsense. When you need results, not excuses."
+        },
+        "teardown": {
+          "name": "Teardown",
+          "description": "Voxel destruction meets strategic chaos. Every pixel matters, every action counts. Build, destroy, rebuild. The cycle of creation through demolition."
+        },
+        "drumsOfLiberation": {
+          "name": "Drums of Liberation",
+          "description": "Gear 5 energy unleashed. Yellow lightning crackles through every pixel. Freedom, joy, and absolute power. When you're not just playing — you're liberating."
+        },
+        "gear5": {
+          "name": "Gear 5",
+          "description": "The peak of transformation. Golden energy flows through your interface. Joy, freedom, and unstoppable momentum. The ultimate form, now on your screen."
+        },
+        "balloons": {
+          "name": "Balloons",
+          "description": "Celebration in every color. Festive, vibrant, and absolutely joyful. When life needs a party, this theme delivers. Pop the fun, not the balloons."
+        },
+        "luck": {
+          "name": "Luck",
+          "description": "Fortune favors the bold. Green and gold dance together in perfect harmony. When opportunity knocks, this theme answers. Your lucky day starts here."
+        },
+        "jujutsuKaisen": {
+          "name": "Jujutsu Kaisen",
+          "description": "Cursed energy flows through dark corridors. Purple and blue create an atmosphere of mystery and power. Domain expansion, now in your interface."
+        },
+        "towel": {
+          "name": "Towel",
+          "description": "Soft, comforting, and absolutely essential. The most underrated tool in the universe. Simple, warm, and always there when you need it. Don't panic."
+        },
+        "shit": {
+          "name": "Shit",
+          "description": "Bold, earthy, and unapologetically honest. Sometimes you need to call things what they are. Brown, real, and absolutely no filter. When subtlety is overrated."
+        },
+        "programming": {
+          "name": "Programming",
+          "description": "Terminal green on black. Where code becomes art and bugs become features. The programmer's sanctuary. Code, compile, debug, repeat."
+        },
+        "outlast": {
+          "name": "Outlast",
+          "description": "Horror that seeps into your soul. Dark, twisted, and absolutely terrifying. Red light in the darkness. Survival is not guaranteed, but fear is."
+        },
+        "phasmophobia": {
+          "name": "Phasmophobia",
+          "description": "Eerie purple light in haunted darkness. Ghosts, mysteries, and the unknown. When fear is your constant companion. The paranormal, now on your screen."
+        },
+        "fnaf1": {
+          "name": "FNAF 1",
+          "description": "The original nightmare begins. Red and yellow in the darkness. Animatronics move, time ticks away. Five nights, endless terror. The pizzeria awaits."
+        },
+        "fnaf2": {
+          "name": "FNAF 2",
+          "description": "The sequel that upped the ante. Bright colors hide darker secrets. More animatronics, less time. The party continues, but so does the fear."
+        },
+        "fnaf3": {
+          "name": "FNAF 3",
+          "description": "Green decay in abandoned halls. Springtrap roams the shadows. The past comes back to haunt you. Thirty years later, the nightmare persists."
+        },
+        "fnaf4": {
+          "name": "FNAF 4",
+          "description": "Nightmares in a child's room. Dark purple and blue shadows. The fear is real, the monsters are closer. The bedroom becomes a prison."
+        },
+        "fnafSisterLocation": {
+          "name": "FNAF: Sister Location",
+          "description": "Futuristic blue underground. Clean surfaces hide mechanical horrors. The facility runs deep, and so do the secrets. Tech meets terror."
+        },
+        "fnafPizzeriaSimulator": {
+          "name": "FNAF: Pizzeria Simulator",
+          "description": "Orange and yellow manage chaos. Run a pizzeria, avoid the animatronics. Business meets survival. The ultimate test of multitasking under pressure."
+        },
+        "fnafUltimateCustomNight": {
+          "name": "FNAF: Ultimate Custom Night",
+          "description": "Neon chaos in a personalized hell. Every animatronic, every nightmare. Customize your own terror. When fifty animatronics are not enough."
+        },
+        "fnafHelpWanted": {
+          "name": "FNAF: Help Wanted",
+          "description": "VR nightmares in metallic silver. The terror is immersive, the fear is real. Virtual reality meets actual horror. Put on the headset, if you dare."
+        },
+        "fnafSecurityBreach": {
+          "name": "FNAF: Security Breach",
+          "description": "Neon pink and blue in a mega mall. Bright colors hide dark secrets. The animatronics are bigger, the chase is longer. The pizzaplex never sleeps."
+        },
+        "fnafRuin": {
+          "name": "FNAF: Ruin",
+          "description": "Rust and decay in the aftermath. The pizzaplex has fallen, but the horror remains. Broken, dark, and absolutely haunting. The end is only the beginning."
+        },
+        "fnafHelpWanted2": {
+          "name": "FNAF: Help Wanted 2",
+          "description": "VR terror returns with triple the intensity. Platinum and titanium in virtual nightmares. The sequel to fear. More animatronics, more horror, more everything."
+        },
+        "artisticVision": {
+          "name": "Artistic Vision",
+          "description": "Where creativity meets elegance. Purple dreams flow through gallery walls. Every pixel is a masterpiece, every moment is inspiration. Create without limits."
+        },
+        "colorfulCanvas": {
+          "name": "Colorful Canvas",
+          "description": "Explosion of colors, burst of energy. Neon dreams paint the digital canvas. When creativity knows no bounds, and every idea deserves a rainbow."
+        },
+        "designStudio": {
+          "name": "Design Studio",
+          "description": "Professional creativity in perfect balance. Clean blues meet artistic surfaces. Where design thinking meets digital perfection. Your workspace, your masterpiece."
+        },
+        "creativeSpark": {
+          "name": "Creative Spark",
+          "description": "Ignite your imagination. Magenta and violet dance in aurora light. When inspiration strikes, this theme captures it. Creative energy, unleashed."
+        },
+        "pastelDreams": {
+          "name": "Pastel Dreams",
+          "description": "Soft, gentle, absolutely dreamy. Pastel colors float on cloud surfaces. When subtlety is strength, and dreams are painted in soft hues."
+        },
+        "abstractArt": {
+          "name": "Abstract Art",
+          "description": "Bold shapes, vibrant colors, pure expression. Royal blues meet abstract surfaces. Where art breaks rules, and creativity sets them free."
+        },
+        "executiveSuite": {
+          "name": "Executive Suite",
+          "description": "Power meets elegance. Navy precision on premium surfaces. When business is serious, and success is the only option. Command respect, demand excellence."
+        },
+        "corporatePower": {
+          "name": "Corporate Power",
+          "description": "Authority in every pixel. Graphite and steel create unbreakable professionalism. When corporate means powerful, and business means results."
+        },
+        "businessClass": {
+          "name": "Business Class",
+          "description": "First-class professionalism. Royal elegance meets platinum precision. When you work at the top, your theme should match. Excellence, elevated."
+        },
+        "boardroom": {
+          "name": "Boardroom",
+          "description": "Where decisions are made. Charcoal authority on sophisticated surfaces. Serious business, serious style. When every meeting matters."
+        },
+        "prestige": {
+          "name": "Prestige",
+          "description": "Luxury defined. Gold and champagne create unparalleled elegance. When status matters, and excellence is expected. Premium by design."
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Built for scale. Cobalt strength meets urban surfaces. When business is global, and your theme should match. Enterprise-grade, always."
+        },
+        "pureMinimal": {
+          "name": "Pure Minimal",
+          "description": "Less is everything. Pure white on snow surfaces. When simplicity is perfection, and every pixel matters. Minimalism, mastered."
+        },
+        "cleanSlate": {
+          "name": "Clean Slate",
+          "description": "Fresh start, clean design. Graphite precision on ivory surfaces. When clarity is key, and distractions are eliminated. Start fresh, stay focused."
+        },
+        "essence": {
+          "name": "Essence",
+          "description": "The core of minimalism. Mono precision on ultra-clean surfaces. When nothing is everything, and less is infinitely more. Pure essence."
+        },
+        "zen": {
+          "name": "Zen",
+          "description": "Peace in every pixel. Sage tranquility on mist surfaces. When calm is power, and simplicity is wisdom. Find your center."
+        },
+        "breath": {
+          "name": "Breath",
+          "description": "Space to breathe. Silver elegance on pearl surfaces. When minimalism meets comfort, and design takes a breath. Light, airy, perfect."
+        },
+        "voidMinimal": {
+          "name": "Void Minimal",
+          "description": "Dark minimalism perfected. Pure accents on void surfaces. When darkness is clarity, and emptiness is full. Minimal, dark, absolute."
+        },
+        "neonExplosion": {
+          "name": "Neon Explosion",
+          "description": "Color bomb detonated. Neon pink, green, and blue collide in electric chaos. When vibrant isn't enough, and energy is everything. Explosive, unstoppable."
+        },
+        "electricVibe": {
+          "name": "Electric Vibe",
+          "description": "Charged with energy. Neon cyan and yellow pulse with laser precision. When electricity flows through your interface, and every click is power."
+        },
+        "rainbowBurst": {
+          "name": "Rainbow Burst",
+          "description": "Every color, all at once. Fuchsia, lime, and cyan explode in rainbow glory. When vibrant means everything, and color is king. Burst with energy."
+        },
+        "sunsetFury": {
+          "name": "Sunset Fury",
+          "description": "Fire in the sky. Vermillion, tangerine, and canary burn with sunset intensity. When warmth meets energy, and colors rage. Sunset, unleashed."
+        },
+        "plasmaCore": {
+          "name": "Plasma Core",
+          "description": "Plasma energy unleashed. Neon purple and orange pulse with futuristic power. When technology meets vibrancy, and energy is infinite. Core activated."
+        },
+        "energyRush": {
+          "name": "Energy Rush",
+          "description": "Pure energy, pure vibrancy. Chartreuse, lime, and neon green create unstoppable momentum. When life needs a boost, this theme delivers. Rush of energy."
         }
       },
       "styleSettingsMoved": "Style settings have been moved to the Themes tab."

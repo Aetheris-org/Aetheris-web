@@ -160,7 +160,7 @@ export function AccountSheet() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-40 hover:opacity-100"
             >
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{xpProgress}%</span>
@@ -168,7 +168,7 @@ export function AccountSheet() {
             </button>
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-40 hover:opacity-100"
             >
               <Flame className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{streakDays}</span>
@@ -194,7 +194,7 @@ export function AccountSheet() {
           {/* View Full Stats Button */}
           <Button
             variant="outline"
-            className="w-full gap-2"
+            className="w-full gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
             onClick={() => setStatsSheetOpen(true)}
           >
             <TrendingUp className="h-4 w-4" />
@@ -229,11 +229,11 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   variant="outline"
-                  className="justify-start gap-2"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
                   onClick={() => setFriendsSheetOpen(true)}
                 >
-                  <Users className="h-4 w-4" />
-                  {t('accountSheet.friends')}
+                  <Users className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-left truncate">{t('accountSheet.friends')}</span>
                 </Button>
               </SheetClose>
               <SheetClose asChild>
@@ -254,11 +254,11 @@ export function AccountSheet() {
             <SheetClose asChild>
               <Button
                 variant="outline"
-                className="w-full justify-center gap-2"
+                className="w-full justify-center gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
                 onClick={() => navigate('/achievements')}
               >
-                <Sparkles className="h-4 w-4" />
-                {t('accountSheet.viewAchievements')}
+                <Sparkles className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-center truncate">{t('accountSheet.viewAchievements')}</span>
               </Button>
             </SheetClose>
           </section>
@@ -300,21 +300,21 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   variant="ghost"
-                  className="justify-start gap-2"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-40 hover:opacity-100 transition-opacity"
                   onClick={() => navigate('/feedback')}
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  {t('accountSheet.feedback')}
+                  <MessageSquare className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-left truncate">{t('accountSheet.feedback')}</span>
                 </Button>
               </SheetClose>
               <SheetClose asChild>
                 <Button
                   variant="ghost"
-                  className="justify-start gap-2"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-40 hover:opacity-100 transition-opacity"
                   onClick={() => navigate('/help')}
                 >
-                  <HelpCircle className="h-4 w-4" />
-                  {t('accountSheet.helpCenter')}
+                  <HelpCircle className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-left truncate">{t('accountSheet.helpCenter')}</span>
                 </Button>
               </SheetClose>
             </div>

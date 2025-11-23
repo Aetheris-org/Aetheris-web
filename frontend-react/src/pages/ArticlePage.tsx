@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -548,7 +548,11 @@ export default function ArticlePage() {
     queryKey: ['bookmark', article?.id],
     queryFn: () => article?.id ? isBookmarked(article.id) : Promise.resolve(false),
     enabled: !!article?.id && !!user,
-    staleTime: 1 * 60 * 1000, // 1 минута
+    staleTime: 0, // Всегда проверяем свежесть данных
+    refetchOnMount: 'always', // Всегда обновляем при монтировании компонента
+    refetchOnWindowFocus: true, // Обновляем при фокусе окна
+    refetchOnReconnect: true, // Обновляем при переподключении
+    gcTime: 0, // Не кешируем в памяти (было cacheTime)
   })
 
   // Bookmark mutation
@@ -560,9 +564,40 @@ export default function ArticlePage() {
         return await addBookmark(articleId)
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmark', article?.id] })
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+    onMutate: async ({ currentlySaved, articleId }) => {
+      // Optimistic update: сразу обновляем состояние в кеше
+      const queryKey = ['bookmark', articleId]
+      await queryClient.cancelQueries({ queryKey })
+      const previousValue = queryClient.getQueryData(queryKey) ?? false
+      // Инвертируем текущее состояние
+      const newValue = !currentlySaved
+      queryClient.setQueryData(queryKey, newValue)
+      logger.debug('[Bookmark] Optimistic update:', { articleId, currentlySaved, newValue, previousValue })
+      return { previousValue, queryKey, newValue }
+    },
+    onSuccess: async (data, variables, context) => {
+      const queryKey = ['bookmark', variables.articleId]
+      const newValue = context?.newValue ?? !variables.currentlySaved
+      
+      logger.debug('[Bookmark] onSuccess:', { articleId: variables.articleId, newValue, currentlySaved: variables.currentlySaved })
+      
+      // Инвалидируем список закладок
+      await queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: НЕ делаем refetch, так как он может вернуть старое значение
+      // Полагаемся на optimistic update и refetchOnMount при следующем монтировании компонента
+      // Устанавливаем новое значение в кеш для немедленного обновления UI
+      queryClient.setQueryData(queryKey, newValue)
+      
+      // Помечаем query как stale, чтобы при следующем монтировании он обновился
+      await queryClient.invalidateQueries({ queryKey, refetchType: 'none' })
+    },
+    onError: (error, variables, context) => {
+      // Откатываем optimistic update при ошибке
+      logger.error('[Bookmark] Mutation error:', error)
+      if (context?.previousValue !== undefined && context?.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousValue)
+      }
     },
   })
   const articleCommentKey = useMemo(() => {
@@ -580,46 +615,80 @@ export default function ArticlePage() {
   const localComments = useLocalCommentsStore(localCommentsSelector)
   const addLocalComment = useLocalCommentsStore((state) => state.addComment)
 
-  const handleBookmark = () => {
-    if (!user) {
-      toast({
-        title: t('article.authRequired'),
-        description: t('article.authRequiredToBookmark'),
-        variant: 'destructive',
-      })
-      navigate('/auth')
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Защита от спама - debounce и проверка isPending
+  const bookmarkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Очищаем таймер при размонтировании
+  useEffect(() => {
+    return () => {
+      if (bookmarkTimeoutRef.current) {
+        clearTimeout(bookmarkTimeoutRef.current)
+      }
+    }
+  }, [])
+  
+  const handleBookmark = useCallback(() => {
+    // Если мутация уже выполняется, игнорируем клик
+    if (bookmarkMutation.isPending) {
+      logger.debug('[Bookmark] Mutation already in progress, ignoring click')
       return
     }
 
-    if (!article?.id) {
-    toast({
-        title: t('article.wait'),
-        description: t('article.waitDescription'),
-        variant: 'destructive',
-      })
-      return
+    // Очищаем предыдущий таймер, если он есть
+    if (bookmarkTimeoutRef.current) {
+      clearTimeout(bookmarkTimeoutRef.current)
+      bookmarkTimeoutRef.current = null
     }
 
-    const wasSaved = isSaved
-    bookmarkMutation.mutate({ articleId: article.id, currentlySaved: isSaved }, {
-      onSuccess: () => {
-    toast({
-      title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
-      description: wasSaved
-        ? t('article.removedFromReadingListDescription')
-        : t('article.savedForLaterDescription'),
-        })
-      },
-      onError: (error) => {
-        logger.error('Failed to toggle bookmark:', error)
+    // Debounce: ждем 300ms перед выполнением
+    bookmarkTimeoutRef.current = setTimeout(() => {
+      if (!user) {
         toast({
-          title: t('common.error'),
-          description: t('article.bookmarkError'),
+          title: t('article.authRequired'),
+          description: t('article.authRequiredToBookmark'),
           variant: 'destructive',
         })
-      },
-    })
-  }
+        navigate('/auth')
+        return
+      }
+
+      if (!article?.id) {
+        toast({
+          title: t('article.wait'),
+          description: t('article.waitDescription'),
+          variant: 'destructive',
+        })
+        return
+      }
+
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем текущее состояние ДО optimistic update
+      const wasSaved = isSaved
+      const willBeSaved = !wasSaved
+
+      bookmarkMutation.mutate(
+        { articleId: article.id, currentlySaved: wasSaved },
+        {
+          onSuccess: () => {
+            // Используем сохраненное значение wasSaved для правильного toast
+            toast({
+              title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
+              description: wasSaved
+                ? t('article.removedFromReadingListDescription')
+                : t('article.savedForLaterDescription'),
+            })
+          },
+          onError: (error) => {
+            logger.error('Failed to toggle bookmark:', error)
+            toast({
+              title: t('common.error'),
+              description: t('article.bookmarkError'),
+              variant: 'destructive',
+            })
+          },
+        }
+      )
+    }, 300)
+  }, [user, article?.id, isSaved, bookmarkMutation, navigate, t, toast])
 
   const ensureCommentAuth = () => {
     if (!user) {
@@ -1544,12 +1613,45 @@ export default function ArticlePage() {
     })
   }
 
-  const estimateReadTime = (content: string | undefined) => {
-    if (!content || typeof content !== 'string') {
-      return 0
+  // Функция для извлечения текста из Slate document
+  const extractTextFromSlate = (content: any): string => {
+    if (typeof content === 'string') {
+      return content
     }
+    
+    // Если это объект Slate document
+    if (content && typeof content === 'object') {
+      // Проверяем формат Slate: { document: [...] }
+      const document = content.document || content
+      
+      if (Array.isArray(document)) {
+        const extractText = (node: any): string => {
+          if (typeof node === 'string') {
+            return node
+          }
+          if (node?.text) {
+            return node.text
+          }
+          if (node?.children && Array.isArray(node.children)) {
+            return node.children.map(extractText).join(' ')
+          }
+          if (node?.content && Array.isArray(node.content)) {
+            return node.content.map(extractText).join(' ')
+          }
+          return ''
+        }
+        return document.map(extractText).join(' ')
+      }
+    }
+    
+    return ''
+  }
+
+  const estimateReadTime = (content: any) => {
     const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
+    const text = extractTextFromSlate(content)
+    if (!text) return 1 // Минимум 1 минута
+    const words = text.split(/\s+/).filter(word => word.length > 0).length
     return Math.ceil(words / wordsPerMinute)
   }
 
@@ -1867,6 +1969,7 @@ export default function ArticlePage() {
                 variant={isSaved ? 'default' : 'outline'}
                 size="sm"
                 onClick={handleBookmark}
+                disabled={bookmarkMutation.isPending}
                 className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
                 aria-pressed={isSaved}
               >
@@ -1900,20 +2003,47 @@ export default function ArticlePage() {
                 {import.meta.env.DEV && (
                   <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
                     <p className="font-semibold text-yellow-600 dark:text-yellow-400">Debug Info:</p>
-                    <p className="text-yellow-700 dark:text-yellow-300">Content length: {article.content.length}</p>
-                    <p className="text-yellow-700 dark:text-yellow-300">Content preview: {article.content.substring(0, 200)}...</p>
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full HTML</summary>
-                      <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
-                        {article.content}
-                      </pre>
-                    </details>
+                    <p className="text-yellow-700 dark:text-yellow-300">
+                      Content type: {typeof article.content === 'string' ? 'string' : 'object (Slate)'}
+                    </p>
+                    {typeof article.content === 'string' ? (
+                      <>
+                        <p className="text-yellow-700 dark:text-yellow-300">Content length: {article.content.length}</p>
+                        <p className="text-yellow-700 dark:text-yellow-300">Content preview: {article.content.substring(0, 200)}...</p>
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full HTML</summary>
+                          <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
+                            {article.content}
+                          </pre>
+                        </details>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-yellow-700 dark:text-yellow-300">
+                          Content preview: {extractTextFromSlate(article.content).substring(0, 200)}...
+                        </p>
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-yellow-600 dark:text-yellow-400">Full Slate JSON</summary>
+                          <pre className="mt-2 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2 text-[10px]">
+                            {JSON.stringify(article.content, null, 2)}
+                          </pre>
+                        </details>
+                      </>
+                    )}
                   </div>
                 )}
-            <div
-              className="text-foreground leading-relaxed break-words"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
+            {typeof article.content === 'string' ? (
+              <div
+                className="text-foreground leading-relaxed break-words"
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
+            ) : (
+              <div className="text-foreground leading-relaxed break-words">
+                <p className="text-muted-foreground text-sm">
+                  {t('article.contentNotAvailable') || 'Content is not available in HTML format. Please use contentJSON.'}
+                </p>
+              </div>
+            )}
               </div>
             )}
           </div>

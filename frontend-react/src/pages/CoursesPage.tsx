@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import {
   BookOpen,
   Clock,
@@ -124,7 +125,7 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-
+      <DevelopmentBanner storageKey="courses-dev-banner" />
       <main className="container py-8 space-y-8">
         {/* Hero Section */}
         <HeroSection

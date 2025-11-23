@@ -53,6 +53,7 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { mockBugs, mockFeatures, type Feedback, type FeedbackType, type FeedbackStatus, type FeedbackPriority } from '@/data/feedbackMockData'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 // Simple date formatting function (replaces date-fns)
 function formatTimeAgo(date: Date): string {
   const now = new Date()
@@ -177,6 +178,7 @@ export default function FeedbackPage() {
           </div>
         </div>
       </header>
+      <DevelopmentBanner storageKey="feedback-dev-banner" />
       <main className="container space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-10 pb-4 sm:pb-6 pt-4 sm:pt-6 px-4 sm:px-6">
         {/* Header */}
         <div className="space-y-4 sm:space-y-6">
@@ -268,16 +270,24 @@ export default function FeedbackPage() {
         >
           <div className="space-y-3 sm:space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <TabsList className="grid w-full sm:w-auto grid-cols-2 h-auto">
-                <TabsTrigger value="bugs" className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
-                  <Bug className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="truncate">{t('feedback.bugs')} ({mockBugs.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="features" className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
-                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="truncate">{t('feedback.features')} ({mockFeatures.length})</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex flex-wrap items-center gap-2">
+                <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-auto border-0 gap-2">
+                  <TabsTrigger 
+                    value="bugs" 
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1.5 sm:gap-2"
+                  >
+                    <Bug className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{t('feedback.bugs')} ({mockBugs.length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="features" 
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1.5 sm:gap-2"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{t('feedback.features')} ({mockFeatures.length})</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <div className="relative flex-1 sm:flex-initial sm:w-[200px]">

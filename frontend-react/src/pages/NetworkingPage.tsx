@@ -30,6 +30,7 @@ import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import type { CompanyJobListing, ClientRequest, FreelancerOffer } from '@/types/networking'
 import { 
   mockCompanyJobs, 
@@ -345,7 +346,7 @@ export default function NetworkingPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-
+      <DevelopmentBanner storageKey="networking-dev-banner" />
       <main className="container space-y-8 pb-12 pt-6">
         {/* Hero Section */}
         <HeroSection

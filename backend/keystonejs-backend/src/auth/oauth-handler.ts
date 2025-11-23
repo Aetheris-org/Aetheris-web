@@ -43,8 +43,20 @@ export async function findOrCreateGoogleUser(
       if (profile.displayName && user.name !== profile.displayName) {
         updateData.name = profile.displayName;
       }
-      if (profile.avatar && user.avatar !== profile.avatar) {
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обновляем аватар из Google ТОЛЬКО если у пользователя его нет
+      // Это предотвращает перезапись загруженного пользователем аватара при повторной авторизации
+      if (profile.avatar && (!user.avatar || user.avatar.trim() === '')) {
         updateData.avatar = profile.avatar;
+        logger.debug('Updating avatar from Google OAuth (user had no avatar)', {
+          userId: user.id,
+          googleAvatar: profile.avatar,
+        });
+      } else if (profile.avatar && user.avatar && user.avatar !== profile.avatar) {
+        logger.debug('Skipping avatar update from Google OAuth (user has custom avatar)', {
+          userId: user.id,
+          currentAvatar: user.avatar,
+          googleAvatar: profile.avatar,
+        });
       }
       if (user.provider !== 'google') {
         updateData.provider = 'google';

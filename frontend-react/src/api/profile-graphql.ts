@@ -1,10 +1,11 @@
 /**
  * GraphQL API для профилей пользователей
  */
-import { query } from '@/lib/graphql'
+import { query, mutate } from '@/lib/graphql'
 import { logger } from '@/lib/logger'
 import type { UserProfile } from '@/types/profile'
 import type { Article } from '@/types/article'
+import type { User } from '@/types/user'
 
 interface GraphQLUserProfile {
   id: string
@@ -227,6 +228,122 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
     return profile
   } catch (error: any) {
     logger.error(`[getUserProfile] Failed to fetch profile for user ${userId}:`, error)
+    throw error
+  }
+}
+
+interface GraphQLUser {
+  id: string
+  username: string
+  email?: string | null
+  bio?: string | null
+  avatar?: string | null
+  coverImage?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+interface UpdateUserProfileInput {
+  username?: string
+  bio?: string | null
+  avatar?: string | null
+  coverImage?: string | null
+}
+
+/**
+ * Обновить профиль пользователя
+ */
+export async function updateUserProfile(input: UpdateUserProfileInput): Promise<User> {
+  logger.debug('[updateUserProfile] Updating profile:', {
+    hasUsername: !!input.username,
+    hasBio: input.bio !== undefined,
+    hasAvatar: input.avatar !== undefined,
+    hasCoverImage: input.coverImage !== undefined,
+  })
+
+  const updateProfileMutation = `
+    mutation UpdateProfile(
+      $username: String
+      $bio: String
+      $avatar: String
+      $coverImage: String
+    ) {
+      updateProfile(
+        username: $username
+        bio: $bio
+        avatar: $avatar
+        coverImage: $coverImage
+      ) {
+        id
+        username
+        email
+        bio
+        avatar
+        coverImage
+        createdAt
+        updatedAt
+      }
+    }
+  `
+
+  // Подготавливаем переменные для GraphQL mutation
+  // Не передаем поля, если они undefined, чтобы KeystoneJS не пытался их обновить
+  const variables: any = {}
+  if (input.username !== undefined) {
+    variables.username = input.username
+  }
+  // bio: используем пустую строку вместо null (KeystoneJS text() поля не могут быть null)
+  if (input.bio !== undefined) {
+    variables.bio = input.bio === null ? '' : input.bio
+  }
+  if (input.avatar !== undefined) {
+    variables.avatar = input.avatar === '' ? null : input.avatar
+  }
+  if (input.coverImage !== undefined) {
+    variables.coverImage = input.coverImage === '' ? null : input.coverImage
+  }
+
+  try {
+    const data = await mutate<{ updateProfile: GraphQLUser }>(updateProfileMutation, variables)
+
+    if (!data.updateProfile) {
+      logger.error('[updateUserProfile] Update failed: no user returned')
+      throw new Error('Failed to update profile')
+    }
+
+    const updatedUser: User = {
+      id: typeof data.updateProfile.id === 'string' 
+        ? Number.parseInt(data.updateProfile.id, 10) 
+        : Number(data.updateProfile.id),
+      nickname: data.updateProfile.username,
+      email: data.updateProfile.email ?? '',
+      avatar: data.updateProfile.avatar ?? undefined,
+      coverImage: data.updateProfile.coverImage ?? undefined,
+      // bio может быть пустой строкой, преобразуем в undefined для frontend
+      bio: data.updateProfile.bio && data.updateProfile.bio.trim() ? data.updateProfile.bio : undefined,
+      articlesCount: 0,
+      commentsCount: 0,
+      likesReceived: 0,
+      viewsReceived: 0,
+      createdAt: data.updateProfile.createdAt,
+      status: 'active',
+      role: 'user',
+      isVerified: false,
+      isProfilePublic: true,
+      showEmail: false,
+      showLastSeen: false,
+      reputation: 0,
+      level: 1,
+      experience: 0,
+    }
+
+    logger.debug('[updateUserProfile] Profile updated successfully:', {
+      username: updatedUser.nickname,
+    })
+
+    return updatedUser
+  } catch (error: any) {
+    logger.error('[updateUserProfile] Failed to update profile:', error)
     throw error
   }
 }

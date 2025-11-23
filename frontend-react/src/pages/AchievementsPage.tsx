@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import {
   Award,
   CheckCircle2,
@@ -628,6 +629,7 @@ export default function AchievementsPage() {
           </div>
         </div>
       </header>
+      <DevelopmentBanner storageKey="achievements-dev-banner" />
       <main className="container space-y-4 sm:space-y-6 md:space-y-8 pb-12 sm:pb-16 pt-4 sm:pt-6 px-4 sm:px-6">
         <HeroSection
           stats={stats}

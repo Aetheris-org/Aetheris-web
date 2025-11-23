@@ -13,10 +13,80 @@ export const extendGraphqlSchema = graphql.extend((base) => {
     values: graphql.enumValues(['like', 'dislike']),
   });
 
+  // Создаем кастомный тип для возврата из reactToArticle, чтобы избежать автоматической загрузки связанных данных
+  const ReactToArticleAuthor = graphql.object<{ id: string; username: string; avatar: string | null }>()({
+    name: 'ReactToArticleAuthor',
+    fields: {
+      id: graphql.field({ type: graphql.nonNull(graphql.ID) }),
+      username: graphql.field({ type: graphql.nonNull(graphql.String) }),
+      avatar: graphql.field({ type: graphql.String }),
+    },
+  });
+
+  const ReactToArticleContent = graphql.object<{ document: any }>()({
+    name: 'ReactToArticleContent',
+    fields: {
+      document: graphql.field({ type: graphql.JSON }),
+    },
+  });
+
+  const ReactToArticleResult = graphql.object<{
+    id: string;
+    title: string;
+    content: any;
+    excerpt: string | null;
+    author: { id: string; username: string; avatar: string | null } | null;
+    previewImage: string | null;
+    tags: string[];
+    difficulty: string;
+    likes_count: number;
+    dislikes_count: number;
+    views: number;
+    publishedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    comments: { id: string }[];
+    userReaction: string | null;
+  }>()({
+    name: 'ReactToArticleResult',
+    fields: {
+      id: graphql.field({ type: graphql.nonNull(graphql.ID) }),
+      title: graphql.field({ type: graphql.nonNull(graphql.String) }),
+      content: graphql.field({ 
+        type: ReactToArticleContent,
+        resolve: (article) => article.content,
+      }),
+      excerpt: graphql.field({ type: graphql.String }),
+      author: graphql.field({ 
+        type: ReactToArticleAuthor,
+        resolve: (article) => article.author,
+      }),
+      previewImage: graphql.field({ type: graphql.String }),
+      tags: graphql.field({ type: graphql.list(graphql.nonNull(graphql.String)) }),
+      difficulty: graphql.field({ type: graphql.nonNull(graphql.String) }),
+      likes_count: graphql.field({ type: graphql.nonNull(graphql.Int) }),
+      dislikes_count: graphql.field({ type: graphql.nonNull(graphql.Int) }),
+      views: graphql.field({ type: graphql.nonNull(graphql.Int) }),
+      publishedAt: graphql.field({ type: graphql.DateTime }),
+      createdAt: graphql.field({ type: graphql.nonNull(graphql.DateTime) }),
+      updatedAt: graphql.field({ type: graphql.nonNull(graphql.DateTime) }),
+      comments: graphql.field({ 
+        type: graphql.list(graphql.object<{ id: string }>()({
+          name: 'ReactToArticleComment',
+          fields: {
+            id: graphql.field({ type: graphql.nonNull(graphql.ID) }),
+          },
+        })),
+        resolve: (article) => article.comments,
+      }),
+      userReaction: graphql.field({ type: graphql.String }),
+    },
+  });
+
   return {
     mutation: {
       reactToArticle: graphql.field({
-        type: base.object('Article'),
+        type: ReactToArticleResult,
         args: {
           articleId: graphql.arg({ type: graphql.nonNull(graphql.ID) }),
           reaction: graphql.arg({
@@ -33,7 +103,20 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           }
 
           const userId = session.itemId;
-          logger.info(`[reactToArticle] userId=${userId}`);
+          // Преобразуем userId в число, если это строка
+          const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+          if (isNaN(userIdNum)) {
+            logger.error(`[reactToArticle] Invalid userId: ${userId}`);
+            throw new Error('Invalid user ID');
+          }
+          logger.info(`[reactToArticle] userId=${userIdNum}`);
+
+          // Преобразуем articleId в число, если это строка (GraphQL ID может быть строкой)
+          const articleIdNum = typeof articleId === 'string' ? parseInt(articleId, 10) : articleId;
+          if (isNaN(articleIdNum)) {
+            logger.error(`[reactToArticle] Invalid articleId: ${articleId}`);
+            throw new Error('Invalid article ID');
+          }
 
           // Проверяем, что реакция валидна
           if (reaction !== 'like' && reaction !== 'dislike') {
@@ -42,9 +125,9 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           }
 
           // Находим статью
-          logger.info(`[reactToArticle] Finding article: articleId=${articleId}`);
+          logger.info(`[reactToArticle] Finding article: articleId=${articleIdNum}`);
           const article = await context.query.Article.findOne({
-            where: { id: articleId },
+            where: { id: String(articleIdNum) },
             query: `
               id
               likes_count
@@ -57,20 +140,23 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           logger.info(`[reactToArticle] Article found:`, { id: article?.id, likes: article?.likes_count, dislikes: article?.dislikes_count });
 
           if (!article) {
-            logger.error(`[reactToArticle] Article not found: articleId=${articleId}`);
+            logger.error(`[reactToArticle] Article not found: articleId=${articleIdNum}`);
             throw new Error('Article not found');
           }
 
           // Проверяем существующую реакцию
-          logger.info(`[reactToArticle] Checking existing reaction: articleId=${articleId}, userId=${userId}`);
-          const existingReaction = await context.query.ArticleReaction.findMany({
+          logger.info(`[reactToArticle] Checking existing reaction: articleId=${articleIdNum}, userId=${userIdNum}`);
+          const existingReactionResult = await context.query.ArticleReaction.findMany({
             where: {
-              article: { id: { equals: articleId } },
-              user: { id: { equals: userId } },
+              article: { id: { equals: String(articleIdNum) } },
+              user: { id: { equals: userIdNum } },
             },
             query: 'id reaction',
             take: 1,
           });
+          
+          // Убеждаемся, что результат - массив
+          const existingReaction = Array.isArray(existingReactionResult) ? existingReactionResult : [];
           logger.info(`[reactToArticle] Existing reaction:`, existingReaction);
 
           let finalUserReaction: 'like' | 'dislike' | null = null;
@@ -98,11 +184,11 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             }
           } else {
             // Создаем новую реакцию
-            logger.info(`[reactToArticle] Creating new reaction: articleId=${articleId}, userId=${userId}, reaction=${reaction}`);
+            logger.info(`[reactToArticle] Creating new reaction: articleId=${articleIdNum}, userId=${userIdNum}, reaction=${reaction}`);
             await context.query.ArticleReaction.createOne({
               data: {
-                article: { connect: { id: articleId } },
-                user: { connect: { id: userId } },
+                article: { connect: { id: String(articleIdNum) } },
+                user: { connect: { id: userIdNum } },
                 reaction,
               },
             });
@@ -111,16 +197,16 @@ export const extendGraphqlSchema = graphql.extend((base) => {
 
           // ИСПРАВЛЕНИЕ RACE CONDITION: Пересчитываем счетчики на основе фактических записей реакций
           // Это гарантирует консистентность даже при одновременных запросах
-          logger.info(`[reactToArticle] Recalculating counts from actual reactions: articleId=${articleId}`);
+          logger.info(`[reactToArticle] Recalculating counts from actual reactions: articleId=${articleIdNum}`);
           const likeReactions = await context.sudo().query.ArticleReaction.count({
             where: {
-              article: { id: { equals: articleId } },
+              article: { id: { equals: String(articleIdNum) } },
               reaction: { equals: 'like' },
             },
           });
           const dislikeReactions = await context.sudo().query.ArticleReaction.count({
             where: {
-              article: { id: { equals: articleId } },
+              article: { id: { equals: String(articleIdNum) } },
               reaction: { equals: 'dislike' },
             },
           });
@@ -130,9 +216,9 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           logger.info(`[reactToArticle] Recalculated counts: likes=${newLikes}, dislikes=${newDislikes}`);
 
           // Обновляем счетчики в статье через sudo (обход access control)
-          logger.info(`[reactToArticle] Updating article counts: articleId=${articleId}`);
+          logger.info(`[reactToArticle] Updating article counts: articleId=${articleIdNum}`);
           await context.sudo().query.Article.updateOne({
-            where: { id: articleId },
+            where: { id: String(articleIdNum) },
             data: {
               likes_count: newLikes,
               dislikes_count: newDislikes,
@@ -156,7 +242,7 @@ export const extendGraphqlSchema = graphql.extend((base) => {
 
                 const where: any = {
                   user: { id: { equals: String(article.author.id) } },
-                  article: { id: { equals: articleId } },
+                  article: { id: { equals: String(articleIdNum) } },
                   type: { equals: 'article_like' },
                 };
 
@@ -179,8 +265,8 @@ export const extendGraphqlSchema = graphql.extend((base) => {
                   await createNotification(context, {
                     type: 'article_like',
                     userId: article.author.id,
-                    actorId: userId,
-                    articleId,
+                    actorId: userIdNum,
+                    articleId: String(articleIdNum),
                     metadata: {
                       threshold,
                       likesCount: newLikes,
@@ -199,35 +285,80 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             }
           }
 
-          // Получаем обновленную статью (без author, так как он не запрашивается в GraphQL запросе)
-          // Убираем DateTime поля, так как они вызывают проблемы с сериализацией
-          logger.info(`[reactToArticle] Fetching updated article: articleId=${articleId}`);
+          // Получаем обновленную статью с author и comments для фронтенда
+          // ВАЖНО: Загружаем данные через Prisma напрямую, чтобы избежать проблем с автоматической загрузкой связанных данных
+          logger.info(`[reactToArticle] Fetching updated article: articleId=${articleIdNum}`);
           try {
-            const updatedArticle = await context.sudo().query.Article.findOne({
-              where: { id: articleId },
-              query: `
-                id
-                title
-                excerpt
-                previewImage
-                tags
-                difficulty
-                likes_count
-                dislikes_count
-                views
-                userReaction
-              `,
-            });
-            
-            logger.info(`[reactToArticle] Article fetched successfully:`, {
-              id: updatedArticle?.id,
-              title: updatedArticle?.title,
-              likes: updatedArticle?.likes_count,
-              dislikes: updatedArticle?.dislikes_count,
-              userReaction: updatedArticle?.userReaction,
+            // Загружаем статью через Prisma напрямую
+            const articleData = await context.sudo().prisma.article.findUnique({
+              where: { id: articleIdNum },
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    username: true,
+                    avatar: true,
+                  },
+                },
+                comments: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
             });
 
-            logger.info(`[reactToArticle] SUCCESS: articleId=${articleId}, userId=${userId}, reaction=${finalUserReaction}`);
+            if (!articleData) {
+              logger.error(`[reactToArticle] Article not found after update: articleId=${articleIdNum}`);
+              throw new Error('Article not found');
+            }
+
+            // Загружаем userReaction через Prisma напрямую, чтобы избежать автоматической загрузки связанных данных
+            const userReactionRecord = await context.sudo().prisma.articleReaction.findFirst({
+              where: {
+                articleId: articleIdNum,
+                userId: userIdNum,
+              },
+              select: {
+                reaction: true,
+              },
+            });
+
+            const userReaction = userReactionRecord?.reaction || null;
+
+            // Формируем объект для возврата
+            const updatedArticle = {
+              id: String(articleData.id),
+              title: articleData.title,
+              content: articleData.content,
+              excerpt: articleData.excerpt,
+              author: articleData.author ? {
+                id: String(articleData.author.id),
+                username: articleData.author.username,
+                avatar: articleData.author.avatar,
+              } : null,
+              previewImage: articleData.previewImage,
+              tags: Array.isArray(articleData.tags) ? articleData.tags : [],
+              difficulty: articleData.difficulty,
+              likes_count: articleData.likes_count,
+              dislikes_count: articleData.dislikes_count,
+              views: articleData.views,
+              publishedAt: articleData.publishedAt,
+              createdAt: articleData.createdAt,
+              updatedAt: articleData.updatedAt,
+              comments: articleData.comments.map((c: any) => ({ id: String(c.id) })),
+              userReaction: userReaction,
+            };
+            
+            logger.info(`[reactToArticle] Article fetched successfully:`, {
+              id: updatedArticle.id,
+              title: updatedArticle.title,
+              likes: updatedArticle.likes_count,
+              dislikes: updatedArticle.dislikes_count,
+              userReaction: updatedArticle.userReaction,
+            });
+
+            logger.info(`[reactToArticle] SUCCESS: articleId=${articleIdNum}, userId=${userIdNum}, reaction=${finalUserReaction}`);
             return updatedArticle;
           } catch (error) {
             logger.error(`[reactToArticle] Error fetching article:`, error);

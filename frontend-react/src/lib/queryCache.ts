@@ -26,6 +26,14 @@ export function persistCache(queryClient: QueryClient) {
       const queryKey = JSON.stringify(query.queryKey)
       const state = query.state
 
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Исключаем bookmark queries из персистентного кеша
+      // чтобы они всегда обновлялись с сервера при перезагрузке страницы
+      const keyArray = query.queryKey as any[]
+      if (keyArray && keyArray[0] === 'bookmark') {
+        // Пропускаем bookmark queries - они должны всегда обновляться с сервера
+        return
+      }
+
       // Сохраняем только успешные запросы с данными
       if (state.status === 'success' && state.data !== undefined) {
         // Пропускаем большие объекты (например, изображения)
@@ -98,6 +106,14 @@ export function restoreCache(queryClient: QueryClient) {
     Object.entries(cacheEntry.data).forEach(([queryKey, queryState]) => {
       try {
         const key = JSON.parse(queryKey)
+        
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Исключаем bookmark queries из восстановления
+        // чтобы они всегда обновлялись с сервера при перезагрузке страницы
+        if (Array.isArray(key) && key[0] === 'bookmark') {
+          // Пропускаем bookmark queries - они должны всегда обновляться с сервера
+          return
+        }
+        
         queryClient.setQueryData(key, queryState.data, {
           updatedAt: queryState.dataUpdatedAt,
         })

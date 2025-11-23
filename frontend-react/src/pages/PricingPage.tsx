@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 
 type FeatureCategory = {
   title: string
@@ -325,6 +326,7 @@ export default function PricingPage() {
           </div>
         </div>
       </header>
+      <DevelopmentBanner storageKey="pricing-dev-banner" />
       
       {/* Hero Section */}
       <section className="relative py-12 sm:py-20 md:py-24 lg:py-32 px-4 sm:px-6 overflow-hidden">

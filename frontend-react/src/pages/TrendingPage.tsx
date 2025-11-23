@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { trendingArticlesMock } from '@/data/mockSections'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 
 type TimeframeValue = '24h' | '7d' | '30d'
 
@@ -95,7 +96,7 @@ export default function TrendingPage() {
           </div>
         </div>
       </header>
-
+      <DevelopmentBanner storageKey="trending-dev-banner" />
       <main className="container space-y-10 pb-6 pt-6">
         {!isHeroDismissed && (
           <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/10 p-6 shadow-sm">

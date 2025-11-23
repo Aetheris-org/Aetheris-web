@@ -553,7 +553,7 @@ export default function ForumLandingPage() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto"
+              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
               onClick={() => navigate('/pricing')}
             >
               {t('forumLanding.hero.pricing')}
@@ -869,7 +869,7 @@ export default function ForumLandingPage() {
               {t('forumLanding.finalCta.registerFree')}
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto">
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
               {t('forumLanding.finalCta.watchDemo')}
               <Video className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>

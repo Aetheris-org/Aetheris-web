@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import {
   Users,
   UserPlus,
@@ -126,7 +127,7 @@ export default function FriendsPage() {
           </div>
         </div>
       </header>
-
+      <DevelopmentBanner storageKey="friends-dev-banner" />
       <main className="container py-4 sm:py-6 md:py-8 px-4 sm:px-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="space-y-3 sm:space-y-4">
@@ -178,39 +179,53 @@ export default function FriendsPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 h-auto">
-            <TabsTrigger value="friends" className="gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-1.5 sm:px-3">
-              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline truncate">Друзья</span>
-              <Badge variant="secondary" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-auto border-0 gap-2">
+              <TabsTrigger 
+                value="friends" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
+              >
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline truncate">Друзья</span>
+                <Badge variant="secondary" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
                 {stats.totalFriends}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-1.5 sm:px-3">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline truncate">Запросы</span>
+              <TabsTrigger 
+                value="requests" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
+              >
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline truncate">Запросы</span>
               {stats.pendingRequests > 0 && (
-                <Badge variant="default" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
+                  <Badge variant="default" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
                   {stats.pendingRequests}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="search" className="gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-1.5 sm:px-3">
-              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline truncate">Поиск</span>
+              <TabsTrigger 
+                value="search" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
+              >
+                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline truncate">Поиск</span>
             </TabsTrigger>
-            <TabsTrigger value="activity" className="gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm px-1.5 sm:px-3">
-              <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline truncate">Активность</span>
+              <TabsTrigger 
+                value="activity" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
+              >
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline truncate">Активность</span>
             </TabsTrigger>
           </TabsList>
+          </div>
 
           {/* Friends Tab */}
           <TabsContent value="friends" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-            <Card>
+            <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <CardTitle className="text-base sm:text-lg">Мои друзья</CardTitle>
                     <CardDescription className="text-xs sm:text-sm">
                       {filteredFriends.length} {filteredFriends.length === 1 ? 'друг' : 'друзей'}
@@ -279,7 +294,7 @@ export default function FriendsPage() {
           <TabsContent value="requests" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
             <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
               {/* Received Requests */}
-              <Card>
+              <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg">
                     <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />

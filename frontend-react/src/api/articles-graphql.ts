@@ -9,10 +9,17 @@ interface ArticlesResponse {
 
 // Трансформация данных статьи из GraphQL в формат Article
 export function transformArticle(article: any): Article {
+  // Обрабатываем content - может быть объектом Slate document или строкой
+  const content = article.content || { document: [] };
+  const contentJSON = content && typeof content === 'object' && content.document 
+    ? content 
+    : null;
+  
   return {
     id: String(article.id),
     title: article.title || '',
-    content: article.content || { document: [] },
+    content: content, // Может быть объектом Slate или строкой для обратной совместимости
+    contentJSON: contentJSON, // Slate JSON для использования с TipTap/ArticleContent
     excerpt: article.excerpt || '',
     author: {
       id: String(article.author?.id || ''),
@@ -54,8 +61,26 @@ export async function getArticles(params?: {
   const search = params?.search;
 
   // Используем кастомный GraphQL resolver searchArticles для фильтрации и поиска
-  // Если есть фильтры (tags, search) - используем searchArticles, иначе стандартный articles
-  const needsCustomResolver = (tags && tags.length > 0) || (search && search.trim().length >= 2);
+  // Если есть фильтры (tags, search, difficulty) - используем searchArticles, иначе стандартный articles
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем search правильно - он должен быть строкой длиной >= 2
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Также используем searchArticles когда есть только difficulty фильтр
+  const hasSearch = search && typeof search === 'string' && search.trim().length >= 2;
+  const hasTags = tags && tags.length > 0;
+  const hasDifficulty = difficulty && difficulty !== 'all';
+  const needsCustomResolver = hasTags || hasSearch || hasDifficulty;
+  
+  // Логирование для отладки
+  if (import.meta.env.DEV) {
+    logger.debug('[getArticles] Resolver selection:', {
+      hasSearch,
+      searchQuery: search,
+      hasTags,
+      tags,
+      hasDifficulty,
+      difficulty,
+      needsCustomResolver,
+    });
+  }
   
   if (needsCustomResolver) {
     // Используем кастомный resolver searchArticles
@@ -73,33 +98,36 @@ export async function getArticles(params?: {
           tags: $tags
           difficulty: $difficulty
           sort: $sort
-        skip: $skip
-        take: $take
-      ) {
-        id
-        title
-        content {
-          document
-        }
-        excerpt
-        author {
-          id
-          username
-          avatar
-        }
-        previewImage
-        tags
-        difficulty
-        likes_count
-        dislikes_count
-        views
-        publishedAt
-        createdAt
-        updatedAt
-        comments {
-          id
+          skip: $skip
+          take: $take
+        ) {
+          articles {
+            id
+            title
+            content {
+              document
+            }
+            excerpt
+            author {
+              id
+              username
+              avatar
+            }
+            previewImage
+            tags
+            difficulty
+            likes_count
+            dislikes_count
+            views
+            publishedAt
+            createdAt
+            updatedAt
+            comments {
+              id
+            }
+            userReaction
           }
-          userReaction
+          total
         }
       }
     `;
@@ -116,7 +144,10 @@ export async function getArticles(params?: {
       }
 
     const response = await query<{
-        searchArticles: any[];
+        searchArticles: {
+          articles: any[];
+          total: number;
+        };
       }>(searchQuery, {
         search: search && search.trim().length >= 2 ? search.trim() : undefined,
         tags: tags && tags.length > 0 ? tags : undefined,
@@ -126,14 +157,23 @@ export async function getArticles(params?: {
       take: pageSize,
     });
 
-      // Для searchArticles нужно получить total отдельно
-      // Временно используем длину массива как total (не идеально, но работает)
-      // TODO: Добавить searchArticlesCount для точного подсчета
-      const articles = response.searchArticles.map(transformArticle);
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: searchArticles теперь возвращает объект с articles и total
+      const articles = response.searchArticles.articles.map(transformArticle);
+      const total = response.searchArticles.total;
+      
+      // Логирование для отладки
+      if (import.meta.env.DEV) {
+        logger.debug('[getArticles] SearchArticles response:', {
+          articlesCount: articles.length,
+          total,
+          searchQuery: search,
+          hasTags: !!(tags && tags.length > 0),
+        });
+      }
 
     return {
       data: articles,
-        total: articles.length, // TODO: Получить точный total через отдельный запрос
+      total, // Используем правильный total из бэкенда
     };
   } catch (error) {
       logger.error('Failed to search articles:', error);
@@ -183,9 +223,18 @@ export async function getArticles(params?: {
       publishedAt: { not: null },
     };
 
-    // Фильтр по difficulty
+    // Фильтр по difficulty (с маппингом для обратной совместимости)
     if (difficulty) {
-      where.difficulty = { equals: difficulty };
+      // Маппинг difficulty для обратной совместимости
+      let difficultyValue = difficulty;
+      if (difficultyValue === 'beginner') {
+        difficultyValue = 'easy';
+      } else if (difficultyValue === 'intermediate') {
+        difficultyValue = 'medium';
+      } else if (difficultyValue === 'advanced') {
+        difficultyValue = 'hard';
+      }
+      where.difficulty = { equals: difficultyValue };
     }
 
     // Определяем сортировку

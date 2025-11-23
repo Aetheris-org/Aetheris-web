@@ -728,6 +728,14 @@ export async function extendExpressApp(
 
       // Конвертируем файл в base64 для ImgBB API
       const base64Image = file.buffer.toString('base64');
+      
+      logger.debug('Preparing ImgBB upload:', {
+        filename: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        base64Length: base64Image.length,
+        hasApiKey: !!imgbbApiKey,
+      });
 
       // Загружаем изображение через ImgBB API
       const formData = new URLSearchParams();
@@ -737,14 +745,19 @@ export async function extendExpressApp(
       if (file.originalname) {
         formData.append('name', file.originalname);
       }
+      
+      const requestBody = formData.toString();
+      logger.debug('ImgBB request body length:', requestBody.length);
 
       // Отправляем запрос к ImgBB API
       const https = await import('https');
       const timeoutMs = 30000; // 30 секунд таймаут
       
       try {
+        const requestBody = formData.toString();
+        logger.debug('ImgBB request body length:', requestBody.length);
+        
         const imgbbResponse = await new Promise<{ statusCode: number; data: any }>((resolve, reject) => {
-          const requestBody = formData.toString();
           let timeout: NodeJS.Timeout;
           
           timeout = setTimeout(() => {
@@ -765,20 +778,62 @@ export async function extendExpressApp(
               let data = '';
               
               res.on('data', (chunk) => {
-                data += chunk;
+                data += chunk.toString();
               });
               
               res.on('end', () => {
                 clearTimeout(timeout);
+                
+                // Логируем ответ для отладки
+                logger.debug('ImgBB API response:', {
+                  statusCode: res.statusCode,
+                  headers: res.headers,
+                  dataLength: data.length,
+                  dataPreview: data.substring(0, 200),
+                });
+                
+                // Проверяем, что данные не пустые
+                if (!data || data.trim().length === 0) {
+                  logger.error('ImgBB API returned empty response', {
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                  });
+                  reject(new Error(`Empty response from ImgBB API (status: ${res.statusCode})`));
+                  return;
+                }
+                
+                // Если статус код не успешный, логируем ответ перед парсингом
+                if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+                  logger.error('ImgBB API returned error status:', {
+                    statusCode: res.statusCode,
+                    data: data.substring(0, 1000),
+                    headers: res.headers,
+                  });
+                }
+                
                 try {
                   const jsonData = JSON.parse(data);
                   resolve({
                     statusCode: res.statusCode || 500,
                     data: jsonData,
                   });
-                } catch (parseError) {
-                  reject(new Error(`Failed to parse response: ${parseError}`));
+                } catch (parseError: any) {
+                  logger.error('Failed to parse ImgBB response:', {
+                    error: parseError.message,
+                    dataLength: data.length,
+                    dataPreview: data.substring(0, 1000),
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                    contentType: res.headers['content-type'],
+                  });
+                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res.statusCode}, Response preview: ${data.substring(0, 200)}`));
                 }
+              });
+              
+              res.on('error', (error) => {
+                clearTimeout(timeout);
+                logger.error('ImgBB API response error:', error);
+                reject(error);
               });
             }
           );

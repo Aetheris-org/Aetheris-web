@@ -243,16 +243,22 @@ export const accessControl = {
         return !!session?.itemId;
       },
       update: () => false, // Закладки нельзя обновлять
-      delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только владелец закладки
-        if (!session?.itemId) return false;
-        if (!item) return false;
-        return String(item.user?.id || item.user) === String(session.itemId);
+      delete: ({ session }: { session?: any }) => {
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Разрешаем удаление авторизованным пользователям
+        // Фильтр filter.delete гарантирует, что пользователь может удалять только свои закладки
+        return !!session?.itemId;
       },
     },
     filter: {
       query: ({ session }: { session?: any }) => {
         // Пользователь видит только свои закладки
+        if (!session?.itemId) return false;
+        return {
+          user: { id: { equals: session.itemId } },
+        };
+      },
+      delete: ({ session }: { session?: any }) => {
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Пользователь может удалять только свои закладки
         if (!session?.itemId) return false;
         return {
           user: { id: { equals: session.itemId } },

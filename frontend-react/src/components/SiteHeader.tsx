@@ -91,10 +91,13 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
               )
               .map((item) => {
                 const Icon = item.icon
+                const isInDevelopment = ['explore', 'networking', 'courses', 'developers'].includes(item.key)
                 return (
                   <DropdownMenuItem
                     key={item.path}
-                    className="flex items-start gap-3 rounded-lg py-3 focus:bg-muted"
+                    className={`flex items-start gap-3 rounded-lg py-3 focus:bg-muted ${
+                      isInDevelopment ? 'opacity-40' : ''
+                    }`}
                     onSelect={(event) => {
                       event.preventDefault()
                       navigate(item.path)

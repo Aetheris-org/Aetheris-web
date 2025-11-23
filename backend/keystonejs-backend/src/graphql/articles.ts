@@ -17,37 +17,52 @@ export const SearchArticlesInputSchema = z.object({
 });
 
 // Функция для извлечения текста из Slate document
+// Рекурсивно извлекает весь текст из всех узлов документа
 export function extractTextFromSlateDocument(document: any): string {
   if (!document) return '';
   
   let text = '';
   
-  if (Array.isArray(document)) {
-    for (const node of document) {
-      if (node.type === 'paragraph' || node.type === 'heading') {
-        if (Array.isArray(node.children)) {
-          for (const child of node.children) {
-            if (typeof child === 'object' && child.text) {
-              text += child.text + ' ';
-            }
-          }
+  // Рекурсивная функция для обхода узлов
+  const extractTextFromNode = (node: any): void => {
+    if (!node) return;
+    
+    // Если узел содержит текст напрямую
+    if (typeof node === 'string') {
+      text += node + ' ';
+      return;
+    }
+    
+    // Если узел - это объект с текстом
+    if (typeof node === 'object') {
+      if (node.text && typeof node.text === 'string') {
+        text += node.text + ' ';
+      }
+      
+      // Рекурсивно обрабатываем children
+      if (Array.isArray(node.children)) {
+        for (const child of node.children) {
+          extractTextFromNode(child);
         }
+      } else if (node.children) {
+        extractTextFromNode(node.children);
       }
     }
-  } else if (typeof document === 'object' && document.children) {
+  };
+  
+  // Обрабатываем document
+  if (Array.isArray(document)) {
+    for (const node of document) {
+      extractTextFromNode(node);
+    }
+  } else if (typeof document === 'object') {
     // Если document это объект с children
     if (Array.isArray(document.children)) {
       for (const node of document.children) {
-        if (node.type === 'paragraph' || node.type === 'heading') {
-          if (Array.isArray(node.children)) {
-            for (const child of node.children) {
-              if (typeof child === 'object' && child.text) {
-                text += child.text + ' ';
-              }
-            }
-          }
-        }
+        extractTextFromNode(node);
       }
+    } else {
+      extractTextFromNode(document);
     }
   }
   
@@ -74,11 +89,16 @@ export function hasAllTags(articleTags: any, filterTags: string[]): boolean {
 
 // Функция для проверки, содержит ли текст поисковый запрос
 export function matchesSearch(text: string, searchQuery: string): boolean {
-  if (!searchQuery || !text) return true;
+  // Если поисковый запрос пустой, не фильтруем (возвращаем true)
+  if (!searchQuery || searchQuery.trim().length === 0) return true;
   
-  const normalizedText = text.toLowerCase();
-  const normalizedSearch = searchQuery.toLowerCase();
+  // Если текст пустой, он не может совпадать с поисковым запросом (возвращаем false)
+  if (!text || text.trim().length === 0) return false;
   
+  const normalizedText = text.toLowerCase().trim();
+  const normalizedSearch = searchQuery.toLowerCase().trim();
+  
+  // Проверяем, содержит ли текст поисковый запрос
   return normalizedText.includes(normalizedSearch);
 }
 
@@ -120,8 +140,12 @@ export async function searchAndFilterArticles(
 
   // Фильтрация по difficulty (если указана)
   if (validatedArgs.difficulty) {
-    // Маппинг старых значений на новые для обратной совместимости
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Маппинг старых значений на новые для обратной совместимости
+    // На фронтенде уже происходит маппинг (beginner -> easy, etc.), но на случай если придет старое значение
     let difficultyValue = validatedArgs.difficulty;
+    const originalValue = difficultyValue;
+    
+    // Маппинг для обратной совместимости (если придет старое значение)
     if (difficultyValue === 'beginner') {
       difficultyValue = 'easy';
     } else if (difficultyValue === 'intermediate') {
@@ -129,6 +153,13 @@ export async function searchAndFilterArticles(
     } else if (difficultyValue === 'advanced') {
       difficultyValue = 'hard';
     }
+    // Если значение уже замаплено (easy, medium, hard), оставляем как есть
+    
+    logger.debug(`[searchArticles] Difficulty filter:`, {
+      original: originalValue,
+      mapped: difficultyValue,
+      whereFilter: { equals: difficultyValue },
+    });
     
     where.difficulty = { equals: difficultyValue };
   }
@@ -167,13 +198,23 @@ export async function searchAndFilterArticles(
   });
 
   logger.debug(`[searchArticles] Found ${allArticles.length} articles before filtering`);
+  
+  // Логирование для отладки difficulty фильтра
+  if (validatedArgs.difficulty) {
+    const difficultyCounts = allArticles.reduce((acc: any, article: any) => {
+      const diff = article.difficulty || 'unknown';
+      acc[diff] = (acc[diff] || 0) + 1;
+      return acc;
+    }, {});
+    logger.debug(`[searchArticles] Articles by difficulty before filter:`, difficultyCounts);
+  }
 
   // Программная фильтрация по тегам и поиску
   let filteredArticles = allArticles;
 
   // Фильтрация по тегам
   if (validatedArgs.tags && validatedArgs.tags.length > 0) {
-    filteredArticles = filteredArticles.filter(article => 
+    filteredArticles = filteredArticles.filter((article: any) => 
       hasAllTags(article.tags, validatedArgs.tags!)
     );
     logger.debug(`[searchArticles] After tags filter: ${filteredArticles.length} articles`);
@@ -182,7 +223,9 @@ export async function searchAndFilterArticles(
   // Фильтрация по поисковому запросу
   if (validatedArgs.search && validatedArgs.search.trim().length > 0) {
     const searchQuery = validatedArgs.search.trim();
-    filteredArticles = filteredArticles.filter(article => {
+    logger.debug(`[searchArticles] Filtering by search query: "${searchQuery}"`);
+    
+    filteredArticles = filteredArticles.filter((article: any) => {
       // Поиск по title
       const titleMatch = matchesSearch(article.title || '', searchQuery);
       
@@ -191,12 +234,26 @@ export async function searchAndFilterArticles(
       
       // Поиск по содержимому (извлекаем текст из Slate document)
       let contentMatch = false;
+      let contentText = '';
       if (article.content && article.content.document) {
-        const contentText = extractTextFromSlateDocument(article.content.document);
+        contentText = extractTextFromSlateDocument(article.content.document);
         contentMatch = matchesSearch(contentText, searchQuery);
       }
       
-      return titleMatch || excerptMatch || contentMatch;
+      const matches = titleMatch || excerptMatch || contentMatch;
+      
+      // Логирование для отладки (только для первых нескольких статей)
+      if (filteredArticles.indexOf(article) < 3) {
+        logger.debug(`[searchArticles] Article "${article.title?.substring(0, 50)}...":`, {
+          titleMatch,
+          excerptMatch,
+          contentMatch,
+          contentTextLength: contentText.length,
+          matches,
+        });
+      }
+      
+      return matches;
     });
     logger.debug(`[searchArticles] After search filter: ${filteredArticles.length} articles`);
   }
@@ -229,28 +286,132 @@ export async function searchAndFilterArticles(
   const take = validatedArgs.take || 10;
   const paginatedArticles = sortedArticles.slice(skip, skip + take);
 
-  // ИСПРАВЛЕНИЕ: Преобразуем ID в числа для правильной работы с Prisma
-  // KeystoneJS GraphQL использует строковые ID, но Prisma ожидает числовые
-  // Когда KeystoneJS автоматически загружает связанные данные, он использует ID из объектов
-  // Поэтому нужно преобразовать ID в числа перед возвратом
-  const serializedArticles = paginatedArticles.map(article => {
-    const serialized: any = { ...article };
-    
-    // Преобразуем ID из строки в число для Prisma
-    if (article.id !== null && article.id !== undefined) {
-      const idNum = typeof article.id === 'string' 
-        ? parseInt(article.id, 10) 
-        : typeof article.id === 'number' 
-          ? article.id 
-          : null;
-      
-      if (idNum !== null && !isNaN(idNum)) {
-        serialized.id = idNum;
-      }
-    }
-    
-    return serialized;
+  // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ
+  logger.debug('[searchArticles] Paginated articles:', {
+    count: paginatedArticles.length,
+    firstArticle: paginatedArticles[0] ? {
+      id: paginatedArticles[0].id,
+      idType: typeof paginatedArticles[0].id,
+      hasAuthor: !!paginatedArticles[0].author,
+      authorId: paginatedArticles[0].author?.id,
+      authorIdType: typeof paginatedArticles[0].author?.id,
+    } : null,
   });
+
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Загружаем полные объекты статей через context.query.Article.findOne
+  // Это заставляет KeystoneJS использовать правильные связи для загрузки всех связанных данных
+  // Вместо того, чтобы возвращать частичные объекты и позволять KeystoneJS автоматически загружать связанные данные
+  // (что приводит к ошибке с articlesId), мы загружаем полные объекты через правильные связи
+  
+  const serializedArticles = await Promise.all(
+    paginatedArticles.map(async (article) => {
+      const articleId = typeof article.id === 'string' 
+        ? parseInt(article.id, 10) 
+        : article.id;
+      
+      if (!articleId || isNaN(articleId)) {
+        logger.warn(`[searchArticles] Invalid article ID: ${article.id}`);
+        return null;
+      }
+      
+      try {
+        // Загружаем полный объект статьи через правильную связь
+        // KeystoneJS автоматически загрузит author через правильную связь (articles relation filter)
+        const fullArticle = await context.sudo().query.Article.findOne({
+          where: { id: String(articleId) },
+          query: `
+            id
+            title
+            content {
+              document
+            }
+            excerpt
+            author {
+              id
+              username
+              avatar
+            }
+            previewImage
+            tags
+            difficulty
+            likes_count
+            dislikes_count
+            views
+            publishedAt
+            createdAt
+            updatedAt
+            comments {
+              id
+            }
+            userReaction
+          `,
+        });
+        
+        if (!fullArticle) {
+          logger.warn(`[searchArticles] Article ${articleId} not found`);
+          return null;
+        }
+        
+        // Преобразуем ID в число для правильной работы с Prisma
+        const serialized: any = {
+          ...fullArticle,
+          id: articleId,
+        };
+        
+        // Преобразуем author.id в число, если он есть
+        if (serialized.author && serialized.author.id) {
+          const authorId = typeof serialized.author.id === 'string' 
+            ? parseInt(serialized.author.id, 10) 
+            : serialized.author.id;
+          if (!isNaN(authorId)) {
+            serialized.author = {
+              ...serialized.author,
+              id: authorId,
+            };
+          }
+        }
+        
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Преобразуем DateTime поля в объекты Date
+        // GraphQL DateTime scalar ожидает объекты Date, а не строки ISO
+        // KeystoneJS возвращает строки ISO, но GraphQL DateTime scalar может не принимать их напрямую
+        // Преобразуем в Date объекты, которые GraphQL правильно сериализует
+        if (serialized.publishedAt && typeof serialized.publishedAt === 'string') {
+          serialized.publishedAt = new Date(serialized.publishedAt);
+        }
+        if (serialized.createdAt && typeof serialized.createdAt === 'string') {
+          serialized.createdAt = new Date(serialized.createdAt);
+        }
+        if (serialized.updatedAt && typeof serialized.updatedAt === 'string') {
+          serialized.updatedAt = new Date(serialized.updatedAt);
+        }
+        
+        // Преобразуем comments.id в числа
+        if (serialized.comments && Array.isArray(serialized.comments)) {
+          serialized.comments = serialized.comments.map((comment: any) => {
+            if (comment && comment.id) {
+              const commentId = typeof comment.id === 'string' 
+                ? parseInt(comment.id, 10) 
+                : comment.id;
+              if (!isNaN(commentId)) {
+                return { id: commentId };
+              }
+            }
+            return comment;
+          });
+        }
+        
+        return serialized;
+      } catch (error) {
+        logger.error(`[searchArticles] Failed to load article ${articleId}:`, error);
+        return null;
+      }
+    })
+  );
+  
+  // Фильтруем null значения
+  const validArticles = serializedArticles.filter((article): article is any => article !== null);
+  
+  logger.debug(`[searchArticles] Loaded ${validArticles.length} full articles from ${paginatedArticles.length} filtered articles`);
 
   logger.info(`[searchArticles] Returning ${serializedArticles.length} articles (total: ${total})`);
 
@@ -285,7 +446,16 @@ export function getArticlesQueries(base: any) {
       },
       async resolve(root, args, context) {
         try {
-          const result = await searchAndFilterArticles(context, args);
+          // Преобразуем null значения в undefined для совместимости с searchAndFilterArticles
+          const normalizedArgs = {
+            search: args.search ?? undefined,
+            tags: args.tags ? args.tags.filter((tag): tag is string => tag !== null) : undefined,
+            difficulty: args.difficulty ?? undefined,
+            sort: args.sort ?? undefined,
+            skip: args.skip ?? undefined,
+            take: args.take ?? undefined,
+          };
+          const result = await searchAndFilterArticles(context, normalizedArgs);
           return result.articles;
         } catch (error: any) {
           logger.error('[searchArticles] Error:', error);

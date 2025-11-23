@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 
 export default function HelpCenterPage() {
   const { t } = useTranslation()
@@ -139,9 +140,9 @@ export default function HelpCenterPage() {
           </div>
         </div>
       </header>
-
-      <main className="container py-4 sm:py-6 md:py-8 lg:py-10 px-4 sm:px-6 max-w-full overflow-x-hidden">
-        <section className="grid gap-4 sm:gap-6 lg:grid-cols-[1.5fr_1fr] min-w-0">
+      <DevelopmentBanner storageKey="help-center-dev-banner" />
+      <main className="container py-4 sm:py-6 md:py-8 lg:py-10 px-4 sm:px-6">
+        <section className="grid gap-4 sm:gap-6 lg:grid-cols-[1.5fr_1fr] min-w-0 w-full">
           <Card className="border-border/60 min-w-0">
             <CardHeader className="space-y-2 p-4 sm:p-6">
               <Badge variant="secondary" className="w-fit gap-1 text-[10px] sm:text-[11px] uppercase tracking-wide">
@@ -155,14 +156,20 @@ export default function HelpCenterPage() {
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0 min-w-0">
               <Tabs defaultValue={defaultTab}>
-                <TabsList className="flex w-full flex-wrap gap-1.5 sm:gap-2 h-auto overflow-x-auto">
-                  {categories.map((category) => (
-                    <TabsTrigger key={category.id} value={category.id} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 shrink-0">
-                      <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="truncate">{category.title}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                <div className="w-full min-w-0">
+                  <TabsList className="flex h-auto items-center justify-start rounded-lg bg-transparent p-0 w-full border-0 gap-1.5 sm:gap-2">
+                    {categories.map((category) => (
+                      <TabsTrigger 
+                        key={category.id} 
+                        value={category.id} 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 flex-1 sm:flex-initial max-w-[110px] sm:max-w-none"
+                      >
+                        <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="truncate min-w-0">{category.title}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
                 {categories.map((category) => (
                   <TabsContent key={category.id} value={category.id} className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 min-w-0">

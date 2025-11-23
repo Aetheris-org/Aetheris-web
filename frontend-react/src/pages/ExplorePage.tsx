@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SiteHeader } from '@/components/SiteHeader'
 import { useTranslation } from '@/hooks/useTranslation'
+import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -117,7 +118,7 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      
+      <DevelopmentBanner storageKey="explore-dev-banner" />
       <main className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
         {/* Заголовок */}
         <div>
