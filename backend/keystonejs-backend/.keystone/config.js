@@ -1306,7 +1306,7 @@ var import_express_rate_limit = __toESM(require("express-rate-limit"));
 var import_express_session = __toESM(require("express-session"));
 var import_connect_redis = __toESM(require("connect-redis"));
 var import_morgan = __toESM(require("morgan"));
-var import_passport = __toESM(require("passport"));
+var import_passport2 = __toESM(require("passport"));
 var import_multer = __toESM(require("multer"));
 
 // src/lib/redis.ts
@@ -1496,6 +1496,66 @@ async function findOrCreateGoogleUser(context, profile) {
     return null;
   }
 }
+
+// src/auth/passport.ts
+var import_passport = __toESM(require("passport"));
+var import_passport_google_oauth20 = require("passport-google-oauth20");
+var googleClientId = process.env.GOOGLE_CLIENT_ID;
+var googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+var googleCallbackURL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:1337/api/connect/google/callback";
+if (!googleClientId || !googleClientSecret) {
+  logger_default.warn("\u26A0\uFE0F Google OAuth credentials not configured. Google OAuth will not work.");
+  logger_default.warn("   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.");
+} else {
+  import_passport.default.use(
+    new import_passport_google_oauth20.Strategy(
+      {
+        clientID: googleClientId,
+        clientSecret: googleClientSecret,
+        callbackURL: googleCallbackURL
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value || profile.email;
+          if (!email) {
+            logger_default.error("Google OAuth: No email in profile", {
+              profileId: profile.id,
+              hasEmails: !!profile.emails && profile.emails.length > 0
+            });
+            return done(new Error("No email in Google profile"), null);
+          }
+          const displayName = profile.displayName || profile.name?.givenName || email.split("@")[0];
+          const avatar = profile.photos?.[0]?.value || void 0;
+          const user = {
+            id: profile.id,
+            email,
+            displayName,
+            avatar,
+            provider: "google"
+          };
+          logger_default.debug("Google OAuth profile processed:", {
+            id: user.id,
+            email: email.substring(0, 5) + "...",
+            // Логируем только часть email для безопасности
+            displayName: user.displayName,
+            hasAvatar: !!user.avatar
+          });
+          return done(null, user);
+        } catch (error) {
+          logger_default.error("Error processing Google OAuth profile:", error);
+          return done(error, null);
+        }
+      }
+    )
+  );
+  logger_default.info("\u2705 Google OAuth strategy configured");
+}
+import_passport.default.serializeUser((user, done) => {
+  done(null, user);
+});
+import_passport.default.deserializeUser((user, done) => {
+  done(null, user);
+});
 
 // src/lib/security-logger.ts
 function logSecurityEvent(event) {
@@ -2039,8 +2099,8 @@ async function extendExpressApp(app, context) {
       }
     })
   );
-  app.use(import_passport.default.initialize());
-  app.use(import_passport.default.session());
+  app.use(import_passport2.default.initialize());
+  app.use(import_passport2.default.session());
   app.get("/api/connect/google", async (req, res, next) => {
     try {
       const crypto = require("crypto");
@@ -2057,7 +2117,7 @@ async function extendExpressApp(app, context) {
           }
         });
       });
-      import_passport.default.authenticate("google", {
+      import_passport2.default.authenticate("google", {
         scope: ["profile", "email"],
         state
         // Google вернет этот state в callback
@@ -2095,7 +2155,7 @@ async function extendExpressApp(app, context) {
       delete req.session.oauthState;
       next();
     },
-    import_passport.default.authenticate("google", { failureRedirect: "/login?error=oauth_failed" }),
+    import_passport2.default.authenticate("google", { failureRedirect: "/login?error=oauth_failed" }),
     async (req, res) => {
       try {
         const ctx = context || keystoneContext;

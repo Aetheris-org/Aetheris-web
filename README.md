@@ -124,13 +124,48 @@ Backend будет доступен на `http://localhost:1337`
 
 ## 🔧 Переменные окружения
 
+### Быстрый старт
+
+Для быстрой настройки используйте шаблоны `.env.example`:
+
+**Frontend:**
+```bash
+cd frontend-react
+cp .env.example .env
+# Отредактируйте .env и заполните необходимые значения
+```
+
+**Backend:**
+```bash
+cd backend/keystonejs-backend
+cp .env.example .env
+# Отредактируйте .env и заполните необходимые значения
+```
+
 ### Frontend (`frontend-react/.env`)
 
+Шаблон: `frontend-react/.env.example`
+
+**Обязательные переменные:**
 ```env
+# URL бэкенда (KeystoneJS GraphQL API)
 VITE_API_BASE_URL=http://localhost:1337
+
+# URL фронтенда (для OAuth callbacks)
+VITE_FRONTEND_URL=http://localhost:5173
+```
+
+**Опциональные переменные:**
+```env
+# API ключ для ImgBB (для загрузки изображений)
+VITE_IMGBB_API_KEY=your_imgbb_api_key_here
 ```
 
 ### Backend (`backend/keystonejs-backend/.env`)
+
+Шаблон: `backend/keystonejs-backend/.env.example`
+
+**Обязательные переменные:**
 
 ```env
 # Database
@@ -152,15 +187,29 @@ GOOGLE_CALLBACK_URL="http://localhost:1337/api/connect/google/callback"
 # Frontend URL
 FRONTEND_URL="http://localhost:5173"
 PUBLIC_URL="http://localhost:1337"
+```
 
-# Redis (опционально, для production рекомендуется)
+**Опциональные переменные:**
+
+```env
+# Redis (для production рекомендуется)
 REDIS_HOST="localhost"
 REDIS_PORT="6379"
 REDIS_PASSWORD=""
 
-# Logging
-LOG_LEVEL="info"
+# Image Hosting
+IMGBB_API_KEY="your_imgbb_api_key_here"
+
+# Server Configuration
+PORT="1337"
 NODE_ENV="development"
+LOG_LEVEL="info"
+
+# Admin User Creation (для скрипта create-first-admin.ts)
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="admin123"
+ADMIN_USERNAME="admin"
+ADMIN_NAME="Admin"
 ```
 
 **Генерация секретных ключей:**
@@ -172,6 +221,11 @@ openssl rand -base64 64
 # EMAIL_HMAC_SECRET
 openssl rand -base64 64
 ```
+
+**Важно:**
+- Все переменные с префиксом `VITE_` должны быть доступны во время сборки frontend
+- `SESSION_SECRET` и `EMAIL_HMAC_SECRET` должны быть минимум 32 символа
+- В production приложение не запустится без обязательных переменных
 
 ## 👤 Создание первого администратора
 

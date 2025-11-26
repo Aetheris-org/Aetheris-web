@@ -9,7 +9,7 @@
     "build": "keystone build",
     "postbuild": "node scripts/fix-next-config.js || true",
     "start": "keystone start",
-    "postinstall": "prisma generate && patch-package",
+    "postinstall": "prisma generate && (patch-package || true)",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
@@ -48,6 +48,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
+    "patch-package": "^8.0.1",
     "pg": "^8.16.3",
     "prisma": "^6.19.0",
     "winston": "^3.18.3",
@@ -68,7 +69,6 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.15.6",
     "nodemon": "^3.1.11",
-    "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
