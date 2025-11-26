@@ -5,12 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "keystone dev",
-    "prebuild": "node scripts/fix-next-config.js || true && npx prisma generate",
+    "prebuild": "node scripts/fix-next-config.js || true",
     "build": "keystone build",
     "postbuild": "node scripts/fix-next-config.js || true",
     "start": "keystone start",
-    "postinstall": "prisma generate && (patch-package || true)",
-    "prisma:generate": "prisma generate",
+    "postinstall": "npx prisma generate --schema=./schema.prisma && (patch-package || true)",
+    "prisma:generate": "npx prisma generate --schema=./schema.prisma",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
