@@ -7,9 +7,9 @@
     "dev": "keystone dev",
     "prebuild": "node scripts/fix-next-config.js || true",
     "build": "keystone build",
-    "postbuild": "node scripts/fix-next-config.js || true",
+    "postbuild": "node scripts/fix-next-config.js || true && node scripts/generate-prisma-client.js || true",
     "start": "keystone start",
-    "postinstall": "npx prisma generate --schema=./schema.prisma && (patch-package || true)",
+    "postinstall": "(patch-package || true)",
     "prisma:generate": "npx prisma generate --schema=./schema.prisma",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"

@@ -430,26 +430,25 @@ cd backend/keystonejs-backend
 # Установка зависимостей
 npm install
 
-# Генерация Prisma клиента
-npm run prisma:generate
-
-# Сборка проекта
+# Сборка проекта (автоматически генерирует Prisma клиент)
 npm run build
 ```
 
 **Что происходит при сборке:**
 1. `prebuild`: Запускается скрипт `fix-next-config.js` для исправления конфигурации Next.js Admin UI
-2. `build`: KeystoneJS собирает проект, включая Admin UI
-3. `postbuild`: Повторно запускается `fix-next-config.js` для финальной проверки
+2. `build`: KeystoneJS собирает проект, включая Admin UI и **автоматически генерирует Prisma клиент** из `schema.prisma`
+3. `postbuild`: Запускается `fix-next-config.js` для финальной проверки и скрипт `generate-prisma-client.js` для проверки Prisma клиента
 
 **Важно:**
 - Скрипт `fix-next-config.js` исправляет ошибку "Html should not be imported outside of pages/_document" путем установки `output: 'standalone'` в конфигурации Next.js
 - Это необходимо, так как Admin UI не должен статически экспортироваться
+- **Не запускайте `prisma generate` вручную** - `keystone build` автоматически генерирует Prisma клиент в правильное место (`@keystone-6/core/node_modules/.prisma/client/`)
+- KeystoneJS использует вложенный Prisma клиент внутри `@keystone-6/core`, поэтому обычный `prisma generate` не подходит
 
 **Результат сборки:**
 - Скомпилированный код в `dist/`
 - Admin UI в `.keystone/admin/.next/`
-- Prisma клиент сгенерирован
+- Prisma клиент автоматически сгенерирован в `@keystone-6/core/node_modules/.prisma/client/`
 
 #### 2. Frontend сборка
 
@@ -501,34 +500,36 @@ VITE_IMGBB_API_KEY=your_imgbb_api_key_here  # Опционально
    - **Start Command**: `cd backend/keystonejs-backend && npm start`
    - **Node Version**: `18.x` (или выше, но не выше 22.x)
 
+   **Важно:** `keystone build` автоматически генерирует Prisma клиент из `schema.prisma` в правильное место (`@keystone-6/core/node_modules/.prisma/client/`). Не запускайте `prisma generate` вручную в Build Command, так как это может конфликтовать с механизмом KeystoneJS.
+
 3. **Переменные окружения:**
-   ```env
+```env
    # Database (обязательно)
-   DATABASE_URL="postgresql://user:password@host:5432/database"
-   
+DATABASE_URL="postgresql://user:password@host:5432/database"
+
    # Security (обязательно, минимум 32 символа)
-   SESSION_SECRET="your-very-long-secret-key-minimum-32-characters-long"
-   EMAIL_HMAC_SECRET="your-very-long-secret-key-minimum-32-characters-long"
-   
+SESSION_SECRET="your-very-long-secret-key-minimum-32-characters-long"
+EMAIL_HMAC_SECRET="your-very-long-secret-key-minimum-32-characters-long"
+
    # OAuth2 Google (обязательно)
-   GOOGLE_CLIENT_ID="your-google-client-id"
-   GOOGLE_CLIENT_SECRET="your-google-client-secret"
-   GOOGLE_CALLBACK_URL="https://your-backend.onrender.com/api/connect/google/callback"
-   
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_CALLBACK_URL="https://your-backend.onrender.com/api/connect/google/callback"
+
    # URLs (обязательно)
-   FRONTEND_URL="https://your-frontend.onrender.com"
-   PUBLIC_URL="https://your-backend.onrender.com"
-   
+FRONTEND_URL="https://your-frontend.onrender.com"
+PUBLIC_URL="https://your-backend.onrender.com"
+
    # Redis (опционально)
-   REDIS_HOST="your-redis-host"
-   REDIS_PORT="6379"
-   REDIS_PASSWORD="your-redis-password"
-   
-   # Environment
-   NODE_ENV="production"
-   LOG_LEVEL="info"
-   PORT="1337"
-   ```
+REDIS_HOST="your-redis-host"
+REDIS_PORT="6379"
+REDIS_PASSWORD="your-redis-password"
+
+# Environment
+NODE_ENV="production"
+LOG_LEVEL="info"
+PORT="1337"
+```
 
 4. **Health Check:**
    - Render автоматически проверяет доступность сервиса
@@ -1034,6 +1035,34 @@ fi
 Эта ошибка возникает при сборке Admin UI. Решение:
 - Скрипт `fix-next-config.js` автоматически исправляет это при сборке
 - Убедитесь, что скрипт выполняется в `prebuild` и `postbuild` хуках
+
+#### Ошибка "@prisma/client did not initialize yet"
+
+Эта ошибка возникает при запуске KeystoneJS на Render или в production.
+
+**Причина:**
+- KeystoneJS использует вложенный Prisma клиент в `@keystone-6/core/node_modules/.prisma/client/`
+- Обычный `prisma generate` генерирует клиент в `./node_modules/@prisma/client`, что не подходит для KeystoneJS
+
+**Решение:**
+1. **Убедитесь, что `keystone build` выполняется в Build Command:**
+   ```
+   cd backend/keystonejs-backend && npm install && npm run build
+   ```
+   `keystone build` автоматически генерирует Prisma клиент в правильное место.
+
+2. **Не запускайте `prisma generate` вручную в Build Command** - это может конфликтовать с механизмом KeystoneJS.
+
+3. **Если проблема сохраняется:**
+   - Убедитесь, что `schema.prisma` существует в корне `backend/keystonejs-backend/`
+   - Проверьте, что `keystone build` выполняется успешно
+   - Проверьте логи сборки на наличие ошибок
+
+4. **Для локальной разработки:**
+   ```bash
+   cd backend/keystonejs-backend
+   npm run dev  # keystone dev автоматически генерирует Prisma клиент
+   ```
 
 #### Frontend не подключается к Backend
 
