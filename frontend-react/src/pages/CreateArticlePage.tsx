@@ -35,7 +35,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
-// TODO: Add the same character limit validation on the backend (Strapi schema)
+// TODO: Add the same character limit validation on the backend
 const EXCERPT_MAX_LENGTH = 500
 const TITLE_MAX_LENGTH = 200
 const CONTENT_MAX_LENGTH = 20000
@@ -1180,31 +1180,57 @@ export default function CreateArticlePage() {
       if (!finalContentJSON) {
         logger.error('[CreateArticlePage] No content JSON available - editor not initialized and no saved JSON')
           toast({
-          title: t('createArticle.missingInformation'),
-          description: 'Editor is not ready or content is empty. Please add content and try again.',
+          title: t('createArticle.editorNotReady'),
+          description: t('createArticle.editorNotReadyDescription'),
           variant: 'destructive',
         })
         setIsPublishing(false)
         return
       }
 
+      // Проверяем и нормализуем формат ProseMirror документа
+      // KeystoneJS возвращает { document: [...] }, а TipTap ожидает { type: "doc", content: [...] }
+      let normalizedContentJSON = finalContentJSON;
+      if (finalContentJSON && typeof finalContentJSON === 'object') {
+        // Если это формат KeystoneJS { document: [...] }
+        if (finalContentJSON.document && Array.isArray(finalContentJSON.document) && !finalContentJSON.type) {
+          normalizedContentJSON = {
+            type: 'doc',
+            content: finalContentJSON.document,
+          };
+          logger.debug('[CreateArticlePage] Normalized content from KeystoneJS format to TipTap format');
+        }
+        // Если это уже массив (старый формат)
+        else if (Array.isArray(finalContentJSON) && !('type' in finalContentJSON)) {
+          normalizedContentJSON = {
+            type: 'doc',
+            content: finalContentJSON,
+          };
+          logger.debug('[CreateArticlePage] Normalized content from array format to TipTap format');
+        }
+      }
+
       // Проверяем, что это валидный ProseMirror документ
-      if (finalContentJSON.type !== 'doc') {
+      if (!normalizedContentJSON || normalizedContentJSON.type !== 'doc') {
         logger.error('[CreateArticlePage] Invalid ProseMirror document:', {
-          type: finalContentJSON.type,
-          contentJSON: finalContentJSON,
+          type: normalizedContentJSON?.type,
+          contentJSON: normalizedContentJSON,
+          originalContentJSON: finalContentJSON,
         })
         toast({
-          title: t('createArticle.missingInformation'),
-          description: 'Invalid editor content format. Please try refreshing the page.',
+          title: t('createArticle.invalidContentFormat'),
+          description: t('createArticle.invalidContentFormatDescription'),
           variant: 'destructive',
         })
         setIsPublishing(false)
         return
       }
       
+      // Используем нормализованный формат
+      const finalContent = normalizedContentJSON;
+      
       // Проверяем, что есть контент (не пустой документ)
-      const hasContent = finalContentJSON.content && Array.isArray(finalContentJSON.content) && finalContentJSON.content.length > 0
+      const hasContent = finalContent.content && Array.isArray(finalContent.content) && finalContent.content.length > 0
       if (!hasContent) {
         logger.error('[CreateArticlePage] Editor content is empty')
         toast({
@@ -1483,10 +1509,10 @@ export default function CreateArticlePage() {
 
       // Преобразуем ProseMirror JSON в Slate формат
       let contentDocument: any[] = []
-      if (finalContentJSON && typeof finalContentJSON === 'object') {
-        if (finalContentJSON.type === 'doc' && Array.isArray(finalContentJSON.content)) {
+      if (finalContent && typeof finalContent === 'object') {
+        if (finalContent.type === 'doc' && Array.isArray(finalContent.content)) {
           // Извлекаем массив блоков из ProseMirror doc и преобразуем в Slate
-          contentDocument = finalContentJSON.content
+          contentDocument = finalContent.content
             .map(convertProseMirrorToSlate)
             .filter((block: any) => block !== null)
           
@@ -1494,9 +1520,9 @@ export default function CreateArticlePage() {
             contentLength: contentDocument.length,
             firstBlock: contentDocument[0],
           })
-        } else if (Array.isArray(finalContentJSON)) {
+        } else if (Array.isArray(finalContent)) {
           // Уже массив блоков - проверяем формат и преобразуем если нужно
-          contentDocument = finalContentJSON
+          contentDocument = finalContent
             .map(convertProseMirrorToSlate)
             .filter((block: any) => block !== null)
           
@@ -1505,7 +1531,7 @@ export default function CreateArticlePage() {
           })
         } else {
           // Fallback: создаем пустой параграф
-          logger.warn('[CreateArticlePage] Unexpected content format, creating empty paragraph:', finalContentJSON)
+          logger.warn('[CreateArticlePage] Unexpected content format, creating empty paragraph:', finalContent)
           contentDocument = [
             {
               type: 'paragraph',
@@ -1528,8 +1554,8 @@ export default function CreateArticlePage() {
       if (!Array.isArray(contentDocument) || contentDocument.length === 0) {
         logger.error('[CreateArticlePage] contentDocument is not a valid array:', contentDocument)
         toast({
-          title: t('createArticle.missingInformation'),
-          description: 'Invalid content format',
+          title: t('createArticle.invalidContentFormat'),
+          description: t('createArticle.invalidContentFormatDescription'),
           variant: 'destructive',
         })
         setIsPublishing(false)
@@ -1953,8 +1979,8 @@ export default function CreateArticlePage() {
           })),
         })
       toast({
-          title: t('createArticle.missingInformation'),
-          description: 'Invalid content structure. Please try again.',
+          title: t('createArticle.invalidContentStructure'),
+          description: t('createArticle.invalidContentStructureDescription'),
           variant: 'destructive',
         })
         setIsPublishing(false)

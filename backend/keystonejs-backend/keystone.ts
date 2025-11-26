@@ -15,6 +15,16 @@ import { logAdminAccessDenied, logAdminAccessGranted } from './src/lib/security-
 
 const databaseURL = process.env.DATABASE_URL || 'file:./.tmp/data.db';
 
+// Определяем провайдер БД динамически по DATABASE_URL
+const getDatabaseProvider = (): 'sqlite' | 'postgresql' => {
+  if (databaseURL.startsWith('postgresql://') || databaseURL.startsWith('postgres://')) {
+    return 'postgresql';
+  }
+  return 'sqlite';
+};
+
+const dbProvider = getDatabaseProvider();
+
 // Проверка силы SESSION_SECRET при старте
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret || sessionSecret.length < 32) {
@@ -31,13 +41,41 @@ if (!sessionSecret || sessionSecret.length < 32) {
   logger.info('✅ SESSION_SECRET is secure (length: ' + sessionSecret.length + ' characters)');
 }
 
+// Проверка силы EMAIL_HMAC_SECRET при старте
+const emailHmacSecret = process.env.EMAIL_HMAC_SECRET;
+if (!emailHmacSecret || emailHmacSecret.length < 32) {
+  logger.error('❌ SECURITY WARNING: EMAIL_HMAC_SECRET is too short or missing!');
+  logger.error('   EMAIL_HMAC_SECRET must be at least 32 characters long.');
+  logger.error('   Generate a secure secret: openssl rand -base64 64');
+  if (process.env.NODE_ENV === 'production') {
+    logger.error('   Application will not start in production with weak EMAIL_HMAC_SECRET.');
+    process.exit(1);
+  } else {
+    logger.warn('   ⚠️  EMAIL_HMAC_SECRET not set or too short - email hashing will fail');
+  }
+} else {
+  logger.info('✅ EMAIL_HMAC_SECRET is secure (length: ' + emailHmacSecret.length + ' characters)');
+}
+
+// Проверка обязательных переменных окружения для production
+if (process.env.NODE_ENV === 'production') {
+  const requiredVars = ['DATABASE_URL', 'FRONTEND_URL', 'SESSION_SECRET', 'EMAIL_HMAC_SECRET'];
+  const missing = requiredVars.filter(v => !process.env[v]);
+  if (missing.length > 0) {
+    logger.error(`❌ Missing required environment variables for production: ${missing.join(', ')}`);
+    logger.error('   Application cannot start without these variables.');
+    process.exit(1);
+  }
+  logger.info('✅ All required environment variables are set for production');
+}
+
 export default withAuth(
   config({
     db: {
-      provider: 'sqlite',
+      provider: dbProvider,
       url: databaseURL,
       useMigrations: true,
-      idField: { kind: 'autoincrement' },
+      idField: { kind: dbProvider === 'postgresql' ? 'uuid' : 'autoincrement' },
     },
     lists,
     session,
@@ -77,7 +115,7 @@ export default withAuth(
         const sessionData = context.session.data as any;
         const userRole = sessionData?.role;
         const userId = context.session.itemId;
-        const email = sessionData?.email || 'unknown';
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не используем email из sessionData (он уже хеширован)
 
         // Доступ к Admin UI только для админов
         if (userRole !== 'admin') {
@@ -86,7 +124,7 @@ export default withAuth(
         }
 
         // Логируем успешный доступ к Admin UI
-        logAdminAccessGranted(ip, String(userId), email, userAgent);
+        logAdminAccessGranted(ip, String(userId), 'hidden', userAgent);
         return true; // Админы имеют полный доступ
       },
     },

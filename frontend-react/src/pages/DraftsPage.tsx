@@ -14,6 +14,7 @@ import { getDrafts, deleteDraft } from '@/api/drafts-graphql'
 import type { Article } from '@/types/article'
 import { useToast } from '@/components/ui/use-toast'
 import { useTranslation } from '@/hooks/useTranslation'
+import { RateLimitError } from '@/lib/errors'
 
 function DraftSkeleton() {
   return (
@@ -37,6 +38,32 @@ export default function DraftsPage() {
   const { toast } = useToast()
   const { t } = useTranslation()
   const user = useAuthStore((state) => state.user)
+
+  // Helper функция для обработки RateLimitError
+  const handleRateLimitError = (error: any) => {
+    if (error instanceof RateLimitError) {
+      const waitTime = error.waitTime
+      if (waitTime > 0) {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: waitTime === 1
+            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
+            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      } else {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      }
+      return true
+    }
+    return false
+  }
 
   // Map old difficulty values to new ones for backward compatibility
   const getDifficultyKey = (difficulty: string | undefined): string => {
@@ -80,6 +107,9 @@ export default function DraftsPage() {
       })
     },
     onError: (error: unknown) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('[DraftsPage] Failed to delete draft', error)
       toast({
         title: t('drafts.deleteError'),

@@ -49,6 +49,8 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Не рефетчить при переподключении (опционально, можно включить для критичных данных)
       refetchOnReconnect: false,
+      // Не рефетчить заново при быстрых переходах (используем кеш)
+      refetchOnMount: false,
       // Retry логика: 3 попытки с экспоненциальной задержкой
       retry: (failureCount, error: any) => {
         // Не ретраить на 4xx ошибки (клиентские ошибки)

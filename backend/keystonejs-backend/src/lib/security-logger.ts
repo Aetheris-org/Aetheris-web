@@ -39,24 +39,26 @@ export function logSecurityEvent(event: SecurityEvent) {
 
 /**
  * Логирует попытку входа
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email уже должен быть хеширован к моменту вызова
  */
 export function logLoginAttempt(ip: string, email: string, userAgent?: string) {
   logSecurityEvent({
     type: 'login_attempt',
     ip,
-    email,
+    email: 'hidden', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     userAgent,
   });
 }
 
 /**
  * Логирует неудачную попытку входа
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email уже должен быть хеширован к моменту вызова
  */
 export function logLoginFailure(ip: string, email: string, reason: string, userAgent?: string) {
   logSecurityEvent({
     type: 'login_failure',
     ip,
-    email,
+    email: 'hidden', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     reason,
     userAgent,
   });
@@ -64,12 +66,13 @@ export function logLoginFailure(ip: string, email: string, reason: string, userA
 
 /**
  * Логирует успешный вход
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email уже должен быть хеширован к моменту вызова
  */
 export function logLoginSuccess(ip: string, email: string, userId: string, userAgent?: string) {
   logSecurityEvent({
     type: 'login_success',
     ip,
-    email,
+    email: 'hidden', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     userId,
     userAgent,
   });
@@ -90,13 +93,14 @@ export function logAdminAccessDenied(ip: string, userId?: string, reason?: strin
 
 /**
  * Логирует успешный доступ к Admin UI
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email уже должен быть хеширован к моменту вызова
  */
 export function logAdminAccessGranted(ip: string, userId: string, email: string, userAgent?: string) {
   logSecurityEvent({
     type: 'admin_access_granted',
     ip,
     userId,
-    email,
+    email: 'hidden', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     userAgent,
   });
 }

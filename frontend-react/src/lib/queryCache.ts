@@ -3,6 +3,7 @@
  * Сохраняет кэш в localStorage и восстанавливает при перезагрузке страницы
  */
 import { QueryClient } from '@tanstack/react-query'
+import { logger } from './logger'
 
 const CACHE_KEY = 'react-query-cache'
 const CACHE_VERSION = '1.0.0'
@@ -61,7 +62,7 @@ export function persistCache(queryClient: QueryClient) {
     
     // Проверяем размер перед сохранением (localStorage ограничен ~5-10MB)
     if (serialized.length > 4 * 1024 * 1024) {
-      console.warn('[QueryCache] Cache too large, skipping persistence')
+      logger.warn('[QueryCache] Cache too large, skipping persistence')
       return
     }
 
@@ -69,10 +70,10 @@ export function persistCache(queryClient: QueryClient) {
   } catch (error) {
     // Ошибка может быть из-за переполнения localStorage или других проблем
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      console.warn('[QueryCache] localStorage quota exceeded, clearing old cache')
+      logger.warn('[QueryCache] localStorage quota exceeded, clearing old cache')
       clearCache()
     } else {
-      console.warn('[QueryCache] Failed to persist cache:', error)
+      logger.warn('[QueryCache] Failed to persist cache:', error)
     }
   }
 }
@@ -89,14 +90,14 @@ export function restoreCache(queryClient: QueryClient) {
 
     // Проверяем версию и возраст кэша
     if (cacheEntry.version !== CACHE_VERSION) {
-      console.log('[QueryCache] Cache version mismatch, clearing cache')
+      logger.debug('[QueryCache] Cache version mismatch, clearing cache')
       localStorage.removeItem(CACHE_KEY)
       return
     }
 
     const cacheAge = Date.now() - cacheEntry.timestamp
     if (cacheAge > MAX_CACHE_AGE) {
-      console.log('[QueryCache] Cache too old, clearing cache')
+      logger.debug('[QueryCache] Cache too old, clearing cache')
       localStorage.removeItem(CACHE_KEY)
       return
     }
@@ -114,20 +115,23 @@ export function restoreCache(queryClient: QueryClient) {
           return
         }
         
-        queryClient.setQueryData(key, queryState.data, {
-          updatedAt: queryState.dataUpdatedAt,
-        })
+        if (queryState && typeof queryState === 'object' && 'data' in queryState && 'dataUpdatedAt' in queryState) {
+          const updatedAt = typeof queryState.dataUpdatedAt === 'number' ? queryState.dataUpdatedAt : undefined
+          queryClient.setQueryData(key, queryState.data, {
+            updatedAt,
+          })
+        }
         restoredCount++
       } catch (error) {
-        console.warn('[QueryCache] Failed to restore query:', queryKey, error)
+        logger.warn('[QueryCache] Failed to restore query:', queryKey, error)
       }
     })
 
     if (restoredCount > 0) {
-      console.log(`[QueryCache] Restored ${restoredCount} queries from cache`)
+      logger.debug(`[QueryCache] Restored ${restoredCount} queries from cache`)
     }
   } catch (error) {
-    console.warn('[QueryCache] Failed to restore cache:', error)
+    logger.warn('[QueryCache] Failed to restore cache:', error)
     localStorage.removeItem(CACHE_KEY)
   }
 }
@@ -139,7 +143,7 @@ export function clearCache() {
   try {
     localStorage.removeItem(CACHE_KEY)
   } catch (error) {
-    console.warn('[QueryCache] Failed to clear cache:', error)
+    logger.warn('[QueryCache] Failed to clear cache:', error)
   }
 }
 

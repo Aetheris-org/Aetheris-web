@@ -30,21 +30,15 @@ import {
   ArrowLeft,
   Award,
   Bookmark,
-  Clock,
   FileEdit,
   Flame,
-  Globe,
-  Mail,
   MessageSquare,
   NotebookPen,
   PenSquare,
   Settings,
-  Star,
   Trophy,
   Users,
-  MapPin,
   Heart,
-  Eye,
   TrendingUp,
   TrendingDown,
   BarChart3,
@@ -65,7 +59,6 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { getUserProfile } from '@/api/profile-graphql'
 import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow-graphql'
-import type { UserProfile } from '@/types/profile'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -87,6 +80,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/use-toast'
+import { RateLimitError } from '@/lib/errors'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   mockAudienceInsights,
@@ -146,7 +140,7 @@ function LevelCard({
 }) {
   const { t } = useTranslation()
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -308,7 +302,7 @@ function AudienceInsightsCard({ insights }: { insights: MockAudienceInsight[] })
   if (insights.length === 0) return null
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -354,7 +348,7 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
   if (mix.length === 0) return null
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -397,7 +391,7 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
   }
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -432,7 +426,7 @@ function CreatorGoalsCard({ goals }: { goals: MockCreatorGoal[] }) {
   if (goals.length === 0) return null
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -524,7 +518,7 @@ function PinnedCollectionsCard({
   if (collections.length === 0) return null
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -563,6 +557,32 @@ export default function ProfilePage() {
   const location = useLocation()
   const { user: currentUser } = useAuthStore()
   const { toast } = useToast()
+
+  // Helper функция для обработки RateLimitError
+  const handleRateLimitError = (error: any) => {
+    if (error instanceof RateLimitError) {
+      const waitTime = error.waitTime
+      if (waitTime > 0) {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: waitTime === 1
+            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
+            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      } else {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      }
+      return true
+    }
+    return false
+  }
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
@@ -622,6 +642,9 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to follow user:', error)
       toast({
         title: t('common.error') || 'Ошибка',
@@ -645,6 +668,9 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to unfollow user:', error)
       toast({
         title: t('common.error') || 'Ошибка',

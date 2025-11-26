@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Badge } from '@/components/ui/badge'
@@ -22,14 +22,11 @@ import {
   CheckCircle2,
   Clock,
   Crown,
-  DollarSign,
   Lock,
   Play,
   ShieldCheck,
   Star,
-  TrendingUp,
   Users,
-  Zap,
   FileText,
   Video,
   Code,

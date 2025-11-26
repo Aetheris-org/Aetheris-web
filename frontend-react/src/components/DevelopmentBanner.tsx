@@ -1,4 +1,11 @@
-import { useState, useEffect } from 'react'
+/**
+ * ⚠️ ВРЕМЕННЫЙ КОМПОНЕНТ ДЛЯ РАЗРАБОТКИ
+ * DevelopmentBanner используется для пометки незавершенных страниц.
+ * Будет удален перед production релизом.
+ * TODO: Удалить перед production
+ */
+
+import { useState } from 'react'
 import { X, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -46,5 +53,6 @@ export function DevelopmentBanner({ storageKey, className = '' }: DevelopmentBan
     </div>
   )
 }
+
 
 

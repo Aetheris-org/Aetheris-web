@@ -23,6 +23,8 @@ import type { NotificationCategory, NotificationType, Notification } from '@/typ
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/api/notifications-graphql'
 import { logger } from '@/lib/logger'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { RateLimitError } from '@/lib/errors'
+import { useToast } from '@/components/ui/use-toast'
 
 function getNotificationIcon(type: NotificationType) {
   switch (type) {
@@ -125,6 +127,33 @@ export default function NotificationsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  // Helper функция для обработки RateLimitError
+  const handleRateLimitError = (error: any) => {
+    if (error instanceof RateLimitError) {
+      const waitTime = error.waitTime
+      if (waitTime > 0) {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: waitTime === 1
+            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
+            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      } else {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      }
+      return true
+    }
+    return false
+  }
 
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
@@ -186,7 +215,17 @@ export default function NotificationsPage() {
       
       return { previousNotifications, previousUnreadCount }
     },
-    onError: (err, notificationId, context) => {
+    onError: (err, _notificationId, context) => {
+      if (handleRateLimitError(err)) {
+        // Откатываем изменения при rate limit ошибке
+        if (context?.previousNotifications) {
+          queryClient.setQueryData(['notifications'], context.previousNotifications)
+        }
+        if (context?.previousUnreadCount !== undefined) {
+          queryClient.setQueryData(['notifications', 'unreadCount'], context.previousUnreadCount)
+        }
+        return
+      }
       logger.error('[NotificationsPage] markAsRead onError:', err)
       // Откатываем изменения при ошибке
       if (context?.previousNotifications) {
@@ -261,7 +300,14 @@ export default function NotificationsPage() {
       
       return { previousNotifications }
     },
-    onError: (err, variables, context) => {
+    onError: (err, _variables, context) => {
+      if (handleRateLimitError(err)) {
+        // Откатываем изменения при rate limit ошибке
+        if (context?.previousNotifications) {
+          queryClient.setQueryData(['notifications'], context.previousNotifications)
+        }
+        return
+      }
       // Откатываем изменения при ошибке
       if (context?.previousNotifications) {
         queryClient.setQueryData(['notifications'], context.previousNotifications)
@@ -547,7 +593,7 @@ function NotificationRow({ notification, onMarkRead }: NotificationRowProps) {
       <CardContent className="flex flex-col gap-1.5 sm:gap-2 md:gap-3 px-2.5 sm:px-3 md:px-4 py-2.5 sm:py-3 md:py-4 pr-12 sm:pr-16 md:pr-20">
         <div className="flex flex-1 items-start gap-2 sm:gap-3 md:gap-4">
           <Avatar className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 shrink-0">
-            <AvatarImage src={notification.actor.avatar} alt={notification.actor.username} />
+            <AvatarImage src={notification.actor.avatar || undefined} alt={notification.actor.username} />
             <AvatarFallback className="bg-primary/10 text-primary">
             <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
             </AvatarFallback>

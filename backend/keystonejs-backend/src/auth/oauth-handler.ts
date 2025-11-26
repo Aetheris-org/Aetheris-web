@@ -3,7 +3,20 @@
  * Создает или обновляет пользователей в базе данных через KeystoneJS context
  */
 import type { KeystoneContext } from '@keystone-6/core/types';
+import { createHash } from 'crypto';
 import logger from '../lib/logger';
+import { hashEmail, isEmailHash } from '../lib/email-hash';
+
+/**
+ * Хеширует email старым способом (SHA-256 без секрета) для обратной совместимости
+ * Используется только для поиска пользователей со старыми хешами
+ */
+function hashEmailOld(email: string): string {
+  const normalizedEmail = email.toLowerCase().trim();
+  const hash = createHash('sha256');
+  hash.update(normalizedEmail);
+  return hash.digest('hex');
+}
 
 export interface GoogleProfile {
   id: string;
@@ -23,23 +36,51 @@ export async function findOrCreateGoogleUser(
   try {
     const email = profile.email;
     if (!email) {
-      logger.error('Google OAuth: No email in profile', { profile });
+      logger.error('Google OAuth: No email in profile', {
+        profileId: profile.id,
+        hasEmails: !!profile.emails && profile.emails.length > 0,
+      });
       return null;
     }
 
-    // Ищем пользователя по email
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Хешируем email новым способом (HMAC-SHA256)
+    const hashedEmail = hashEmail(email);
+
+    // Ищем пользователя по новому хешу email (HMAC-SHA256)
     // Используем sudo() для обхода access control при OAuth обработке
-    const existingUser = await context.sudo().query.User.findMany({
-      where: { email: { equals: email } },
+    let existingUser = await context.sudo().query.User.findMany({
+      where: { email: { equals: hashedEmail } },
       query: 'id email username name avatar provider confirmed',
       take: 1,
     });
+
+    // Если не найден по новому хешу, пробуем найти по старому (SHA-256) для обратной совместимости
+    if (existingUser.length === 0) {
+      const oldHashedEmail = hashEmailOld(email);
+      existingUser = await context.sudo().query.User.findMany({
+        where: { email: { equals: oldHashedEmail } },
+        query: 'id email username name avatar provider confirmed',
+        take: 1,
+      });
+      
+      if (existingUser.length > 0) {
+        logger.info(`Found user with old email hash format, will rehash to HMAC-SHA256: ${existingUser[0].id}`);
+      }
+    }
 
     if (existingUser.length > 0) {
       const user = existingUser[0];
       
       // Обновляем данные, если они изменились
       const updateData: any = {};
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Перехешируем email с новым алгоритмом, если он изменился
+      // Это происходит автоматически при следующем OAuth входе для пользователей со старыми хешами
+      if (user.email !== hashedEmail) {
+        updateData.email = hashedEmail;
+        logger.info(`Rehashing email for user ${user.id} from old format to HMAC-SHA256`);
+      }
+      
       if (profile.displayName && user.name !== profile.displayName) {
         updateData.name = profile.displayName;
       }
@@ -67,7 +108,7 @@ export async function findOrCreateGoogleUser(
 
       if (Object.keys(updateData).length > 0) {
         // Используем context.sudo() для обхода access control при OAuth обработке
-        // Это безопасно, так как мы обновляем только публичные поля (name, avatar, provider)
+        // Это безопасно, так как мы обновляем только публичные поля (name, avatar, provider, email)
         await context.sudo().query.User.updateOne({
           where: { id: user.id },
           data: updateData,
@@ -77,7 +118,7 @@ export async function findOrCreateGoogleUser(
 
       return {
         id: String(user.id),
-        email: user.email,
+        email: '', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
         username: user.username,
         name: user.name || profile.displayName,
         avatar: user.avatar || profile.avatar,
@@ -120,7 +161,7 @@ export async function findOrCreateGoogleUser(
     // Используем sudo() для обхода access control при OAuth обработке
     const newUser = await context.sudo().query.User.createOne({
       data: {
-        email,
+        email: hashedEmail, // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем хеш email вместо оригинального
         username,
         name: profile.displayName,
         avatar: profile.avatar || undefined,
@@ -137,7 +178,7 @@ export async function findOrCreateGoogleUser(
 
     return {
       id: String(newUser.id),
-      email: newUser.email,
+      email: '', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
       username: newUser.username,
       name: newUser.name || profile.displayName,
       avatar: newUser.avatar || profile.avatar,

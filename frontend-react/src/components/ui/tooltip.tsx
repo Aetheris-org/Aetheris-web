@@ -102,7 +102,7 @@ export const TooltipTrigger = React.forwardRef<HTMLElement, TriggerProps>(functi
       ;(forwardedRef as React.MutableRefObject<any>).current = node
     }
 
-    if (React.isValidElement(children) && children.ref) {
+    if (React.isValidElement(children) && 'ref' in children && children.ref) {
       if (typeof children.ref === 'function') {
         children.ref(node)
       } else {
@@ -216,16 +216,13 @@ export const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentPro
               : undefined,
         zIndex: 50,
         pointerEvents: 'none',
+        borderRadius: 'var(--radius-sm)',
         ...style,
       }}
       className={cn(
         'border border-border/60 bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md rounded-sm',
         className,
       )}
-      style={{
-        borderRadius: 'var(--radius-sm)',
-        ...style,
-      }}
       {...props}
     >
       {children}

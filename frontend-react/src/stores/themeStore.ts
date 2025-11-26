@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { logger } from '@/lib/logger'
 
 type TypographyScale = 'default' | 'comfortable' | 'compact'
 type ContrastMode = 'standard' | 'bold'
@@ -39,6 +40,7 @@ export type SurfaceStyle =
   | 'stone'
   | 'slate'
   | 'charcoal'
+  | 'default'
   | 'ash'
   | 'smoke'
   | 'fog'
@@ -122,7 +124,6 @@ export type SurfaceStyle =
   | 'one-piece-joy'
   | '90s-muted'
   | 'programming-terminal'
-  | 'balloons-festive'
   | 'teardown-voxel'
   | 'dispatch-modern'
   | 'horror-dark'
@@ -163,6 +164,7 @@ export type SurfaceStyle =
   | 'dark-moody'
   | 'colorful-rainbow'
   | 'monochrome-minimal'
+  | 'one-piece-white'
 export type AccentColor =
   | 'indigo'
   | 'violet'
@@ -244,6 +246,10 @@ export type AccentColor =
   | 'titanium'
   | 'steel'
   | 'iron'
+  | 'charcoal'
+  | 'slate'
+  | 'snow'
+  | 'cream'
   | 'neon-pink'
   | 'neon-green'
   | 'neon-blue'
@@ -425,6 +431,7 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
   'stone',
   'slate',
   'charcoal',
+  'default',
   'ash',
   'smoke',
   'fog',
@@ -508,7 +515,6 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
   'one-piece-joy',
   '90s-muted',
   'programming-terminal',
-  'balloons-festive',
   'teardown-voxel',
   'dispatch-modern',
   'horror-dark',
@@ -549,6 +555,7 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
   'dark-moody',
   'colorful-rainbow',
   'monochrome-minimal',
+  'one-piece-white',
 ]
 
 const DEFAULT_PREFERENCES: StoredPreferences = {
@@ -2823,27 +2830,6 @@ export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig>
       },
     },
   },
-  'one-piece-white': {
-    label: 'One Piece White',
-    description: 'Pure white for Gear 5 liberation theme',
-    preview: '0 0% 100%',
-    values: {
-      light: {
-        primary: '0 0% 100%',
-        primaryForeground: '0 0% 10%',
-        accent: '0 0% 96%',
-        accentForeground: '0 0% 20%',
-        ring: '0 0% 100%',
-      },
-      dark: {
-        primary: '0 0% 98%',
-        primaryForeground: '0 0% 8%',
-        accent: '0 0% 20%',
-        accentForeground: '0 0% 95%',
-        ring: '0 0% 98%',
-      },
-    },
-  },
   'balloon-red': {
     label: 'Balloon Red',
     description: 'Bright red for festive balloon themes',
@@ -3264,6 +3250,69 @@ export const ACCENT_COLORS: Record<Exclude<AccentColor, 'custom'>, AccentConfig>
       },
     },
   },
+  snow: {
+    label: 'Snow',
+    description: 'Pure white with crisp clarity',
+    preview: '0 0% 100%',
+    values: {
+      light: {
+        primary: '0 0% 100%',
+        primaryForeground: '222 35% 12%',
+        accent: '0 0% 96%',
+        accentForeground: '222 20% 38%',
+        ring: '0 0% 100%',
+      },
+      dark: {
+        primary: '0 0% 98%',
+        primaryForeground: '210 40% 98%',
+        accent: '0 0% 20%',
+        accentForeground: '0 0% 95%',
+        ring: '0 0% 98%',
+      },
+    },
+  },
+  cream: {
+    label: 'Cream',
+    description: 'Warm off-white with subtle yellow undertones',
+    preview: '50 30% 90%',
+    values: {
+      light: {
+        primary: '50 30% 90%',
+        primaryForeground: '222 35% 12%',
+        accent: '50 40% 96%',
+        accentForeground: '50 25% 70%',
+        ring: '50 30% 90%',
+      },
+      dark: {
+        primary: '50 30% 88%',
+        primaryForeground: '30 100% 14%',
+        accent: '50 20% 48%',
+        accentForeground: '50 95% 92%',
+        ring: '50 30% 88%',
+      },
+    },
+  },
+  'one-piece-white': {
+    label: 'One Piece White',
+    description: 'Pure white for Gear 5 liberation theme',
+    preview: '0 0% 100%',
+    values: {
+      light: {
+        primary: '0 0% 100%',
+        primaryForeground: '222 35% 12%',
+        accent: '0 0% 96%',
+        accentForeground: '222 20% 38%',
+        ring: '0 0% 100%',
+      },
+      dark: {
+        primary: '0 0% 98%',
+        primaryForeground: '210 40% 98%',
+        accent: '0 0% 20%',
+        accentForeground: '0 0% 95%',
+        ring: '0 0% 98%',
+      },
+    },
+  },
 }
 
 export const ACCENT_COLOR_PRESETS = Object.entries(ACCENT_COLORS).map(([value, config]) => ({
@@ -3290,7 +3339,7 @@ interface SurfacePresetConfigLegacy {
   }>
 }
 
-export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = {
+export const SURFACE_PRESETS: Partial<Record<SurfaceStyle, SurfacePresetConfigLegacy>> = {
   daylight: {
     label: 'Daylight',
     description: 'Bright, editorial-friendly canvas',
@@ -4379,6 +4428,40 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
       },
     },
   },
+  default: {
+    label: 'Default',
+    description: 'Monochrome dark grey, perfect for the default theme',
+    values: {
+      light: {
+        background: '0 0% 96%',
+        foreground: '0 0% 15%',
+        card: '0 0% 98%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 98%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 92%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 88%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 86%',
+        input: '0 0% 86%',
+      },
+      dark: {
+        background: '0 0% 8%',
+        foreground: '0 0% 96%',
+        card: '0 0% 10%',
+        cardForeground: '0 0% 96%',
+        popover: '0 0% 10%',
+        popoverForeground: '0 0% 96%',
+        muted: '0 0% 14%',
+        mutedForeground: '0 0% 75%',
+        secondary: '0 0% 14%',
+        secondaryForeground: '0 0% 96%',
+        border: '0 0% 22%',
+        input: '0 0% 22%',
+      },
+    },
+  },
   ash: {
     label: 'Ash',
     description: 'Cool grey with ashy, muted tones',
@@ -5064,18 +5147,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Vibrant electric colors for cyberpunk themes',
     values: {
       light: {
-        background: '280 80% 5%',
-        foreground: '280 100% 95%',
-        card: '280 75% 8%',
-        cardForeground: '280 100% 95%',
-        popover: '280 75% 8%',
-        popoverForeground: '280 100% 95%',
-        muted: '280 70% 15%',
-        mutedForeground: '280 90% 85%',
-        secondary: '280 70% 15%',
-        secondaryForeground: '280 100% 95%',
-        border: '280 70% 20%',
-        input: '280 70% 20%',
+        background: '280 60% 96%',
+        foreground: '280 80% 20%',
+        card: '280 55% 98%',
+        cardForeground: '280 80% 20%',
+        popover: '280 55% 98%',
+        popoverForeground: '280 80% 20%',
+        muted: '280 50% 92%',
+        mutedForeground: '280 70% 40%',
+        secondary: '280 45% 88%',
+        secondaryForeground: '280 80% 20%',
+        border: '280 50% 86%',
+        input: '280 50% 86%',
       },
       dark: {
         background: '280 85% 3%',
@@ -5574,6 +5657,20 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Dark horror atmosphere for Outlast',
     values: {
       light: {
+        background: '0 0% 96%',
+        foreground: '0 0% 15%',
+        card: '0 0% 98%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 98%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 92%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 88%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 86%',
+        input: '0 0% 86%',
+      },
+      dark: {
         background: '0 0% 6%',
         foreground: '0 0% 96%',
         card: '0 0% 8%',
@@ -5587,20 +5684,6 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
         border: '0 0% 12%',
         input: '0 0% 12%',
       },
-      dark: {
-        background: '0 0% 3%',
-        foreground: '0 0% 98%',
-        card: '0 0% 5%',
-        cardForeground: '0 0% 98%',
-        popover: '0 0% 5%',
-        popoverForeground: '0 0% 98%',
-        muted: '0 0% 8%',
-        mutedForeground: '0 0% 65%',
-        secondary: '0 0% 8%',
-        secondaryForeground: '0 0% 98%',
-        border: '0 0% 8%',
-        input: '0 0% 8%',
-      },
     },
   },
   'phasmophobia-eerie': {
@@ -5608,18 +5691,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Eerie blue atmosphere for ghost hunting',
     values: {
       light: {
-        background: '220 35% 18%',
-        foreground: '220 45% 92%',
-        card: '220 33% 22%',
-        cardForeground: '220 45% 92%',
-        popover: '220 33% 22%',
-        popoverForeground: '220 45% 92%',
-        muted: '220 30% 26%',
-        mutedForeground: '220 40% 78%',
-        secondary: '220 30% 26%',
-        secondaryForeground: '220 45% 92%',
-        border: '220 30% 26%',
-        input: '220 30% 26%',
+        background: '220 35% 95%',
+        foreground: '220 45% 18%',
+        card: '220 33% 97%',
+        cardForeground: '220 45% 18%',
+        popover: '220 33% 97%',
+        popoverForeground: '220 45% 18%',
+        muted: '220 30% 91%',
+        mutedForeground: '220 40% 40%',
+        secondary: '220 28% 87%',
+        secondaryForeground: '220 45% 18%',
+        border: '220 30% 85%',
+        input: '220 30% 85%',
       },
       dark: {
         background: '220 40% 10%',
@@ -5642,18 +5725,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Mystical dark purple for Jujutsu Kaisen',
     values: {
       light: {
-        background: '270 40% 20%',
-        foreground: '270 50% 92%',
-        card: '270 38% 24%',
-        cardForeground: '270 50% 92%',
-        popover: '270 38% 24%',
-        popoverForeground: '270 50% 92%',
-        muted: '270 35% 28%',
-        mutedForeground: '270 45% 78%',
-        secondary: '270 35% 28%',
-        secondaryForeground: '270 50% 92%',
-        border: '270 35% 28%',
-        input: '270 35% 28%',
+        background: '270 40% 96%',
+        foreground: '270 50% 18%',
+        card: '270 38% 98%',
+        cardForeground: '270 50% 18%',
+        popover: '270 38% 98%',
+        popoverForeground: '270 50% 18%',
+        muted: '270 35% 92%',
+        mutedForeground: '270 45% 40%',
+        secondary: '270 32% 88%',
+        secondaryForeground: '270 50% 18%',
+        border: '270 35% 86%',
+        input: '270 35% 86%',
       },
       dark: {
         background: '270 45% 12%',
@@ -5676,66 +5759,32 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Bright joyful colors for Gear 5 liberation',
     values: {
       light: {
-        background: '0 0% 100%',
-        foreground: '0 0% 10%',
-        card: '0 0% 98%',
-        cardForeground: '0 0% 10%',
-        popover: '0 0% 98%',
-        popoverForeground: '0 0% 10%',
-        muted: '0 0% 95%',
-        mutedForeground: '0 0% 45%',
-        secondary: '0 0% 92%',
-        secondaryForeground: '0 0% 10%',
-        border: '0 0% 90%',
-        input: '0 0% 90%',
+        background: '48 100% 98%',
+        foreground: '48 90% 12%',
+        card: '48 80% 96%',
+        cardForeground: '48 90% 12%',
+        popover: '48 80% 96%',
+        popoverForeground: '48 90% 12%',
+        muted: '48 60% 92%',
+        mutedForeground: '48 50% 35%',
+        secondary: '48 50% 88%',
+        secondaryForeground: '48 90% 12%',
+        border: '48 40% 85%',
+        input: '48 40% 85%',
       },
       dark: {
-        background: '0 0% 98%',
-        foreground: '0 0% 8%',
-        card: '0 0% 96%',
-        cardForeground: '0 0% 8%',
-        popover: '0 0% 96%',
-        popoverForeground: '0 0% 8%',
-        muted: '0 0% 93%',
-        mutedForeground: '0 0% 40%',
-        secondary: '0 0% 90%',
-        secondaryForeground: '0 0% 8%',
-        border: '0 0% 88%',
-        input: '0 0% 88%',
-      },
-    },
-  },
-  '90s-muted': {
-    label: '90s Muted',
-    description: 'Muted retro colors of the 90s',
-    values: {
-      light: {
-        background: '200 15% 92%',
-        foreground: '200 30% 18%',
-        card: '200 12% 95%',
-        cardForeground: '200 30% 18%',
-        popover: '200 12% 95%',
-        popoverForeground: '200 30% 18%',
-        muted: '200 18% 88%',
-        mutedForeground: '200 25% 42%',
-        secondary: '200 16% 85%',
-        secondaryForeground: '200 30% 18%',
-        border: '200 20% 82%',
-        input: '200 20% 82%',
-      },
-      dark: {
-        background: '200 25% 15%',
-        foreground: '200 35% 88%',
-        card: '200 22% 18%',
-        cardForeground: '200 35% 88%',
-        popover: '200 22% 18%',
-        popoverForeground: '200 35% 88%',
-        muted: '200 28% 24%',
-        mutedForeground: '200 30% 70%',
-        secondary: '200 28% 24%',
-        secondaryForeground: '200 35% 88%',
-        border: '200 28% 24%',
-        input: '200 28% 24%',
+        background: '48 40% 12%',
+        foreground: '48 80% 92%',
+        card: '48 35% 16%',
+        cardForeground: '48 80% 92%',
+        popover: '48 35% 16%',
+        popoverForeground: '48 80% 92%',
+        muted: '48 30% 22%',
+        mutedForeground: '48 60% 75%',
+        secondary: '48 30% 22%',
+        secondaryForeground: '48 80% 92%',
+        border: '48 25% 28%',
+        input: '48 25% 28%',
       },
     },
   },
@@ -5744,18 +5793,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Classic terminal green-on-black aesthetic',
     values: {
       light: {
-        background: '120 100% 8%',
-        foreground: '120 100% 55%',
-        card: '120 100% 10%',
-        cardForeground: '120 100% 55%',
-        popover: '120 100% 10%',
-        popoverForeground: '120 100% 55%',
-        muted: '120 100% 12%',
-        mutedForeground: '120 100% 50%',
-        secondary: '120 100% 12%',
-        secondaryForeground: '120 100% 55%',
-        border: '120 100% 12%',
-        input: '120 100% 12%',
+        background: '120 30% 95%',
+        foreground: '120 80% 20%',
+        card: '120 25% 97%',
+        cardForeground: '120 80% 20%',
+        popover: '120 25% 97%',
+        popoverForeground: '120 80% 20%',
+        muted: '120 20% 92%',
+        mutedForeground: '120 60% 35%',
+        secondary: '120 15% 88%',
+        secondaryForeground: '120 80% 20%',
+        border: '120 20% 86%',
+        input: '120 20% 86%',
       },
       dark: {
         background: '120 100% 5%',
@@ -5770,40 +5819,6 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
         secondaryForeground: '120 100% 60%',
         border: '120 100% 9%',
         input: '120 100% 9%',
-      },
-    },
-  },
-  'balloons-festive': {
-    label: 'Balloons Festive',
-    description: 'Bright festive colors for celebration',
-    values: {
-      light: {
-        background: '0 100% 98%',
-        foreground: '0 100% 15%',
-        card: '210 100% 100%',
-        cardForeground: '0 100% 15%',
-        popover: '210 100% 100%',
-        popoverForeground: '0 100% 15%',
-        muted: '55 100% 94%',
-        mutedForeground: '0 80% 40%',
-        secondary: '320 100% 92%',
-        secondaryForeground: '0 100% 15%',
-        border: '210 100% 88%',
-        input: '210 100% 88%',
-      },
-      dark: {
-        background: '0 100% 12%',
-        foreground: '0 100% 95%',
-        card: '210 100% 15%',
-        cardForeground: '0 100% 95%',
-        popover: '210 100% 15%',
-        popoverForeground: '0 100% 95%',
-        muted: '55 100% 20%',
-        mutedForeground: '0 80% 75%',
-        secondary: '320 100% 24%',
-        secondaryForeground: '0 100% 95%',
-        border: '210 100% 22%',
-        input: '210 100% 22%',
       },
     },
   },
@@ -5914,18 +5929,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Classic green terminal aesthetic',
     values: {
       light: {
-        background: '120 100% 5%',
-        foreground: '120 100% 60%',
-        card: '120 100% 7%',
-        cardForeground: '120 100% 60%',
-        popover: '120 100% 7%',
-        popoverForeground: '120 100% 60%',
-        muted: '120 100% 9%',
-        mutedForeground: '120 100% 55%',
-        secondary: '120 100% 9%',
-        secondaryForeground: '120 100% 60%',
-        border: '120 100% 9%',
-        input: '120 100% 9%',
+        background: '120 30% 96%',
+        foreground: '120 80% 18%',
+        card: '120 25% 98%',
+        cardForeground: '120 80% 18%',
+        popover: '120 25% 98%',
+        popoverForeground: '120 80% 18%',
+        muted: '120 20% 93%',
+        mutedForeground: '120 60% 35%',
+        secondary: '120 15% 90%',
+        secondaryForeground: '120 80% 18%',
+        border: '120 20% 88%',
+        input: '120 20% 88%',
       },
       dark: {
         background: '120 100% 3%',
@@ -5948,18 +5963,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Cyberpunk neon aesthetic',
     values: {
       light: {
-        background: '280 50% 10%',
-        foreground: '280 100% 85%',
-        card: '280 48% 14%',
-        cardForeground: '280 100% 85%',
-        popover: '280 48% 14%',
-        popoverForeground: '280 100% 85%',
-        muted: '280 45% 18%',
-        mutedForeground: '280 90% 75%',
-        secondary: '280 45% 18%',
-        secondaryForeground: '280 100% 85%',
-        border: '280 45% 18%',
-        input: '280 45% 18%',
+        background: '280 40% 96%',
+        foreground: '280 80% 20%',
+        card: '280 35% 98%',
+        cardForeground: '280 80% 20%',
+        popover: '280 35% 98%',
+        popoverForeground: '280 80% 20%',
+        muted: '280 30% 92%',
+        mutedForeground: '280 60% 40%',
+        secondary: '280 25% 88%',
+        secondaryForeground: '280 80% 20%',
+        border: '280 30% 86%',
+        input: '280 30% 86%',
       },
       dark: {
         background: '280 55% 6%',
@@ -6084,18 +6099,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Deep ocean blue atmosphere',
     values: {
       light: {
-        background: '200 50% 20%',
-        foreground: '200 60% 92%',
-        card: '200 48% 24%',
-        cardForeground: '200 60% 92%',
-        popover: '200 48% 24%',
-        popoverForeground: '200 60% 92%',
-        muted: '200 45% 28%',
-        mutedForeground: '200 55% 78%',
-        secondary: '200 45% 28%',
-        secondaryForeground: '200 60% 92%',
-        border: '200 45% 28%',
-        input: '200 45% 28%',
+        background: '200 40% 94%',
+        foreground: '200 50% 18%',
+        card: '200 35% 96%',
+        cardForeground: '200 50% 18%',
+        popover: '200 35% 96%',
+        popoverForeground: '200 50% 18%',
+        muted: '200 30% 90%',
+        mutedForeground: '200 40% 40%',
+        secondary: '200 25% 86%',
+        secondaryForeground: '200 50% 18%',
+        border: '200 30% 84%',
+        input: '200 30% 84%',
       },
       dark: {
         background: '200 55% 10%',
@@ -6254,18 +6269,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Dramatic storm gray atmosphere',
     values: {
       light: {
-        background: '220 20% 25%',
-        foreground: '220 30% 90%',
-        card: '220 18% 28%',
-        cardForeground: '220 30% 90%',
-        popover: '220 18% 28%',
-        popoverForeground: '220 30% 90%',
-        muted: '220 22% 32%',
-        mutedForeground: '220 28% 75%',
-        secondary: '220 22% 32%',
-        secondaryForeground: '220 30% 90%',
-        border: '220 22% 32%',
-        input: '220 22% 32%',
+        background: '220 20% 94%',
+        foreground: '220 30% 15%',
+        card: '220 18% 96%',
+        cardForeground: '220 30% 15%',
+        popover: '220 18% 96%',
+        popoverForeground: '220 30% 15%',
+        muted: '220 22% 90%',
+        mutedForeground: '220 28% 40%',
+        secondary: '220 20% 86%',
+        secondaryForeground: '220 30% 15%',
+        border: '220 22% 84%',
+        input: '220 22% 84%',
       },
       dark: {
         background: '220 25% 10%',
@@ -6424,18 +6439,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Futuristic tech aesthetic',
     values: {
       light: {
-        background: '240 30% 18%',
-        foreground: '240 40% 92%',
-        card: '240 28% 22%',
-        cardForeground: '240 40% 92%',
-        popover: '240 28% 22%',
-        popoverForeground: '240 40% 92%',
-        muted: '240 32% 26%',
-        mutedForeground: '240 38% 78%',
-        secondary: '240 32% 26%',
-        secondaryForeground: '240 40% 92%',
-        border: '240 32% 26%',
-        input: '240 32% 26%',
+        background: '240 30% 96%',
+        foreground: '240 40% 15%',
+        card: '240 28% 98%',
+        cardForeground: '240 40% 15%',
+        popover: '240 28% 98%',
+        popoverForeground: '240 40% 15%',
+        muted: '240 32% 92%',
+        mutedForeground: '240 38% 40%',
+        secondary: '240 30% 88%',
+        secondaryForeground: '240 40% 15%',
+        border: '240 32% 86%',
+        input: '240 32% 86%',
       },
       dark: {
         background: '240 35% 10%',
@@ -6696,18 +6711,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Mystical magical atmosphere',
     values: {
       light: {
-        background: '270 35% 22%',
-        foreground: '270 45% 91%',
-        card: '270 33% 26%',
-        cardForeground: '270 45% 91%',
-        popover: '270 33% 26%',
-        popoverForeground: '270 45% 91%',
-        muted: '270 37% 30%',
-        mutedForeground: '270 42% 77%',
-        secondary: '270 37% 30%',
-        secondaryForeground: '270 45% 91%',
-        border: '270 37% 30%',
-        input: '270 37% 30%',
+        background: '270 35% 96%',
+        foreground: '270 45% 15%',
+        card: '270 33% 98%',
+        cardForeground: '270 45% 15%',
+        popover: '270 33% 98%',
+        popoverForeground: '270 45% 15%',
+        muted: '270 37% 92%',
+        mutedForeground: '270 42% 40%',
+        secondary: '270 35% 88%',
+        secondaryForeground: '270 45% 15%',
+        border: '270 37% 86%',
+        input: '270 37% 86%',
       },
       dark: {
         background: '270 40% 12%',
@@ -6730,18 +6745,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Raw industrial aesthetic',
     values: {
       light: {
-        background: '0 0% 20%',
-        foreground: '0 0% 92%',
-        card: '0 0% 22%',
-        cardForeground: '0 0% 92%',
-        popover: '0 0% 22%',
-        popoverForeground: '0 0% 92%',
-        muted: '0 0% 25%',
-        mutedForeground: '0 0% 75%',
-        secondary: '0 0% 25%',
-        secondaryForeground: '0 0% 92%',
-        border: '0 0% 25%',
-        input: '0 0% 25%',
+        background: '0 0% 96%',
+        foreground: '0 0% 15%',
+        card: '0 0% 98%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 98%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 92%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 88%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 86%',
+        input: '0 0% 86%',
       },
       dark: {
         background: '0 0% 12%',
@@ -6798,18 +6813,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Pixel art digital aesthetic',
     values: {
       light: {
-        background: '160 50% 18%',
-        foreground: '160 60% 90%',
-        card: '160 48% 22%',
-        cardForeground: '160 60% 90%',
-        popover: '160 48% 22%',
-        popoverForeground: '160 60% 90%',
-        muted: '160 52% 26%',
-        mutedForeground: '160 58% 76%',
-        secondary: '160 52% 26%',
-        secondaryForeground: '160 60% 90%',
-        border: '160 52% 26%',
-        input: '160 52% 26%',
+        background: '160 40% 95%',
+        foreground: '160 60% 18%',
+        card: '160 35% 97%',
+        cardForeground: '160 60% 18%',
+        popover: '160 35% 97%',
+        popoverForeground: '160 60% 18%',
+        muted: '160 30% 91%',
+        mutedForeground: '160 50% 40%',
+        secondary: '160 25% 87%',
+        secondaryForeground: '160 60% 18%',
+        border: '160 30% 85%',
+        input: '160 30% 85%',
       },
       dark: {
         background: '160 55% 10%',
@@ -7002,18 +7017,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Mysterious smoky atmosphere',
     values: {
       light: {
-        background: '0 0% 25%',
-        foreground: '0 0% 90%',
-        card: '0 0% 27%',
-        cardForeground: '0 0% 90%',
-        popover: '0 0% 27%',
-        popoverForeground: '0 0% 90%',
-        muted: '0 0% 30%',
-        mutedForeground: '0 0% 73%',
-        secondary: '0 0% 30%',
-        secondaryForeground: '0 0% 90%',
-        border: '0 0% 30%',
-        input: '0 0% 30%',
+        background: '0 0% 95%',
+        foreground: '0 0% 15%',
+        card: '0 0% 97%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 97%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 91%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 89%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 87%',
+        input: '0 0% 87%',
       },
       dark: {
         background: '0 0% 15%',
@@ -7070,18 +7085,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Dark moody atmosphere',
     values: {
       light: {
-        background: '0 0% 12%',
-        foreground: '0 0% 90%',
-        card: '0 0% 14%',
-        cardForeground: '0 0% 90%',
-        popover: '0 0% 14%',
-        popoverForeground: '0 0% 90%',
-        muted: '0 0% 17%',
-        mutedForeground: '0 0% 70%',
-        secondary: '0 0% 17%',
-        secondaryForeground: '0 0% 90%',
-        border: '0 0% 17%',
-        input: '0 0% 17%',
+        background: '0 0% 94%',
+        foreground: '0 0% 15%',
+        card: '0 0% 96%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 96%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 90%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 88%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 86%',
+        input: '0 0% 86%',
       },
       dark: {
         background: '0 0% 6%',
@@ -7478,18 +7493,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Futuristic cyberpunk aesthetic with neon accents',
     values: {
       light: {
-        background: '260 30% 15%',
-        foreground: '260 60% 92%',
-        card: '260 28% 18%',
-        cardForeground: '260 60% 92%',
-        popover: '260 28% 18%',
-        popoverForeground: '260 60% 92%',
-        muted: '260 25% 24%',
-        mutedForeground: '260 50% 75%',
-        secondary: '260 25% 24%',
-        secondaryForeground: '260 60% 92%',
-        border: '260 25% 24%',
-        input: '260 25% 24%',
+        background: '260 30% 96%',
+        foreground: '260 60% 18%',
+        card: '260 28% 98%',
+        cardForeground: '260 60% 18%',
+        popover: '260 28% 98%',
+        popoverForeground: '260 60% 18%',
+        muted: '260 25% 92%',
+        mutedForeground: '260 50% 40%',
+        secondary: '260 22% 88%',
+        secondaryForeground: '260 60% 18%',
+        border: '260 25% 86%',
+        input: '260 25% 86%',
       },
       dark: {
         background: '260 35% 8%',
@@ -7512,18 +7527,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Bright neon colors with high contrast',
     values: {
       light: {
-        background: '300 40% 20%',
-        foreground: '300 70% 92%',
-        card: '300 38% 24%',
-        cardForeground: '300 70% 92%',
-        popover: '300 38% 24%',
-        popoverForeground: '300 70% 92%',
-        muted: '300 35% 28%',
-        mutedForeground: '300 60% 78%',
-        secondary: '300 35% 28%',
-        secondaryForeground: '300 70% 92%',
-        border: '300 35% 28%',
-        input: '300 35% 28%',
+        background: '300 40% 96%',
+        foreground: '300 70% 18%',
+        card: '300 38% 98%',
+        cardForeground: '300 70% 18%',
+        popover: '300 38% 98%',
+        popoverForeground: '300 70% 18%',
+        muted: '300 35% 92%',
+        mutedForeground: '300 60% 40%',
+        secondary: '300 32% 88%',
+        secondaryForeground: '300 70% 18%',
+        border: '300 35% 86%',
+        input: '300 35% 86%',
       },
       dark: {
         background: '300 45% 10%',
@@ -7580,18 +7595,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Dark green on black like The Matrix',
     values: {
       light: {
-        background: '120 30% 12%',
-        foreground: '120 60% 88%',
-        card: '120 28% 16%',
-        cardForeground: '120 60% 88%',
-        popover: '120 28% 16%',
-        popoverForeground: '120 60% 88%',
-        muted: '120 25% 20%',
-        mutedForeground: '120 50% 72%',
-        secondary: '120 25% 20%',
-        secondaryForeground: '120 60% 88%',
-        border: '120 25% 20%',
-        input: '120 25% 20%',
+        background: '120 30% 96%',
+        foreground: '120 60% 18%',
+        card: '120 28% 98%',
+        cardForeground: '120 60% 18%',
+        popover: '120 28% 98%',
+        popoverForeground: '120 60% 18%',
+        muted: '120 25% 92%',
+        mutedForeground: '120 50% 40%',
+        secondary: '120 22% 88%',
+        secondaryForeground: '120 60% 18%',
+        border: '120 25% 86%',
+        input: '120 25% 86%',
       },
       dark: {
         background: '120 35% 6%',
@@ -7716,18 +7731,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Electric purple-pink like plasma energy',
     values: {
       light: {
-        background: '290 40% 18%',
-        foreground: '290 70% 92%',
-        card: '290 38% 22%',
-        cardForeground: '290 70% 92%',
-        popover: '290 38% 22%',
-        popoverForeground: '290 70% 92%',
-        muted: '290 35% 26%',
-        mutedForeground: '290 60% 78%',
-        secondary: '290 35% 26%',
-        secondaryForeground: '290 70% 92%',
-        border: '290 35% 26%',
-        input: '290 35% 26%',
+        background: '290 40% 96%',
+        foreground: '290 70% 18%',
+        card: '290 38% 98%',
+        cardForeground: '290 70% 18%',
+        popover: '290 38% 98%',
+        popoverForeground: '290 70% 18%',
+        muted: '290 35% 92%',
+        mutedForeground: '290 60% 40%',
+        secondary: '290 32% 88%',
+        secondaryForeground: '290 70% 18%',
+        border: '290 35% 86%',
+        input: '290 35% 86%',
       },
       dark: {
         background: '290 45% 10%',
@@ -7818,18 +7833,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Luxurious dark with gold accents',
     values: {
       light: {
-        background: '45 20% 12%',
-        foreground: '45 60% 92%',
-        card: '45 18% 16%',
-        cardForeground: '45 60% 92%',
-        popover: '45 18% 16%',
-        popoverForeground: '45 60% 92%',
-        muted: '45 15% 22%',
-        mutedForeground: '45 50% 78%',
-        secondary: '45 15% 22%',
-        secondaryForeground: '45 60% 92%',
-        border: '45 15% 22%',
-        input: '45 15% 22%',
+        background: '45 20% 96%',
+        foreground: '45 50% 15%',
+        card: '45 18% 98%',
+        cardForeground: '45 50% 15%',
+        popover: '45 18% 98%',
+        popoverForeground: '45 50% 15%',
+        muted: '45 15% 92%',
+        mutedForeground: '45 40% 40%',
+        secondary: '45 12% 88%',
+        secondaryForeground: '45 50% 15%',
+        border: '45 15% 86%',
+        input: '45 15% 86%',
       },
       dark: {
         background: '45 25% 8%',
@@ -7886,18 +7901,18 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
     description: 'Refined dark gray for professional settings',
     values: {
       light: {
-        background: '0 0% 14%',
-        foreground: '0 0% 92%',
-        card: '0 0% 18%',
-        cardForeground: '0 0% 92%',
-        popover: '0 0% 18%',
-        popoverForeground: '0 0% 92%',
-        muted: '0 0% 24%',
-        mutedForeground: '0 0% 75%',
-        secondary: '0 0% 24%',
-        secondaryForeground: '0 0% 92%',
-        border: '0 0% 24%',
-        input: '0 0% 24%',
+        background: '0 0% 96%',
+        foreground: '0 0% 15%',
+        card: '0 0% 98%',
+        cardForeground: '0 0% 15%',
+        popover: '0 0% 98%',
+        popoverForeground: '0 0% 15%',
+        muted: '0 0% 92%',
+        mutedForeground: '0 0% 40%',
+        secondary: '0 0% 88%',
+        secondaryForeground: '0 0% 15%',
+        border: '0 0% 86%',
+        input: '0 0% 86%',
       },
       dark: {
         background: '0 0% 8%',
@@ -7912,40 +7927,6 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
         secondaryForeground: '0 0% 96%',
         border: '0 0% 18%',
         input: '0 0% 18%',
-      },
-    },
-  },
-  '90s-muted': {
-    label: '90s Muted',
-    description: 'Soft muted colors from the 90s aesthetic',
-    values: {
-      light: {
-        background: '280 15% 94%',
-        foreground: '280 30% 15%',
-        card: '280 12% 96%',
-        cardForeground: '280 30% 15%',
-        popover: '280 12% 96%',
-        popoverForeground: '280 30% 15%',
-        muted: '280 18% 90%',
-        mutedForeground: '280 25% 40%',
-        secondary: '280 10% 86%',
-        secondaryForeground: '280 30% 15%',
-        border: '280 15% 84%',
-        input: '280 15% 84%',
-      },
-      dark: {
-        background: '280 20% 10%',
-        foreground: '280 40% 94%',
-        card: '280 18% 14%',
-        cardForeground: '280 40% 94%',
-        popover: '280 18% 14%',
-        popoverForeground: '280 40% 94%',
-        muted: '280 15% 22%',
-        mutedForeground: '280 30% 78%',
-        secondary: '280 15% 22%',
-        secondaryForeground: '280 40% 94%',
-        border: '280 15% 22%',
-        input: '280 15% 22%',
       },
     },
   },
@@ -8082,6 +8063,74 @@ export const SURFACE_PRESETS: Record<SurfaceStyle, SurfacePresetConfigLegacy> = 
         secondaryForeground: '15 50% 94%',
         border: '15 25% 22%',
         input: '15 25% 22%',
+      },
+    },
+  },
+  'one-piece-white': {
+    label: 'One Piece White',
+    description: 'Pure white for Gear 5 liberation theme',
+    values: {
+      light: {
+        background: '0 0% 100%',
+        foreground: '222 35% 12%',
+        card: '0 0% 100%',
+        cardForeground: '222 35% 12%',
+        popover: '0 0% 100%',
+        popoverForeground: '222 35% 12%',
+        muted: '0 0% 96%',
+        mutedForeground: '222 20% 38%',
+        secondary: '0 0% 96%',
+        secondaryForeground: '222 35% 12%',
+        border: '0 0% 94%',
+        input: '0 0% 94%',
+      },
+      dark: {
+        background: '222 35% 12%',
+        foreground: '0 0% 98%',
+        card: '222 30% 16%',
+        cardForeground: '0 0% 98%',
+        popover: '222 30% 16%',
+        popoverForeground: '0 0% 98%',
+        muted: '222 20% 24%',
+        mutedForeground: '0 0% 80%',
+        secondary: '222 20% 24%',
+        secondaryForeground: '0 0% 98%',
+        border: '222 20% 24%',
+        input: '222 20% 24%',
+      },
+    },
+  },
+  '90s-muted': {
+    label: '90s Muted',
+    description: 'Muted retro colors from the 90s',
+    values: {
+      light: {
+        background: '200 20% 94%',
+        foreground: '200 30% 15%',
+        card: '200 18% 96%',
+        cardForeground: '200 30% 15%',
+        popover: '200 18% 96%',
+        popoverForeground: '200 30% 15%',
+        muted: '200 22% 90%',
+        mutedForeground: '200 25% 40%',
+        secondary: '200 20% 86%',
+        secondaryForeground: '200 30% 15%',
+        border: '200 25% 84%',
+        input: '200 25% 84%',
+      },
+      dark: {
+        background: '200 25% 12%',
+        foreground: '200 30% 90%',
+        card: '200 22% 16%',
+        cardForeground: '200 30% 90%',
+        popover: '200 22% 16%',
+        popoverForeground: '200 30% 90%',
+        muted: '200 20% 22%',
+        mutedForeground: '200 25% 75%',
+        secondary: '200 20% 22%',
+        secondaryForeground: '200 30% 90%',
+        border: '200 20% 22%',
+        input: '200 20% 22%',
       },
     },
   },
@@ -8285,6 +8334,57 @@ function validateAccent(accent: unknown): accent is AccentColor {
     accent === 'sky' ||
     accent === 'forest' ||
     accent === 'ocean' ||
+    accent === 'ruby' ||
+    accent === 'sapphire' ||
+    accent === 'steel' ||
+    accent === 'iron' ||
+    accent === 'copper' ||
+    accent === 'charcoal' ||
+    accent === 'slate' ||
+    accent === 'cream' ||
+    accent === 'snow' ||
+    accent === 'cherry' ||
+    accent === 'burgundy' ||
+    accent === 'wine' ||
+    accent === 'scarlet' ||
+    accent === 'vermillion' ||
+    accent === 'rust' ||
+    accent === 'maroon' ||
+    accent === 'royal' ||
+    accent === 'amethyst' ||
+    accent === 'jade' ||
+    accent === 'honey' ||
+    accent === 'butter' ||
+    accent === 'canary' ||
+    accent === 'lemon' ||
+    accent === 'tangerine' ||
+    accent === 'apricot' ||
+    accent === 'champagne' ||
+    accent === 'platinum' ||
+    accent === 'titanium' ||
+    accent === 'tan' ||
+    accent === 'khaki' ||
+    accent === 'beige' ||
+    accent === 'vanilla' ||
+    accent === 'aqua' ||
+    accent === 'cerulean' ||
+    accent === 'periwinkle' ||
+    accent === 'lilac' ||
+    accent === 'wisteria' ||
+    accent === 'mauve' ||
+    accent === 'neon-pink' ||
+    accent === 'neon-blue' ||
+    accent === 'neon-green' ||
+    accent === 'neon-yellow' ||
+    accent === 'neon-cyan' ||
+    accent === 'neon-orange' ||
+    accent === 'neon-purple' ||
+    accent === 'pastel-pink' ||
+    accent === 'pastel-blue' ||
+    accent === 'pastel-purple' ||
+    accent === 'moss-green' ||
+    accent === 'dispatch-blue' ||
+    accent === 'chartreuse' ||
     accent === 'custom'
   )
 }
@@ -8325,52 +8425,7 @@ function loadPreferences(): StoredPreferences {
           ? (parsed.presets as AppearancePreset[]).map((preset) => {
               const settings = preset.settings ?? ({} as Partial<AppearancePresetSettings>)
               const presetAccent = settings.accent
-              const presetAccentValid =
-                presetAccent === 'indigo' ||
-                presetAccent === 'violet' ||
-                presetAccent === 'emerald' ||
-                presetAccent === 'amber' ||
-                presetAccent === 'rose' ||
-                presetAccent === 'cyan' ||
-                presetAccent === 'mono' ||
-                presetAccent === 'peach' ||
-                presetAccent === 'azure' ||
-                presetAccent === 'cobalt' ||
-                presetAccent === 'magenta' ||
-                presetAccent === 'crimson' ||
-                presetAccent === 'plum' ||
-                presetAccent === 'orchid' ||
-                presetAccent === 'teal' ||
-                presetAccent === 'seafoam' ||
-                presetAccent === 'sage' ||
-                presetAccent === 'coral' ||
-                presetAccent === 'saffron' ||
-                presetAccent === 'sunset' ||
-                presetAccent === 'graphite' ||
-                presetAccent === 'pure' ||
-                presetAccent === 'lime' ||
-                presetAccent === 'mint' ||
-                presetAccent === 'orange' ||
-                presetAccent === 'yellow' ||
-                presetAccent === 'green' ||
-                presetAccent === 'blue' ||
-                presetAccent === 'purple' ||
-                presetAccent === 'pink' ||
-                presetAccent === 'red' ||
-                presetAccent === 'brown' ||
-                presetAccent === 'gold' ||
-                presetAccent === 'silver' ||
-                presetAccent === 'bronze' ||
-                presetAccent === 'turquoise' ||
-                presetAccent === 'lavender' ||
-                presetAccent === 'fuchsia' ||
-                presetAccent === 'salmon' ||
-                presetAccent === 'olive' ||
-                presetAccent === 'navy' ||
-                presetAccent === 'sky' ||
-                presetAccent === 'forest' ||
-                presetAccent === 'ocean' ||
-                presetAccent === 'custom'
+              const presetAccentValid = validateAccent(presetAccent)
               return {
                 ...preset,
                 settings: {
@@ -8519,18 +8574,40 @@ function applyThemePreferences(state: ThemeState) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
   const resolved = state.resolvedTheme
-  root.classList.toggle('dark', resolved === 'dark')
+  
+  // Убеждаемся, что resolvedTheme правильно определен
+  let actualResolved: ResolvedTheme = resolved
+  if (!resolved || (resolved !== 'light' && resolved !== 'dark')) {
+    logger.error('❌ Invalid resolvedTheme:', resolved, 'Falling back to light')
+    actualResolved = 'light'
+  }
+  
+  // Сначала устанавливаем класс dark, чтобы CSS правила применялись правильно
+  root.classList.toggle('dark', actualResolved === 'dark')
+  
+  // Затем устанавливаем dataset атрибуты
   root.dataset.theme = state.theme
   root.dataset.surface = state.surface
   root.dataset.contrast = state.contrast
   root.dataset.depth = state.depth
   root.dataset.motion = state.motion
   root.dataset.typography = state.typography
+  
+  logger.debug('🎨 Setting dataset attributes:', {
+    theme: state.theme,
+    surface: state.surface,
+    contrast: state.contrast,
+    depth: state.depth,
+    motion: state.motion,
+    typography: state.typography,
+    resolved: actualResolved,
+    hasDarkClass: root.classList.contains('dark'),
+  })
 
   const accentValues =
     state.accent === 'custom'
-      ? getCustomAccentTones(state.customAccent)[resolved]
-      : ACCENT_COLORS[state.accent].values[resolved]
+      ? getCustomAccentTones(state.customAccent)[actualResolved]
+      : ACCENT_COLORS[state.accent].values[actualResolved]
 
   root.style.setProperty('--primary', accentValues.primary)
   root.style.setProperty('--primary-foreground', accentValues.primaryForeground)
@@ -8544,8 +8621,8 @@ function applyThemePreferences(state: ThemeState) {
   if (state.secondaryAccent) {
     const secondaryAccentValues =
       state.secondaryAccent === 'custom'
-        ? getCustomAccentTones(state.customAccent)[resolved]
-        : ACCENT_COLORS[state.secondaryAccent].values[resolved]
+        ? getCustomAccentTones(state.customAccent)[actualResolved]
+        : ACCENT_COLORS[state.secondaryAccent].values[actualResolved]
     root.style.setProperty('--primary-secondary', secondaryAccentValues.primary)
     root.style.setProperty('--primary-secondary-foreground', secondaryAccentValues.primaryForeground)
     root.style.setProperty('--accent-secondary', secondaryAccentValues.accent)
@@ -8562,8 +8639,8 @@ function applyThemePreferences(state: ThemeState) {
   if (state.tertiaryAccent) {
     const tertiaryAccentValues =
       state.tertiaryAccent === 'custom'
-        ? getCustomAccentTones(state.customAccent)[resolved]
-        : ACCENT_COLORS[state.tertiaryAccent].values[resolved]
+        ? getCustomAccentTones(state.customAccent)[actualResolved]
+        : ACCENT_COLORS[state.tertiaryAccent].values[actualResolved]
     root.style.setProperty('--primary-tertiary', tertiaryAccentValues.primary)
     root.style.setProperty('--primary-tertiary-foreground', tertiaryAccentValues.primaryForeground)
     root.style.setProperty('--accent-tertiary', tertiaryAccentValues.accent)
@@ -8591,14 +8668,58 @@ function applyThemePreferences(state: ThemeState) {
   root.style.removeProperty('--aetheris-surface-flat')
   root.style.removeProperty('--aetheris-surface-gradient')
 
-  let surfaceValues = SURFACE_PRESETS[state.surface].values[resolved]
+  // Проверяем, что surface существует
+  if (!SURFACE_PRESETS[state.surface]) {
+    logger.error(`Surface "${state.surface}" not found in SURFACE_PRESETS. Available surfaces:`, Object.keys(SURFACE_PRESETS).slice(0, 10))
+    return
+  }
+  
+  // Проверяем, что surface имеет значения для текущего режима
+  const surfacePreset = SURFACE_PRESETS[state.surface]
+  if (!surfacePreset) {
+    logger.error(`❌ Surface "${state.surface}" not found in SURFACE_PRESETS`)
+    return
+  }
+  
+  if (!surfacePreset.values?.[actualResolved]) {
+    logger.error(`❌ Surface "${state.surface}" does not have values for "${actualResolved}" mode. Available modes:`, Object.keys(surfacePreset.values || {}))
+    // Fallback: используем light если доступен, иначе dark
+    const fallbackMode = surfacePreset.values?.light ? 'light' : 'dark'
+    logger.warn(`⚠️ Falling back to "${fallbackMode}" mode for surface "${state.surface}"`)
+    actualResolved = fallbackMode as ResolvedTheme
+  }
+  
+  let surfaceValues = surfacePreset.values[actualResolved]
+  
+  logger.debug('🎨 Applying surface:', {
+    surface: state.surface,
+    resolved: actualResolved,
+    theme: state.theme,
+    resolvedTheme: state.resolvedTheme,
+    background: surfaceValues.background,
+    foreground: surfaceValues.foreground,
+    card: surfaceValues.card,
+    border: surfaceValues.border,
+    hasLightValues: !!SURFACE_PRESETS[state.surface]?.values?.light,
+    hasDarkValues: !!SURFACE_PRESETS[state.surface]?.values?.dark,
+  })
+  
+  // Проверяем, что CSS переменные устанавливаются
+  logger.debug('🎨 Setting CSS variables for surface:', state.surface)
+  
+  // Проверяем текущие значения до установки
+  const beforeBackground = getComputedStyle(root).getPropertyValue('--background')
+  logger.debug('🎨 Before setting --background:', beforeBackground)
 
   // Apply bold contrast transformations if enabled
   // This modifies colors via CSS variables instead of CSS filter to avoid layout issues
   if (state.contrast === 'bold') {
-    surfaceValues = applyBoldContrast(surfaceValues, resolved)
+    surfaceValues = applyBoldContrast(surfaceValues, actualResolved)
   }
 
+  // Устанавливаем CSS переменные с приоритетом, чтобы они перезаписывали значения из CSS
+  // Используем setProperty с третьим параметром для установки приоритета
+  // Устанавливаем CSS переменные на root
   root.style.setProperty('--background', surfaceValues.background)
   root.style.setProperty('--foreground', surfaceValues.foreground)
   root.style.setProperty('--card', surfaceValues.card)
@@ -8612,8 +8733,35 @@ function applyThemePreferences(state: ThemeState) {
   root.style.setProperty('--border', surfaceValues.border)
   root.style.setProperty('--input', surfaceValues.input)
   
+  // Также устанавливаем background напрямую на body для гарантии применения
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.style.backgroundColor = `hsl(${surfaceValues.background})`
+    logger.debug('🎨 Set body.backgroundColor directly to:', `hsl(${surfaceValues.background})`)
+  }
+  
+  // Проверяем, что CSS переменные действительно установлены и применяются
+  const actualBackground = root.style.getPropertyValue('--background')
+  const computedBackground = getComputedStyle(root).getPropertyValue('--background')
+  const bodyBackground = getComputedStyle(document.body).backgroundColor
+  const bodyStyleBackground = document.body.style.backgroundColor
+  
+  logger.debug('🎨 CSS variable --background:', {
+    inline: actualBackground,
+    computed: computedBackground,
+    expected: surfaceValues.background,
+    bodyComputed: bodyBackground,
+    bodyStyle: bodyStyleBackground,
+    match: actualBackground === surfaceValues.background || computedBackground === surfaceValues.background,
+    rootHasDarkClass: root.classList.contains('dark'),
+    rootDataset: {
+      theme: root.dataset.theme,
+      surface: root.dataset.surface,
+      contrast: root.dataset.contrast,
+    },
+  })
+  
   // Apply destructive color from accent if available, otherwise generate it
-  const destructiveColors = generateDestructiveColor(accentValues, resolved)
+  const destructiveColors = generateDestructiveColor(accentValues, actualResolved)
   root.style.setProperty('--destructive', destructiveColors.destructive)
   root.style.setProperty('--destructive-foreground', destructiveColors.destructiveForeground)
 }
@@ -8820,6 +8968,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
         contrast: params.contrast,
         depth: params.depth,
         motion: params.motion,
+      }
+      // Проверяем, что surface существует в SURFACE_PRESETS
+      if (!SURFACE_PRESETS[nextState.surface]) {
+        logger.error(`Surface "${nextState.surface}" not found in SURFACE_PRESETS`)
+        return state
       }
       applyThemePreferences(nextState)
       savePreferences(extractPreferences(nextState))

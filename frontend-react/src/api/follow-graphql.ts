@@ -21,7 +21,7 @@ export async function followUser(followingId: number): Promise<{ id: string }> {
   try {
     const response = await mutate<{ createFollow: { id: string } }>(followMutation, {
       followingId: String(followingId),
-    })
+    }, undefined, 'follow') // Используем специальный rate limit для подписок (2/5 сек)
 
     logger.debug('[followUser] Follow created:', response.createFollow)
     return response.createFollow
@@ -46,7 +46,7 @@ export async function unfollowUser(followId: string): Promise<void> {
   try {
     await mutate<{ deleteFollow: { id: string } }>(unfollowMutation, {
       id: followId,
-    })
+    }, undefined, 'follow') // Используем специальный rate limit для отписок (2/5 сек)
 
     logger.debug('[unfollowUser] Follow deleted:', followId)
   } catch (error: any) {

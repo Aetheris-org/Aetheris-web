@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useMemo } from 'react'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -13,7 +13,6 @@ import {
   Users,
   Trophy,
   Clock,
-  MapPin,
   Award,
   CheckCircle2,
   ArrowLeft,
@@ -24,7 +23,6 @@ import {
 } from 'lucide-react'
 
 import { mockEvents } from '@/data/exploreMockData'
-import type { Event } from '@/types/explore'
 
 /**
  * EVENT DETAIL PAGE

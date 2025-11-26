@@ -16,23 +16,23 @@ export const session = statelessSessions({
 });
 
 // Базовая аутентификация через email/password
-// TODO: Интегрировать с Passport.js для OAuth2
+// Passport.js для OAuth2 уже интегрирован в src/auth/passport.ts
 const { withAuth } = createAuth({
   listKey: 'User',
   identityField: 'email',
   secretField: 'password',
-  sessionData: 'id email username role',
+  sessionData: 'id username role', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из sessionData (он хеширован и не нужен в сессии)
   passwordResetLink: {
     sendToken: async ({ itemId, identity, token, context }) => {
-      // TODO: Реализовать отправку email с токеном сброса пароля
-      logger.info(`Password reset token for ${identity}: ${token}`);
+      // Не используется, т.к. авторизация только через OAuth2
+      logger.info(`Password reset token requested (OAuth2 only, not implemented)`);
     },
     tokensValidForMins: 60,
   },
   magicAuthLink: {
     sendToken: async ({ itemId, identity, token, context }) => {
-      // TODO: Реализовать отправку email с magic link
-      logger.info(`Magic auth token for ${identity}: ${token}`);
+      // Не используется, т.к. авторизация только через OAuth2
+      logger.info(`Magic auth token requested (OAuth2 only, not implemented)`);
     },
     tokensValidForMins: 60,
   },
@@ -41,4 +41,3 @@ const { withAuth } = createAuth({
 logger.info('✅ KeystoneJS authentication configured');
 
 export { withAuth };
-

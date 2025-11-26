@@ -6,6 +6,7 @@ import { list } from '@keystone-6/core';
 import { text, relationship, select, timestamp, checkbox, password } from '@keystone-6/core/fields';
 import { accessControl } from '../src/access-control';
 import logger from '../src/lib/logger';
+import { hashEmail, isEmailHash } from '../src/lib/email-hash';
 
 export const User = list({
   access: accessControl.User,
@@ -14,6 +15,24 @@ export const User = list({
     // Роль 'admin' может быть назначена ТОЛЬКО через защищенный endpoint /api/setup/initial
     // или вручную существующим администратором через Admin UI
     resolveInput: async ({ resolvedData, operation, context }) => {
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Автоматическое хеширование email при создании и обновлении
+      if (resolvedData.email && typeof resolvedData.email === 'string') {
+        // Проверяем, является ли email уже хешем
+        if (!isEmailHash(resolvedData.email)) {
+          // Если это не хеш, хешируем email
+          try {
+            resolvedData.email = hashEmail(resolvedData.email);
+            logger.debug('Email automatically hashed in User schema hook', {
+              operation,
+              // НЕ логируем оригинальный email для безопасности
+            });
+          } catch (error) {
+            logger.error('Failed to hash email in User schema hook:', error);
+            throw new Error('Invalid email format');
+          }
+        }
+      }
+
       if (operation === 'create') {
         // Если роль не указана - устанавливаем 'user' по умолчанию
         // НИКОГДА не назначаем 'admin' автоматически через GraphQL API

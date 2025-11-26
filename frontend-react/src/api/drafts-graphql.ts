@@ -181,7 +181,7 @@ export async function createDraft(data: {
 
     const response = await mutate<{ createArticle: any }>(createMutation, {
       data: mutationData,
-    });
+    }, undefined, 'article-mutation'); // Используем специальный rate limit для создания черновиков (1/60 сек)
 
     return transformArticle(response.createArticle);
   } catch (error: any) {
@@ -269,7 +269,7 @@ export async function updateDraft(
     const response = await mutate<{ updateArticle: any }>(updateMutation, {
       id,
       data: updateData,
-    });
+    }, undefined, 'article-mutation'); // Используем специальный rate limit для обновления черновиков (1/60 сек)
 
     return transformArticle(response.updateArticle);
   } catch (error) {
@@ -291,7 +291,7 @@ export async function deleteDraft(id: string): Promise<boolean> {
   `;
 
   try {
-    await mutate(deleteMutation, { id });
+    await mutate(deleteMutation, { id }, undefined, 'article-mutation'); // Используем специальный rate limit для удаления черновиков (1/60 сек)
     return true;
   } catch (error) {
     logger.error(`Failed to delete draft ${id}:`, error);

@@ -1,10 +1,15 @@
 /**
+ * ⚠️ ВРЕМЕННЫЕ МОК-ДАННЫЕ
+ * Этот файл содержит временные мок-данные для разработки.
+ * В будущем будет заменен на реальные API запросы к KeystoneJS backend.
+ * TODO: Заменить на GraphQL запросы к backend
+ * 
  * MOCK DATA FOR FRIENDS SYSTEM
  * 
  * ⚠️ FOR FUTURE DEVELOPERS / AI ASSISTANTS:
  * 
  * This file contains temporary mock data for the friends feature.
- * When integrating with the real backend (Strapi), follow these steps:
+ * When integrating with the real backend (KeystoneJS), follow these steps:
  * 
  * 1. CREATE STRAPI CONTENT TYPES:
  *    - FriendRequest (sender, receiver, status, message, timestamps)

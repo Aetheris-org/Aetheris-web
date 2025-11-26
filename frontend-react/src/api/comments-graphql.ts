@@ -211,9 +211,14 @@ export async function createComment(data: {
   }
 
   try {
-    const response = await mutate<{ createComment: any }>(createMutation, {
-      data: createData,
-    });
+    const response = await mutate<{ createComment: any }>(
+      createMutation,
+      {
+        data: createData,
+      },
+      undefined,
+      'comment' // Используем специальный rate limit для комментариев (25 секунд)
+    );
 
     return transformComment(response.createComment);
   } catch (error) {
@@ -255,10 +260,15 @@ export async function updateComment(
   `;
 
   try {
-    const response = await mutate<{ updateComment: any }>(updateMutation, {
-      id,
-      data: { text: data.text },
-    });
+    const response = await mutate<{ updateComment: any }>(
+      updateMutation,
+      {
+        id,
+        data: { text: data.text },
+      },
+      undefined,
+      'comment' // Используем специальный rate limit для комментариев (25 секунд)
+    );
 
     return transformComment(response.updateComment);
   } catch (error) {
@@ -280,7 +290,7 @@ export async function deleteComment(id: string): Promise<boolean> {
   `;
 
   try {
-    await mutate(deleteMutation, { id });
+    await mutate(deleteMutation, { id }, undefined, 'comment'); // Используем специальный rate limit для комментариев (25 секунд)
     return true;
   } catch (error) {
     logger.error(`Failed to delete comment ${id}:`, error);
@@ -308,10 +318,15 @@ export async function reactToComment(
   `;
 
   try {
-    const response = await mutate<{ reactToComment: any }>(reactMutation, {
-      commentId,
-      reaction,
-    });
+    const response = await mutate<{ reactToComment: any }>(
+      reactMutation,
+      {
+        commentId,
+        reaction,
+      },
+      undefined,
+      'reaction' // Используем специальный rate limit для реакций (3/5 сек)
+    );
 
     const comment = transformComment(response.reactToComment);
     // userReaction теперь виртуальное поле, оно автоматически разрешается KeystoneJS

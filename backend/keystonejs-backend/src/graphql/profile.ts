@@ -77,7 +77,7 @@ export const extendGraphqlSchemaProfile = graphql.extend((base) => {
             const updatedUser = await context.query.User.updateOne({
               where: { id: String(userId) },
               data: updateData,
-              query: 'id username email bio avatar coverImage createdAt updatedAt',
+              query: 'id username bio avatar coverImage createdAt updatedAt', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
             });
 
             if (!updatedUser) {

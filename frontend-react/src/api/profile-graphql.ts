@@ -57,7 +57,7 @@ interface GraphQLUserProfile {
   }>
 }
 
-function transformUserProfile(raw: GraphQLUserProfile, currentUserId?: number): UserProfile {
+function transformUserProfile(raw: GraphQLUserProfile, _currentUserId?: number): UserProfile {
   const publishedArticles = raw.articles.filter((a) => a.publishedAt !== null)
 
   // Подсчитываем общее количество лайков из всех статей пользователя
@@ -304,7 +304,7 @@ export async function updateUserProfile(input: UpdateUserProfileInput): Promise<
   }
 
   try {
-    const data = await mutate<{ updateProfile: GraphQLUser }>(updateProfileMutation, variables)
+    const data = await mutate<{ updateProfile: GraphQLUser }>(updateProfileMutation, variables, undefined, 'profile-update') // Используем специальный rate limit для обновления профиля (1/10 сек)
 
     if (!data.updateProfile) {
       logger.error('[updateUserProfile] Update failed: no user returned')

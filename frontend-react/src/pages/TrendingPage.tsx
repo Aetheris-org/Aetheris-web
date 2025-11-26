@@ -212,7 +212,7 @@ export default function TrendingPage() {
           </section>
         )}
 
-        <section className="space-y-6 rounded-3xl border border-border/60 bg-muted/10 p-6 shadow-sm">
+        <section className="space-y-6 rounded-3xl border border-dashed border-muted-foreground/40 bg-muted/10 p-6 shadow-sm opacity-20 hover:opacity-100 transition-opacity">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
               <CardTitle className="text-xl font-semibold">{t('trending.exploreLeaderboard')}</CardTitle>

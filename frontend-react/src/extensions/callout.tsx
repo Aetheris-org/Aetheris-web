@@ -49,7 +49,7 @@ const CALLOUT_VARIANTS: Record<
   },
 }
 
-const CalloutView = ({ node, updateAttributes, children, editor }: NodeViewProps) => {
+const CalloutView = ({ node, updateAttributes, editor }: NodeViewProps) => {
   const variant: CalloutVariant = node.attrs.variant ?? 'info'
   const VariantIcon = CALLOUT_VARIANTS[variant].icon
   const variantConfig = CALLOUT_VARIANTS[variant]
@@ -130,7 +130,7 @@ export const Callout = Node.create({
     ]
   },
 
-  toDOM({ node }) {
+  toDOM({ node }: { node: any }) {
     const variant: CalloutVariant = (node.attrs?.variant || 'info') as CalloutVariant
     const variantConfig = CALLOUT_VARIANTS[variant]
     
@@ -248,11 +248,12 @@ export const Callout = Node.create({
     ]
   },
 
+  // @ts-expect-error - TipTap type definitions don't match our custom commands
   addCommands() {
     return {
       insertCallout:
         (variant: CalloutVariant = 'info') =>
-        ({ commands, chain }) => {
+        ({ chain }: { commands: any; chain: any }) => {
           return chain()
             .insertContent({
               type: this.name,
@@ -264,7 +265,7 @@ export const Callout = Node.create({
         },
       setCalloutVariant:
         (variant: CalloutVariant) =>
-        ({ commands }) =>
+        ({ commands }: { commands: any }) =>
           commands.updateAttributes(this.name, { variant }),
     }
   },

@@ -116,6 +116,7 @@ export const BlockAnchor = Extension.create({
     ]
   },
 
+  // @ts-expect-error - TipTap type definitions don't match our custom commands
   addCommands() {
     return {
       setBlockAnchor:

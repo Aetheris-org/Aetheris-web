@@ -19,6 +19,7 @@ import logger from '../lib/logger';
 import { findOrCreateGoogleUser } from '../auth/oauth-handler';
 import '../auth/passport'; // Инициализация Passport.js
 import { logRateLimitExceeded, logLoginAttempt } from '../lib/security-logger';
+import { hashEmail, isEmailHash } from '../lib/email-hash';
 
 // Сохраняем context в модуле для доступа из OAuth handlers
 let keystoneContext: KeystoneContext | null = null;
@@ -135,6 +136,52 @@ export async function extendExpressApp(
   app.use(compression());
 
   // 5. Rate limiting
+  // Специальные лимитеры для критичных операций
+  // Комментарии через REST API: 1 запрос за 25 секунд
+  const commentLimiter = rateLimit({
+    windowMs: 25 * 1000, // 25 секунд
+    max: 1, // максимум 1 запрос
+    message: 'Too many comment requests, please try again later.',
+    skip: (req) => {
+      // Применяем только к комментариям через REST API
+      return !req.path.includes('/comments');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, req.path, userAgent);
+      res.status(429).json({
+        error: 'Too many comment requests',
+        message: 'Too many comment requests. Please wait 25 seconds before trying again.',
+        waitTime: 25,
+      });
+    },
+  });
+  app.use('/api/', commentLimiter);
+
+  // Загрузка файлов: 5 запросов за 1 минуту
+  const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 минута
+    max: 5, // максимум 5 запросов
+    message: 'Too many upload requests, please try again later.',
+    skip: (req) => {
+      // Применяем только к загрузке файлов
+      return !req.path.includes('/upload');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, req.path, userAgent);
+      res.status(429).json({
+        error: 'Too many upload requests',
+        message: 'Too many upload requests. Please wait a minute before trying again.',
+        waitTime: 60,
+      });
+    },
+  });
+  app.use('/api/', uploadLimiter);
+
+  // Общий лимитер для остальных API endpoints
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 минут
     max: 100, // максимум 100 запросов с одного IP
@@ -143,7 +190,10 @@ export async function extendExpressApp(
     legacyHeaders: false,
     skip: (req) => {
       // Пропускаем GraphQL endpoint (он имеет свои лимитеры)
-      return req.path === '/api/graphql';
+      // Пропускаем комментарии и загрузку (у них свои лимитеры)
+      return req.path === '/api/graphql' 
+        || req.path.includes('/comments')
+        || req.path.includes('/upload');
     },
     handler: (req, res) => {
       const ip = req.ip || req.connection?.remoteAddress || 'unknown';
@@ -184,8 +234,8 @@ export async function extendExpressApp(
   // Rate limiting для GraphQL
   // Разделяем лимиты для попыток входа и обычных запросов
   const graphqlLoginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 минут
-    max: 10, // максимум 10 попыток входа с одного IP
+    windowMs: 5 * 60 * 1000, // 5 минут (синхронизировано с клиентом)
+    max: 5, // максимум 5 попыток входа с одного IP (синхронизировано с клиентом)
     message: 'Too many login attempts, please try again later.',
     skip: (req) => {
       // Пропускаем, если это не запрос на аутентификацию
@@ -200,6 +250,7 @@ export async function extendExpressApp(
       res.status(429).json({
         error: 'Too many login attempts',
         message: 'Too many login attempts from this IP, please try again later.',
+        waitTime: 300, // 5 минут в секундах
       });
     },
   });
@@ -213,7 +264,28 @@ export async function extendExpressApp(
       // Пропускаем запросы на аутентификацию (они обрабатываются отдельным лимитером)
       if (req.method !== 'POST' || !req.body) return false;
       const query = req.body.query || '';
-      return query.includes('authenticateUserWithPassword');
+      
+      // Пропускаем запросы на аутентификацию
+      if (query.includes('authenticateUserWithPassword')) return true;
+      
+      // Пропускаем все запросы от Admin UI (они содержат специфичные поля)
+      // Admin UI делает запросы с полями: adminMeta, StaticAdminMeta, ItemPage, RelationshipSelect и т.д.
+      const adminQueryIndicators = [
+        'adminMeta',
+        'StaticAdminMeta',
+        'ItemPage',
+        'RelationshipSelect',
+        'ListPage',
+        'keystone {',
+        '__typename', // Admin UI часто использует __typename
+      ];
+      
+      // Если запрос содержит хотя бы один индикатор админки - пропускаем rate limiting
+      const isAdminQuery = adminQueryIndicators.some(indicator => 
+        query.includes(indicator)
+      );
+      
+      return isAdminQuery;
     },
     handler: (req, res) => {
       const ip = req.ip || req.connection?.remoteAddress || 'unknown';
@@ -226,9 +298,222 @@ export async function extendExpressApp(
     },
   });
 
-  // Применяем оба лимитера к GraphQL endpoint
+  // Rate limiting для комментариев через GraphQL
+  const graphqlCommentLimiter = rateLimit({
+    windowMs: 25 * 1000, // 25 секунд
+    max: 1, // максимум 1 запрос
+    message: 'Too many comment requests, please try again later.',
+    skip: (req) => {
+      // Пропускаем, если это не запрос на создание/обновление/удаление/реакцию комментария
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      const commentMutations = ['createComment', 'updateComment', 'deleteComment'];
+      return !commentMutations.some(mutation => query.includes(mutation));
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (comment)', userAgent);
+      res.status(429).json({
+        error: 'Too many comment requests',
+        message: 'Too many comment requests. Please wait 25 seconds before trying again.',
+        waitTime: 25,
+      });
+    },
+  });
+
+  // Rate limiting для реакций на статьи и комментарии
+  const graphqlReactionLimiter = rateLimit({
+    windowMs: 5 * 1000, // 5 секунд
+    max: 3, // максимум 3 реакции
+    message: 'Too many reaction requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('reactToArticle') && !query.includes('reactToComment');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (reaction)', userAgent);
+      res.status(429).json({
+        error: 'Too many reaction requests',
+        message: 'Too many reaction requests. Please wait 5 seconds before trying again.',
+        waitTime: 5,
+      });
+    },
+  });
+
+  // Rate limiting для подписок (follow/unfollow)
+  const graphqlFollowLimiter = rateLimit({
+    windowMs: 5 * 1000, // 5 секунд
+    max: 2, // максимум 2 подписки/отписки
+    message: 'Too many follow requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('createFollow') && !query.includes('deleteFollow');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (follow)', userAgent);
+      res.status(429).json({
+        error: 'Too many follow requests',
+        message: 'Too many follow requests. Please wait 5 seconds before trying again.',
+        waitTime: 5,
+      });
+    },
+  });
+
+  // Rate limiting для автосохранения черновиков (более мягкий лимит)
+  const graphqlDraftAutoSaveLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 минута
+    max: 10, // максимум 10 автосохранений в минуту
+    message: 'Too many auto-save requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      // Только для updateDraft (автосохранение)
+      return !query.includes('updateDraft') || query.includes('createArticle');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (draft auto-save)', userAgent);
+      res.status(429).json({
+        error: 'Too many auto-save requests',
+        message: 'Too many auto-save requests. Please wait a moment before trying again.',
+        waitTime: 60,
+      });
+    },
+  });
+
+  // Rate limiting для создания/публикации статей (строгий лимит)
+  const graphqlArticleMutationLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 минута
+    max: 1, // максимум 1 мутация
+    message: 'Too many article mutation requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      // Только для createArticle и updateArticle (публикация), НЕ для updateDraft
+      const articleMutations = ['createArticle', 'updateArticle'];
+      return !articleMutations.some(mutation => query.includes(mutation));
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (article mutation)', userAgent);
+      res.status(429).json({
+        error: 'Too many article mutation requests',
+        message: 'Too many article mutation requests. Please wait 60 seconds before trying again.',
+        waitTime: 60,
+      });
+    },
+  });
+
+  // Rate limiting для удаления статей/черновиков
+  const graphqlDeleteLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 минута
+    max: 5, // максимум 5 удалений
+    message: 'Too many delete requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('deleteArticle') && !query.includes('deleteDraft');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (delete)', userAgent);
+      res.status(429).json({
+        error: 'Too many delete requests',
+        message: 'Too many delete requests. Please wait a minute before trying again.',
+        waitTime: 60,
+      });
+    },
+  });
+
+  // Rate limiting для закладок
+  const graphqlBookmarkLimiter = rateLimit({
+    windowMs: 5 * 1000, // 5 секунд
+    max: 1, // максимум 1 операция
+    message: 'Too many bookmark requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('createBookmark') && !query.includes('deleteBookmark');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (bookmark)', userAgent);
+      res.status(429).json({
+        error: 'Too many bookmark requests',
+        message: 'Too many bookmark requests. Please wait 5 seconds before trying again.',
+        waitTime: 5,
+      });
+    },
+  });
+
+  // Rate limiting для обновления профиля
+  const graphqlProfileUpdateLimiter = rateLimit({
+    windowMs: 10 * 1000, // 10 секунд
+    max: 1, // максимум 1 обновление профиля
+    message: 'Too many profile update requests, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('updateProfile');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (profile update)', userAgent);
+      res.status(429).json({
+        error: 'Too many profile update requests',
+        message: 'Too many profile update requests. Please wait 10 seconds before trying again.',
+        waitTime: 10,
+      });
+    },
+  });
+
+  // Rate limiting для регистрации
+  const graphqlSignUpLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 минут
+    max: 3, // максимум 3 попытки регистрации
+    message: 'Too many sign up attempts, please try again later.',
+    skip: (req) => {
+      if (req.method !== 'POST' || !req.body) return true;
+      const query = req.body.query || '';
+      return !query.includes('createUser') || query.includes('authenticateUserWithPassword');
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      logRateLimitExceeded(ip, '/api/graphql (sign up)', userAgent);
+      res.status(429).json({
+        error: 'Too many sign up attempts',
+        message: 'Too many sign up attempts. Please wait 5 minutes before trying again.',
+        waitTime: 300,
+      });
+    },
+  });
+
+  // Применяем все лимитеры к GraphQL endpoint в правильном порядке
+  // Сначала специфичные лимитеры (более строгие), потом общие
   app.use('/api/graphql', graphqlLoginLimiter);
-  app.use('/api/graphql', graphqlLimiter);
+  app.use('/api/graphql', graphqlSignUpLimiter);
+  app.use('/api/graphql', graphqlCommentLimiter);
+  app.use('/api/graphql', graphqlReactionLimiter);
+  app.use('/api/graphql', graphqlFollowLimiter);
+  app.use('/api/graphql', graphqlDraftAutoSaveLimiter); // Сначала мягкий лимит для автосохранения
+  app.use('/api/graphql', graphqlArticleMutationLimiter); // Затем строгий лимит для публикации
+  app.use('/api/graphql', graphqlDeleteLimiter);
+  app.use('/api/graphql', graphqlBookmarkLimiter);
+  app.use('/api/graphql', graphqlProfileUpdateLimiter);
+  app.use('/api/graphql', graphqlLimiter); // Общий лимитер в конце
   
   // Middleware для логирования cookie в GraphQL запросах (только в development)
   if (process.env.NODE_ENV === 'development') {
@@ -380,7 +665,7 @@ export async function extendExpressApp(
 
         // Сохраняем userId в Express session для последующего создания KeystoneJS session
         (req.session as any).oauthUserId = keystoneUser.id;
-        (req.session as any).oauthEmail = keystoneUser.email;
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не сохраняем email в session (он хеширован и не нужен)
         
         // ВАЖНО: Явно сохраняем session перед редиректом
         // Это гарантирует, что oauthUserId и oauthEmail будут доступны в последующем запросе
@@ -441,6 +726,9 @@ export async function extendExpressApp(
 
       const { email, password, username, name } = validationResult.data;
 
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Хешируем email перед сохранением
+      const hashedEmail = hashEmail(email);
+
       // ИСПОЛЬЗУЕМ PRISMA ТРАНЗАКЦИЮ для защиты от race conditions
       // В SQLite транзакция блокирует базу, предотвращая одновременное создание нескольких админов
       const { PrismaClient } = await import('@prisma/client');
@@ -465,7 +753,7 @@ export async function extendExpressApp(
           // ВАЖНО: Роль 'admin' устанавливается ЯВНО, а не через hook
           const newAdmin = await tx.user.create({
             data: {
-              email,
+              email: hashedEmail, // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем хеш email вместо оригинального
               password: hashedPassword,
               username,
               name,
@@ -481,14 +769,15 @@ export async function extendExpressApp(
           isolationLevel: 'Serializable', // Максимальная изоляция для SQLite (блокирует конкурентные запросы)
         });
 
-        logger.info(`✅ First admin created via initial setup endpoint: ${admin.email}`);
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем оригинальный email для безопасности
+        logger.info(`✅ First admin created via initial setup endpoint: ${admin.id}`);
 
         res.json({
           success: true,
           message: 'First admin created successfully',
           user: {
             id: admin.id,
-            email: admin.email,
+            email: '', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
             username: admin.username,
             name: admin.name,
             role: admin.role,
@@ -546,7 +835,7 @@ export async function extendExpressApp(
       const userId = String(user.id);
       const sessionData = {
         id: userId,
-        email: user.email,
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не включаем email в sessionData (он хеширован и не нужен)
         username: user.username,
         role: user.role || 'user',
       };
@@ -582,13 +871,14 @@ export async function extendExpressApp(
         return res.status(500).json({ error: 'Failed to create session token', details: error.message });
       }
 
-      logger.info(`✅ OAuth session created for user: ${user.email}`);
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email для безопасности
+      logger.info(`✅ OAuth session created for user: ${user.id}`);
 
       res.json({
         success: true,
         user: {
           id: user.id,
-          email: user.email,
+          email: '', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
           username: user.username,
           role: user.role,
         },
@@ -728,7 +1018,7 @@ export async function extendExpressApp(
 
       // Конвертируем файл в base64 для ImgBB API
       const base64Image = file.buffer.toString('base64');
-      
+
       logger.debug('Preparing ImgBB upload:', {
         filename: file.originalname,
         size: file.size,
@@ -754,7 +1044,7 @@ export async function extendExpressApp(
       const timeoutMs = 30000; // 30 секунд таймаут
       
       try {
-        const requestBody = formData.toString();
+          const requestBody = formData.toString();
         logger.debug('ImgBB request body length:', requestBody.length);
         
         const imgbbResponse = await new Promise<{ statusCode: number; data: any }>((resolve, reject) => {
@@ -1344,7 +1634,7 @@ export async function extendExpressApp(
 
   // 13. GraphQL security logging middleware
   // Логируем попытки аутентификации через GraphQL
-  app.use('/api/graphql', (req, res, next) => {
+  app.use('/api/graphql', async (req, res, next) => {
     // Проверяем, является ли это запросом на аутентификацию
     if (req.method === 'POST' && req.body) {
       const body = req.body;
@@ -1355,12 +1645,132 @@ export async function extendExpressApp(
         const ip = req.ip || req.connection?.remoteAddress || 'unknown';
         const userAgent = req.get('user-agent') || 'unknown';
         
-        // Извлекаем email из переменных (если доступен)
+        // Извлекаем email из переменных (KeystoneJS использует $identity, а не $email)
         const variables = body.variables || {};
-        const email = variables.email || 'unknown';
+        const originalEmail = variables.identity || variables.email; // Проверяем оба варианта для совместимости
+        
+        logger.info('[authenticateUserWithPassword] Middleware triggered', {
+          hasEmail: !!originalEmail,
+          emailType: typeof originalEmail,
+          isEmailHash: originalEmail ? isEmailHash(originalEmail) : 'N/A',
+          emailLength: originalEmail ? originalEmail.length : 0,
+          hasIdentity: !!variables.identity,
+          hasEmailVar: !!variables.email,
+        });
+        
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Хешируем email и проверяем оба формата для обратной совместимости
+        if (originalEmail && typeof originalEmail === 'string' && !isEmailHash(originalEmail)) {
+          logger.info('[authenticateUserWithPassword] Email is not hashed, will hash it');
+          try {
+            // Хешируем email новым способом (HMAC-SHA256)
+            const hashedEmail = hashEmail(originalEmail);
+            
+            // Проверяем, существует ли пользователь с новым хешем
+            // Если нет - пробуем старый формат (SHA-256) и обновляем при необходимости
+            const ctx = keystoneContext;
+            if (ctx) {
+              const { createHash } = await import('crypto');
+              const hashEmailOld = (email: string): string => {
+                const normalizedEmail = email.toLowerCase().trim();
+                const hash = createHash('sha256');
+                hash.update(normalizedEmail);
+                return hash.digest('hex');
+              };
+              
+              // Пробуем найти пользователя по новому хешу
+              let user = await ctx.sudo().query.User.findMany({
+                where: { email: { equals: hashedEmail } },
+                take: 1,
+              });
+              
+              logger.info(`[authenticateUserWithPassword] Checking user with new hash (HMAC-SHA256): found=${user.length > 0}`);
+              
+              // Если не найден по новому хешу, пробуем по старому (SHA-256)
+              if (user.length === 0) {
+                const oldHashedEmail = hashEmailOld(originalEmail);
+                logger.info(`[authenticateUserWithPassword] User not found with new hash, trying old hash (SHA-256)`);
+                user = await ctx.sudo().query.User.findMany({
+                  where: { email: { equals: oldHashedEmail } },
+                  take: 1,
+                });
+                
+                logger.info(`[authenticateUserWithPassword] Checking user with old hash (SHA-256): found=${user.length > 0}`);
+                
+                // Если найден по старому хешу - перехешируем email с новым алгоритмом
+                if (user.length > 0) {
+                  logger.info(`[authenticateUserWithPassword] Found user ${user[0].id} with old email hash format, rehashing to HMAC-SHA256`);
+                  await ctx.sudo().query.User.updateOne({
+                    where: { id: user[0].id },
+                    data: { email: hashedEmail },
+                  });
+                  
+                  // Проверяем, что обновление прошло успешно
+                  const updatedUser = await ctx.sudo().query.User.findMany({
+                    where: { id: { equals: user[0].id } },
+                    query: 'id email',
+                    take: 1,
+                  });
+                  
+                  if (updatedUser.length > 0 && updatedUser[0].email === hashedEmail) {
+                    logger.info(`[authenticateUserWithPassword] Rehashed email for user ${user[0].id} from old format to HMAC-SHA256 - verified`);
+                  } else {
+                    logger.error(`[authenticateUserWithPassword] Failed to verify email rehash for user ${user[0].id}`);
+                  }
+                } else {
+                  logger.warn(`[authenticateUserWithPassword] User not found with either hash format - authentication will likely fail`);
+                }
+              } else {
+                logger.info(`[authenticateUserWithPassword] User found with new hash (HMAC-SHA256)`);
+              }
+            } else {
+              logger.warn('[authenticateUserWithPassword] KeystoneJS context not available for email hash migration check');
+            }
+            
+            // Передаем новый хеш в KeystoneJS (всегда используем новый формат)
+            // Обновляем variables.identity, так как KeystoneJS использует $identity
+            variables.identity = hashedEmail;
+            // Также обновляем variables.email на случай, если где-то используется старый формат
+            if (variables.email) {
+              variables.email = hashedEmail;
+            }
+            body.variables = variables;
+            logger.info('[authenticateUserWithPassword] Email hashed and passed to KeystoneJS (HMAC-SHA256)');
+          } catch (error) {
+            logger.error('[authenticateUserWithPassword] Failed to hash email:', error);
+            // В случае ошибки не передаем хешированный email, пусть KeystoneJS обработает оригинальный
+          }
+        } else if (originalEmail && isEmailHash(originalEmail)) {
+          logger.info('[authenticateUserWithPassword] Email already hashed, passing to KeystoneJS as-is');
+        } else {
+          logger.warn('[authenticateUserWithPassword] Email is missing or invalid', {
+            hasEmail: !!originalEmail,
+            emailType: typeof originalEmail,
+            hasIdentity: !!variables.identity,
+            hasEmailVar: !!variables.email,
+          });
+        }
         
         // Логируем попытку входа
-        logLoginAttempt(ip, email, userAgent);
+        logLoginAttempt(ip, 'hidden', userAgent);
+      }
+
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Хешируем email для операций сброса пароля
+      if (query.includes('sendUserPasswordResetLink') || 
+          query.includes('redeemUserPasswordResetToken') || 
+          query.includes('validateUserPasswordResetToken')) {
+        const variables = body.variables || {};
+        if (variables.email && typeof variables.email === 'string' && !isEmailHash(variables.email)) {
+          try {
+            variables.email = hashEmail(variables.email);
+            body.variables = variables;
+            logger.debug('Email hashed for password reset operation', {
+              operation: query.match(/(sendUserPasswordResetLink|redeemUserPasswordResetToken|validateUserPasswordResetToken)/)?.[1] || 'unknown',
+              // НЕ логируем оригинальный email для безопасности
+            });
+          } catch (error) {
+            logger.error('Failed to hash email for password reset operation:', error);
+          }
+        }
       }
 
       // Логируем createArticle mutation для отладки
@@ -1402,7 +1812,7 @@ export async function extendExpressApp(
   });
 
   // 14. GraphQL error logging middleware
-  // Логируем ошибки GraphQL ответов
+  // Логируем ошибки GraphQL ответов и результаты аутентификации
   app.use('/api/graphql', (req, res, next) => {
     const originalJson = res.json;
     res.json = function (body: any) {
@@ -1413,6 +1823,27 @@ export async function extendExpressApp(
           method: req.method,
         });
       }
+      
+      // Логируем результат аутентификации
+      if (req.body && req.body.query && req.body.query.includes('authenticateUserWithPassword')) {
+        if (body && body.data && body.data.authenticate) {
+          const authResult = body.data.authenticate;
+          if (authResult.__typename === 'UserAuthenticationWithPasswordSuccess') {
+            logger.info('[authenticateUserWithPassword] Authentication successful', {
+              userId: authResult.item?.id,
+            });
+          } else if (authResult.__typename === 'UserAuthenticationWithPasswordFailure') {
+            logger.warn('[authenticateUserWithPassword] Authentication failed', {
+              message: authResult.message,
+            });
+          }
+        } else if (body && body.errors) {
+          logger.error('[authenticateUserWithPassword] Authentication error in response', {
+            errors: body.errors,
+          });
+        }
+      }
+      
       return originalJson.call(this, body);
     };
     next();

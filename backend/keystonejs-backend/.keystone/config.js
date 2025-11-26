@@ -41,6 +41,11 @@ var import_core = require("@keystone-6/core");
 var import_fields = require("@keystone-6/core/fields");
 
 // src/access-control.ts
+function isAdmin(session2) {
+  if (!session2?.itemId) return false;
+  const sessionData = session2.data;
+  return sessionData?.role === "admin";
+}
 function isReactionOwner({ session: session2, item }) {
   if (!session2?.itemId) return false;
   if (!item) return false;
@@ -57,21 +62,17 @@ var accessControl = {
       },
       update: ({ session: session2, item }) => {
         if (!session2?.itemId) return false;
-        const sessionData = session2.data;
-        if (sessionData?.role === "admin") return true;
+        if (isAdmin(session2)) return true;
         return String(item.id) === String(session2.itemId);
       },
-      delete: ({ session: session2, item }) => {
-        if (!session2?.itemId) return false;
-        const sessionData = session2.data;
-        return sessionData?.role === "admin";
+      delete: ({ session: session2 }) => {
+        return isAdmin(session2);
       }
     },
     filter: {
       query: ({ session: session2 }) => {
         if (!session2?.itemId) return true;
-        const sessionData = session2.data;
-        if (sessionData?.role === "admin") return true;
+        if (isAdmin(session2)) return true;
         return true;
       }
     }
@@ -97,6 +98,7 @@ var accessControl = {
             publishedAt: { not: null }
           };
         }
+        if (isAdmin(session2)) return true;
         return {
           OR: [
             { publishedAt: { not: null } },
@@ -106,12 +108,14 @@ var accessControl = {
       },
       update: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           author: { id: { equals: session2.itemId } }
         };
       },
       delete: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           author: { id: { equals: session2.itemId } }
         };
@@ -137,12 +141,14 @@ var accessControl = {
       // Все видят все комментарии
       update: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           author: { id: { equals: session2.itemId } }
         };
       },
       delete: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           author: { id: { equals: session2.itemId } }
         };
@@ -157,9 +163,11 @@ var accessControl = {
         return !!session2?.itemId;
       },
       update: ({ session: session2, item }) => {
+        if (isAdmin(session2)) return true;
         return isReactionOwner({ session: session2, item });
       },
       delete: ({ session: session2, item }) => {
+        if (isAdmin(session2)) return true;
         return isReactionOwner({ session: session2, item });
       }
     },
@@ -176,9 +184,11 @@ var accessControl = {
         return !!session2?.itemId;
       },
       update: ({ session: session2, item }) => {
+        if (isAdmin(session2)) return true;
         return isReactionOwner({ session: session2, item });
       },
       delete: ({ session: session2, item }) => {
+        if (isAdmin(session2)) return true;
         return isReactionOwner({ session: session2, item });
       }
     },
@@ -210,6 +220,7 @@ var accessControl = {
       },
       delete: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           user: { id: { equals: session2.itemId } }
         };
@@ -227,6 +238,7 @@ var accessControl = {
       // Подписки нельзя обновлять
       delete: ({ session: session2, item }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         if (!item) return false;
         return String(item.follower?.id || item.follower) === String(session2.itemId);
       }
@@ -253,18 +265,21 @@ var accessControl = {
     filter: {
       query: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           user: { id: { equals: session2.itemId } }
         };
       },
       update: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           user: { id: { equals: session2.itemId } }
         };
       },
       delete: ({ session: session2 }) => {
         if (!session2?.itemId) return false;
+        if (isAdmin(session2)) return true;
         return {
           user: { id: { equals: session2.itemId } }
         };
@@ -272,6 +287,108 @@ var accessControl = {
     }
   }
 };
+
+// src/lib/logger.ts
+var import_winston = __toESM(require("winston"));
+var import_winston_daily_rotate_file = __toESM(require("winston-daily-rotate-file"));
+var import_fs = require("fs");
+var logFormat = import_winston.default.format.combine(
+  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  import_winston.default.format.errors({ stack: true }),
+  import_winston.default.format.splat(),
+  import_winston.default.format.json()
+);
+var consoleFormat = import_winston.default.format.combine(
+  import_winston.default.format.colorize(),
+  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  import_winston.default.format.printf(({ timestamp: timestamp9, level, message, ...meta }) => {
+    let msg = `${timestamp9} [${level}]: ${message}`;
+    if (Object.keys(meta).length > 0) {
+      msg += ` ${JSON.stringify(meta)}`;
+    }
+    return msg;
+  })
+);
+var fileRotateTransport = new import_winston_daily_rotate_file.default({
+  filename: "logs/application-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
+  maxSize: "20m",
+  maxFiles: "14d",
+  format: logFormat
+});
+var errorFileRotateTransport = new import_winston_daily_rotate_file.default({
+  filename: "logs/error-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
+  level: "error",
+  maxSize: "20m",
+  maxFiles: "30d",
+  format: logFormat
+});
+var logger = import_winston.default.createLogger({
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
+  format: logFormat,
+  defaultMeta: { service: "keystonejs-backend" },
+  transports: [
+    fileRotateTransport,
+    errorFileRotateTransport,
+    new import_winston.default.transports.Console({
+      format: consoleFormat
+    })
+  ],
+  exceptionHandlers: [
+    new import_winston.default.transports.File({ filename: "logs/exceptions.log" })
+  ],
+  rejectionHandlers: [
+    new import_winston.default.transports.File({ filename: "logs/rejections.log" })
+  ]
+});
+if (!(0, import_fs.existsSync)("logs")) {
+  (0, import_fs.mkdirSync)("logs", { recursive: true });
+}
+var logger_default = logger;
+
+// src/lib/email-hash.ts
+var import_crypto = require("crypto");
+var getSecretKey = () => {
+  const secret = process.env.EMAIL_HMAC_SECRET;
+  if (!secret || secret.length < 32) {
+    const errorMsg = "EMAIL_HMAC_SECRET must be set and at least 32 characters long";
+    logger_default.error(`hashEmail: ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
+  return secret;
+};
+function hashEmail(email) {
+  if (!email || typeof email !== "string") {
+    logger_default.warn("hashEmail: Invalid email provided");
+    throw new Error("Email must be a non-empty string");
+  }
+  const normalizedEmail = email.toLowerCase().trim();
+  if (!normalizedEmail) {
+    logger_default.warn("hashEmail: Empty email after normalization");
+    throw new Error("Email cannot be empty after normalization");
+  }
+  if (!normalizedEmail.includes("@")) {
+    logger_default.warn("hashEmail: Invalid email format (no @ symbol)");
+    throw new Error("Invalid email format");
+  }
+  const secretKey = getSecretKey();
+  const hmac = (0, import_crypto.createHmac)("sha256", secretKey);
+  hmac.update(normalizedEmail);
+  const hashedEmail = hmac.digest("hex");
+  logger_default.debug("Email hashed successfully with HMAC-SHA256", {
+    originalLength: email.length,
+    hashedLength: hashedEmail.length
+    // НЕ логируем оригинальный email для безопасности
+  });
+  return hashedEmail;
+}
+function isEmailHash(value) {
+  if (!value || typeof value !== "string") {
+    return false;
+  }
+  return value.length === 64 && /^[a-f0-9]{64}$/i.test(value);
+}
 
 // schemas/User.ts
 var User = (0, import_core.list)({
@@ -281,6 +398,20 @@ var User = (0, import_core.list)({
     // Роль 'admin' может быть назначена ТОЛЬКО через защищенный endpoint /api/setup/initial
     // или вручную существующим администратором через Admin UI
     resolveInput: async ({ resolvedData, operation, context }) => {
+      if (resolvedData.email && typeof resolvedData.email === "string") {
+        if (!isEmailHash(resolvedData.email)) {
+          try {
+            resolvedData.email = hashEmail(resolvedData.email);
+            logger_default.debug("Email automatically hashed in User schema hook", {
+              operation
+              // НЕ логируем оригинальный email для безопасности
+            });
+          } catch (error) {
+            logger_default.error("Failed to hash email in User schema hook:", error);
+            throw new Error("Invalid email format");
+          }
+        }
+      }
       if (operation === "create") {
         if (!resolvedData.role) {
           resolvedData.role = "user";
@@ -384,65 +515,6 @@ var import_core2 = require("@keystone-6/core");
 var import_fields2 = require("@keystone-6/core/fields");
 var import_core3 = require("@keystone-6/core");
 var import_fields_document = require("@keystone-6/fields-document");
-
-// src/lib/logger.ts
-var import_winston = __toESM(require("winston"));
-var import_winston_daily_rotate_file = __toESM(require("winston-daily-rotate-file"));
-var import_fs = require("fs");
-var logFormat = import_winston.default.format.combine(
-  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  import_winston.default.format.errors({ stack: true }),
-  import_winston.default.format.splat(),
-  import_winston.default.format.json()
-);
-var consoleFormat = import_winston.default.format.combine(
-  import_winston.default.format.colorize(),
-  import_winston.default.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  import_winston.default.format.printf(({ timestamp: timestamp9, level, message, ...meta }) => {
-    let msg = `${timestamp9} [${level}]: ${message}`;
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
-    }
-    return msg;
-  })
-);
-var fileRotateTransport = new import_winston_daily_rotate_file.default({
-  filename: "logs/application-%DATE%.log",
-  datePattern: "YYYY-MM-DD",
-  maxSize: "20m",
-  maxFiles: "14d",
-  format: logFormat
-});
-var errorFileRotateTransport = new import_winston_daily_rotate_file.default({
-  filename: "logs/error-%DATE%.log",
-  datePattern: "YYYY-MM-DD",
-  level: "error",
-  maxSize: "20m",
-  maxFiles: "30d",
-  format: logFormat
-});
-var logger = import_winston.default.createLogger({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
-  format: logFormat,
-  defaultMeta: { service: "keystonejs-backend" },
-  transports: [
-    fileRotateTransport,
-    errorFileRotateTransport,
-    new import_winston.default.transports.Console({
-      format: consoleFormat
-    })
-  ],
-  exceptionHandlers: [
-    new import_winston.default.transports.File({ filename: "logs/exceptions.log" })
-  ],
-  rejectionHandlers: [
-    new import_winston.default.transports.File({ filename: "logs/rejections.log" })
-  ]
-});
-if (!(0, import_fs.existsSync)("logs")) {
-  (0, import_fs.mkdirSync)("logs", { recursive: true });
-}
-var logger_default = logger;
 
 // src/lib/notifications.ts
 async function hasDuplicateNotification(context, data, timeWindowMs = 60 * 60 * 1e3) {
@@ -1208,16 +1280,17 @@ var { withAuth } = (0, import_auth.createAuth)({
   listKey: "User",
   identityField: "email",
   secretField: "password",
-  sessionData: "id email username role",
+  sessionData: "id username role",
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из sessionData (он хеширован и не нужен в сессии)
   passwordResetLink: {
     sendToken: async ({ itemId, identity, token, context }) => {
-      logger_default.info(`Password reset token for ${identity}: ${token}`);
+      logger_default.info(`Password reset token requested (OAuth2 only, not implemented)`);
     },
     tokensValidForMins: 60
   },
   magicAuthLink: {
     sendToken: async ({ itemId, identity, token, context }) => {
-      logger_default.info(`Magic auth token for ${identity}: ${token}`);
+      logger_default.info(`Magic auth token requested (OAuth2 only, not implemented)`);
     },
     tokensValidForMins: 60
   }
@@ -1233,7 +1306,7 @@ var import_express_rate_limit = __toESM(require("express-rate-limit"));
 var import_express_session = __toESM(require("express-session"));
 var import_connect_redis = __toESM(require("connect-redis"));
 var import_morgan = __toESM(require("morgan"));
-var import_passport2 = __toESM(require("passport"));
+var import_passport = __toESM(require("passport"));
 var import_multer = __toESM(require("multer"));
 
 // src/lib/redis.ts
@@ -1297,21 +1370,47 @@ async function getRedisClientWithFallback() {
 }
 
 // src/auth/oauth-handler.ts
+var import_crypto2 = require("crypto");
+function hashEmailOld(email) {
+  const normalizedEmail = email.toLowerCase().trim();
+  const hash = (0, import_crypto2.createHash)("sha256");
+  hash.update(normalizedEmail);
+  return hash.digest("hex");
+}
 async function findOrCreateGoogleUser(context, profile) {
   try {
     const email = profile.email;
     if (!email) {
-      logger_default.error("Google OAuth: No email in profile", { profile });
+      logger_default.error("Google OAuth: No email in profile", {
+        profileId: profile.id,
+        hasEmails: !!profile.emails && profile.emails.length > 0
+      });
       return null;
     }
-    const existingUser = await context.sudo().query.User.findMany({
-      where: { email: { equals: email } },
+    const hashedEmail = hashEmail(email);
+    let existingUser = await context.sudo().query.User.findMany({
+      where: { email: { equals: hashedEmail } },
       query: "id email username name avatar provider confirmed",
       take: 1
     });
+    if (existingUser.length === 0) {
+      const oldHashedEmail = hashEmailOld(email);
+      existingUser = await context.sudo().query.User.findMany({
+        where: { email: { equals: oldHashedEmail } },
+        query: "id email username name avatar provider confirmed",
+        take: 1
+      });
+      if (existingUser.length > 0) {
+        logger_default.info(`Found user with old email hash format, will rehash to HMAC-SHA256: ${existingUser[0].id}`);
+      }
+    }
     if (existingUser.length > 0) {
       const user = existingUser[0];
       const updateData = {};
+      if (user.email !== hashedEmail) {
+        updateData.email = hashedEmail;
+        logger_default.info(`Rehashing email for user ${user.id} from old format to HMAC-SHA256`);
+      }
       if (profile.displayName && user.name !== profile.displayName) {
         updateData.name = profile.displayName;
       }
@@ -1343,7 +1442,8 @@ async function findOrCreateGoogleUser(context, profile) {
       }
       return {
         id: String(user.id),
-        email: user.email,
+        email: "",
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
         username: user.username,
         name: user.name || profile.displayName,
         avatar: user.avatar || profile.avatar
@@ -1368,7 +1468,8 @@ async function findOrCreateGoogleUser(context, profile) {
     }
     const newUser = await context.sudo().query.User.createOne({
       data: {
-        email,
+        email: hashedEmail,
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем хеш email вместо оригинального
         username,
         name: profile.displayName,
         avatar: profile.avatar || void 0,
@@ -1384,7 +1485,8 @@ async function findOrCreateGoogleUser(context, profile) {
     logger_default.info(`Created new Google OAuth user: ${newUser.id}`);
     return {
       id: String(newUser.id),
-      email: newUser.email,
+      email: "",
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
       username: newUser.username,
       name: newUser.name || profile.displayName,
       avatar: newUser.avatar || profile.avatar
@@ -1394,82 +1496,6 @@ async function findOrCreateGoogleUser(context, profile) {
     return null;
   }
 }
-
-// src/auth/passport.ts
-var import_passport = __toESM(require("passport"));
-var import_passport_google_oauth20 = require("passport-google-oauth20");
-var import_passport_jwt = require("passport-jwt");
-import_passport.default.use(
-  new import_passport_google_oauth20.Strategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      // ВАЖНО: callbackURL должен указывать на BACKEND, а не frontend!
-      // Google будет редиректить на этот URL после авторизации
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:1337/api/connect/google/callback"
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-        if (!email) {
-          logger_default.error("Google OAuth: No email in profile", {
-            profileId: profile.id,
-            emails: profile.emails
-          });
-          return done(new Error("Email is required for OAuth authentication"), null);
-        }
-        logger_default.info(`Google OAuth callback: ${profile.id}, ${email}`);
-        const userProfile = {
-          id: profile.id,
-          email,
-          // Теперь гарантированно есть
-          displayName: profile.displayName,
-          avatar: profile.photos?.[0]?.value,
-          provider: "google"
-        };
-        return done(null, userProfile);
-      } catch (error) {
-        logger_default.error("Google OAuth error:", error);
-        return done(error, null);
-      }
-    }
-  )
-);
-import_passport.default.use(
-  new import_passport_jwt.Strategy(
-    {
-      jwtFromRequest: import_passport_jwt.ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET || "change-me-in-production"
-    },
-    async (payload, done) => {
-      try {
-        logger_default.info(`JWT authentication: ${payload.id}`);
-        const user = {
-          id: payload.id,
-          email: payload.email,
-          username: payload.username
-        };
-        return done(null, user);
-      } catch (error) {
-        logger_default.error("JWT authentication error:", error);
-        return done(error, null);
-      }
-    }
-  )
-);
-import_passport.default.serializeUser((user, done) => {
-  done(null, user.id);
-});
-import_passport.default.deserializeUser(async (id, done) => {
-  try {
-    logger_default.info(`Deserialize user: ${id}`);
-    done(null, { id });
-  } catch (error) {
-    logger_default.error("Deserialize user error:", error);
-    done(error, null);
-  }
-});
-logger_default.info("\u2705 Passport.js configured");
 
 // src/lib/security-logger.ts
 function logSecurityEvent(event) {
@@ -1493,7 +1519,8 @@ function logLoginAttempt(ip, email, userAgent) {
   logSecurityEvent({
     type: "login_attempt",
     ip,
-    email,
+    email: "hidden",
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     userAgent
   });
 }
@@ -1511,7 +1538,8 @@ function logAdminAccessGranted(ip, userId, email, userAgent) {
     type: "admin_access_granted",
     ip,
     userId,
-    email,
+    email: "hidden",
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email (даже хешированный) для безопасности
     userAgent
   });
 }
@@ -1619,6 +1647,48 @@ async function extendExpressApp(app, context) {
     })
   );
   app.use((0, import_compression.default)());
+  const commentLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 25 * 1e3,
+    // 25 секунд
+    max: 1,
+    // максимум 1 запрос
+    message: "Too many comment requests, please try again later.",
+    skip: (req) => {
+      return !req.path.includes("/comments");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, req.path, userAgent);
+      res.status(429).json({
+        error: "Too many comment requests",
+        message: "Too many comment requests. Please wait 25 seconds before trying again.",
+        waitTime: 25
+      });
+    }
+  });
+  app.use("/api/", commentLimiter);
+  const uploadLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 60 * 1e3,
+    // 1 минута
+    max: 5,
+    // максимум 5 запросов
+    message: "Too many upload requests, please try again later.",
+    skip: (req) => {
+      return !req.path.includes("/upload");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, req.path, userAgent);
+      res.status(429).json({
+        error: "Too many upload requests",
+        message: "Too many upload requests. Please wait a minute before trying again.",
+        waitTime: 60
+      });
+    }
+  });
+  app.use("/api/", uploadLimiter);
   const limiter = (0, import_express_rate_limit.default)({
     windowMs: 15 * 60 * 1e3,
     // 15 минут
@@ -1628,7 +1698,7 @@ async function extendExpressApp(app, context) {
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => {
-      return req.path === "/api/graphql";
+      return req.path === "/api/graphql" || req.path.includes("/comments") || req.path.includes("/upload");
     },
     handler: (req, res) => {
       const ip = req.ip || req.connection?.remoteAddress || "unknown";
@@ -1662,10 +1732,10 @@ async function extendExpressApp(app, context) {
   app.use("/api/auth/", oauthLimiter);
   app.use("/api/connect/", oauthLimiter);
   const graphqlLoginLimiter = (0, import_express_rate_limit.default)({
-    windowMs: 15 * 60 * 1e3,
-    // 15 минут
-    max: 10,
-    // максимум 10 попыток входа с одного IP
+    windowMs: 5 * 60 * 1e3,
+    // 5 минут (синхронизировано с клиентом)
+    max: 5,
+    // максимум 5 попыток входа с одного IP (синхронизировано с клиентом)
     message: "Too many login attempts, please try again later.",
     skip: (req) => {
       if (req.method !== "POST" || !req.body) return true;
@@ -1678,7 +1748,9 @@ async function extendExpressApp(app, context) {
       logRateLimitExceeded(ip, "/api/graphql (login)", userAgent);
       res.status(429).json({
         error: "Too many login attempts",
-        message: "Too many login attempts from this IP, please try again later."
+        message: "Too many login attempts from this IP, please try again later.",
+        waitTime: 300
+        // 5 минут в секундах
       });
     }
   });
@@ -1691,7 +1763,21 @@ async function extendExpressApp(app, context) {
     skip: (req) => {
       if (req.method !== "POST" || !req.body) return false;
       const query = req.body.query || "";
-      return query.includes("authenticateUserWithPassword");
+      if (query.includes("authenticateUserWithPassword")) return true;
+      const adminQueryIndicators = [
+        "adminMeta",
+        "StaticAdminMeta",
+        "ItemPage",
+        "RelationshipSelect",
+        "ListPage",
+        "keystone {",
+        "__typename"
+        // Admin UI часто использует __typename
+      ];
+      const isAdminQuery = adminQueryIndicators.some(
+        (indicator) => query.includes(indicator)
+      );
+      return isAdminQuery;
     },
     handler: (req, res) => {
       const ip = req.ip || req.connection?.remoteAddress || "unknown";
@@ -1703,7 +1789,216 @@ async function extendExpressApp(app, context) {
       });
     }
   });
+  const graphqlCommentLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 25 * 1e3,
+    // 25 секунд
+    max: 1,
+    // максимум 1 запрос
+    message: "Too many comment requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      const commentMutations = ["createComment", "updateComment", "deleteComment"];
+      return !commentMutations.some((mutation) => query.includes(mutation));
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (comment)", userAgent);
+      res.status(429).json({
+        error: "Too many comment requests",
+        message: "Too many comment requests. Please wait 25 seconds before trying again.",
+        waitTime: 25
+      });
+    }
+  });
+  const graphqlReactionLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 5 * 1e3,
+    // 5 секунд
+    max: 3,
+    // максимум 3 реакции
+    message: "Too many reaction requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("reactToArticle") && !query.includes("reactToComment");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (reaction)", userAgent);
+      res.status(429).json({
+        error: "Too many reaction requests",
+        message: "Too many reaction requests. Please wait 5 seconds before trying again.",
+        waitTime: 5
+      });
+    }
+  });
+  const graphqlFollowLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 5 * 1e3,
+    // 5 секунд
+    max: 2,
+    // максимум 2 подписки/отписки
+    message: "Too many follow requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("createFollow") && !query.includes("deleteFollow");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (follow)", userAgent);
+      res.status(429).json({
+        error: "Too many follow requests",
+        message: "Too many follow requests. Please wait 5 seconds before trying again.",
+        waitTime: 5
+      });
+    }
+  });
+  const graphqlDraftAutoSaveLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 60 * 1e3,
+    // 1 минута
+    max: 10,
+    // максимум 10 автосохранений в минуту
+    message: "Too many auto-save requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("updateDraft") || query.includes("createArticle");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (draft auto-save)", userAgent);
+      res.status(429).json({
+        error: "Too many auto-save requests",
+        message: "Too many auto-save requests. Please wait a moment before trying again.",
+        waitTime: 60
+      });
+    }
+  });
+  const graphqlArticleMutationLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 60 * 1e3,
+    // 1 минута
+    max: 1,
+    // максимум 1 мутация
+    message: "Too many article mutation requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      const articleMutations = ["createArticle", "updateArticle"];
+      return !articleMutations.some((mutation) => query.includes(mutation));
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (article mutation)", userAgent);
+      res.status(429).json({
+        error: "Too many article mutation requests",
+        message: "Too many article mutation requests. Please wait 60 seconds before trying again.",
+        waitTime: 60
+      });
+    }
+  });
+  const graphqlDeleteLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 60 * 1e3,
+    // 1 минута
+    max: 5,
+    // максимум 5 удалений
+    message: "Too many delete requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("deleteArticle") && !query.includes("deleteDraft");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (delete)", userAgent);
+      res.status(429).json({
+        error: "Too many delete requests",
+        message: "Too many delete requests. Please wait a minute before trying again.",
+        waitTime: 60
+      });
+    }
+  });
+  const graphqlBookmarkLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 5 * 1e3,
+    // 5 секунд
+    max: 1,
+    // максимум 1 операция
+    message: "Too many bookmark requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("createBookmark") && !query.includes("deleteBookmark");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (bookmark)", userAgent);
+      res.status(429).json({
+        error: "Too many bookmark requests",
+        message: "Too many bookmark requests. Please wait 5 seconds before trying again.",
+        waitTime: 5
+      });
+    }
+  });
+  const graphqlProfileUpdateLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 10 * 1e3,
+    // 10 секунд
+    max: 1,
+    // максимум 1 обновление профиля
+    message: "Too many profile update requests, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("updateProfile");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (profile update)", userAgent);
+      res.status(429).json({
+        error: "Too many profile update requests",
+        message: "Too many profile update requests. Please wait 10 seconds before trying again.",
+        waitTime: 10
+      });
+    }
+  });
+  const graphqlSignUpLimiter = (0, import_express_rate_limit.default)({
+    windowMs: 5 * 60 * 1e3,
+    // 5 минут
+    max: 3,
+    // максимум 3 попытки регистрации
+    message: "Too many sign up attempts, please try again later.",
+    skip: (req) => {
+      if (req.method !== "POST" || !req.body) return true;
+      const query = req.body.query || "";
+      return !query.includes("createUser") || query.includes("authenticateUserWithPassword");
+    },
+    handler: (req, res) => {
+      const ip = req.ip || req.connection?.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+      logRateLimitExceeded(ip, "/api/graphql (sign up)", userAgent);
+      res.status(429).json({
+        error: "Too many sign up attempts",
+        message: "Too many sign up attempts. Please wait 5 minutes before trying again.",
+        waitTime: 300
+      });
+    }
+  });
   app.use("/api/graphql", graphqlLoginLimiter);
+  app.use("/api/graphql", graphqlSignUpLimiter);
+  app.use("/api/graphql", graphqlCommentLimiter);
+  app.use("/api/graphql", graphqlReactionLimiter);
+  app.use("/api/graphql", graphqlFollowLimiter);
+  app.use("/api/graphql", graphqlDraftAutoSaveLimiter);
+  app.use("/api/graphql", graphqlArticleMutationLimiter);
+  app.use("/api/graphql", graphqlDeleteLimiter);
+  app.use("/api/graphql", graphqlBookmarkLimiter);
+  app.use("/api/graphql", graphqlProfileUpdateLimiter);
   app.use("/api/graphql", graphqlLimiter);
   if (process.env.NODE_ENV === "development") {
     app.use("/api/graphql", (req, res, next) => {
@@ -1744,8 +2039,8 @@ async function extendExpressApp(app, context) {
       }
     })
   );
-  app.use(import_passport2.default.initialize());
-  app.use(import_passport2.default.session());
+  app.use(import_passport.default.initialize());
+  app.use(import_passport.default.session());
   app.get("/api/connect/google", async (req, res, next) => {
     try {
       const crypto = require("crypto");
@@ -1762,7 +2057,7 @@ async function extendExpressApp(app, context) {
           }
         });
       });
-      import_passport2.default.authenticate("google", {
+      import_passport.default.authenticate("google", {
         scope: ["profile", "email"],
         state
         // Google вернет этот state в callback
@@ -1800,7 +2095,7 @@ async function extendExpressApp(app, context) {
       delete req.session.oauthState;
       next();
     },
-    import_passport2.default.authenticate("google", { failureRedirect: "/login?error=oauth_failed" }),
+    import_passport.default.authenticate("google", { failureRedirect: "/login?error=oauth_failed" }),
     async (req, res) => {
       try {
         const ctx = context || keystoneContext;
@@ -1822,7 +2117,6 @@ async function extendExpressApp(app, context) {
           return res.redirect(`${frontendUrl2}/auth/callback?error=user_creation_failed`);
         }
         req.session.oauthUserId = keystoneUser.id;
-        req.session.oauthEmail = keystoneUser.email;
         await new Promise((resolve, reject) => {
           req.session.save((err) => {
             if (err) {
@@ -1868,6 +2162,7 @@ async function extendExpressApp(app, context) {
         });
       }
       const { email, password: password2, username, name } = validationResult.data;
+      const hashedEmail = hashEmail(email);
       const { PrismaClient } = await import("@prisma/client");
       const prisma = new PrismaClient();
       try {
@@ -1880,7 +2175,8 @@ async function extendExpressApp(app, context) {
           const hashedPassword = await bcrypt.hash(password2, 10);
           const newAdmin = await tx.user.create({
             data: {
-              email,
+              email: hashedEmail,
+              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем хеш email вместо оригинального
               password: hashedPassword,
               username,
               name,
@@ -1896,13 +2192,14 @@ async function extendExpressApp(app, context) {
           isolationLevel: "Serializable"
           // Максимальная изоляция для SQLite (блокирует конкурентные запросы)
         });
-        logger_default.info(`\u2705 First admin created via initial setup endpoint: ${admin.email}`);
+        logger_default.info(`\u2705 First admin created via initial setup endpoint: ${admin.id}`);
         res.json({
           success: true,
           message: "First admin created successfully",
           user: {
             id: admin.id,
-            email: admin.email,
+            email: "",
+            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
             username: admin.username,
             name: admin.name,
             role: admin.role
@@ -1945,7 +2242,7 @@ async function extendExpressApp(app, context) {
       const userId = String(user.id);
       const sessionData = {
         id: userId,
-        email: user.email,
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не включаем email в sessionData (он хеширован и не нужен)
         username: user.username,
         role: user.role || "user"
       };
@@ -1973,12 +2270,13 @@ async function extendExpressApp(app, context) {
         logger_default.error("Error stack:", error.stack);
         return res.status(500).json({ error: "Failed to create session token", details: error.message });
       }
-      logger_default.info(`\u2705 OAuth session created for user: ${user.email}`);
+      logger_default.info(`\u2705 OAuth session created for user: ${user.id}`);
       res.json({
         success: true,
         user: {
           id: user.id,
-          email: user.email,
+          email: "",
+          // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не возвращаем email (даже хешированный) для безопасности
           username: user.username,
           role: user.role
         }
@@ -2549,7 +2847,7 @@ async function extendExpressApp(app, context) {
       });
     }
   });
-  app.use("/api/graphql", (req, res, next) => {
+  app.use("/api/graphql", async (req, res, next) => {
     if (req.method === "POST" && req.body) {
       const body = req.body;
       const query = body.query || "";
@@ -2557,8 +2855,101 @@ async function extendExpressApp(app, context) {
         const ip = req.ip || req.connection?.remoteAddress || "unknown";
         const userAgent = req.get("user-agent") || "unknown";
         const variables = body.variables || {};
-        const email = variables.email || "unknown";
-        logLoginAttempt(ip, email, userAgent);
+        const originalEmail = variables.identity || variables.email;
+        logger_default.info("[authenticateUserWithPassword] Middleware triggered", {
+          hasEmail: !!originalEmail,
+          emailType: typeof originalEmail,
+          isEmailHash: originalEmail ? isEmailHash(originalEmail) : "N/A",
+          emailLength: originalEmail ? originalEmail.length : 0,
+          hasIdentity: !!variables.identity,
+          hasEmailVar: !!variables.email
+        });
+        if (originalEmail && typeof originalEmail === "string" && !isEmailHash(originalEmail)) {
+          logger_default.info("[authenticateUserWithPassword] Email is not hashed, will hash it");
+          try {
+            const hashedEmail = hashEmail(originalEmail);
+            const ctx = keystoneContext;
+            if (ctx) {
+              const { createHash: createHash2 } = await import("crypto");
+              const hashEmailOld2 = (email) => {
+                const normalizedEmail = email.toLowerCase().trim();
+                const hash = createHash2("sha256");
+                hash.update(normalizedEmail);
+                return hash.digest("hex");
+              };
+              let user = await ctx.sudo().query.User.findMany({
+                where: { email: { equals: hashedEmail } },
+                take: 1
+              });
+              logger_default.info(`[authenticateUserWithPassword] Checking user with new hash (HMAC-SHA256): found=${user.length > 0}`);
+              if (user.length === 0) {
+                const oldHashedEmail = hashEmailOld2(originalEmail);
+                logger_default.info(`[authenticateUserWithPassword] User not found with new hash, trying old hash (SHA-256)`);
+                user = await ctx.sudo().query.User.findMany({
+                  where: { email: { equals: oldHashedEmail } },
+                  take: 1
+                });
+                logger_default.info(`[authenticateUserWithPassword] Checking user with old hash (SHA-256): found=${user.length > 0}`);
+                if (user.length > 0) {
+                  logger_default.info(`[authenticateUserWithPassword] Found user ${user[0].id} with old email hash format, rehashing to HMAC-SHA256`);
+                  await ctx.sudo().query.User.updateOne({
+                    where: { id: user[0].id },
+                    data: { email: hashedEmail }
+                  });
+                  const updatedUser = await ctx.sudo().query.User.findMany({
+                    where: { id: { equals: user[0].id } },
+                    query: "id email",
+                    take: 1
+                  });
+                  if (updatedUser.length > 0 && updatedUser[0].email === hashedEmail) {
+                    logger_default.info(`[authenticateUserWithPassword] Rehashed email for user ${user[0].id} from old format to HMAC-SHA256 - verified`);
+                  } else {
+                    logger_default.error(`[authenticateUserWithPassword] Failed to verify email rehash for user ${user[0].id}`);
+                  }
+                } else {
+                  logger_default.warn(`[authenticateUserWithPassword] User not found with either hash format - authentication will likely fail`);
+                }
+              } else {
+                logger_default.info(`[authenticateUserWithPassword] User found with new hash (HMAC-SHA256)`);
+              }
+            } else {
+              logger_default.warn("[authenticateUserWithPassword] KeystoneJS context not available for email hash migration check");
+            }
+            variables.identity = hashedEmail;
+            if (variables.email) {
+              variables.email = hashedEmail;
+            }
+            body.variables = variables;
+            logger_default.info("[authenticateUserWithPassword] Email hashed and passed to KeystoneJS (HMAC-SHA256)");
+          } catch (error) {
+            logger_default.error("[authenticateUserWithPassword] Failed to hash email:", error);
+          }
+        } else if (originalEmail && isEmailHash(originalEmail)) {
+          logger_default.info("[authenticateUserWithPassword] Email already hashed, passing to KeystoneJS as-is");
+        } else {
+          logger_default.warn("[authenticateUserWithPassword] Email is missing or invalid", {
+            hasEmail: !!originalEmail,
+            emailType: typeof originalEmail,
+            hasIdentity: !!variables.identity,
+            hasEmailVar: !!variables.email
+          });
+        }
+        logLoginAttempt(ip, "hidden", userAgent);
+      }
+      if (query.includes("sendUserPasswordResetLink") || query.includes("redeemUserPasswordResetToken") || query.includes("validateUserPasswordResetToken")) {
+        const variables = body.variables || {};
+        if (variables.email && typeof variables.email === "string" && !isEmailHash(variables.email)) {
+          try {
+            variables.email = hashEmail(variables.email);
+            body.variables = variables;
+            logger_default.debug("Email hashed for password reset operation", {
+              operation: query.match(/(sendUserPasswordResetLink|redeemUserPasswordResetToken|validateUserPasswordResetToken)/)?.[1] || "unknown"
+              // НЕ логируем оригинальный email для безопасности
+            });
+          } catch (error) {
+            logger_default.error("Failed to hash email for password reset operation:", error);
+          }
+        }
       }
       if (query.includes("createArticle") || query.includes("CreateArticle")) {
         const variables = body.variables || {};
@@ -2599,6 +2990,24 @@ async function extendExpressApp(app, context) {
           path: req.path,
           method: req.method
         });
+      }
+      if (req.body && req.body.query && req.body.query.includes("authenticateUserWithPassword")) {
+        if (body && body.data && body.data.authenticate) {
+          const authResult = body.data.authenticate;
+          if (authResult.__typename === "UserAuthenticationWithPasswordSuccess") {
+            logger_default.info("[authenticateUserWithPassword] Authentication successful", {
+              userId: authResult.item?.id
+            });
+          } else if (authResult.__typename === "UserAuthenticationWithPasswordFailure") {
+            logger_default.warn("[authenticateUserWithPassword] Authentication failed", {
+              message: authResult.message
+            });
+          }
+        } else if (body && body.errors) {
+          logger_default.error("[authenticateUserWithPassword] Authentication error in response", {
+            errors: body.errors
+          });
+        }
       }
       return originalJson.call(this, body);
     };
@@ -3521,7 +3930,8 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
           logger_default.debug("[updateProfile] UpdateData before update:", JSON.stringify(updateData, null, 2));
           const currentUser = await context.sudo().query.User.findOne({
             where: { id: String(userId) },
-            query: "id username email bio avatar coverImage"
+            query: "id username bio avatar coverImage"
+            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
           });
           if (!currentUser) {
             logger_default.error(`[updateProfile] User not found: userId=${userId}`);
@@ -3556,12 +3966,14 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
             updatedUser = await context.sudo().query.User.updateOne({
               where: { id: String(userId) },
               data: finalUpdateData,
-              query: "id username email bio avatar coverImage createdAt updatedAt"
+              query: "id username bio avatar coverImage createdAt updatedAt"
+              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
             });
           } else {
             updatedUser = await context.sudo().query.User.findOne({
               where: { id: String(userId) },
-              query: "id username email bio avatar coverImage createdAt updatedAt"
+              query: "id username bio avatar coverImage createdAt updatedAt"
+              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
             });
           }
           if (!updatedUser) {
@@ -3583,6 +3995,13 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
 
 // keystone.ts
 var databaseURL = process.env.DATABASE_URL || "file:./.tmp/data.db";
+var getDatabaseProvider = () => {
+  if (databaseURL.startsWith("postgresql://") || databaseURL.startsWith("postgres://")) {
+    return "postgresql";
+  }
+  return "sqlite";
+};
+var dbProvider = getDatabaseProvider();
 var sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret || sessionSecret.length < 32) {
   logger_default.error("\u274C SECURITY WARNING: SESSION_SECRET is too short or missing!");
@@ -3597,13 +4016,37 @@ if (!sessionSecret || sessionSecret.length < 32) {
 } else {
   logger_default.info("\u2705 SESSION_SECRET is secure (length: " + sessionSecret.length + " characters)");
 }
+var emailHmacSecret = process.env.EMAIL_HMAC_SECRET;
+if (!emailHmacSecret || emailHmacSecret.length < 32) {
+  logger_default.error("\u274C SECURITY WARNING: EMAIL_HMAC_SECRET is too short or missing!");
+  logger_default.error("   EMAIL_HMAC_SECRET must be at least 32 characters long.");
+  logger_default.error("   Generate a secure secret: openssl rand -base64 64");
+  if (process.env.NODE_ENV === "production") {
+    logger_default.error("   Application will not start in production with weak EMAIL_HMAC_SECRET.");
+    process.exit(1);
+  } else {
+    logger_default.warn("   \u26A0\uFE0F  EMAIL_HMAC_SECRET not set or too short - email hashing will fail");
+  }
+} else {
+  logger_default.info("\u2705 EMAIL_HMAC_SECRET is secure (length: " + emailHmacSecret.length + " characters)");
+}
+if (process.env.NODE_ENV === "production") {
+  const requiredVars = ["DATABASE_URL", "FRONTEND_URL", "SESSION_SECRET", "EMAIL_HMAC_SECRET"];
+  const missing = requiredVars.filter((v) => !process.env[v]);
+  if (missing.length > 0) {
+    logger_default.error(`\u274C Missing required environment variables for production: ${missing.join(", ")}`);
+    logger_default.error("   Application cannot start without these variables.");
+    process.exit(1);
+  }
+  logger_default.info("\u2705 All required environment variables are set for production");
+}
 var keystone_default = withAuth(
   (0, import_core13.config)({
     db: {
-      provider: "sqlite",
+      provider: dbProvider,
       url: databaseURL,
       useMigrations: true,
-      idField: { kind: "autoincrement" }
+      idField: { kind: dbProvider === "postgresql" ? "uuid" : "autoincrement" }
     },
     lists,
     session,
@@ -3637,12 +4080,11 @@ var keystone_default = withAuth(
         const sessionData = context.session.data;
         const userRole = sessionData?.role;
         const userId = context.session.itemId;
-        const email = sessionData?.email || "unknown";
         if (userRole !== "admin") {
           logAdminAccessDenied(ip, String(userId), `User role is '${userRole}', not 'admin'`, userAgent);
           return false;
         }
-        logAdminAccessGranted(ip, String(userId), email, userAgent);
+        logAdminAccessGranted(ip, String(userId), "hidden", userAgent);
         return true;
       }
     }

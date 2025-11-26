@@ -4,6 +4,15 @@
  */
 
 /**
+ * Проверка, является ли пользователь администратором
+ */
+function isAdmin(session?: any): boolean {
+  if (!session?.itemId) return false;
+  const sessionData = session.data as any;
+  return sessionData?.role === 'admin';
+}
+
+/**
  * Проверка, является ли пользователь владельцем записи
  */
 function isOwner({ session, item }: { session?: any; item: any }) {
@@ -83,15 +92,12 @@ export const accessControl = {
       update: ({ session, item }: { session?: any; item: any }) => {
         // Обновлять можно только свой профиль или админы могут обновлять всех
         if (!session?.itemId) return false;
-        const sessionData = session.data as any;
-        if (sessionData?.role === 'admin') return true; // Админы могут обновлять всех
+        if (isAdmin(session)) return true; // Админы могут обновлять всех
         return String(item.id) === String(session.itemId); // Обычные пользователи - только свой профиль
       },
-      delete: ({ session, item }: { session?: any; item: any }) => {
+      delete: ({ session }: { session?: any }) => {
         // Удалять может только админ
-        if (!session?.itemId) return false;
-        const sessionData = session.data as any;
-        return sessionData?.role === 'admin';
+        return isAdmin(session);
       },
     },
     filter: {
@@ -99,8 +105,7 @@ export const accessControl = {
         // Публичные данные доступны всем
         // Полные данные - только админам
         if (!session?.itemId) return true;
-        const sessionData = session.data as any;
-        if (sessionData?.role === 'admin') return true; // Админы видят все
+        if (isAdmin(session)) return true; // Админы видят все
         return true; // Публичные данные для всех
       },
     },
@@ -130,6 +135,8 @@ export const accessControl = {
             publishedAt: { not: null },
           };
         }
+        // Админы видят все статьи
+        if (isAdmin(session)) return true;
         // Авторизованные видят опубликованные + свои черновики
         return {
           OR: [
@@ -139,15 +146,17 @@ export const accessControl = {
         };
       },
       update: ({ session }: { session?: any }) => {
-        // Обновлять может только автор статьи
+        // Обновлять может только автор статьи или админ
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут обновлять все
         return {
           author: { id: { equals: session.itemId } },
         };
       },
       delete: ({ session }: { session?: any }) => {
-        // Удалять может только автор статьи
+        // Удалять может только автор статьи или админ
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут удалять все
         return {
           author: { id: { equals: session.itemId } },
         };
@@ -174,15 +183,17 @@ export const accessControl = {
     filter: {
       query: () => true, // Все видят все комментарии
       update: ({ session }: { session?: any }) => {
-        // Обновлять можно только свои комментарии
+        // Обновлять можно только свои комментарии или админ может обновлять все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут обновлять все
         return {
           author: { id: { equals: session.itemId } },
         };
       },
       delete: ({ session }: { session?: any }) => {
-        // Удалять можно только свои комментарии
+        // Удалять можно только свои комментарии или админ может удалять все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут удалять все
         return {
           author: { id: { equals: session.itemId } },
         };
@@ -198,11 +209,13 @@ export const accessControl = {
         return !!session?.itemId;
       },
       update: ({ session, item }: { session?: any; item: any }) => {
-        // Обновлять может только владелец реакции
+        // Обновлять может только владелец реакции или админ
+        if (isAdmin(session)) return true; // Админы могут обновлять все
         return isReactionOwner({ session, item });
       },
       delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только владелец реакции
+        // Удалять может только владелец реакции или админ
+        if (isAdmin(session)) return true; // Админы могут удалять все
         return isReactionOwner({ session, item });
       },
     },
@@ -219,11 +232,13 @@ export const accessControl = {
         return !!session?.itemId;
       },
       update: ({ session, item }: { session?: any; item: any }) => {
-        // Обновлять может только владелец реакции
+        // Обновлять может только владелец реакции или админ
+        if (isAdmin(session)) return true; // Админы могут обновлять все
         return isReactionOwner({ session, item });
       },
       delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только владелец реакции
+        // Удалять может только владелец реакции или админ
+        if (isAdmin(session)) return true; // Админы могут удалять все
         return isReactionOwner({ session, item });
       },
     },
@@ -258,8 +273,9 @@ export const accessControl = {
         };
       },
       delete: ({ session }: { session?: any }) => {
-        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Пользователь может удалять только свои закладки
+        // Пользователь может удалять только свои закладки, админ может удалять все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут удалять все (для модерации)
         return {
           user: { id: { equals: session.itemId } },
         };
@@ -276,8 +292,9 @@ export const accessControl = {
       },
       update: () => false, // Подписки нельзя обновлять
       delete: ({ session, item }: { session?: any; item: any }) => {
-        // Удалять может только владелец подписки (follower)
+        // Удалять может только владелец подписки (follower) или админ
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут удалять все
         if (!item) return false;
         return String(item.follower?.id || item.follower) === String(session.itemId);
       },
@@ -308,22 +325,25 @@ export const accessControl = {
     },
     filter: {
       query: ({ session }: { session?: any }) => {
-        // Пользователь видит только свои уведомления
+        // Пользователь видит только свои уведомления, админ видит все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы видят все (для модерации)
         return {
           user: { id: { equals: session.itemId } },
         };
       },
       update: ({ session }: { session?: any }) => {
-        // Обновлять можно только свои уведомления
+        // Обновлять можно только свои уведомления или админ может обновлять все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут обновлять все
         return {
           user: { id: { equals: session.itemId } },
         };
       },
       delete: ({ session }: { session?: any }) => {
-        // Удалять можно только свои уведомления
+        // Удалять можно только свои уведомления или админ может удалять все
         if (!session?.itemId) return false;
+        if (isAdmin(session)) return true; // Админы могут удалять все
         return {
           user: { id: { equals: session.itemId } },
         };

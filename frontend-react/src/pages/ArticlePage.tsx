@@ -34,10 +34,10 @@ import {
   Facebook,
   MessageCircle,
   Mail,
-  MessageSquare,
   Link2,
 } from 'lucide-react'
 import { getArticle, reactArticle } from '@/api/articles-graphql'
+import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
   createComment, 
@@ -54,6 +54,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/components/ui/use-toast'
+import { RateLimitError } from '@/lib/errors'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
 import { addBookmark, removeBookmark, isBookmarked } from '@/api/bookmarks-graphql'
@@ -142,18 +143,13 @@ interface CommentNode extends UnifiedComment {
   replies: CommentNode[]
 }
 
-interface CommentReactionState {
-  score: number
-  positive: number
-  negative: number
-  userReaction: 'up' | 'down' | null
-}
+// CommentReactionState interface removed - not used
 
 const MAX_VISIBLE_STRIPE_DEPTH = 6
 const STRIPE_WIDTH = 2
 const STRIPE_GAP = 4
-const BASE_COMMENT_PADDING = 16
 const BASE_COMMENT_PADDING_MOBILE = 12
+const MAX_COMMENT_LENGTH = 500
 const STRIPE_CLASSNAMES = [
   'bg-border/80',
   'bg-border/70',
@@ -170,6 +166,32 @@ export default function ArticlePage() {
   const { toast } = useToast()
   const { t, language } = useTranslation()
   const queryClient = useQueryClient()
+
+  // Helper функция для обработки RateLimitError
+  const handleRateLimitError = (error: any) => {
+    if (error instanceof RateLimitError) {
+      const waitTime = error.waitTime
+      if (waitTime > 0) {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: waitTime === 1
+            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
+            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      } else {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      }
+      return true
+    }
+    return false
+  }
 
   const [commentText, setCommentText] = useState('')
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -218,8 +240,8 @@ export default function ArticlePage() {
     staleTime: 10 * 60 * 1000,
     // Храним в кэше 1 час
     gcTime: 60 * 60 * 1000,
-    // Рефетчим при монтировании, если пользователь изменился (для загрузки userReaction)
-    refetchOnMount: true,
+    // Используем кеш при повторном входе (рефетч выполнит эффект ниже при необходимости)
+    refetchOnMount: false,
     // Retry логика
     retry: (failureCount, error: any) => {
       // Не ретраить на 404 (статья не найдена)
@@ -513,6 +535,9 @@ export default function ArticlePage() {
     // Мы уже обновили кеш через setQueryData
     gcTime: 0, // Не кэшировать мутацию
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to react to article:', error)
       toast({
         title: t('article.reactionError') || 'Ошибка',
@@ -575,7 +600,7 @@ export default function ArticlePage() {
       logger.debug('[Bookmark] Optimistic update:', { articleId, currentlySaved, newValue, previousValue })
       return { previousValue, queryKey, newValue }
     },
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (_data, variables, context) => {
       const queryKey = ['bookmark', variables.articleId]
       const newValue = context?.newValue ?? !variables.currentlySaved
       
@@ -592,7 +617,7 @@ export default function ArticlePage() {
       // Помечаем query как stale, чтобы при следующем монтировании он обновился
       await queryClient.invalidateQueries({ queryKey, refetchType: 'none' })
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Откатываем optimistic update при ошибке
       logger.error('[Bookmark] Mutation error:', error)
       if (context?.previousValue !== undefined && context?.queryKey) {
@@ -613,7 +638,7 @@ export default function ArticlePage() {
     [articleCommentKey]
   )
   const localComments = useLocalCommentsStore(localCommentsSelector)
-  const addLocalComment = useLocalCommentsStore((state) => state.addComment)
+  // const _addLocalComment = useLocalCommentsStore((state) => state.addComment) // Unused, but may be needed in future
 
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Защита от спама - debounce и проверка isPending
   const bookmarkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -642,42 +667,44 @@ export default function ArticlePage() {
 
     // Debounce: ждем 300ms перед выполнением
     bookmarkTimeoutRef.current = setTimeout(() => {
-      if (!user) {
-        toast({
+    if (!user) {
+      toast({
           title: t('article.authRequired'),
           description: t('article.authRequiredToBookmark'),
-          variant: 'destructive',
-        })
+        variant: 'destructive',
+      })
         navigate('/auth')
-        return
-      }
+      return
+    }
 
       if (!article?.id) {
-        toast({
+    toast({
           title: t('article.wait'),
           description: t('article.waitDescription'),
-          variant: 'destructive',
-        })
-        return
-      }
+        variant: 'destructive',
+      })
+      return
+    }
 
       // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем текущее состояние ДО optimistic update
-      const wasSaved = isSaved
-      const willBeSaved = !wasSaved
+    const wasSaved = isSaved
 
       bookmarkMutation.mutate(
         { articleId: article.id, currentlySaved: wasSaved },
         {
           onSuccess: () => {
             // Используем сохраненное значение wasSaved для правильного toast
-            toast({
+    toast({
               title: wasSaved ? t('article.removedFromReadingList') : t('article.savedForLater'),
-              description: wasSaved
+      description: wasSaved
                 ? t('article.removedFromReadingListDescription')
                 : t('article.savedForLaterDescription'),
             })
           },
           onError: (error) => {
+            if (handleRateLimitError(error)) {
+              return
+            }
             logger.error('Failed to toggle bookmark:', error)
             toast({
               title: t('common.error'),
@@ -712,8 +739,18 @@ export default function ArticlePage() {
       // Используем id из URL, а не article.id, чтобы избежать рассинхронизации
       return createComment({ articleId: id, text, parentId: parentId || null })
     },
-    onSuccess: (newComment) => {
+    onSuccess: (newComment, variables) => {
       logger.debug('[createCommentMutation] Comment created:', newComment)
+      
+      // Очищаем текст только при успешном создании комментария
+      if (variables.parentId) {
+        // Это был ответ на комментарий
+        setReplyText('')
+        setActiveReply(null)
+      } else {
+        // Это был обычный комментарий
+        setCommentText('')
+      }
       
       // Инвалидируем кэш для получения актуальных данных с сервера
       queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
@@ -724,6 +761,9 @@ export default function ArticlePage() {
       })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to create comment:', error)
       // Откатываем оптимистичное обновление при ошибке
       queryClient.invalidateQueries({ queryKey: ['article-comments', id, user?.id] })
@@ -747,6 +787,9 @@ export default function ArticlePage() {
       })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to update comment:', error)
       toast({
         title: t('article.commentError') || 'Ошибка',
@@ -768,6 +811,9 @@ export default function ArticlePage() {
       })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to delete comment:', error)
       toast({
         title: t('article.commentError') || 'Ошибка',
@@ -809,6 +855,9 @@ export default function ArticlePage() {
       })
     },
     onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to react to comment:', error)
       toast({
         title: t('article.reactionError') || 'Ошибка',
@@ -820,7 +869,8 @@ export default function ArticlePage() {
 
   const handleSubmitComment = () => {
     if (!ensureCommentAuth()) return
-    if (!commentText.trim()) {
+    const trimmedText = commentText.trim()
+    if (!trimmedText) {
       toast({
         title: t('article.emptyComment'),
         description: t('article.emptyCommentDescription'),
@@ -828,8 +878,15 @@ export default function ArticlePage() {
       })
       return
     }
-    createCommentMutation.mutate({ text: commentText.trim(), parentId: null })
-    setCommentText('')
+    if (trimmedText.length > MAX_COMMENT_LENGTH) {
+      toast({
+        title: t('article.commentTooLong') || 'Комментарий слишком длинный',
+        description: t('article.commentTooLongDescription', { maxLength: MAX_COMMENT_LENGTH }) || `Максимальная длина комментария: ${MAX_COMMENT_LENGTH} символов`,
+        variant: 'destructive',
+      })
+      return
+    }
+    createCommentMutation.mutate({ text: trimmedText, parentId: null })
   }
 
   const handleReplyClick = (commentId: string, authorName: string) => {
@@ -846,7 +903,8 @@ export default function ArticlePage() {
   const handleSubmitReply = () => {
     if (!activeReply) return
     if (!ensureCommentAuth()) return
-    if (!replyText.trim()) {
+    const trimmedText = replyText.trim()
+    if (!trimmedText) {
       toast({
         title: t('article.emptyComment'),
         description: t('article.emptyCommentDescription'),
@@ -854,9 +912,15 @@ export default function ArticlePage() {
       })
       return
     }
-    createCommentMutation.mutate({ text: replyText.trim(), parentId: activeReply.parentId })
-    setReplyText('')
-    setActiveReply(null)
+    if (trimmedText.length > MAX_COMMENT_LENGTH) {
+      toast({
+        title: t('article.commentTooLong') || 'Комментарий слишком длинный',
+        description: t('article.commentTooLongDescription', { maxLength: MAX_COMMENT_LENGTH }) || `Максимальная длина комментария: ${MAX_COMMENT_LENGTH} символов`,
+        variant: 'destructive',
+      })
+      return
+    }
+    createCommentMutation.mutate({ text: trimmedText, parentId: activeReply.parentId })
   }
 
   const handleShare = () => {
@@ -1013,7 +1077,7 @@ export default function ArticlePage() {
   const parentById = commentGraph.parentById
   const depthById = commentGraph.depthById
   const descendantCountById = commentGraph.descendantCountById
-  const maxCommentDepth = commentGraph.maxDepth
+  // const _maxCommentDepth = commentGraph.maxDepth // Unused, but may be needed in future
 
   const infoReactions = infoComment ? {
     score: (infoComment.likes || 0) - (infoComment.dislikes || 0),
@@ -1122,9 +1186,18 @@ export default function ArticlePage() {
       })
       return
     }
+    const trimmedText = editingText.trim()
+    if (trimmedText.length > MAX_COMMENT_LENGTH) {
+      toast({
+        title: t('article.commentTooLong') || 'Комментарий слишком длинный',
+        description: t('article.commentTooLongDescription', { maxLength: MAX_COMMENT_LENGTH }) || `Максимальная длина комментария: ${MAX_COMMENT_LENGTH} символов`,
+        variant: 'destructive',
+      })
+      return
+    }
 
     updateCommentMutation.mutate(
-      { commentId: editingCommentId, text: editingText.trim() },
+      { commentId: editingCommentId, text: trimmedText },
       {
         onSuccess: () => {
           setEditingCommentId(null)
@@ -1303,27 +1376,62 @@ export default function ArticlePage() {
                   )}
                   {editingCommentId === node.id ? (
                     <div className="space-y-2">
-                      <textarea
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        ref={(el) => {
-                          if (el) {
-                            editInputRefs.current.set(node.id, el)
-                          } else {
-                            editInputRefs.current.delete(node.id)
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            handleCancelEdit()
-                          } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault()
-                            handleSaveEdit()
-                          }
-                        }}
-                        className="w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder={t('article.editComment') || 'Редактировать комментарий...'}
-                      />
+                      <div className="space-y-1.5">
+                        <textarea
+                          value={editingText}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            if (value.length <= MAX_COMMENT_LENGTH) {
+                              setEditingText(value)
+                            }
+                          }}
+                          ref={(el) => {
+                            if (el) {
+                              editInputRefs.current.set(node.id, el)
+                            } else {
+                              editInputRefs.current.delete(node.id)
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              handleCancelEdit()
+                            } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              handleSaveEdit()
+                            }
+                          }}
+                          maxLength={MAX_COMMENT_LENGTH}
+                          className={cn(
+                            "w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring",
+                            editingText.length > MAX_COMMENT_LENGTH && "border-destructive focus:ring-destructive"
+                          )}
+                          placeholder={t('article.editComment') || 'Редактировать комментарий...'}
+                        />
+                        <div className="flex items-center justify-between px-1">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">
+                            {editingText.length > MAX_COMMENT_LENGTH * 0.9 && (
+                              <span className={cn(
+                                "transition-colors",
+                                editingText.length > MAX_COMMENT_LENGTH ? "text-destructive font-medium" : "text-muted-foreground"
+                              )}>
+                                {editingText.length > MAX_COMMENT_LENGTH 
+                                  ? t('article.commentExceedsLimit') || `Превышен лимит на ${editingText.length - MAX_COMMENT_LENGTH} символов`
+                                  : t('article.commentApproachingLimit') || `Осталось ${MAX_COMMENT_LENGTH - editingText.length} символов`}
+                              </span>
+                            )}
+                          </div>
+                          <div className={cn(
+                            "text-[10px] sm:text-xs transition-colors",
+                            editingText.length > MAX_COMMENT_LENGTH 
+                              ? "text-destructive font-medium" 
+                              : editingText.length > MAX_COMMENT_LENGTH * 0.9
+                              ? "text-orange-500"
+                              : "text-muted-foreground"
+                          )}>
+                            {editingText.length} / {MAX_COMMENT_LENGTH}
+                          </div>
+                        </div>
+                      </div>
                       <div className="flex justify-end gap-1.5 sm:gap-2">
                         <Button
                           variant="ghost"
@@ -1337,7 +1445,7 @@ export default function ArticlePage() {
                         <Button
                           size="sm"
                           onClick={handleSaveEdit}
-                          disabled={updateCommentMutation.isPending || !editingText.trim()}
+                          disabled={updateCommentMutation.isPending || !editingText.trim() || editingText.trim().length > MAX_COMMENT_LENGTH}
                           className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                         >
                           {updateCommentMutation.isPending
@@ -1544,25 +1652,60 @@ export default function ArticlePage() {
               </div>
               {activeReply?.parentId === node.id && (
                 <div className="space-y-2 rounded-lg border border-dashed border-border/60 bg-muted/20 p-2 sm:p-3">
-                  <textarea
-                    placeholder={t('article.writeReply', { username: node.author.username })}
-                    className="w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                    value={replyText}
-                    onChange={(event) => setReplyText(event.target.value)}
-                    ref={(el) => {
-                      if (el) {
-                        replyInputRefs.current.set(node.id, el)
-                      } else {
-                        replyInputRefs.current.delete(node.id)
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault()
-                        handleSubmitReply()
-                      }
-                    }}
-                  />
+                  <div className="space-y-1.5">
+                    <textarea
+                      placeholder={t('article.writeReply', { username: node.author.username })}
+                      className={cn(
+                        "w-full min-h-[80px] sm:min-h-[100px] rounded-lg border bg-background p-2 sm:p-3 text-xs sm:text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring",
+                        replyText.length > MAX_COMMENT_LENGTH && "border-destructive focus:ring-destructive"
+                      )}
+                      value={replyText}
+                      onChange={(event) => {
+                        const value = event.target.value
+                        if (value.length <= MAX_COMMENT_LENGTH) {
+                          setReplyText(value)
+                        }
+                      }}
+                      ref={(el) => {
+                        if (el) {
+                          replyInputRefs.current.set(node.id, el)
+                        } else {
+                          replyInputRefs.current.delete(node.id)
+                        }
+                      }}
+                      maxLength={MAX_COMMENT_LENGTH}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault()
+                          handleSubmitReply()
+                        }
+                      }}
+                    />
+                    <div className="flex items-center justify-between px-1">
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">
+                        {replyText.length > MAX_COMMENT_LENGTH * 0.9 && (
+                          <span className={cn(
+                            "transition-colors",
+                            replyText.length > MAX_COMMENT_LENGTH ? "text-destructive font-medium" : "text-muted-foreground"
+                          )}>
+                            {replyText.length > MAX_COMMENT_LENGTH 
+                              ? t('article.commentExceedsLimit') || `Превышен лимит на ${replyText.length - MAX_COMMENT_LENGTH} символов`
+                              : t('article.commentApproachingLimit') || `Осталось ${MAX_COMMENT_LENGTH - replyText.length} символов`}
+                          </span>
+                        )}
+                      </div>
+                      <div className={cn(
+                        "text-[10px] sm:text-xs transition-colors",
+                        replyText.length > MAX_COMMENT_LENGTH 
+                          ? "text-destructive font-medium" 
+                          : replyText.length > MAX_COMMENT_LENGTH * 0.9
+                          ? "text-orange-500"
+                          : "text-muted-foreground"
+                      )}>
+                        {replyText.length} / {MAX_COMMENT_LENGTH}
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex justify-end gap-1.5 sm:gap-2">
                     <Button variant="ghost" size="sm" onClick={handleCancelReply} className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
                       {t('common.cancel')}
@@ -1570,7 +1713,7 @@ export default function ArticlePage() {
                     <Button
                       size="sm"
                       onClick={handleSubmitReply}
-                      disabled={!replyText.trim()}
+                      disabled={!replyText.trim() || replyText.trim().length > MAX_COMMENT_LENGTH}
                       className="h-7 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                     >
                       {t('article.send')}
@@ -1770,7 +1913,7 @@ export default function ArticlePage() {
   if (error) {
     const isNotFound = (error as any)?.response?.status === 404
     const isRateLimit = (error as any)?.response?.status === 429
-    const isServerError = (error as any)?.response?.status >= 500
+    // const _isServerError = (error as any)?.response?.status >= 500 // Unused, but may be needed in future
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -1999,7 +2142,7 @@ export default function ArticlePage() {
               <ArticleContent content={article.contentJSON} />
             ) : (
               // Fallback на HTML для обратной совместимости
-              <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <div className="prose prose-neutral dark:prose-invert max-w-none">
                 {import.meta.env.DEV && (
                   <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
                     <p className="font-semibold text-yellow-600 dark:text-yellow-400">Debug Info:</p>
@@ -2035,8 +2178,8 @@ export default function ArticlePage() {
             {typeof article.content === 'string' ? (
               <div
                 className="text-foreground leading-relaxed break-words"
-                dangerouslySetInnerHTML={{ __html: article.content }}
-              />
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
             ) : (
               <div className="text-foreground leading-relaxed break-words">
                 <p className="text-muted-foreground text-sm">
@@ -2107,20 +2250,55 @@ export default function ArticlePage() {
             <div className="rounded-lg border border-border/30 bg-muted/20 p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Comment Input Form */}
                 <div className="space-y-3">
-                <textarea
-                  placeholder={user ? t('article.writeComment') : t('article.signInToComment')}
-                  className="w-full min-h-[100px] sm:min-h-[120px] rounded-lg border bg-background p-2.5 sm:p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                  value={commentText}
-                  onChange={(event) => setCommentText(event.target.value)}
-                  disabled={!user}
-                  ref={commentInputRef}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !event.shiftKey) {
-                      event.preventDefault()
-                      handleSubmitComment()
-                    }
-                  }}
-                />
+                <div className="space-y-1.5">
+                  <textarea
+                    placeholder={user ? t('article.writeComment') : t('article.signInToComment')}
+                    className={cn(
+                      "w-full min-h-[100px] sm:min-h-[120px] rounded-lg border bg-background p-2.5 sm:p-3 text-sm leading-relaxed break-words break-all whitespace-pre-wrap resize-none focus:outline-none focus:ring-2 focus:ring-ring",
+                      commentText.length > MAX_COMMENT_LENGTH && "border-destructive focus:ring-destructive"
+                    )}
+                    value={commentText}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      if (value.length <= MAX_COMMENT_LENGTH) {
+                        setCommentText(value)
+                      }
+                    }}
+                    disabled={!user}
+                    ref={commentInputRef}
+                    maxLength={MAX_COMMENT_LENGTH}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault()
+                        handleSubmitComment()
+                      }
+                    }}
+                  />
+                  <div className="flex items-center justify-between px-1">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
+                      {commentText.length > MAX_COMMENT_LENGTH * 0.9 && (
+                        <span className={cn(
+                          "transition-colors",
+                          commentText.length > MAX_COMMENT_LENGTH ? "text-destructive font-medium" : "text-muted-foreground"
+                        )}>
+                          {commentText.length > MAX_COMMENT_LENGTH 
+                            ? t('article.commentExceedsLimit') || `Превышен лимит на ${commentText.length - MAX_COMMENT_LENGTH} символов`
+                            : t('article.commentApproachingLimit') || `Осталось ${MAX_COMMENT_LENGTH - commentText.length} символов`}
+                        </span>
+                      )}
+                    </div>
+                    <div className={cn(
+                      "text-[10px] sm:text-xs transition-colors",
+                      commentText.length > MAX_COMMENT_LENGTH 
+                        ? "text-destructive font-medium" 
+                        : commentText.length > MAX_COMMENT_LENGTH * 0.9
+                        ? "text-orange-500"
+                        : "text-muted-foreground"
+                    )}>
+                      {commentText.length} / {MAX_COMMENT_LENGTH}
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-end gap-1.5 sm:gap-2">
                   {!user && (
                     <Button variant="outline" onClick={() => navigate('/auth')} className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
@@ -2129,7 +2307,7 @@ export default function ArticlePage() {
                   )}
                   <Button
                     onClick={handleSubmitComment}
-                    disabled={!user || !commentText.trim()}
+                    disabled={!user || !commentText.trim() || commentText.trim().length > MAX_COMMENT_LENGTH}
                     className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                   >
                     {t('article.sendComment')}
@@ -2260,7 +2438,7 @@ export default function ArticlePage() {
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
                   <p className="text-xs text-muted-foreground">{t('article.source')}</p>
                   <p className="text-sm font-medium text-foreground">
-                    {infoComment.source === 'local' ? t('article.localStorage') : t('article.strapi')}
+                    {infoComment.source === 'local' ? t('article.localStorage') : t('article.source')}
                   </p>
                 </div>
                 <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
@@ -2282,18 +2460,6 @@ export default function ArticlePage() {
                     +{infoReactions?.positive ?? 0} / -{infoReactions?.negative ?? 0}
                   </p>
                 </div>
-                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/25 p-3">
-                  <p className="text-xs text-muted-foreground">{t('article.syncStatus')}</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {infoComment.source === 'local'
-                      ? t('article.pendingSync')
-                      : t('article.syncedFromStrapi')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-[calc(var(--radius)*1.1)] border border-dashed border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
-                {t('article.todoSync')}
               </div>
             </div>
           )}

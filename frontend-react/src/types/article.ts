@@ -46,3 +46,6 @@ export interface CreateArticleRequest {
   difficulty?: string
 }
 
+export type ArticleDifficulty = 'beginner' | 'intermediate' | 'advanced'
+export type ArticleSortOption = 'newest' | 'oldest' | 'popular'
+

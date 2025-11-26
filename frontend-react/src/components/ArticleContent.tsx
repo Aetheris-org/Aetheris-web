@@ -14,6 +14,7 @@ import { BlockAnchor } from '@/extensions/block-anchor'
 import { Column, Columns } from '@/extensions/columns'
 import { slateToProseMirror } from '@/lib/slate-to-prosemirror'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface ArticleContentProps {
   content: any // Slate JSON или ProseMirror JSON
@@ -103,7 +104,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       const checkAnchors = () => {
         const allAnchors = editorRef.current?.querySelectorAll('[id], [data-block-id]')
         if (allAnchors && allAnchors.length > 0) {
-          console.log('[ArticleContent] Anchors found after render:', Array.from(allAnchors).map(el => ({
+          logger.debug('[ArticleContent] Anchors found after render:', Array.from(allAnchors).map(el => ({
             id: el.id,
             dataBlockId: el.getAttribute('data-block-id'),
             tagName: el.tagName,
@@ -136,7 +137,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         if (!anchorId) return
         
         if (import.meta.env.DEV) {
-          console.log('[ArticleContent] Anchor link clicked:', { href, anchorId })
+          logger.debug('[ArticleContent] Anchor link clicked:', { href, anchorId })
         }
         
         // Ищем элемент с id или data-block-id равным anchorId
@@ -146,7 +147,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         ) as HTMLElement | null
         
         if (import.meta.env.DEV) {
-          console.log('[ArticleContent] Found anchor element:', anchorElement)
+          logger.debug('[ArticleContent] Found anchor element:', anchorElement)
           if (!anchorElement) {
             // Проверяем, какие элементы с id или data-block-id есть в документе
             const allAnchors = document.querySelectorAll('[id], [data-block-id]')
@@ -157,9 +158,9 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
               className: el.className,
               textContent: el.textContent?.substring(0, 50),
             }))
-            console.log('[ArticleContent] All anchors in document:', anchorsInfo)
-            console.log('[ArticleContent] Looking for anchorId:', anchorId)
-            console.log('[ArticleContent] Editor content:', editor.getJSON())
+            logger.debug('[ArticleContent] All anchors in document:', anchorsInfo)
+            logger.debug('[ArticleContent] Looking for anchorId:', anchorId)
+            logger.debug('[ArticleContent] Editor content:', editor.getJSON())
           }
         }
         
@@ -196,7 +197,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
               anchorInEditor.classList.remove('anchor-highlight')
             }, 2000)
           } else if (import.meta.env.DEV) {
-            console.warn('[ArticleContent] Anchor element not found:', anchorId)
+            logger.warn('[ArticleContent] Anchor element not found:', anchorId)
           }
         }
       }

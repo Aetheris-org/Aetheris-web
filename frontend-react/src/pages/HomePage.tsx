@@ -10,16 +10,10 @@ import {
   List,
   Rows,
   Hash,
-  Compass,
-  GraduationCap,
-  Terminal,
-  Sparkles,
-  Bookmark,
-  MessageCircle,
-  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getArticles, getTrendingArticles, searchArticles, getArticle, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles-graphql'
+import type { Article } from '@/types/article'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -30,7 +24,7 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { ArticleCardLine } from '@/components/ArticleCardLine'
 import { ArticleCardSquare } from '@/components/ArticleCardSquare'
 import { SiteHeader } from '@/components/SiteHeader'
-import { networkingOpportunities, featuredCourses, developerResources, forumSpotlights } from '@/data/mockSections'
+// import { networkingOpportunities, featuredCourses } from '@/data/mockSections' // Unused, but may be needed in future
 import {
   Sheet,
   SheetContent,
@@ -62,18 +56,18 @@ export default function HomePage() {
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
 
   // Map old difficulty values to new ones for backward compatibility
-  const getDifficultyKey = (difficulty: string | undefined): string => {
-    if (!difficulty) return ''
-    const difficultyMap: Record<string, string> = {
-      'easy': 'beginner',
-      'medium': 'intermediate',
-      'hard': 'advanced',
-      'beginner': 'beginner',
-      'intermediate': 'intermediate',
-      'advanced': 'advanced',
-    }
-    return difficultyMap[difficulty.toLowerCase()] || difficulty
-  }
+  // const _getDifficultyKey = (difficulty: string | undefined): string => { // Unused, but may be needed in future
+  //   if (!difficulty) return ''
+  //   const difficultyMap: Record<string, string> = {
+  //     'easy': 'beginner',
+  //     'medium': 'intermediate',
+  //     'hard': 'advanced',
+  //     'beginner': 'beginner',
+  //     'intermediate': 'intermediate',
+  //     'advanced': 'advanced',
+  //   }
+  //   return difficultyMap[difficulty.toLowerCase()] || difficulty
+  // }
   const viewModeOptions: Array<{
     id: 'default' | 'line' | 'square'
     label: string
@@ -99,13 +93,13 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-  const [isViewModeExpanded, setIsViewModeExpanded] = useState(false)
+  // Убрали isViewModeExpanded - теперь переключаем форматы по клику
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
   const [page, setPage] = useState(1)
   const pageRef = useRef(page)
-  const [isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
+  const [_isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchInputFocused, setSearchInputFocused] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
@@ -116,34 +110,34 @@ export default function HomePage() {
   }, [page])
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
-  const quickDestinations = useMemo(
-    () => [
-      {
-        label: t('home.quickDestinations.networking'),
-        description: t('home.quickDestinations.networkingDescription'),
-        icon: Compass,
-        action: () => navigate('/networking'),
-      },
-      {
-        label: t('home.quickDestinations.courses'),
-        description: t('home.quickDestinations.coursesDescription'),
-        icon: GraduationCap,
-        action: () => navigate('/courses'),
-      },
-      {
-        label: t('home.quickDestinations.developers'),
-        description: t('home.quickDestinations.developersDescription'),
-        icon: Terminal,
-        action: () => navigate('/developers'),
-      },
-    ],
-    [navigate, t]
-  )
-  const openNetworking = useMemo(
-    () => networkingOpportunities.filter((item) => item.status === 'open').length,
-    []
-  )
-  const upcomingCourses = useMemo(() => featuredCourses.length, [])
+  // const _quickDestinations = useMemo( // Unused, but may be needed in future
+  //   () => [
+  //     {
+  //       label: t('home.quickDestinations.networking'),
+  //       description: t('home.quickDestinations.networkingDescription'),
+  //       icon: Compass,
+  //       action: () => navigate('/networking'),
+  //     },
+  //     {
+  //       label: t('home.quickDestinations.courses'),
+  //       description: t('home.quickDestinations.coursesDescription'),
+  //       icon: GraduationCap,
+  //       action: () => navigate('/courses'),
+  //     },
+  //     {
+  //       label: t('home.quickDestinations.developers'),
+  //       description: t('home.quickDestinations.developersDescription'),
+  //       icon: Terminal,
+  //       action: () => navigate('/developers'),
+  //     },
+  //   ],
+  //   [navigate, t]
+  // )
+  // const _openNetworking = useMemo( // Unused, but may be needed in future
+  //   () => networkingOpportunities.filter((item) => item.status === 'open').length,
+  //   []
+  // )
+  // const _upcomingCourses = useMemo(() => featuredCourses.length, []) // Unused, but may be needed in future
 
   // Queries с оптимизированными настройками для высокой нагрузки
   const { data: articlesData, isLoading, error: articlesError } = useQuery({
@@ -217,7 +211,7 @@ export default function HomePage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { data: searchResults = [], isLoading: isSearching } = useQuery({
+  const { data: searchResultsData, isLoading: isSearching } = useQuery({
     queryKey: ['search-articles', debouncedSearchQuery, user?.id],
     queryFn: () => searchArticles(debouncedSearchQuery, user?.id ? String(user.id) : undefined, 0, 10),
     enabled: debouncedSearchQuery.length >= 2,
@@ -233,13 +227,13 @@ export default function HomePage() {
     },
   })
 
-  const trendingSummary = useMemo(() => {
-    if (!trendingArticles.length) return 'No data yet'
-    return trendingArticles
-      .slice(0, 3)
-      .map((article) => article.title)
-      .join(' • ')
-  }, [trendingArticles])
+  // const _trendingSummary = useMemo(() => { // Unused, but may be needed in future
+  //   if (!trendingArticles.length) return 'No data yet'
+  //   return trendingArticles
+  //     .slice(0, 3)
+  //     .map((article) => article.title)
+  //     .join(' • ')
+  // }, [trendingArticles])
 
   const articles = articlesData?.data || []
   const totalRecords = articlesData?.total || 0
@@ -360,9 +354,9 @@ export default function HomePage() {
 
   // Prefetch article при наведении на карточку (для быстрой загрузки)
   const handleArticleMouseEnter = useCallback((articleId: string) => {
-    // Prefetch только если статья еще не в кэше
+    // Prefetch только если статья еще не в кэше текущего пользователя
     queryClient.prefetchQuery({
-      queryKey: ['article', articleId],
+      queryKey: ['article', articleId, user?.id],
       queryFn: () => getArticle(articleId, { userId: user?.id }),
       staleTime: 10 * 60 * 1000, // 10 минут
     })
@@ -394,38 +388,19 @@ export default function HomePage() {
   }
 
 
-  // Close view mode expander when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      // Игнорируем клики на пагинацию и кнопки
-      if (
-        target.closest('nav[aria-label="pagination"]') ||
-        target.closest('button') ||
-        target.tagName === 'BUTTON'
-      ) {
-        return
-      }
-      if (isViewModeExpanded && !target.closest('[data-view-mode-expander]')) {
-        setIsViewModeExpanded(false)
-      }
-    }
-
-    if (isViewModeExpanded) {
-      // Используем capture: false чтобы обработчик срабатывал после обработчиков на кнопках
-      document.addEventListener('mousedown', handleClickOutside, { capture: false })
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
-      }
-    }
-  }, [isViewModeExpanded])
-
-  const handleDismissSpotlight = () => {
-    setIsSpotlightDismissed(true)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('home-spotlight-dismissed', 'true')
-    }
+  // Функция для циклического переключения форматов отображения
+  const handleToggleViewMode = () => {
+    const currentIndex = viewModeOptions.findIndex((option) => option.id === viewMode)
+    const nextIndex = (currentIndex + 1) % viewModeOptions.length
+    setViewMode(viewModeOptions[nextIndex].id)
   }
+
+  // const _handleDismissSpotlight = () => { // Unused, but may be needed in future
+  //   setIsSpotlightDismissed(true)
+  //   if (typeof window !== 'undefined') {
+  //     localStorage.setItem('home-spotlight-dismissed', 'true')
+  //   }
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -523,7 +498,7 @@ export default function HomePage() {
                         setSearchQuery('')
                       }
                     }}
-                    className="pl-10 sm:pl-9 h-10 text-sm"
+                    className="pl-10 sm:pl-9 h-10 text-sm rounded-[var(--radius-sm)]"
                   />
                   {showSearchResults && (
                     <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
@@ -535,16 +510,16 @@ export default function HomePage() {
                         <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                           {t('home.search.typeToSearch')}
                         </div>
-                      ) : searchResults.length === 0 && debouncedSearchQuery.length >= 2 ? (
+                      ) : (searchResultsData?.data?.length ?? 0) === 0 && debouncedSearchQuery.length >= 2 ? (
                         <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                           {t('home.search.noResults', { query: debouncedSearchQuery })}
                         </div>
-                      ) : searchResults.length > 0 ? (
+                      ) : (searchResultsData?.data?.length ?? 0) > 0 ? (
                         <div className="py-2">
                           <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border">
                             {t('home.search.results')}
                           </div>
-                          {searchResults.map((article) => (
+                          {searchResultsData?.data?.map((article: Article) => (
                             <button
                               key={article.id}
                               type="button"
@@ -581,7 +556,7 @@ export default function HomePage() {
                               </div>
                             </button>
                           ))}
-                          {searchResults.length >= 10 && (
+                          {(searchResultsData?.data?.length ?? 0) >= 10 && (
                             <button
                               type="button"
                               onClick={() => {
@@ -600,132 +575,33 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  <div className="relative shrink-0" data-view-mode-expander>
-                    {/* Единый контейнер кнопки и меню */}
-                    <div
-                      className={cn(
-                        'flex flex-col bg-background border border-border rounded-md overflow-hidden transition-all duration-300 ease-in-out z-40',
-                        isViewModeExpanded && 'shadow-lg'
-                      )}
-                      style={{
-                        width: '40px',
-                        height: isViewModeExpanded 
-                          ? `${40 + (viewModeOptions.filter((o) => o.id !== viewMode).length * 40)}px` 
-                          : '40px',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                      }}
+                  <div className="flex items-center border border-input bg-background rounded-[var(--radius-sm)] h-10 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={handleToggleViewMode}
+                      className="flex items-center justify-center h-10 w-10 hover:bg-muted/50 transition-colors"
+                      aria-label={t('home.viewModes.selectViewMode')}
+                      title={(() => {
+                        const currentOption = viewModeOptions.find((option) => option.id === viewMode)
+                        return currentOption?.label || t('home.viewModes.selectViewMode')
+                      })()}
                     >
-                      {/* Активная кнопка (всегда видима) */}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        type="button"
-                        onClick={() => setIsViewModeExpanded(!isViewModeExpanded)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape' && isViewModeExpanded) {
-                            setIsViewModeExpanded(false)
-                            e.currentTarget.focus()
-                          } else if (e.key === 'ArrowDown' && !isViewModeExpanded) {
-                            e.preventDefault()
-                            setIsViewModeExpanded(true)
-                            // Фокусируемся на первом элементе меню
-                            setTimeout(() => {
-                              const firstButton = e.currentTarget.parentElement?.querySelector('div[class*="flex flex-col"] button') as HTMLButtonElement
-                              firstButton?.focus()
-                            }, 0)
-                          } else if (e.key === 'Tab' && isViewModeExpanded) {
-                            // При Tab закрываем меню и продолжаем навигацию
-                            setIsViewModeExpanded(false)
-                          }
-                        }}
-                        aria-label={t('home.viewModes.selectViewMode')}
-                        aria-expanded={isViewModeExpanded}
-                        className={cn(
-                          'h-10 w-10 shrink-0 border-0 rounded-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                          isViewModeExpanded && 'border-b border-border/50'
-                        )}
-                      >
-                        {(() => {
-                          const currentOption = viewModeOptions.find((option) => option.id === viewMode)
-                          const Icon = currentOption?.icon
-                          return Icon ? <Icon className="h-4 w-4" /> : null
-                        })()}
-                      </Button>
-                      
-                      {/* Остальные варианты (растягиваются вниз) */}
-                      <div
-                        className={cn(
-                          'flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
-                          isViewModeExpanded
-                            ? 'opacity-100' 
-                            : 'opacity-0 pointer-events-none'
-                        )}
-                      >
-                        {viewModeOptions
-                          .filter((option) => option.id !== viewMode)
-                          .map((option, index) => {
-                            const Icon = option.icon
-                            const isLast = index === viewModeOptions.filter((o) => o.id !== viewMode).length - 1
-                            return (
-                              <Button
-                                key={option.id}
-                                variant="outline"
-                                size="icon"
-                                type="button"
-                                tabIndex={isViewModeExpanded ? 0 : -1}
-                                className={cn(
-                                  'h-10 w-10 shrink-0 border-0 rounded-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                                  !isLast && 'border-b border-border/50'
-                                )}
-                                onClick={() => {
-                                  setViewMode(option.id)
-                                  setIsViewModeExpanded(false)
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Escape') {
-                                    setIsViewModeExpanded(false)
-                                    const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
-                                    mainButton?.focus()
-                                  } else if (e.key === 'ArrowDown') {
-                                    e.preventDefault()
-                                    const nextButton = e.currentTarget.parentElement?.children[index + 1] as HTMLButtonElement
-                                    if (nextButton) {
-                                      nextButton.focus()
-                                    } else {
-                                      // Если последний элемент, возвращаемся к главной кнопке
-                                      const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
-                                      mainButton?.focus()
-                                    }
-                                  } else if (e.key === 'ArrowUp') {
-                                    e.preventDefault()
-                                    if (index === 0) {
-                                      const mainButton = e.currentTarget.parentElement?.parentElement?.querySelector('button[aria-expanded]') as HTMLButtonElement
-                                      mainButton?.focus()
-                                    } else {
-                                      const prevButton = e.currentTarget.parentElement?.children[index - 1] as HTMLButtonElement
-                                      prevButton?.focus()
-                                    }
-                                  } else if (e.key === 'Tab' && !e.shiftKey) {
-                                    // При Tab закрываем меню и продолжаем навигацию
-                                    setIsViewModeExpanded(false)
-                                  }
-                                }}
-                                aria-label={option.label}
-                              >
-                                <Icon className="h-4 w-4" />
-                              </Button>
-                            )
-                          })}
-                      </div>
-                    </div>
-                    {/* Невидимый placeholder для сохранения места в layout */}
-                    <div className="w-10 h-10" aria-hidden="true" />
+                      {(() => {
+                        const currentOption = viewModeOptions.find((option) => option.id === viewMode)
+                        const Icon = currentOption?.icon
+                        return Icon ? <Icon className="h-4 w-4" /> : null
+                      })()}
+                    </button>
+                    <div className="h-4 w-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex items-center justify-center h-10 w-10 hover:bg-muted/50 transition-colors"
+                      aria-label={t('home.filters.title')}
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </button>
                   </div>
-                  <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)} className="h-10 w-10 shrink-0">
-                    <SlidersHorizontal className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
 
@@ -752,9 +628,7 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                   <span className="text-muted-foreground">{t('home.filters.difficulty')}</span>
                   <Badge variant="outline" className="capitalize text-xs">
-                    {difficultyFilter === 'all' 
-                      ? t('home.filtersDrawer.all')
-                      : t(`home.filtersDrawer.${getDifficultyKey(difficultyFilter)}`)}
+                    {t(`home.filtersDrawer.${difficultyFilter}`)}
                   </Badge>
                   <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-7 px-2 sm:px-3 text-xs">
                     {t('home.filters.reset')}
@@ -913,7 +787,7 @@ export default function HomePage() {
           </div>
 
           <aside className="space-y-4 sm:space-y-6 order-1 lg:order-2 min-w-0 max-w-full">
-            <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+            <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
               <CardHeader className="space-y-3 pb-3 sm:pb-4 p-4 sm:p-6">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -1030,36 +904,36 @@ export default function HomePage() {
   )
 }
 
-function StatTile({
-  label,
-  value,
-  description,
-  compact,
-}: {
-  label: string
-  value: string | number
-  description?: string
-  compact?: boolean
-}) {
-  const displayValue =
-    typeof value === 'number' && !Number.isNaN(value) ? value.toLocaleString() : value || '—'
-
-  return (
-    <Card className="h-full border-border/60 bg-background shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </CardDescription>
-        <CardTitle className={cn('truncate text-2xl font-semibold', compact && 'text-base font-medium')}>
-          {displayValue}
-        </CardTitle>
-      </CardHeader>
-      {description && (
-        <CardContent className="pt-0 text-xs text-muted-foreground">{description}</CardContent>
-      )}
-    </Card>
-  )
-}
+// function _StatTile({ // Unused, but may be needed in future
+//   label,
+//   value,
+//   description,
+//   compact,
+// }: {
+//   label: string
+//   value: string | number
+//   description?: string
+//   compact?: boolean
+// }) {
+//   const displayValue =
+//     typeof value === 'number' && !Number.isNaN(value) ? value.toLocaleString() : value || '—'
+//
+//   return (
+//     <Card className="h-full border-border/60 bg-background shadow-sm">
+//       <CardHeader className="space-y-1">
+//         <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground">
+//           {label}
+//         </CardDescription>
+//         <CardTitle className={cn('truncate text-2xl font-semibold', compact && 'text-base font-medium')}>
+//           {displayValue}
+//         </CardTitle>
+//       </CardHeader>
+//       {description && (
+//         <CardContent className="pt-0 text-xs text-muted-foreground">{description}</CardContent>
+//       )}
+//     </Card>
+//   )
+// }
 
 interface FiltersDrawerProps {
   open: boolean

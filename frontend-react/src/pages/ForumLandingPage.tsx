@@ -15,26 +15,20 @@ import {
   Users,
   GraduationCap,
   Code,
-  Zap,
   Shield,
-  Globe,
   MessageSquare,
-  TrendingUp,
   Coins,
   Store,
   Rocket,
   Brain,
   Star,
-  Target,
   Gamepad2,
   BookOpen,
   Briefcase,
   DollarSign,
   Lock,
-  Palette,
   CheckCircle2,
   ArrowRight,
-  Lightbulb,
   Network,
   Flame,
   Crown,
@@ -286,7 +280,7 @@ export default function ForumLandingPage() {
             // Определяем мобильное устройство и настраиваем параметры
             const isMobile = window.innerWidth < 768
             const squaresCount = isMobile ? 8 : 15 // Оптимальное количество квадратиков
-            const squares: HTMLElement[] = []
+            const squares: Array<{ wrapper: HTMLElement; square: HTMLElement }> = []
 
             // Разные оттенки акцентного цвета (разная прозрачность для создания оттенков)
             const opacityVariants = [
@@ -553,7 +547,7 @@ export default function ForumLandingPage() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
+              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
               onClick={() => navigate('/pricing')}
             >
               {t('forumLanding.hero.pricing')}
@@ -869,7 +863,7 @@ export default function ForumLandingPage() {
               {t('forumLanding.finalCta.registerFree')}
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 w-full sm:w-auto border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
               {t('forumLanding.finalCta.watchDemo')}
               <Video className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
             </Button>

@@ -99,8 +99,10 @@ npm run build
 ```
 frontend-react/
 ├── src/
-│   ├── api/              # API клиенты
-│   │   └── articles.ts
+│   ├── api/              # GraphQL API клиенты
+│   │   ├── articles-graphql.ts
+│   │   ├── auth-graphql.ts
+│   │   └── bookmarks-graphql.ts
 │   ├── components/       # React компоненты
 │   │   ├── ui/          # shadcn/ui компоненты
 │   │   ├── ArticleCard.tsx
@@ -108,8 +110,8 @@ frontend-react/
 │   │   ├── ArticleCardSquare.tsx
 │   │   └── ThemeToggle.tsx
 │   ├── lib/             # Утилиты
-│   │   ├── axios.ts     # HTTP клиент
-│   │   ├── strapi.ts    # Strapi адаптер
+│   │   ├── axios.ts     # HTTP клиент (для upload)
+│   │   ├── graphql.ts   # GraphQL клиент
 │   │   └── utils.ts     # Общие утилиты
 │   ├── pages/           # Страницы
 │   │   ├── HomePage.tsx
@@ -152,12 +154,11 @@ npm run lint         # Проверка кода с ESLint
 
 ## 🌐 API интеграция
 
-Приложение интегрировано с **Strapi** backend:
+Приложение интегрировано с **KeystoneJS** backend через GraphQL:
 
-- **Base URL**: `http://localhost:1337/api`
-- **Аутентификация**: JWT tokens в cookies
-- **CSRF защита**: Автоматическая
-- **Refresh tokens**: Автоматическое обновление
+- **GraphQL Endpoint**: `http://localhost:3000/api/graphql`
+- **Аутентификация**: Session-based (cookies)
+- **OAuth2**: Google OAuth для входа
 
 ## 🎯 Основные фичи
 
@@ -205,7 +206,6 @@ npm run lint         # Проверка кода с ESLint
 
 - **[PAGES_GUIDE.md](./PAGES_GUIDE.md)** - Описание всех страниц
 - **[DESIGN.md](./DESIGN.md)** - Дизайн система
-- **[REACT_MIGRATION_GUIDE.md](./REACT_MIGRATION_GUIDE.md)** - Гайд по миграции
 
 ## 🔜 Coming Soon
 

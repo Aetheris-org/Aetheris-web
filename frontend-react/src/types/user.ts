@@ -1,7 +1,7 @@
 export interface User {
   id: number
   nickname: string
-  email: string
+  email?: string // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email опциональный (скрыт для безопасности)
   avatar?: string
   coverImage?: string
   firstName?: string

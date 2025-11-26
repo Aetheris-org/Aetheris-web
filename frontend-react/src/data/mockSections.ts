@@ -1,8 +1,13 @@
 /**
+ * ⚠️ ВРЕМЕННЫЕ МОК-ДАННЫЕ
+ * Этот файл содержит временные мок-данные для разработки.
+ * В будущем будет заменен на реальные API запросы к KeystoneJS backend.
+ * TODO: Заменить на GraphQL запросы к backend
+ * 
  * NOTE FOR FUTURE DEVELOPERS / AUTOMATIONS:
  *
  * This file contains temporary mock data for the Networking, Courses, and Developers sections.
- * When integrating with the real backend (e.g. Strapi), follow these steps:
+ * When integrating with the real backend (KeystoneJS), follow these steps:
  *
  * 1. Create the necessary content types in Strapi (or your preferred CMS):
  *    - Networking opportunity (title, summary, tags, contact method, availability, location, status, compensation, meta flags).
@@ -992,6 +997,16 @@ export const developerResources: DeveloperResource[] = [
     lastVerified: '2025-01-25',
   },
 ]
+
+export interface ForumSpotlight {
+  id: string
+  title: string
+  summary: string
+  author: string
+  tags: string[]
+  reads: number
+  replies: number
+}
 
 export const forumSpotlights: ForumSpotlight[] = [
   {

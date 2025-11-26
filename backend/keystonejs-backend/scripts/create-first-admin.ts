@@ -6,6 +6,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import logger from '../src/lib/logger';
+import { hashEmail } from '../src/lib/email-hash';
 
 const prisma = new PrismaClient();
 
@@ -25,13 +26,16 @@ async function createFirstAdmin() {
     const username = process.env.ADMIN_USERNAME || 'admin';
     const name = process.env.ADMIN_NAME || 'Admin';
 
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Хешируем email перед сохранением
+    const hashedEmail = hashEmail(email);
+
     // Хешируем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Создаем первого администратора
     const admin = await prisma.user.create({
       data: {
-        email,
+        email: hashedEmail, // Сохраняем хеш email вместо оригинального
         password: hashedPassword,
         username,
         name,
@@ -43,9 +47,7 @@ async function createFirstAdmin() {
     });
 
     logger.info(`✅ First admin created successfully!`);
-    logger.info(`Email: ${email}`);
     logger.info(`Username: ${username}`);
-    logger.info(`Password: ${password}`);
     logger.info(`⚠️  Please change the default password after first login!`);
 
     process.exit(0);

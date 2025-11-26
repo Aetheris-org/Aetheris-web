@@ -1,6 +1,8 @@
 import { Extension } from '@tiptap/core'
-import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state'
+import { Plugin, PluginKey, NodeSelection, TextSelection } from 'prosemirror-state'
 import { dropPoint } from 'prosemirror-transform'
+import { Slice } from 'prosemirror-model'
+import { logger } from '@/lib/logger'
 
 const DRAG_HANDLE_PLUGIN_KEY = new PluginKey('dragHandle')
 
@@ -23,17 +25,17 @@ export const DragHandle = Extension.create({
       new Plugin({
         key: DRAG_HANDLE_PLUGIN_KEY,
         state: {
-          init: () => ({ pos: null, hoveredPos: null }),
-          apply(tr, value) {
+          init: () => ({ pos: null, hoveredPos: null } as { pos: number | null; hoveredPos: number | null }),
+          apply(tr, value): { pos: number | null; hoveredPos: number | null } {
             // Обновляем позицию при изменении документа
             if (tr.docChanged && value.pos != null) {
-              return { pos: tr.mapping.map(value.pos), hoveredPos: value.hoveredPos }
+              return { pos: tr.mapping.map(value.pos) as number | null, hoveredPos: value.hoveredPos as number | null }
             }
             // Обновляем hoveredPos из метаданных
             if (tr.getMeta(DRAG_HANDLE_PLUGIN_KEY)) {
               const meta = tr.getMeta(DRAG_HANDLE_PLUGIN_KEY)
               if (meta?.hoveredPos !== undefined) {
-                return { pos: value.pos, hoveredPos: meta.hoveredPos }
+                return { pos: value.pos, hoveredPos: meta.hoveredPos as number | null }
               }
             }
             // Обновляем pos при изменении selection
@@ -231,9 +233,8 @@ export const DragHandle = Extension.create({
             }
 
             // Используем dropPoint для правильного определения позиции вставки
-            let insertPos = dropPoint(editorView.state.doc, $pos.pos, (slice) => {
-              return node.type.create(node.attrs, node.content)
-            })
+            const slice = new Slice(node.content, 0, 0)
+            let insertPos = dropPoint(editorView.state.doc, $pos.pos, slice)
 
             if (insertPos === null) {
               // Если dropPoint не сработал, используем простую логику
@@ -268,12 +269,10 @@ export const DragHandle = Extension.create({
                 tr.insert(finalInsertPos, node)
                 // Сбрасываем selection
                 const newPos = Math.min(finalInsertPos + node.nodeSize, tr.doc.content.size)
-                const $newPos = tr.doc.resolve(newPos)
-                const TextSelection = editorView.state.selection.constructor
                 tr.setSelection(TextSelection.create(tr.doc, newPos))
                 editorView.dispatch(tr)
               } catch (err) {
-                console.warn('Failed to move node:', err)
+                logger.warn('Failed to move node:', err)
               }
             }
 

@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Sparkles,
 } from 'lucide-react'
+import { logger } from '@/lib/logger'
 import {
   Sheet,
   SheetContent,
@@ -27,13 +28,13 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/authStore'
-import { selectReadingListCount, useReadingListStore } from '@/stores/readingListStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { FriendsSheet } from '@/components/FriendsSheet'
 import { StatsSheet } from '@/components/StatsSheet'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '@/api/notifications-graphql'
+import { getBookmarksCount } from '@/api/bookmarks-graphql'
 
 export function AccountSheet() {
   const { t } = useTranslation()
@@ -53,7 +54,14 @@ export function AccountSheet() {
     refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
     refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
   })
-  const readingListCount = useReadingListStore(selectReadingListCount)
+  const { data: readingListCount = 0 } = useQuery({
+    queryKey: ['bookmarks', 'count'],
+    queryFn: getBookmarksCount,
+    enabled: !!user, // Запрашиваем только если пользователь авторизован
+    staleTime: 1 * 60 * 1000, // 1 минута - счетчик обновляется чаще
+    refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
+    refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
+  })
   const { level, xpIntoLevel, xpForLevel, streakDays } = useGamificationStore((state) => ({
     level: state.level,
     xpIntoLevel: state.xpIntoLevel,
@@ -77,7 +85,7 @@ export function AccountSheet() {
       await logout()
       navigate('/')
     } catch (error) {
-      console.error('Failed to logout:', error)
+      logger.error('Failed to logout:', error)
     }
   }
 
@@ -88,14 +96,14 @@ export function AccountSheet() {
         size="sm" 
         onClick={() => {
           const currentPath = location.pathname + location.search
-          console.log('🔐 Sign in clicked, current path:', currentPath)
+          logger.debug('🔐 Sign in clicked, current path:', currentPath)
           // Не сохраняем redirect если уже на странице авторизации
           if (currentPath !== '/auth' && currentPath !== '/auth?') {
             const redirectUrl = `/auth?redirect=${encodeURIComponent(currentPath)}`
-            console.log('🔗 Navigating to auth with redirect:', redirectUrl)
+            logger.debug('🔗 Navigating to auth with redirect:', redirectUrl)
             navigate(redirectUrl)
           } else {
-            console.log('🔗 Navigating to auth without redirect')
+            logger.debug('🔗 Navigating to auth without redirect')
             navigate('/auth')
           }
         }}
@@ -138,16 +146,10 @@ export function AccountSheet() {
               </div>
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
-                {user.email && (
-                  <div className="group relative max-w-full">
-                    <p className="truncate text-xs text-muted-foreground">
-                      {t('accountSheet.signedInAs')} <span className="truncate">{user.email}</span>
-                    </p>
-                    <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 w-max max-w-[280px] rounded-md border border-border/60 bg-card/95 px-2 py-1 text-[11px] font-medium text-foreground shadow-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                      {user.email}
-                    </div>
-                  </div>
-                )}
+                {/* КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email скрыт для безопасности */}
+                <p className="truncate text-xs text-muted-foreground">
+                  {t('accountSheet.signedInAs')} —
+                </p>
               </div>
             </div>
             <Badge variant="outline" className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-2.5 py-1 text-xs text-primary">
@@ -160,7 +162,7 @@ export function AccountSheet() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-40 hover:opacity-100"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-20 hover:opacity-100"
             >
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{xpProgress}%</span>
@@ -168,7 +170,7 @@ export function AccountSheet() {
             </button>
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-40 hover:opacity-100"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-20 hover:opacity-100"
             >
               <Flame className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{streakDays}</span>
@@ -194,7 +196,7 @@ export function AccountSheet() {
           {/* View Full Stats Button */}
           <Button
             variant="outline"
-            className="w-full gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
+            className="w-full gap-2 border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
             onClick={() => setStatsSheetOpen(true)}
           >
             <TrendingUp className="h-4 w-4" />
@@ -229,7 +231,7 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   variant="outline"
-                  className="justify-start gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
                   onClick={() => setFriendsSheetOpen(true)}
                 >
                   <Users className="h-4 w-4 shrink-0" />
@@ -254,7 +256,7 @@ export function AccountSheet() {
             <SheetClose asChild>
               <Button
                 variant="outline"
-                className="w-full justify-center gap-2 border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity"
+                className="w-full justify-center gap-2 border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
                 onClick={() => navigate('/achievements')}
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
@@ -300,7 +302,7 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   variant="ghost"
-                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-40 hover:opacity-100 transition-opacity"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-20 hover:opacity-100 transition-opacity"
                   onClick={() => navigate('/feedback')}
                 >
                   <MessageSquare className="h-4 w-4 shrink-0" />
@@ -310,7 +312,7 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   variant="ghost"
-                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-40 hover:opacity-100 transition-opacity"
+                  className="justify-start gap-2 border-dashed border-muted-foreground/30 opacity-20 hover:opacity-100 transition-opacity"
                   onClick={() => navigate('/help')}
                 >
                   <HelpCircle className="h-4 w-4 shrink-0" />

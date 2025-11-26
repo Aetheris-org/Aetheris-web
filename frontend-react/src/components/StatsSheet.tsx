@@ -16,12 +16,6 @@ import { Flame, Award, Bell, TrendingUp } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '@/api/notifications-graphql'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 
 interface StatsSheetProps {
   open: boolean
@@ -84,7 +78,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user?.nickname}</h2>
                     <p className="truncate text-xs text-muted-foreground">
-                      {t('accountSheet.signedInAs')} {user?.email || '—'}
+                      {t('accountSheet.signedInAs')} — {/* КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email скрыт для безопасности */}
                     </p>
                   </div>
                 </div>
@@ -97,7 +91,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
           </Card>
 
           {/* XP Progress */}
-          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-40 hover:opacity-100 transition-opacity">
+          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
             <CardContent className="p-5 space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -115,7 +109,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
 
           {/* Stats Grid */}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-40 hover:opacity-100 transition-opacity">
+            <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
               <CardContent className="p-4">
                 <div className="flex flex-col gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -158,7 +152,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
           </div>
 
           {/* Lifetime Experience */}
-          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-40 hover:opacity-100 transition-opacity">
+          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>

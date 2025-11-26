@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { useState } from 'react'
 import hljs from 'highlight.js'
+import { logger } from '@/lib/logger'
 // Импортируем дополнительные языки для lowlight
 import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
@@ -127,7 +128,7 @@ const CodeBlockHeader = ({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error('Failed to copy text:', err)
+      logger.error('Failed to copy text:', err)
     }
   }
 

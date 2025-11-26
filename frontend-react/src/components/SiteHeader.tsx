@@ -96,7 +96,7 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                   <DropdownMenuItem
                     key={item.path}
                     className={`flex items-start gap-3 rounded-lg py-3 focus:bg-muted ${
-                      isInDevelopment ? 'opacity-40' : ''
+                      isInDevelopment ? 'opacity-20' : ''
                     }`}
                     onSelect={(event) => {
                       event.preventDefault()

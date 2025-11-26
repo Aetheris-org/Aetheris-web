@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+// import { useNavigate } from 'react-router-dom' // Unused, but may be needed in future
 import { 
   Search, 
   SlidersHorizontal, 
@@ -111,7 +111,7 @@ const pageSizeOptions = [
 ]
 
 export default function NetworkingPage() {
-  const navigate = useNavigate()
+  // const _navigate = useNavigate() // Unused, but may be needed in future
   const { t } = useTranslation()
   
   // Hero section state

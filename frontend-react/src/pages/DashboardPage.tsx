@@ -214,7 +214,7 @@ export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { level, experience, xpIntoLevel, xpForLevel, achievements } = useGamificationStore()
+  const { level, achievements } = useGamificationStore()
   const gridContainerRef = useRef<HTMLDivElement>(null)
   // Инициализируем с примерной шириной, чтобы виджеты могли отрендериться сразу
   const [gridWidth, setGridWidth] = useState(() => {
@@ -437,8 +437,8 @@ export default function DashboardPage() {
         e.stopPropagation()
         e.nativeEvent.stopImmediatePropagation()
         toast({
-          title: 'Режим редактирования',
-          description: 'Вы находитесь в режиме редактирования. Отключите его, чтобы взаимодействовать с виджетами.',
+          title: t('dashboard.editMode'),
+          description: t('dashboard.editModeDescription'),
           variant: 'default',
         })
         return
@@ -565,6 +565,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+      <DevelopmentBanner storageKey="dashboard-dev-banner" />
       <main className="container space-y-4 sm:space-y-6 pb-6 pt-6 px-4 sm:px-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

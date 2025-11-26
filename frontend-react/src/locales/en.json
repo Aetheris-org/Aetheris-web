@@ -28,7 +28,11 @@
     "categories": "Categories",
     "retry": "Retry",
     "optional": "optional",
-    "and": "and"
+    "and": "and",
+    "rateLimitExceeded": "Too many requests",
+    "waitOneSecond": "Please wait 1 second before the next action",
+    "waitSeconds": "Please wait {seconds} seconds before the next action",
+    "waitAMoment": "You are sending requests too frequently. Please wait a moment."
   },
   "settings": {
     "title": "Settings",
@@ -136,7 +140,11 @@
       "professionalProfileSaved": "Professional profile saved",
       "focusVisibilitySaved": "Focus & visibility saved",
       "profileUpdated": "Profile updated",
-      "profileUpdateFailed": "Update failed"
+      "profileUpdateFailed": "Update failed",
+      "nicknameTooShort": "Nickname too short",
+      "nicknameTooShortDescription": "Nickname must be at least 3 characters long.",
+      "bioTooLong": "Bio is too long",
+      "bioTooLongDescription": "Bio must be {limit} characters or less."
     },
     "appearance": {
       "title": "Appearance",
@@ -295,6 +303,14 @@
       "themeNameRequiredDescription": "Give your theme a name before saving it.",
       "themeImported": "Theme imported",
       "themeImportedDescription": "Theme configuration has been applied.",
+      "themeCreated": "Theme created",
+      "themeCreatedDescription": "\"{name}\" has been saved.",
+      "themeApplied": "Theme applied",
+      "themeAppliedDescription": "\"{name}\" is now active.",
+      "themeDeleted": "Theme deleted",
+      "themeDeletedDescription": "Theme has been removed.",
+      "themeReset": "Theme reset",
+      "themeResetDescription": "Theme has been reset to default settings.",
       "importFailed": "Import failed",
       "importFailedDescription": "Invalid JSON format. Please check your theme configuration.",
       "accentGroups": {
@@ -992,6 +1008,10 @@
           "name": "Charcoal",
           "description": "Deep grey with warm undertones"
         },
+        "default": {
+          "name": "Default",
+          "description": "Light charcoal grey, perfect for the default theme"
+        },
         "ash": {
           "name": "Ash",
           "description": "Cool grey with ashy, muted tones"
@@ -1156,10 +1176,6 @@
           "name": "Programming Terminal",
           "description": "Classic terminal green-on-black aesthetic"
         },
-        "balloons-festive": {
-          "name": "Balloons Festive",
-          "description": "Bright festive colors for celebration"
-        },
         "teardown-voxel": {
           "name": "Teardown Voxel",
           "description": "Voxel destruction aesthetic for Teardown"
@@ -1319,12 +1335,123 @@
         "monochrome-minimal": {
           "name": "Monochrome Minimal",
           "description": "Pure monochrome minimal"
+        },
+        "beach": {
+          "name": "Beach",
+          "description": "Warm sandy beach atmosphere"
+        },
+        "candlelight": {
+          "name": "Candlelight",
+          "description": "Warm candlelit atmosphere"
+        },
+        "city": {
+          "name": "City",
+          "description": "Urban city atmosphere"
+        },
+        "cyber": {
+          "name": "Cyber",
+          "description": "Cyberpunk digital aesthetic"
+        },
+        "desert": {
+          "name": "Desert",
+          "description": "Warm desert tones"
+        },
+        "elegant": {
+          "name": "Elegant",
+          "description": "Sophisticated elegant aesthetic"
+        },
+        "firelight": {
+          "name": "Firelight",
+          "description": "Warm firelight glow"
+        },
+        "gallery": {
+          "name": "Gallery",
+          "description": "Art gallery atmosphere"
+        },
+        "jungle": {
+          "name": "Jungle",
+          "description": "Lush jungle green atmosphere"
+        },
+        "lake": {
+          "name": "Lake",
+          "description": "Calm lake blue atmosphere"
+        },
+        "laser": {
+          "name": "Laser",
+          "description": "Bright laser beam aesthetic"
+        },
+        "mahogany": {
+          "name": "Mahogany",
+          "description": "Rich mahogany wood tones"
+        },
+        "matrix": {
+          "name": "Matrix",
+          "description": "Digital matrix green aesthetic"
+        },
+        "meadow": {
+          "name": "Meadow",
+          "description": "Fresh meadow green atmosphere"
+        },
+        "mountain": {
+          "name": "Mountain",
+          "description": "Mountain peak atmosphere"
+        },
+        "one-piece-white": {
+          "name": "One Piece White",
+          "description": "Pure white for One Piece themes"
+        },
+        "plasma": {
+          "name": "Plasma",
+          "description": "Electric plasma glow"
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Premium luxury aesthetic"
+        },
+        "retro": {
+          "name": "Retro",
+          "description": "Retro vintage aesthetic"
+        },
+        "river": {
+          "name": "River",
+          "description": "Flowing river blue atmosphere"
+        },
+        "silk": {
+          "name": "Silk",
+          "description": "Smooth silk texture"
+        },
+        "sophisticated": {
+          "name": "Sophisticated",
+          "description": "Refined sophisticated aesthetic"
+        },
+        "starlight": {
+          "name": "Starlight",
+          "description": "Twinkling starlight atmosphere"
+        },
+        "studio": {
+          "name": "Studio",
+          "description": "Professional studio atmosphere"
+        },
+        "valley": {
+          "name": "Valley",
+          "description": "Peaceful valley atmosphere"
+        },
+        "velvet": {
+          "name": "Velvet",
+          "description": "Luxurious velvet texture"
+        },
+        "vintage": {
+          "name": "Vintage",
+          "description": "Classic vintage aesthetic"
         }
       },
       "themeGroups": {
         "basic": "Basic",
         "games": "Games",
         "anime": "Anime",
+        "horror": "Horror",
+        "cyberpunk": "Cyberpunk",
+        "programming": "Programming",
         "extraordinary": "Extraordinary",
         "nature": "Nature",
         "corporate": "Corporate",
@@ -2157,10 +2284,6 @@
           "name": "Gear 5",
           "description": "The peak of transformation. Golden energy flows through your interface. Joy, freedom, and unstoppable momentum. The ultimate form, now on your screen."
         },
-        "balloons": {
-          "name": "Balloons",
-          "description": "Celebration in every color. Festive, vibrant, and absolutely joyful. When life needs a party, this theme delivers. Pop the fun, not the balloons."
-        },
         "luck": {
           "name": "Luck",
           "description": "Fortune favors the bold. Green and gold dance together in perfect harmony. When opportunity knocks, this theme answers. Your lucky day starts here."
@@ -2177,9 +2300,13 @@
           "name": "Shit",
           "description": "Bold, earthy, and unapologetically honest. Sometimes you need to call things what they are. Brown, real, and absolutely no filter. When subtlety is overrated."
         },
+        "pipBoy": {
+          "name": "Pip-Boy",
+          "description": "The iconic green terminal interface from Fallout. Vault-Tec approved. Nuclear wasteland aesthetic meets retro computing. Perfect for wandering the wasteland or debugging code."
+        },
         "programming": {
           "name": "Programming",
-          "description": "Terminal green on black. Where code becomes art and bugs become features. The programmer's sanctuary. Code, compile, debug, repeat."
+          "description": "Modern developer workspace. Clean, focused, and optimized for long coding sessions. Where syntax highlighting meets productivity."
         },
         "outlast": {
           "name": "Outlast",
@@ -2358,7 +2485,7 @@
       "requestSubmittedDescription": "TODO: connect export/deletion requests to support workflow.",
       "saveSettings": "Save privacy settings",
       "preferencesSaved": "Privacy preferences saved",
-      "preferencesSavedDescription": "TODO: wire these toggles into Strapi privacy settings."
+      "preferencesSavedDescription": "TODO: wire these toggles into backend privacy settings."
     },
     "notifications": {
       "title": "Notifications",
@@ -2391,7 +2518,7 @@
       "quietHoursUpdatedDescription": "TODO: expose a time range picker for quiet hours.",
       "saveSettings": "Save notification settings",
       "preferencesSaved": "Notification preferences saved",
-      "preferencesSavedDescription": "TODO: sync notification toggles with user preferences in Strapi."
+      "preferencesSavedDescription": "TODO: sync notification toggles with user preferences in backend."
     },
     "sessions": {
       "title": "Active sessions",
@@ -2676,6 +2803,19 @@
     "emptyCommentDescription": "Please enter comment text before submitting",
     "commentSaved": "Comment saved",
     "commentSavedDescription": "Comments are currently stored locally on this device.",
+    "commentUpdated": "Comment updated",
+    "commentUpdatedDescription": "Comment has been successfully updated",
+    "commentDeleted": "Comment deleted",
+    "commentDeletedDescription": "Comment has been successfully deleted",
+    "commentError": "Error",
+    "commentErrorDescription": "Failed to perform action on comment",
+    "commentEmpty": "Comment cannot be empty",
+    "commentTooLong": "Comment is too long",
+    "commentTooLongDescription": "Maximum comment length: {maxLength} characters",
+    "reactionError": "Error",
+    "reactionErrorDescription": "Failed to add reaction",
+    "bookmarkError": "Error",
+    "bookmarkErrorDescription": "Failed to perform action on bookmark",
     "replySaved": "Reply saved",
     "replySavedDescription": "Reply is currently stored locally and visible only to you.",
     "shared": "Shared",
@@ -2714,13 +2854,9 @@
     "commentText": "Comment text",
     "source": "Source",
     "localStorage": "Local storage (only for current user)",
-    "strapi": "Strapi (public)",
     "replies": "Replies",
     "reactions": "Reactions (rating)",
     "syncStatus": "Sync status",
-    "pendingSync": "Pending sync to Strapi",
-    "syncedFromStrapi": "Synced from Strapi",
-    "todoSync": "TODO: replace local storage with Strapi API requests (`/api/comments`) and sync reactions via `/api/comment-reactions`.",
     "shareArticleDescription": "Spread the word about {title} across your favorite channels.",
     "shareLink": "Share link",
     "copied": "Copied",
@@ -2843,6 +2979,12 @@
     "unableToLoadDraftDescription": "We could not open this draft. It may have been removed.",
     "missingInformation": "Missing information",
     "missingInformationDescription": "Add a title and the main content before publishing.",
+    "editorNotReady": "Editor not ready",
+    "editorNotReadyDescription": "Editor is not ready or content is empty. Please add content and try again.",
+    "invalidContentFormat": "Invalid content format",
+    "invalidContentFormatDescription": "Invalid editor content format. Please try refreshing the page.",
+    "invalidContentStructure": "Invalid content structure",
+    "invalidContentStructureDescription": "Invalid content structure. Please try again.",
     "titleRequired": "Title required",
     "titleRequiredDescription": "Please add a title for your article.",
     "contentRequired": "Content required",
@@ -3704,7 +3846,9 @@
     "pageTitle": "Friends"
   },
   "dashboard": {
-    "pageTitle": "Dashboard"
+    "pageTitle": "Dashboard",
+    "editMode": "Edit mode",
+    "editModeDescription": "You are in edit mode. Turn it off to interact with widgets."
   },
   "pricing": {
     "pageTitle": "Pricing",

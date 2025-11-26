@@ -17,10 +17,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
 import {
   Users,
   Search,
@@ -30,8 +28,6 @@ import {
   Eye,
   Settings,
   CheckCircle2,
-  Star,
-  TrendingUp,
   Clock,
   ArrowRight,
   Heart,

@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Search, Award, Lock, CheckCircle2 } from 'lucide-react'
 import { AchievementCard } from '@/components/explore/AchievementCard'
-import { mockAchievements, mockUserStats } from '@/data/exploreMockData'
+import { mockAchievements } from '@/data/exploreMockData'
 
 export default function ExploreAchievementsPage() {
   const navigate = useNavigate()

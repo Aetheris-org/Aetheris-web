@@ -2,14 +2,17 @@ import * as React from "react"
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 5
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  dedupeKey?: string // Ключ для дедупликации тостов
+  count?: number // Счетчик для одинаковых тостов
+  originalDescription?: React.ReactNode // Оригинальное описание без счетчика
 }
 
 const actionTypes = {
@@ -71,6 +74,46 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // Проверяем дедупликацию: если есть тост с таким же dedupeKey, обновляем его
+      if (action.toast.dedupeKey) {
+        const existingToastIndex = state.toasts.findIndex(
+          (t) => t.dedupeKey === action.toast.dedupeKey && t.open
+        )
+        
+        if (existingToastIndex !== -1) {
+          const existingToast = state.toasts[existingToastIndex]
+          const newCount = (existingToast.count || 1) + 1
+          
+          // Используем сохраненное оригинальное описание или извлекаем из нового тоста
+          const originalDescription = existingToast.originalDescription || action.toast.description
+          
+          // Обновляем существующий тост с новым счетчиком
+          const updatedToasts = [...state.toasts]
+          updatedToasts[existingToastIndex] = {
+            ...existingToast,
+            ...action.toast,
+            count: newCount,
+            open: true,
+            originalDescription: originalDescription, // Сохраняем оригинальное описание
+            // Обновляем описание, чтобы показать счетчик
+            description: newCount > 1 
+              ? `${originalDescription} (${newCount})`
+              : originalDescription,
+          }
+          
+          // Сбрасываем таймер удаления для обновленного тоста
+          if (toastTimeouts.has(existingToast.id)) {
+            clearTimeout(toastTimeouts.get(existingToast.id)!)
+            toastTimeouts.delete(existingToast.id)
+          }
+          
+          return {
+            ...state,
+            toasts: updatedToasts,
+          }
+        }
+      }
+      
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
@@ -132,9 +175,11 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type Toast = Omit<ToasterToast, "id"> & {
+  dedupeKey?: string // Опциональный ключ для дедупликации
+}
 
-function toast({ ...props }: Toast) {
+function toast({ dedupeKey, ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -149,6 +194,9 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
+      dedupeKey,
+      count: 1,
+      originalDescription: props.description, // Сохраняем оригинальное описание
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()

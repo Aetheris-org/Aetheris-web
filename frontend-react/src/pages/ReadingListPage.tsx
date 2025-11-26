@@ -12,6 +12,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useAuthStore } from '@/stores/authStore'
 import { getBookmarks, removeBookmark } from '@/api/bookmarks-graphql'
 import { useToast } from '@/components/ui/use-toast'
+import { RateLimitError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
 
 export default function ReadingListPage() {
@@ -20,6 +21,32 @@ export default function ReadingListPage() {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const { toast } = useToast()
+
+  // Helper функция для обработки RateLimitError
+  const handleRateLimitError = (error: any) => {
+    if (error instanceof RateLimitError) {
+      const waitTime = error.waitTime
+      if (waitTime > 0) {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: waitTime === 1
+            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
+            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      } else {
+        toast({
+          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
+          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          variant: 'destructive',
+          dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
+        })
+      }
+      return true
+    }
+    return false
+  }
 
   // Fetch bookmarks from backend
   const { data: bookmarks = [], isLoading } = useQuery({
@@ -41,6 +68,9 @@ export default function ReadingListPage() {
       })
     },
     onError: (error) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to remove bookmark:', error)
       toast({
         title: t('common.error'),
@@ -65,6 +95,9 @@ export default function ReadingListPage() {
       })
     },
     onError: (error) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
       logger.error('Failed to clear all bookmarks:', error)
       toast({
         title: t('common.error'),

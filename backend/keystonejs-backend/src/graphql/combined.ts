@@ -743,7 +743,7 @@ export const extendGraphqlSchema = graphql.extend((base) => {
           // Загружаем текущего пользователя, чтобы проверить существующие значения
           const currentUser = await context.sudo().query.User.findOne({
             where: { id: String(userId) },
-            query: 'id username email bio avatar coverImage',
+            query: 'id username bio avatar coverImage', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
           });
           
           if (!currentUser) {
@@ -794,13 +794,13 @@ export const extendGraphqlSchema = graphql.extend((base) => {
             updatedUser = await context.sudo().query.User.updateOne({
               where: { id: String(userId) },
               data: finalUpdateData,
-              query: 'id username email bio avatar coverImage createdAt updatedAt',
+              query: 'id username bio avatar coverImage createdAt updatedAt', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
             });
           } else {
             // Если ничего не изменилось, возвращаем текущего пользователя с полными данными
             updatedUser = await context.sudo().query.User.findOne({
               where: { id: String(userId) },
-              query: 'id username email bio avatar coverImage createdAt updatedAt',
+              query: 'id username bio avatar coverImage createdAt updatedAt', // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
             });
           }
 

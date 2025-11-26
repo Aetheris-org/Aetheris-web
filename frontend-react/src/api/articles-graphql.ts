@@ -2,6 +2,9 @@ import { query, mutate } from '@/lib/graphql';
 import { logger } from '@/lib/logger';
 import type { Article, ArticleDifficulty, ArticleSortOption } from '@/types/article';
 
+// Re-export types for use in other files
+export type { ArticleDifficulty, ArticleSortOption } from '@/types/article';
+
 interface ArticlesResponse {
   data: Article[];
   total: number;
@@ -11,10 +14,15 @@ interface ArticlesResponse {
 export function transformArticle(article: any): Article {
   // Обрабатываем content - может быть объектом Slate document или строкой
   const content = article.content || { document: [] };
-  const contentJSON = content && typeof content === 'object' && content.document 
-    ? content 
-    : null;
   
+  // Оставляем Slate формат { document: [...] } для конвертации через slateToProseMirror в ArticleContent
+  // ArticleContent сам определит формат и конвертирует Slate в ProseMirror при необходимости
+  let contentJSON: any = null;
+  if (content && typeof content === 'object' && content.document) {
+    // Передаем оригинальный Slate формат - ArticleContent конвертирует его в ProseMirror
+    contentJSON = content;
+  }
+
   return {
     id: String(article.id),
     title: article.title || '',
@@ -22,7 +30,7 @@ export function transformArticle(article: any): Article {
     contentJSON: contentJSON, // Slate JSON для использования с TipTap/ArticleContent
     excerpt: article.excerpt || '',
     author: {
-      id: String(article.author?.id || ''),
+      id: Number(article.author?.id) || 0,
       username: article.author?.username || '',
       avatar: article.author?.avatar || null,
     },
@@ -32,12 +40,12 @@ export function transformArticle(article: any): Article {
     likes: article.likes_count || 0,
     dislikes: article.dislikes_count || 0,
     views: article.views || 0,
-    publishedAt: article.publishedAt ? new Date(article.publishedAt).toISOString() : null,
     createdAt: article.createdAt ? new Date(article.createdAt).toISOString() : new Date().toISOString(),
     updatedAt: article.updatedAt ? new Date(article.updatedAt).toISOString() : new Date().toISOString(),
     commentsCount: Array.isArray(article.comments) ? article.comments.length : 0,
     userReaction: article.userReaction || null,
     isBookmarked: false, // TODO: добавить bookmarks
+    status: article.status || 'published',
   };
 }
 
@@ -66,7 +74,7 @@ export async function getArticles(params?: {
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Также используем searchArticles когда есть только difficulty фильтр
   const hasSearch = search && typeof search === 'string' && search.trim().length >= 2;
   const hasTags = tags && tags.length > 0;
-  const hasDifficulty = difficulty && difficulty !== 'all';
+  const hasDifficulty = !!difficulty;
   const needsCustomResolver = hasTags || hasSearch || hasDifficulty;
   
   // Логирование для отладки
@@ -134,12 +142,12 @@ export async function getArticles(params?: {
 
     try {
       // Маппинг difficulty для обратной совместимости
-      let difficultyValue = difficulty;
-      if (difficultyValue === 'beginner') {
+      let difficultyValue: 'easy' | 'medium' | 'hard' | undefined = undefined;
+      if (difficulty === 'beginner') {
         difficultyValue = 'easy';
-      } else if (difficultyValue === 'intermediate') {
+      } else if (difficulty === 'intermediate') {
         difficultyValue = 'medium';
-      } else if (difficultyValue === 'advanced') {
+      } else if (difficulty === 'advanced') {
         difficultyValue = 'hard';
       }
 
@@ -181,14 +189,14 @@ export async function getArticles(params?: {
   }
   } else {
     // Используем стандартный GraphQL query articles без фильтров
-    const articlesQuery = `
+  const articlesQuery = `
       query GetArticles($skip: Int!, $take: Int!, $orderBy: [ArticleOrderByInput!], $where: ArticleWhereInput) {
         articlesCount(where: $where)
       articles(
           where: $where
-          skip: $skip
+        skip: $skip
         take: $take
-          orderBy: $orderBy
+        orderBy: $orderBy
       ) {
         id
         title
@@ -212,11 +220,11 @@ export async function getArticles(params?: {
         updatedAt
         comments {
           id
-          }
-          userReaction
         }
+          userReaction
       }
-    `;
+    }
+  `;
 
     // Строим where фильтр
     const where: any = {
@@ -226,46 +234,48 @@ export async function getArticles(params?: {
     // Фильтр по difficulty (с маппингом для обратной совместимости)
     if (difficulty) {
       // Маппинг difficulty для обратной совместимости
-      let difficultyValue = difficulty;
-      if (difficultyValue === 'beginner') {
+      let difficultyValue: 'easy' | 'medium' | 'hard' | undefined = undefined;
+      if (difficulty === 'beginner') {
         difficultyValue = 'easy';
-      } else if (difficultyValue === 'intermediate') {
+      } else if (difficulty === 'intermediate') {
         difficultyValue = 'medium';
-      } else if (difficultyValue === 'advanced') {
+      } else if (difficulty === 'advanced') {
         difficultyValue = 'hard';
       }
-      where.difficulty = { equals: difficultyValue };
+      if (difficultyValue) {
+        where.difficulty = { equals: difficultyValue };
+      }
     }
 
-    // Определяем сортировку
-    let orderBy: any[] = [];
-    if (sort === 'newest') {
-      orderBy = [{ publishedAt: 'desc' }];
-    } else if (sort === 'oldest') {
-      orderBy = [{ publishedAt: 'asc' }];
-    } else if (sort === 'popular') {
-      orderBy = [{ likes_count: 'desc' }];
-    }
+  // Определяем сортировку
+  let orderBy: any[] = [];
+  if (sort === 'newest') {
+    orderBy = [{ publishedAt: 'desc' }];
+  } else if (sort === 'oldest') {
+    orderBy = [{ publishedAt: 'asc' }];
+  } else if (sort === 'popular') {
+    orderBy = [{ likes_count: 'desc' }];
+  }
 
-    try {
-      const response = await query<{
-        articlesCount: number;
-        articles: any[];
-      }>(articlesQuery, {
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy,
+  try {
+    const response = await query<{
+      articlesCount: number;
+      articles: any[];
+    }>(articlesQuery, {
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy,
         where,
-      });
+    });
 
-      const articles = response.articles.map(transformArticle);
+    const articles = response.articles.map(transformArticle);
 
-      return {
-        data: articles,
-        total: response.articlesCount,
-      };
+    return {
+      data: articles,
+      total: response.articlesCount,
+    };
   } catch (error) {
-      logger.error('Failed to fetch articles:', error);
+    logger.error('Failed to fetch articles:', error);
       throw error;
     }
   }
@@ -276,7 +286,7 @@ export async function getArticles(params?: {
  */
 export async function getArticle(
   id: string,
-  options?: { userId?: string | number }
+  _options?: { userId?: string | number }
 ): Promise<Article | null> {
   const queryString = `
     query GetArticle($id: ID!) {
@@ -338,7 +348,7 @@ export async function getArticle(
  * Получение трендовых статей
  */
 export async function getTrendingArticles(
-  userId?: string | number,
+  _userId?: string | number,
   limit: number = 10
 ): Promise<Article[]> {
   const queryString = `
@@ -397,7 +407,7 @@ export async function getTrendingArticles(
  */
 export async function searchArticles(
   searchQuery: string,
-  userId?: string | number,
+  _userId?: string | number,
   start: number = 0,
   limit: number = 10
 ): Promise<ArticlesResponse> {
@@ -504,7 +514,7 @@ export async function reactArticle(articleId: string, reaction: 'like' | 'dislik
     }>(mutation, {
       articleId,
       reaction,
-    });
+    }, undefined, 'reaction'); // Используем специальный rate limit для реакций (3/5 сек)
 
     return transformArticle(response.reactToArticle);
   } catch (error) {
@@ -568,18 +578,18 @@ export async function createArticle(data: {
 
     // Формируем данные для мутации
     const mutationData: any = {
-      title: data.title,
+        title: data.title,
       content: data.content,
       excerpt: data.excerpt || null,
       tags: data.tags || [],
       difficulty: mapDifficulty(data.difficulty),
       previewImage: data.previewImage || null,
-      publishedAt: data.publishedAt,
+        publishedAt: data.publishedAt,
     };
 
     const response = await mutate<{ createArticle: any }>(createMutation, {
       data: mutationData,
-    });
+    }, undefined, 'article-mutation'); // Используем специальный rate limit для создания статей (1/60 сек)
 
     return transformArticle(response.createArticle);
   } catch (error: any) {
@@ -676,7 +686,7 @@ export async function updateArticle(
     const response = await mutate<{ updateArticle: any }>(updateMutation, {
       id,
       data: updateData,
-    });
+    }, undefined, 'article-mutation'); // Используем специальный rate limit для обновления статей (1/60 сек)
 
     return transformArticle(response.updateArticle);
   } catch (error) {

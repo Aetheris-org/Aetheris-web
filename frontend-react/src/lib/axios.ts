@@ -1,5 +1,7 @@
 import axios from 'axios'
 import { logger } from './logger'
+import { rateLimiter, type RequestType } from './rateLimiter'
+import { RateLimitError } from './errors'
 
 // В development используем прокси Vite (/api -> http://localhost:1337)
 // Это позволяет cookie работать, так как все запросы идут через один домен (localhost:5173)
@@ -8,61 +10,6 @@ const baseURL = import.meta.env.DEV
   ? '/api' // Используем прокси Vite в development
   : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
 
-let isRefreshing = false
-let failedQueue: Array<{
-  resolve: (token: string | null) => void
-  reject: (error: any) => void
-}> = []
-
-let csrfToken: string | null = null
-let csrfTokenExpiry: number = 0
-const CSRF_TOKEN_TTL = 60 * 60 * 1000 // 1 час
-
-async function fetchCsrfToken(): Promise<string | null> {
-  // Проверяем, не истек ли токен
-  if (csrfToken && Date.now() < csrfTokenExpiry) {
-    return csrfToken
-  }
-
-  try {
-    // baseURL уже содержит /api (прокси), поэтому не добавляем /api снова
-    const response = await axios.get(`${baseURL}/auth/csrf`, {
-      withCredentials: true,
-    })
-    if (response.data?.csrfToken) {
-      csrfToken = response.data.csrfToken
-      csrfTokenExpiry = Date.now() + CSRF_TOKEN_TTL
-      if (import.meta.env.DEV) {
-        logger.debug('✅ CSRF token fetched')
-      }
-      return csrfToken
-    }
-    return null
-  } catch (error: any) {
-    // Игнорируем 429 ошибки (Too Many Requests) - просто используем старый токен
-    if (error?.response?.status === 429) {
-      if (import.meta.env.DEV) {
-        logger.warn('⚠️ CSRF token rate limited, using cached token')
-      }
-      return csrfToken // Возвращаем старый токен, если есть
-    }
-    if (import.meta.env.DEV) {
-      logger.error('❌ Failed to fetch CSRF token:', error)
-    }
-    return null
-  }
-}
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error)
-    } else {
-      prom.resolve(token)
-    }
-  })
-  failedQueue = []
-}
 
 function getTokenFromCookie(): string | null {
   const cookies = document.cookie.split(';')
@@ -98,12 +45,6 @@ export function deleteTokenCookie() {
   document.cookie = 'jwtToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
 }
 
-async function refreshAccessToken(): Promise<string | null> {
-  // Users & Permissions плагин Strapi не поддерживает refresh-токены из коробки.
-  // Если понадобится собственная реализация — добавить здесь.
-  logger.warn('🔄 Refresh token flow is not implemented for Strapi users-permissions')
-    return null
-}
 
 const pendingRequests = new Set<AbortController>()
 
@@ -114,6 +55,30 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(async (config) => {
   config.headers = config.headers || {}
+  
+  // Rate limiting: проверяем лимиты перед отправкой запроса
+  const method = config.method?.toUpperCase() || '';
+  const url = config.url || '';
+  
+  // Определяем тип операции из URL и метода
+  let rateLimitType: RequestType = 'mutation';
+  if (url.includes('/comments')) {
+    rateLimitType = 'comment';
+  } else if (url.includes('/upload')) {
+    rateLimitType = 'upload';
+  } else if (url.includes('/auth') || url.includes('/connect')) {
+    rateLimitType = 'login';
+  } else if (method === 'GET') {
+    rateLimitType = 'query';
+  }
+  
+  // Проверяем rate limit
+  const limitCheck = rateLimiter.checkLimit(rateLimitType);
+  if (!limitCheck.allowed) {
+    const waitTime = limitCheck.waitTime || 0;
+    logger.warn(`[Axios] Rate limit exceeded for ${rateLimitType}`, { waitTime, url });
+    return Promise.reject(new RateLimitError(waitTime, rateLimitType, 'client'));
+  }
   
   // Токен теперь в httpOnly cookie - JavaScript не может его прочитать
   // Но он автоматически отправится с запросом через withCredentials: true
@@ -148,17 +113,6 @@ apiClient.interceptors.request.use(async (config) => {
     config.headers['Content-Type'] = 'application/json'
   }
   
-  const unsafeMethods = ['POST', 'PUT', 'DELETE', 'PATCH']
-  if (unsafeMethods.includes(config.method?.toUpperCase() || '')) {
-    if (!csrfToken) {
-      await fetchCsrfToken()
-    }
-    
-    if (csrfToken) {
-      config.headers['X-CSRF-Token'] = csrfToken
-    }
-  }
-  
   const controller = new AbortController()
   config.signal = controller.signal
   pendingRequests.add(controller)
@@ -178,10 +132,26 @@ apiClient.interceptors.response.use(
         }
       })
     }
+    
+    // Записываем успешный запрос в историю rate limiter
+    const method = resp.config.method?.toUpperCase() || '';
+    const url = resp.config.url || '';
+    let rateLimitType: RequestType = 'mutation';
+    if (url.includes('/comments')) {
+      rateLimitType = 'comment';
+    } else if (url.includes('/upload')) {
+      rateLimitType = 'upload';
+    } else if (url.includes('/auth') || url.includes('/connect')) {
+      rateLimitType = 'login';
+    } else if (method === 'GET') {
+      rateLimitType = 'query';
+    }
+    rateLimiter.recordRequest(rateLimitType);
+    
     return resp
   },
   async (err) => {
-    const originalRequest = err.config
+    // const _originalRequest = err.config // Unused, but may be needed in future
     
     if (err.config?.signal) {
       pendingRequests.forEach(controller => {
@@ -193,69 +163,47 @@ apiClient.interceptors.response.use(
     
     const status = err.response?.status
     
-    if (status === 403 && err.response?.data?.message?.includes('CSRF')) {
-      if (import.meta.env.DEV) {
-        logger.warn('⚠️  CSRF token expired, fetching new one')
-      }
-      // Сбрасываем кэш токена при ошибке CSRF
-      csrfToken = null
-      csrfTokenExpiry = 0
-      await fetchCsrfToken()
+    // Обработка HTTP 429 ошибок (Rate Limit от сервера)
+    if (status === 429) {
+      const retryAfter = err.response?.headers?.['retry-after'] || err.response?.headers?.['Retry-After'];
+      const responseData = err.response?.data || {};
       
-      if (csrfToken && originalRequest.headers) {
-        originalRequest.headers['X-CSRF-Token'] = csrfToken
-        return apiClient(originalRequest)
+      // Пытаемся извлечь время ожидания из заголовка или ответа
+      let waitTime = 0;
+      if (retryAfter) {
+        waitTime = parseInt(retryAfter, 10);
+      } else if (responseData.waitTime !== undefined) {
+        waitTime = parseInt(responseData.waitTime, 10);
+      } else if (responseData.message) {
+        // Пытаемся извлечь время из сообщения (например, "wait 5 seconds")
+        const match = responseData.message.match(/(\d+)\s*(?:second|секунд)/i);
+        if (match) {
+          waitTime = parseInt(match[1], 10);
+        }
       }
+      
+      // Определяем тип операции из URL и метода
+      const url = err.config?.url || '';
+      const method = err.config?.method?.toUpperCase() || '';
+      let rateLimitType: RequestType = 'mutation';
+      if (url.includes('/comments')) {
+        rateLimitType = 'comment';
+      } else if (url.includes('/upload')) {
+        rateLimitType = 'upload';
+      } else if (url.includes('/auth') || url.includes('/connect')) {
+        rateLimitType = 'login';
+      } else if (method === 'GET') {
+        rateLimitType = 'query';
+      }
+      
+      logger.warn('[Axios] Server rate limit exceeded', { waitTime, type: rateLimitType, url });
+      return Promise.reject(new RateLimitError(waitTime, rateLimitType, 'server'));
     }
     
-    // Только пытаемся обновить токен если:
-    // 1. Это 401 ошибка
-    // 2. Запрос еще не повторялся
-    // 3. Изначально был токен (не публичный запрос)
-    const hadAuthHeader = originalRequest.headers?.Authorization
-    
-    if (
-      status === 401 &&
-      !originalRequest._retry &&
-      hadAuthHeader && // Только если изначально был токен
-      err.name !== 'AbortError' &&
-      err.name !== 'CanceledError'
-    ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject })
-        })
-          .then(token => {
-            if (token) {
-              originalRequest.headers.Authorization = `Bearer ${token}`
-            }
-            return apiClient(originalRequest)
-          })
-          .catch(err => Promise.reject(err))
-      }
-      
-      originalRequest._retry = true
-      isRefreshing = true
-      
-      try {
-        const newToken = await refreshAccessToken()
-        
-        if (newToken) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
-          processQueue(null, newToken)
-          return apiClient(originalRequest)
-        } else {
-          processQueue(new Error('Failed to refresh token'), null)
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'))
-          return Promise.reject(err)
-        }
-      } catch (refreshError) {
-        processQueue(refreshError, null)
-        window.dispatchEvent(new CustomEvent('auth:unauthorized'))
-        return Promise.reject(refreshError)
-      } finally {
-        isRefreshing = false
-      }
+    // KeystoneJS использует сессии через cookies, refresh token не требуется
+    // При 401 ошибке просто редиректим на страницу авторизации
+    if (status === 401) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
     }
     
     return Promise.reject(err)

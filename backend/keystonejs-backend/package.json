@@ -5,14 +5,20 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "keystone dev",
+    "prebuild": "node scripts/fix-next-config.js || true",
     "build": "keystone build",
+    "postbuild": "node scripts/fix-next-config.js || true",
     "start": "keystone start",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && patch-package",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
-  "keywords": ["keystonejs", "graphql", "backend"],
+  "keywords": [
+    "keystonejs",
+    "graphql",
+    "backend"
+  ],
   "author": "",
   "license": "ISC",
   "engines": {
@@ -21,7 +27,6 @@
   },
   "dependencies": {
     "@keystone-6/auth": "^8.1.0",
-    "@keystone-6/cloudinary": "^8.0.0",
     "@keystone-6/core": "^6.5.1",
     "@keystone-6/fields-document": "^9.1.1",
     "@prisma/client": "^6.19.0",
@@ -30,9 +35,7 @@
     "compression": "^1.8.1",
     "connect-redis": "^9.0.0",
     "cors": "^2.8.5",
-    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.2.1",
     "express-session": "^1.18.2",
     "express-validator": "^7.3.0",
@@ -40,17 +43,13 @@
     "hpp": "^0.2.3",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
-    "mime-types": "^3.0.1",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
-    "mysql2": "^3.15.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "prisma": "^6.19.0",
-    "sharp": "^0.34.5",
-    "uuid": "^13.0.0",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^4.1.12"
@@ -61,7 +60,6 @@
     "@types/express-session": "^1.18.2",
     "@types/hpp": "^0.2.7",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/mime-types": "^3.0.1",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
@@ -69,8 +67,9 @@
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.15.6",
-    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.11",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

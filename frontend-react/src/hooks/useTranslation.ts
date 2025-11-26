@@ -12,9 +12,10 @@ import ruTranslations from '@/locales/ru.json'
 type Translations = typeof enTranslations
 
 // Загружаем переводы в зависимости от языка
+// Используем unknown для приведения типов, так как структуры могут отличаться
 const translations: Record<'en' | 'ru', Translations> = {
   en: enTranslations,
-  ru: ruTranslations,
+  ru: ruTranslations as unknown as Translations,
 }
 
 /**

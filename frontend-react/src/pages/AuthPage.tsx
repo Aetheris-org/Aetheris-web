@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
 import { useTranslation } from '@/hooks/useTranslation'
+import { logger } from '@/lib/logger'
 
 // В development используем прокси Vite для всех запросов
 // Это позволяет cookie работать, так как все запросы идут через один домен
@@ -53,15 +54,15 @@ export default function AuthPage() {
     // Это нужно для OAuth callback, чтобы вернуть пользователя на ту же страницу
     // Важно: сохраняем даже если redirectTarget это '/', так как это может быть лендинг
     if (hasExplicitRedirect) {
-      console.log('💾 Saving auth_redirect to sessionStorage:', redirectTarget)
+      logger.debug('💾 Saving auth_redirect to sessionStorage:', redirectTarget)
       sessionStorage.setItem('auth_redirect', redirectTarget)
       // Проверяем, что значение действительно сохранилось
       const saved = sessionStorage.getItem('auth_redirect')
-      console.log('✅ Verified saved redirect:', saved)
+      logger.debug('✅ Verified saved redirect:', saved)
     } else {
       // Если redirect не был передан, значит пользователь зашел напрямую на /auth
       // В этом случае после авторизации перенаправим на /forum (главная страница со статьями)
-      console.log('⚠️ No explicit redirect found, will use /forum after auth')
+      logger.debug('⚠️ No explicit redirect found, will use /forum after auth')
     }
 
     // Используем KeystoneJS OAuth endpoint

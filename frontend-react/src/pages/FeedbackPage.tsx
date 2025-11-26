@@ -48,12 +48,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { mockBugs, mockFeatures, type Feedback, type FeedbackType, type FeedbackStatus, type FeedbackPriority } from '@/data/feedbackMockData'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DevelopmentBanner } from '@/components/DevelopmentBanner'
+import { logger } from '@/lib/logger'
 // Simple date formatting function (replaces date-fns)
 function formatTimeAgo(date: Date): string {
   const now = new Date()
@@ -152,7 +152,7 @@ export default function FeedbackPage() {
 
   const handleReaction = (feedbackId: string, reactionType: 'upvote' | 'downvote' | 'important' | 'duplicate' | 'wontfix') => {
     // TODO: Replace with API call
-    console.log('Reaction:', feedbackId, reactionType)
+    logger.debug('Reaction:', feedbackId, reactionType)
   }
 
   return (
@@ -634,7 +634,7 @@ function CreateFeedbackDialog({ open, onOpenChange }: CreateFeedbackDialogProps)
     setIsSubmitting(true)
     // TODO: Replace with API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log('Creating feedback:', {
+    logger.debug('Creating feedback:', {
       type,
       title,
       description,

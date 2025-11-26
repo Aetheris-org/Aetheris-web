@@ -20,7 +20,6 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
-  TrendingUp,
   Users,
   Zap,
   Award,
@@ -32,7 +31,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from 'lucide-react'
-import type { Course, CourseFilters } from '@/types/courses'
+import type { Course } from '@/types/courses'
 import { mockCourses, mockCategories, mockAuthors } from '@/data/coursesMockData'
 
 type ViewMode = 'all' | 'verified' | 'community'

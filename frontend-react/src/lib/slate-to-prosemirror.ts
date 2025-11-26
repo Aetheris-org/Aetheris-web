@@ -6,6 +6,8 @@
  * Эта функция позволяет использовать TipTap Editor для отображения контента
  */
 
+import { logger } from './logger'
+
 interface SlateNode {
   type?: string
   children?: SlateNode[]
@@ -161,7 +163,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
       if (headingAnchor.blockId) {
         headingResult.attrs.blockId = headingAnchor.blockId
         if (import.meta.env.DEV) {
-          console.log('[slateToProseMirror] Extracted blockId for heading:', headingAnchor.blockId)
+          logger.debug('[slateToProseMirror] Extracted blockId for heading:', headingAnchor.blockId)
         }
       }
       return headingResult
@@ -219,7 +221,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
       if (codeBlockId) {
         codeResult.attrs.blockId = codeBlockId
         if (import.meta.env.DEV) {
-          console.log('[slateToProseMirror] Extracted blockId for codeBlock:', codeBlockId)
+          logger.debug('[slateToProseMirror] Extracted blockId for codeBlock:', codeBlockId)
         }
       }
       return codeResult
@@ -272,7 +274,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
         if (blockquoteBlockId) {
           calloutResult.attrs.blockId = blockquoteBlockId
           if (import.meta.env.DEV) {
-            console.log('[slateToProseMirror] Extracted blockId for callout:', blockquoteBlockId)
+            logger.debug('[slateToProseMirror] Extracted blockId for callout:', blockquoteBlockId)
           }
         }
         return calloutResult
@@ -286,7 +288,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
       if (blockquoteBlockId) {
         blockquoteResult.attrs = { blockId: blockquoteBlockId }
         if (import.meta.env.DEV) {
-          console.log('[slateToProseMirror] Extracted blockId for blockquote:', blockquoteBlockId)
+          logger.debug('[slateToProseMirror] Extracted blockId for blockquote:', blockquoteBlockId)
         }
       }
       return blockquoteResult
@@ -313,7 +315,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
       if (listItemAnchor.blockId) {
         listItemResult.attrs = { blockId: listItemAnchor.blockId }
         if (import.meta.env.DEV) {
-          console.log('[slateToProseMirror] Extracted blockId for listItem:', listItemAnchor.blockId)
+          logger.debug('[slateToProseMirror] Extracted blockId for listItem:', listItemAnchor.blockId)
         }
       }
       return listItemResult
@@ -374,7 +376,7 @@ function convertSlateToProseMirror(node: SlateNode): any {
       if (blockId) {
         result.attrs = { blockId }
         if (import.meta.env.DEV) {
-          console.log('[slateToProseMirror] Extracted blockId for paragraph:', blockId)
+          logger.debug('[slateToProseMirror] Extracted blockId for paragraph:', blockId)
         }
       }
 

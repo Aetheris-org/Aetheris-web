@@ -113,7 +113,7 @@ export async function addBookmark(articleId: string): Promise<Bookmark> {
   try {
     const response = await mutate<{ createBookmark: any }>(addBookmarkMutation, {
       articleId,
-    });
+    }, undefined, 'bookmark'); // Используем специальный rate limit для закладок (1/5 сек)
 
     return {
       id: response.createBookmark.id,
@@ -173,7 +173,7 @@ export async function removeBookmark(articleId: string): Promise<boolean> {
       }
     `;
 
-    await mutate(deleteBookmarkMutation, { id: bookmarkId });
+    await mutate(deleteBookmarkMutation, { id: bookmarkId }, undefined, 'bookmark'); // Используем специальный rate limit для закладок (1/5 сек)
     logger.debug(`Bookmark ${bookmarkId} for article ${articleId} successfully removed.`);
     return true;
   } catch (error: any) {
@@ -218,17 +218,19 @@ export async function isBookmarked(articleId: string): Promise<boolean> {
 
 /**
  * Получить количество закладок пользователя
+ * Использует встроенное поле bookmarksCount от KeystoneJS, которое автоматически
+ * применяет access control и возвращает только закладки текущего пользователя
  */
 export async function getBookmarksCount(): Promise<number> {
   const countQuery = `
     query GetBookmarksCount {
-      bookmarksCount
+      bookmarksCount(where: {})
     }
   `;
 
   try {
     const response = await query<{ bookmarksCount: number }>(countQuery);
-    return response.bookmarksCount;
+    return response.bookmarksCount || 0;
   } catch (error) {
     logger.error('Failed to fetch bookmarks count:', error);
     return 0;

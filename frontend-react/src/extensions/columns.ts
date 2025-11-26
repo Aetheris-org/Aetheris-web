@@ -115,11 +115,12 @@ export const Columns = Node.create({
     ]
   },
 
+  // @ts-expect-error - TipTap type definitions don't match our custom commands
   addCommands() {
     return {
       insertColumns:
         (preset: ColumnPresetKey = 'twoEqual') =>
-        ({ commands }) => {
+        ({ commands }: { commands: any }) => {
           const layout = COLUMN_LAYOUTS[preset].widths
           return commands.insertContent({
             type: this.name,
@@ -133,7 +134,7 @@ export const Columns = Node.create({
         },
       setColumnsLayout:
         (preset: ColumnPresetKey) =>
-        ({ state, dispatch }) => {
+        ({ state, dispatch }: { state: any; dispatch: any }) => {
           const layout = COLUMN_LAYOUTS[preset].widths
           const { selection } = state
           const { $from } = selection
@@ -146,7 +147,7 @@ export const Columns = Node.create({
                 ...node.attrs,
                 layout,
               })
-              node.forEach((child, offset, index) => {
+              node.forEach((child: any, offset: number, index: number) => {
                 const columnPos = pos + 1 + offset
                 const width = layout[index] ?? layout[layout.length - 1] ?? 50
                 transaction.setNodeMarkup(columnPos, undefined, {

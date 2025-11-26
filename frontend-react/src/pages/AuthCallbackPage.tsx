@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { getCurrentUser as getCurrentUserGraphQL } from '@/api/auth-graphql'
-import { getCurrentUser } from '@/api/profile'
+import { getCurrentUser, getCurrentUserGraphQL } from '@/api/auth-graphql'
 import { useAuthStore } from '@/stores/authStore'
+import { logger } from '@/lib/logger'
 
 export default function AuthCallbackPage() {
   const location = useLocation()
@@ -14,7 +14,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     // Проверяем sessionStorage в самом начале
     const initialRedirect = sessionStorage.getItem('auth_redirect')
-    console.log('🔍 AuthCallbackPage mounted, initial auth_redirect:', initialRedirect)
+    logger.debug('🔍 AuthCallbackPage mounted, initial auth_redirect:', initialRedirect)
     
     const handleCallback = async () => {
       const searchParams = new URLSearchParams(location.search)
@@ -36,7 +36,7 @@ export default function AuthCallbackPage() {
       const userId = searchParams.get('userId')
 
       if (oauthSuccess === 'success' && userId) {
-        console.log('✅ OAuth callback successful, userId:', userId)
+        logger.debug('✅ OAuth callback successful, userId:', userId)
         
         // KeystoneJS backend создал пользователя и сохранил userId в Express session
         // Теперь нужно создать KeystoneJS session через специальный endpoint
@@ -60,7 +60,7 @@ export default function AuthCallbackPage() {
           }
 
           const sessionData = await sessionResponse.json()
-          console.log('✅ KeystoneJS session created:', sessionData)
+          logger.debug('✅ KeystoneJS session created:', sessionData)
 
           // ПРИМЕЧАНИЕ: cookie с httpOnly: true не виден через document.cookie
           // Это нормально и правильно для безопасности
@@ -68,9 +68,9 @@ export default function AuthCallbackPage() {
 
           // Теперь получаем данные пользователя через GraphQL
           // Cookie должен автоматически передаваться благодаря credentials: 'include'
-          console.log('🔍 Fetching user data via GraphQL...')
+          logger.debug('🔍 Fetching user data via GraphQL...')
           const graphqlUser = await getCurrentUserGraphQL()
-          console.log('👤 GraphQL user:', graphqlUser)
+          logger.debug('👤 GraphQL user:', graphqlUser)
           
           if (!graphqlUser) {
             throw new Error('Failed to get user data after OAuth')
@@ -81,15 +81,15 @@ export default function AuthCallbackPage() {
           setUser(user)
 
           const savedRedirect = sessionStorage.getItem('auth_redirect')
-          console.log('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
+          logger.debug('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
           
           // Используем сохраненный redirect, если он есть
           const redirect = savedRedirect !== null ? savedRedirect : '/forum'
-          console.log('🚀 Navigating to:', redirect)
+          logger.debug('🚀 Navigating to:', redirect)
           sessionStorage.removeItem('auth_redirect')
           navigate(redirect, { replace: true })
         } catch (error) {
-          console.error('Failed to finalize OAuth callback:', error)
+          logger.error('Failed to finalize OAuth callback:', error)
           setErrorMessage('Не удалось завершить авторизацию. Повторите попытку.')
           setTimeout(() => navigate('/auth', { replace: true }), 3000)
         }
@@ -97,7 +97,7 @@ export default function AuthCallbackPage() {
       }
 
       // Если нет параметров OAuth, возможно это старый формат или ошибка
-      console.warn('⚠️ Unexpected OAuth callback format:', location.search)
+      logger.warn('⚠️ Unexpected OAuth callback format:', location.search)
       setErrorMessage('Неверный формат callback. Повторите попытку.')
       setTimeout(() => navigate('/auth', { replace: true }), 3000)
     }

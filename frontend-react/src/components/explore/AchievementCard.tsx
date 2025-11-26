@@ -70,7 +70,7 @@ export function AchievementCard({ achievement, compact = false }: AchievementCar
             </div>
             <p className="text-xs text-muted-foreground truncate">{achievement.description}</p>
             
-            {hasProgress && (
+            {hasProgress && achievement.progress && (
               <div className="mt-2">
                 <Progress value={achievement.progress.percentage} className="h-1" />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -134,7 +134,7 @@ export function AchievementCard({ achievement, compact = false }: AchievementCar
         </div>
 
         {/* Progress */}
-        {hasProgress && (
+        {hasProgress && achievement.progress && (
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">Progress</span>

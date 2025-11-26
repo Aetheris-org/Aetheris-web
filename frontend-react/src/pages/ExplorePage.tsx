@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -18,9 +17,7 @@ import {
   Users,
   Calendar,
   Search,
-  Filter,
   TrendingUp,
-  Crown,
   Zap,
   Target,
   Award,
@@ -37,14 +34,12 @@ import {
 import {
   mockDuels,
   mockClanWars,
-  mockClans,
   mockLeaderboards,
   mockEvents,
-  mockAchievements,
   mockUserStats,
 } from '@/data/exploreMockData'
 
-import type { DuelStatus, EventStatus, LeaderboardPeriod } from '@/types/explore'
+import type { LeaderboardPeriod } from '@/types/explore'
 
 export default function ExplorePage() {
   const navigate = useNavigate()

@@ -24,7 +24,6 @@ import {
   Users,
   UserPlus,
   Search,
-  Filter,
   Star,
   MoreVertical,
   MessageCircle,
@@ -40,7 +39,6 @@ import {
   BookOpen,
   GraduationCap,
   Eye,
-  UserCheck,
 } from 'lucide-react'
 import type { FriendUser, Friendship, FriendRequest, FriendSuggestion } from '@/types/friends'
 import {
@@ -222,7 +220,7 @@ export default function FriendsPage() {
 
           {/* Friends Tab */}
           <TabsContent value="friends" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-            <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+            <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
@@ -294,7 +292,7 @@ export default function FriendsPage() {
           <TabsContent value="requests" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
             <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
               {/* Received Requests */}
-              <Card className="border-dashed border-muted-foreground/40 opacity-40 hover:opacity-100 transition-opacity">
+              <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg">
                     <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
