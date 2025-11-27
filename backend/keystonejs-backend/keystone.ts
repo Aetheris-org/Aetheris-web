@@ -87,6 +87,7 @@ export default withAuth(
       extendGraphqlSchema,
     },
     server: {
+      host: '0.0.0.0',
       port: parseInt(process.env.PORT || '1337', 10),
       extendExpressApp,
       cors: {
