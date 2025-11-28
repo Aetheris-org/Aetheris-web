@@ -79,6 +79,9 @@ export async function extendExpressApp(
     express.urlencoded({ extended: true })(req, res, next);
   });
 
+  // 1.5. Trust proxy - для корректной работы rate limiting за reverse proxy (Render, nginx и т.д.)
+  app.set('trust proxy', 1);
+
   // 2. Helmet - Security headers
   // В development отключаем CSP для Admin UI (Next.js требует unsafe-eval для hot reload)
   const isDevelopment = process.env.NODE_ENV === 'development';
