@@ -19,9 +19,10 @@ function getDirectConnectionUrl() {
   }
   
 
-  if (dbUrl.includes('pooler.supabase.com:6543')) {
-    console.log('ℹ️  Using pooler connection (tables should already exist)');
-    return dbUrl;
+  if (dbUrl.includes('pooler.supabase.com') || dbUrl.includes(':6543')) {
+    console.log('ℹ️  Detected Supabase pooler connection');
+    console.log('ℹ️  Using pooler (tables should already exist, created via Supabase MCP)');
+    return dbUrl; 
   }
   
   return dbUrl;
