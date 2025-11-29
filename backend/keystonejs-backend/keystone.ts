@@ -74,7 +74,7 @@ export default withAuth(
     db: {
       provider: dbProvider,
       url: databaseURL,
-      useMigrations: true,
+      useMigrations: false,
       idField: { kind: dbProvider === 'postgresql' ? 'uuid' : 'autoincrement' },
     },
     lists,
