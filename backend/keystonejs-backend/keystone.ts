@@ -75,7 +75,7 @@ export default withAuth(
       provider: dbProvider,
       url: databaseURL,
       useMigrations: false,
-      idField: { kind: dbProvider === 'postgresql' ? 'uuid' : 'autoincrement' },
+      idField: { kind: 'autoincrement' }, // Используем autoincrement, так как таблицы уже созданы с integer ID
     },
     lists,
     session,
