@@ -147,7 +147,7 @@ export function clearCache() {
   }
 }
 
-let saveTimeout: NodeJS.Timeout | null = null
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
 
 /**
  * Настроить автоматическое сохранение кэша

@@ -641,7 +641,7 @@ export default function ArticlePage() {
   // const _addLocalComment = useLocalCommentsStore((state) => state.addComment) // Unused, but may be needed in future
 
   // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Защита от спама - debounce и проверка isPending
-  const bookmarkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const bookmarkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Очищаем таймер при размонтировании
   useEffect(() => {

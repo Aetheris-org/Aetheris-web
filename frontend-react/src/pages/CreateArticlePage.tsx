@@ -97,7 +97,7 @@ export default function CreateArticlePage() {
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [isLoadingDraft, setIsLoadingDraft] = useState(false)
   const [draftId, setDraftId] = useState<string | null>(null)
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<string | null>(null)
   const [lastDraftSaveTime, setLastDraftSaveTime] = useState<number>(0)
   const [currentStep, setCurrentStep] = useState(0)

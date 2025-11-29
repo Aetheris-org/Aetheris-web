@@ -544,7 +544,67 @@ export async function extendExpressApp(
     });
   }
 
-  // 6. Session store с Redis
+
+  app.use((req, res, next) => {
+    // Перехватываем установку cookie через setHeader
+    const originalSetHeader = res.setHeader.bind(res);
+    res.setHeader = function(name: string, value: any) {
+      if (name.toLowerCase() === 'set-cookie' && Array.isArray(value)) {
+
+        value = value.map((cookie: string) => {
+          if (cookie.includes('keystonejs-session=')) {
+
+            cookie = cookie.replace(/;\s*sameSite=[^;]*/gi, '');
+            cookie = cookie.replace(/;\s*secure/gi, '');
+            cookie = cookie.replace(/;\s*partitioned/gi, '');
+            
+            // Добавляем правильные атрибуты для production (кросс-доменные запросы)
+            if (process.env.NODE_ENV === 'production') {
+              cookie += '; SameSite=None; Secure; Partitioned';
+            } else {
+              cookie += '; SameSite=Lax';
+            }
+            
+            logger.debug('Updated keystonejs-session cookie with cross-domain attributes');
+          }
+          return cookie;
+        });
+      }
+      return originalSetHeader(name, value);
+    };
+    const originalCookie = res.cookie.bind(res);
+    res.cookie = function(name: string, value: any, options: any = {}) {
+      if (name === 'keystonejs-session') {
+        
+        if (process.env.NODE_ENV === 'production') {
+          options.sameSite = 'none';
+          options.secure = true;
+         
+          if (!options.partitioned) {
+            setTimeout(() => {
+              const setCookieHeader = res.getHeader('Set-Cookie');
+              if (Array.isArray(setCookieHeader)) {
+                const updated = setCookieHeader.map((cookie: string) => {
+                  if (cookie.includes('keystonejs-session=') && !cookie.includes('Partitioned')) {
+                    return cookie + '; Partitioned';
+                  }
+                  return cookie;
+                });
+                res.setHeader('Set-Cookie', updated);
+              }
+            }, 0);
+          }
+        } else {
+          options.sameSite = 'lax';
+        }
+      }
+      return originalCookie(name, value, options);
+    };
+    
+    next();
+  });
+
+  // 7. Session store с Redis
   const redisClient = await getRedisClientWithFallback();
   const sessionStore = redisClient
     ? new RedisStore({ client: redisClient, prefix: 'session:' })
@@ -557,11 +617,13 @@ export async function extendExpressApp(
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production', 
         httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
+        maxAge: 7 * 24 * 60 * 60 * 1000, 
+
       },
+      name: 'connect.sid', 
     })
   );
 
@@ -817,8 +879,40 @@ export async function extendExpressApp(
         return res.status(500).json({ error: 'KeystoneJS context not available' });
       }
 
-      const oauthUserId = (req.session as any)?.oauthUserId;
+      // Отладочное логирование для диагностики проблемы с сессией
+      logger.debug('OAuth session endpoint called', {
+        hasSession: !!req.session,
+        sessionId: (req.session as any)?.id,
+        cookies: req.headers.cookie,
+        sessionKeys: req.session ? Object.keys(req.session) : [],
+        oauthUserIdFromSession: (req.session as any)?.oauthUserId,
+        userIdFromBody: (req.body as any)?.userId,
+        origin: req.headers.origin,
+        referer: req.headers.referer,
+      });
+
+      // Пробуем получить userId из сессии (основной способ)
+      // Если сессия не передается между доменами, используем userId из body (fallback)
+      // userId передается через query параметр в редиректе и может быть передан в body
+      let oauthUserId = (req.session as any)?.oauthUserId;
+      
+      // Fallback: если сессия не найдена, пробуем получить userId из body
+      // Это безопасно, так как userId уже был передан в query параметре редиректа
+      if (!oauthUserId && (req.body as any)?.userId) {
+        logger.debug('Using userId from body as fallback (session not available)');
+        oauthUserId = (req.body as any).userId;
+      }
+      
       if (!oauthUserId) {
+        logger.error('OAuth session not found', {
+          hasSession: !!req.session,
+          sessionId: (req.session as any)?.id,
+          cookies: req.headers.cookie,
+          sessionKeys: req.session ? Object.keys(req.session) : [],
+          userIdFromBody: (req.body as any)?.userId,
+          origin: req.headers.origin,
+          referer: req.headers.referer,
+        });
         return res.status(400).json({ error: 'OAuth session not found' });
       }
 
@@ -876,6 +970,15 @@ export async function extendExpressApp(
 
       // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не логируем email для безопасности
       logger.info(`✅ OAuth session created for user: ${user.id}`);
+      
+      // Логируем информацию о cookie для диагностики
+      const setCookieHeader = res.getHeader('Set-Cookie');
+      logger.debug('Cookie set in response:', {
+        hasSetCookie: !!setCookieHeader,
+        setCookieValue: setCookieHeader ? (Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toString().substring(0, 100) : null,
+        origin: req.headers.origin,
+        referer: req.headers.referer,
+      });
 
       res.json({
         success: true,

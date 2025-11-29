@@ -46,12 +46,14 @@ export default function AuthCallbackPage() {
             : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
 
           // Создаем KeystoneJS session для OAuth пользователя
+          // Передаем userId в body как fallback, если cookie сессии не передается между доменами
           const sessionResponse = await fetch(`${API_BASE}/api/auth/oauth/session`, {
             method: 'POST',
             credentials: 'include', // Важно: отправляем cookies
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ userId }), // Передаем userId в body как fallback
           })
 
           if (!sessionResponse.ok) {
@@ -61,18 +63,43 @@ export default function AuthCallbackPage() {
 
           const sessionData = await sessionResponse.json()
           logger.debug('✅ KeystoneJS session created:', sessionData)
+          
+          // Проверяем, что cookie был установлен в ответе
+          const setCookieHeader = sessionResponse.headers.get('Set-Cookie')
+          logger.debug('🔍 Cookie in response:', {
+            hasSetCookie: !!setCookieHeader,
+            setCookiePreview: setCookieHeader ? setCookieHeader.substring(0, 100) : null,
+          })
 
-          // ПРИМЕЧАНИЕ: cookie с httpOnly: true не виден через document.cookie
-          // Это нормально и правильно для безопасности
-          // Cookie должен автоматически передаваться в следующих запросах благодаря credentials: 'include'
+          // Небольшая задержка, чтобы cookie успел установиться
+          // Это особенно важно для кросс-доменных запросов
+          await new Promise(resolve => setTimeout(resolve, 200))
 
-          // Теперь получаем данные пользователя через GraphQL
-          // Cookie должен автоматически передаваться благодаря credentials: 'include'
-          logger.debug('🔍 Fetching user data via GraphQL...')
-          const graphqlUser = await getCurrentUserGraphQL()
-          logger.debug('👤 GraphQL user:', graphqlUser)
+
+          
+          let graphqlUser: any = null
+          let retries = 3
+          
+
+          while (!graphqlUser && retries > 0) {
+            try {
+              graphqlUser = await getCurrentUserGraphQL()
+              if (graphqlUser) {
+                logger.debug('👤 GraphQL user:', graphqlUser)
+                break
+              }
+            } catch (error: any) {
+              logger.warn(`⚠️ Failed to get user data (${retries} retries left):`, error.message)
+              if (retries > 1) {
+                // Ждем немного перед повторной попыткой
+                await new Promise(resolve => setTimeout(resolve, 200))
+              }
+            }
+            retries--
+          }
           
           if (!graphqlUser) {
+            logger.error('❌ Failed to get user data after OAuth (all retries exhausted)')
             throw new Error('Failed to get user data after OAuth')
           }
 

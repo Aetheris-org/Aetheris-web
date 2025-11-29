@@ -11,6 +11,10 @@ import logger from '../lib/logger';
 export const session = statelessSessions({
   secret: process.env.SESSION_SECRET || 'change-me-in-production',
   maxAge: 7 * 24 * 60 * 60, // 7 дней
+
+  secure: process.env.NODE_ENV === 'production', // Только HTTPS в production
+  path: '/', // Cookie доступен для всех путей
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Кросс-доменные запросы в production
   // Явно указываем имя cookie для совместимости
   // По умолчанию KeystoneJS использует 'keystonejs-session'
 });

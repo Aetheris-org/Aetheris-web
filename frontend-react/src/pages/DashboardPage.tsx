@@ -226,7 +226,7 @@ export default function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isCustomizing, setIsCustomizing] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const dragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { toast } = useToast()
 
   // Определяем количество колонок на основе ширины
