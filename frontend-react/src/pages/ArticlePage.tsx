@@ -2132,28 +2132,56 @@ export default function ArticlePage() {
                 <span className="hidden sm:inline">{t('article.share')}</span>
               </Button>
               {/* Кнопки редактирования/удаления для автора статьи */}
-              {user && article && String(user.id) === String(article.author.id) && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/create?edit=${article.id}`)}
-                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
-                  >
-                    <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">{t('article.edit') || 'Редактировать'}</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsDeleteArticleDialogOpen(true)}
-                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">{t('article.deleteArticle') || 'Удалить'}</span>
-                  </Button>
-                </>
-              )}
+              {(() => {
+                if (!user || !article) {
+                  if (import.meta.env.DEV) {
+                    logger.debug('[ArticlePage] No user or article:', { hasUser: !!user, hasArticle: !!article })
+                  }
+                  return null
+                }
+                
+                const userId = Number(user.id)
+                const authorId = Number(article.author.id)
+                const isAuthor = userId === authorId
+                
+                // Отладка в development режиме
+                if (import.meta.env.DEV) {
+                  logger.debug('[ArticlePage] Author check:', {
+                    userId,
+                    authorId,
+                    isAuthor,
+                    userNickname: user.nickname,
+                    authorUsername: article.author.username,
+                  })
+                }
+                
+                if (!isAuthor) {
+                  return null
+                }
+                
+                return (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/create?edit=${article.id}`)}
+                      className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+                    >
+                      <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">{t('article.edit') || 'Редактировать'}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsDeleteArticleDialogOpen(true)}
+                      className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">{t('article.deleteArticle') || 'Удалить'}</span>
+                    </Button>
+                  </>
+                )
+              })()}
             </div>
           </div>
 

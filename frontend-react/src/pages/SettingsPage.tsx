@@ -1379,12 +1379,27 @@ function ProfileSettings() {
         description: t('settings.profile.description'),
       })
     } catch (error: unknown) {
-      console.error('Failed to update profile', error)
+      logger.error('Failed to update profile', error)
+      const errorMessage = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+      const errorStatus = (error as { response?: { status?: number } })?.response?.status
+      
+      // Более детальное сообщение об ошибке
+      let description = t('settings.profile.profileUpdateFailed')
+      if (errorStatus === 400) {
+        if (errorMessage) {
+          description = errorMessage
+        } else {
+          description = t('settings.profile.uploadError') || 'Ошибка загрузки изображения. Проверьте формат файла (JPG, PNG, WEBP) и размер (максимум 8MB).'
+        }
+      } else if (errorStatus === 401) {
+        description = t('settings.profile.authError') || 'Требуется авторизация. Пожалуйста, войдите снова.'
+      } else if (errorMessage) {
+        description = errorMessage
+      }
+      
       toast({
         title: t('settings.profile.profileUpdateFailed'),
-        description:
-          (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
-          t('settings.profile.profileUpdateFailed'),
+        description,
         variant: 'destructive',
       })
     } finally {
