@@ -268,6 +268,18 @@ export async function getArticles(params?: {
         where,
     });
 
+    // Добавляем логирование для отладки
+    if (import.meta.env.DEV) {
+      logger.debug('[getArticles] Response:', {
+        articlesCount: response.articlesCount,
+        articlesLength: response.articles?.length || 0,
+        firstArticleId: response.articles?.[0]?.id,
+        whereFilter: where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
+    }
+
     const articles = response.articles.map(transformArticle);
 
     return {

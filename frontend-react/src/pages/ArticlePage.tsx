@@ -832,12 +832,14 @@ export default function ArticlePage() {
       // Инвалидируем кэш статей и редиректим на главную
       queryClient.invalidateQueries({ queryKey: ['articles'] })
       queryClient.invalidateQueries({ queryKey: ['article', id] })
+      queryClient.invalidateQueries({ queryKey: ['trending-articles'] })
       toast({
-        title: t('article.articleDeleted') || 'Статья удалена',
-        description: t('article.articleDeletedDescription') || 'Статья успешно удалена',
+        title: t('article.deleted') || 'Статья удалена',
+        description: t('article.deletedDescription') || 'Статья успешно удалена',
+        variant: 'default',
       })
       setIsDeleteArticleDialogOpen(false)
-      navigate('/')
+      navigate('/forum')
     },
     onError: (error: any) => {
       if (handleRateLimitError(error)) {

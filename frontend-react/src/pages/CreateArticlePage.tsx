@@ -29,7 +29,7 @@ import {
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
 import { createDraft, updateDraft, getDraft } from '@/api/drafts-graphql'
-import { createArticle, updateArticle } from '@/api/articles-graphql'
+import { createArticle, updateArticle, getArticle } from '@/api/articles-graphql'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 
@@ -118,7 +118,12 @@ export default function CreateArticlePage() {
   const effectiveImageUrl = selectedImageUrl ?? originalImageUrl
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
+  const editParam = searchParams.get('edit')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
+  const articleIdFromQuery = editParam ? editParam : null
+  const [isEditMode, setIsEditMode] = useState(!!articleIdFromQuery)
+  const [isLoadingArticle, setIsLoadingArticle] = useState(false)
+  const [articleToEdit, setArticleToEdit] = useState<any>(null)
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     if (!croppedImageBlob) {
@@ -252,6 +257,119 @@ export default function CreateArticlePage() {
   useEffect(() => {
     adjustTextareaHeight()
   }, [excerpt, adjustTextareaHeight])
+
+  // Загрузка статьи для редактирования
+  useEffect(() => {
+    if (articleIdFromQuery && user && !isLoadingArticle && !articleToEdit) {
+      setIsLoadingArticle(true)
+      getArticle(articleIdFromQuery)
+        .then((article) => {
+          if (article) {
+            // Проверяем, что пользователь является автором статьи
+            if (user.id !== article.author.id) {
+              toast({
+                title: t('createArticle.editNotAuthorized') || 'Not authorized',
+                description: t('createArticle.editNotAuthorizedDescription') || 'You can only edit your own articles',
+                variant: 'destructive',
+              })
+              navigate('/forum')
+              return
+            }
+            
+            setArticleToEdit(article)
+            setTitle(article.title)
+            setExcerpt(article.excerpt || '')
+            
+            // Преобразуем теги из JSON или массива
+            if (article.tags) {
+              if (Array.isArray(article.tags)) {
+                setTags(article.tags)
+              } else if (typeof article.tags === 'string') {
+                try {
+                  const parsed = JSON.parse(article.tags)
+                  setTags(Array.isArray(parsed) ? parsed : [])
+                } catch {
+                  setTags([])
+                }
+              } else {
+                setTags([])
+              }
+            }
+            
+            // Преобразуем difficulty из backend формата в frontend
+            const difficultyMap: Record<string, 'beginner' | 'intermediate' | 'advanced'> = {
+              easy: 'beginner',
+              medium: 'intermediate',
+              hard: 'advanced',
+            }
+            if (article.difficulty && difficultyMap[article.difficulty]) {
+              setDifficulty(difficultyMap[article.difficulty])
+            }
+            
+            // Устанавливаем превью изображение
+            if (article.previewImage) {
+              setExistingPreviewImageId(article.previewImage)
+              setOriginalImageUrl(article.previewImage)
+            }
+            
+            // Преобразуем контент из JSON в HTML для редактора
+            if (article.content) {
+              try {
+                // Если content - это объект с document (TipTap формат)
+                if (article.content.document) {
+                  setContentJSON(article.content.document)
+                  // Устанавливаем контент в редактор
+                  if (editorRef.current) {
+                    editorRef.current.setContent(article.content.document)
+                  }
+                } else if (typeof article.content === 'string') {
+                  // Если content - это строка (HTML)
+                  setContent(article.content)
+                } else if (Array.isArray(article.content)) {
+                  // Если content - это массив (Slate формат)
+                  setContentJSON(article.content)
+                  // Преобразуем в HTML для отображения
+                  const htmlContent = article.content
+                    .map((block: any) => {
+                      if (block.type === 'paragraph') {
+                        const text = block.children?.map((child: any) => child.text || '').join('') || ''
+                        return `<p>${text}</p>`
+                      }
+                      return ''
+                    })
+                    .join('')
+                  setContent(htmlContent)
+                }
+              } catch (error) {
+                logger.error('[CreateArticlePage] Failed to parse article content:', error)
+                setContent('')
+              }
+            }
+            
+            logger.debug('[CreateArticlePage] Article loaded for editing:', { articleId: article.id })
+          } else {
+            toast({
+              title: t('createArticle.articleNotFound') || 'Article not found',
+              description: t('createArticle.articleNotFoundDescription') || 'The article you are trying to edit does not exist',
+              variant: 'destructive',
+            })
+            navigate('/forum')
+          }
+        })
+        .catch((error) => {
+          logger.error('[CreateArticlePage] Failed to load article for editing:', error)
+          toast({
+            title: t('createArticle.loadError') || 'Error loading article',
+            description: t('createArticle.loadErrorDescription') || 'Failed to load article for editing',
+            variant: 'destructive',
+          })
+          navigate('/forum')
+        })
+        .finally(() => {
+          setIsLoadingArticle(false)
+        })
+    }
+  }, [articleIdFromQuery, user, isLoadingArticle, articleToEdit, navigate, toast, t])
 
   // Check if content is long enough to need collapsing
   useEffect(() => {
@@ -2075,10 +2193,16 @@ export default function CreateArticlePage() {
       })
 
       const publishedArticle = draftId
-        ? await updateArticle(String(draftId), {
-            ...articleData,
-            publishedAt: new Date().toISOString(),
-          })
+        // Если редактируем существующую статью, используем updateArticle
+        ? await (isEditMode && articleToEdit
+            ? updateArticle(String(articleToEdit.id), {
+                ...articleData,
+                publishedAt: articleToEdit.publishedAt || new Date().toISOString(),
+              })
+            : updateArticle(String(draftId), {
+                ...articleData,
+                publishedAt: new Date().toISOString(),
+              }))
         : await createArticle({
             ...articleData,
             publishedAt: new Date().toISOString(),
