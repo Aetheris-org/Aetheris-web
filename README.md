@@ -494,6 +494,7 @@ VITE_IMGBB_API_KEY=your_imgbb_api_key_here  # Опционально
 1. **Создайте Web Service в Render:**
    - Подключите GitHub репозиторий
    - Выберите ветку `main` (или нужную)
+   - **ВАЖНО:** Убедитесь, что включен **"Auto-Deploy"** в настройках сервиса (включен по умолчанию)
 
 2. **Настройки сервиса:**
    - **Name**: `aetheris-backend` (или любое другое)
@@ -501,6 +502,14 @@ VITE_IMGBB_API_KEY=your_imgbb_api_key_here  # Опционально
    - **Build Command**: `cd backend/keystonejs-backend && npm install && npm run build`
    - **Start Command**: `cd backend/keystonejs-backend && npm start`
    - **Node Version**: `18.x` (или выше, но не выше 22.x)
+   
+   **Автоматический деплой:**
+   - ✅ При каждом push в ветку `main` Render автоматически:
+     1. Обнаруживает изменения через GitHub webhook
+     2. Запускает Build Command
+     3. Пересобирает проект
+     4. Перезапускает сервис с новой версией
+   - ⚠️ Если Auto-Deploy отключен, нужно вручную нажать "Manual Deploy" в панели Render
 
    **Важно:** `keystone build` автоматически генерирует Prisma клиент из `schema.prisma` в правильное место (`@keystone-6/core/node_modules/.prisma/client/`). Не запускайте `prisma generate` вручную в Build Command, так как это может конфликтовать с механизмом KeystoneJS.
 
@@ -542,6 +551,7 @@ PORT="1337"
 1. **Создайте Static Site в Render:**
    - Подключите GitHub репозиторий
    - Выберите ветку `main`
+   - **ВАЖНО:** Убедитесь, что включен **"Auto-Deploy"** в настройках сервиса (включен по умолчанию)
 
 2. **Настройки:**
    - **Build Command**: `cd frontend-react && npm install && npm run build`
@@ -558,6 +568,24 @@ PORT="1337"
    ```
    /*    /index.html   200
    ```
+   
+   **ВАЖНО:** На Render.com для Static Sites также необходимо настроить редиректы через панель управления:
+   1. Перейдите в настройки вашего Static Site на Render.com
+   2. Найдите раздел **"Redirects/Rewrites"** или **"Custom Headers"**
+   3. Добавьте новое правило:
+      - **Source:** `/*`
+      - **Destination:** `/index.html`
+      - **Action:** `Rewrite` (или `200`)
+   
+   Это гарантирует, что все маршруты (включая `/auth/callback`) будут перенаправляться на `index.html`, позволяя React Router обрабатывать их на клиенте.
+
+**Автоматический деплой:**
+- ✅ При каждом push в ветку `main` Render автоматически:
+  1. Обнаруживает изменения через GitHub webhook
+  2. Запускает Build Command
+  3. Пересобирает проект
+  4. Деплоит новую версию
+- ⚠️ Если Auto-Deploy отключен, нужно вручную нажать "Manual Deploy" в панели Render
 
 #### Вариант 2: Деплой на Vercel
 

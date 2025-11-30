@@ -535,13 +535,46 @@ export default function CreateArticlePage() {
           draftData.previewImage = currentPreviewImage
         }
 
-        // Сохраняем черновик
+        // ВАЖНО: Сначала сохраняем в localStorage для быстрого восстановления при потере соединения
+        const localStorageKey = `draft_${currentDraftId || 'new'}`
+        try {
+          const localStorageData = {
+            ...draftData,
+            draftId: currentDraftId,
+            savedAt: new Date().toISOString(),
+            contentHTML: currentContent, // Сохраняем HTML для быстрого восстановления
+            contentJSON: finalContentJSON, // Сохраняем JSON для точного восстановления
+          }
+          localStorage.setItem(localStorageKey, JSON.stringify(localStorageData))
+          logger.debug('[CreateArticlePage] Saved draft to localStorage:', { key: localStorageKey })
+        } catch (localStorageError) {
+          logger.warn('[CreateArticlePage] Failed to save draft to localStorage:', localStorageError)
+          // Продолжаем сохранение на бэкенд даже если localStorage не работает
+        }
+
+        // Затем сохраняем черновик на бэкенд
         const saved = currentDraftId
           ? await updateDraft(currentDraftId, draftData)
           : await createDraft(draftData)
 
         setDraftId(saved.id)
         setLastDraftSaveTime(Date.now())
+        
+        // Обновляем localStorage с новым ID после создания
+        if (!currentDraftId && saved.id) {
+          try {
+            const newLocalStorageKey = `draft_${saved.id}`
+            const oldData = localStorage.getItem(localStorageKey)
+            if (oldData) {
+              const parsedData = JSON.parse(oldData)
+              parsedData.draftId = saved.id
+              localStorage.setItem(newLocalStorageKey, JSON.stringify(parsedData))
+              localStorage.removeItem(localStorageKey) // Удаляем старый ключ
+            }
+          } catch (error) {
+            logger.warn('[CreateArticlePage] Failed to update localStorage key:', error)
+          }
+        }
         
         // Обновляем URL в query params
         const nextParams = new URLSearchParams(searchParams)

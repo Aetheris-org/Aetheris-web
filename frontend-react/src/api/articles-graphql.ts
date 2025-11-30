@@ -694,3 +694,24 @@ export async function updateArticle(
     throw error;
   }
 }
+
+/**
+ * Удалить статью (только для создателя статьи)
+ */
+export async function deleteArticle(id: string): Promise<boolean> {
+  const deleteMutation = `
+    mutation DeleteArticle($id: ID!) {
+      deleteArticle(where: { id: $id }) {
+        id
+      }
+    }
+  `;
+
+  try {
+    await mutate(deleteMutation, { id }, undefined, 'article-mutation'); // Используем специальный rate limit для удаления статей (1/60 сек)
+    return true;
+  } catch (error) {
+    logger.error(`Failed to delete article ${id}:`, error);
+    throw error;
+  }
+}

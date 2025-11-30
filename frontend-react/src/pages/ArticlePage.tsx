@@ -36,7 +36,7 @@ import {
   Mail,
   Link2,
 } from 'lucide-react'
-import { getArticle, reactArticle } from '@/api/articles-graphql'
+import { getArticle, reactArticle, deleteArticle } from '@/api/articles-graphql'
 import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
@@ -211,6 +211,7 @@ export default function ArticlePage() {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
+  const [isDeleteArticleDialogOpen, setIsDeleteArticleDialogOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
   const replyInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
   const editInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
@@ -2130,6 +2131,29 @@ export default function ArticlePage() {
                 <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{t('article.share')}</span>
               </Button>
+              {/* Кнопки редактирования/удаления для автора статьи */}
+              {user && article && String(user.id) === String(article.author.id) && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/create?edit=${article.id}`)}
+                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+                  >
+                    <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{t('article.edit') || 'Редактировать'}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsDeleteArticleDialogOpen(true)}
+                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{t('article.deleteArticle') || 'Удалить'}</span>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -2645,6 +2669,36 @@ export default function ArticlePage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог подтверждения удаления статьи */}
+      <Dialog open={isDeleteArticleDialogOpen} onOpenChange={setIsDeleteArticleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('article.deleteArticle') || 'Удалить статью'}</DialogTitle>
+            <DialogDescription>
+              {t('article.deleteMessage') || 'Вы уверены, что хотите удалить эту статью? Это действие нельзя отменить.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteArticleDialogOpen(false)}
+              disabled={deleteArticleMutation.isPending}
+            >
+              {t('common.cancel') || 'Отмена'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteArticle}
+              disabled={deleteArticleMutation.isPending}
+            >
+              {deleteArticleMutation.isPending
+                ? t('common.deleting') || 'Удаление...'
+                : t('article.deleteArticle') || 'Удалить'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       </div>
