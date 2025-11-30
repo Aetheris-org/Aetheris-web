@@ -63,7 +63,7 @@ export default function AuthCallbackPage() {
 
           const sessionData = await sessionResponse.json()
           logger.debug('✅ KeystoneJS session created:', sessionData)
-          
+
           // Проверяем, что cookie был установлен в ответе
           const setCookieHeader = sessionResponse.headers.get('Set-Cookie')
           logger.debug('🔍 Cookie in response:', {
@@ -85,7 +85,7 @@ export default function AuthCallbackPage() {
             try {
               graphqlUser = await getCurrentUserGraphQL()
               if (graphqlUser) {
-                logger.debug('👤 GraphQL user:', graphqlUser)
+          logger.debug('👤 GraphQL user:', graphqlUser)
                 break
               }
             } catch (error: any) {

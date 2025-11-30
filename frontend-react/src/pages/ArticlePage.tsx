@@ -824,6 +824,41 @@ export default function ArticlePage() {
     },
   })
 
+  const deleteArticleMutation = useMutation({
+    mutationFn: (articleId: string) => {
+      return deleteArticle(articleId)
+    },
+    onSuccess: () => {
+      // Инвалидируем кэш статей и редиректим на главную
+      queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['article', id] })
+      toast({
+        title: t('article.articleDeleted') || 'Статья удалена',
+        description: t('article.articleDeletedDescription') || 'Статья успешно удалена',
+      })
+      setIsDeleteArticleDialogOpen(false)
+      navigate('/')
+    },
+    onError: (error: any) => {
+      if (handleRateLimitError(error)) {
+        return
+      }
+      logger.error('Failed to delete article:', error)
+      toast({
+        title: t('article.articleError') || 'Ошибка',
+        description: error?.response?.data?.error?.message || t('article.articleErrorDescription') || 'Не удалось удалить статью',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const handleDeleteArticle = () => {
+    if (!article?.id || deleteArticleMutation.isPending) {
+      return
+    }
+    deleteArticleMutation.mutate(String(article.id))
+  }
+
   const reactCommentMutation = useMutation({
     mutationFn: ({ commentId, reaction }: { commentId: string; reaction: 'like' | 'dislike' }) => {
       return reactToComment(commentId, reaction)

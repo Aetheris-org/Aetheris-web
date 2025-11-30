@@ -61,6 +61,335 @@ export async function extendExpressApp(
     },
   });
   
+  // КРИТИЧЕСКИ ВАЖНО: Обрабатываем /api/upload/image ДО всех других middleware,
+  // чтобы graphql-upload не перехватил multipart запрос
+  // Это должно быть ПЕРВЫМ middleware после инициализации multer
+  app.post('/api/upload/image', upload.single('files'), async (req, res) => {
+    try {
+      logger.debug('Image upload request received (early handler):', {
+        method: req.method,
+        path: req.path,
+        hasFile: !!req.file,
+        cookies: req.headers.cookie ? 'present' : 'missing',
+        contentType: req.headers['content-type'],
+      });
+
+      // Проверяем аутентификацию через KeystoneJS session
+      const ctx = context || keystoneContext;
+      if (!ctx) {
+        logger.error('KeystoneJS context not available for image upload', {
+          hasContext: !!context,
+          hasKeystoneContext: !!keystoneContext,
+        });
+        return res.status(500).json({ error: 'KeystoneJS context not available' });
+      }
+
+      if (!ctx.sessionStrategy) {
+        logger.error('KeystoneJS sessionStrategy not available', {
+          hasContext: !!ctx,
+          contextKeys: Object.keys(ctx || {}),
+        });
+        return res.status(500).json({ error: 'Session strategy not available' });
+      }
+      
+      logger.debug('KeystoneJS context available for image upload', {
+        hasSessionStrategy: !!ctx.sessionStrategy,
+        sessionStrategyType: typeof ctx.sessionStrategy,
+      });
+
+      // Создаем контекст с Express request и response для sessionStrategy
+      const sessionContext = {
+        ...ctx,
+        req: req,
+        res: res,
+      } as any;
+
+      // Получаем session через sessionStrategy
+      let sessionData;
+      try {
+        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
+        logger.debug('Image upload session check:', {
+          hasSession: !!sessionData,
+          itemId: sessionData?.itemId,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
+      } catch (sessionError: any) {
+        logger.error('Session check failed for image upload:', {
+          error: sessionError?.message,
+          stack: sessionError?.stack,
+          name: sessionError?.name,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
+        return res.status(401).json({ 
+          error: 'Authentication required',
+          details: process.env.NODE_ENV === 'development' ? sessionError?.message : undefined,
+        });
+      }
+
+      // Проверяем, что пользователь аутентифицирован
+      if (!sessionData?.itemId) {
+        logger.warn('Image upload attempted without authentication', {
+          hasSession: !!sessionData,
+          cookies: req.headers.cookie ? 'present' : 'missing',
+        });
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      logger.debug('Image upload request from authenticated user:', {
+        userId: sessionData.itemId,
+      });
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
+
+      const file = req.file;
+      
+      logger.debug('Image upload request:', {
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+      });
+
+      // Валидация размера файла
+      const maxFileSize = 8 * 1024 * 1024; // 8MB
+      if (file.size > maxFileSize) {
+        return res.status(400).json({ 
+          error: `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB` 
+        });
+      }
+
+      // Получаем API ключ ImgBB из переменных окружения
+      const imgbbApiKey = process.env.IMGBB_API_KEY;
+      
+      if (!imgbbApiKey) {
+        logger.error('IMGBB_API_KEY not configured in environment variables');
+        const publicUrl = process.env.PUBLIC_URL || 'http://localhost:1337';
+        const tempUrl = `${publicUrl}/uploads/${Date.now()}-${file.originalname}`;
+        
+        logger.warn('⚠️ ImgBB not configured, using temporary URL (not persisted)');
+        return res.json([{
+          id: Date.now().toString(),
+          url: tempUrl,
+          display_url: tempUrl,
+          delete_url: null,
+          size: file.size,
+          width: null,
+          height: null,
+          mime: file.mimetype,
+          name: file.originalname,
+        }]);
+      }
+
+      // Конвертируем файл в base64 для ImgBB API
+      const base64Image = file.buffer.toString('base64');
+
+      logger.debug('Preparing ImgBB upload:', {
+        filename: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        base64Length: base64Image.length,
+        hasApiKey: !!imgbbApiKey,
+      });
+
+      // Загружаем изображение через ImgBB API
+      const formData = new URLSearchParams();
+      formData.append('key', imgbbApiKey);
+      formData.append('image', base64Image);
+      
+      if (file.originalname) {
+        formData.append('name', file.originalname);
+      }
+      
+      const requestBody = formData.toString();
+      logger.debug('ImgBB request body length:', requestBody.length);
+
+      // Отправляем запрос к ImgBB API
+      const https = await import('https');
+      const timeoutMs = 30000; // 30 секунд таймаут
+      
+      try {
+        const imgbbResponse = await new Promise<{ statusCode: number; data: any }>((resolve, reject) => {
+          let timeout: NodeJS.Timeout;
+          
+          timeout = setTimeout(() => {
+            reject(new Error('Request timeout'));
+          }, timeoutMs);
+          
+          const req = https.request(
+            {
+              hostname: 'api.imgbb.com',
+              path: '/1/upload',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(requestBody),
+              },
+            },
+            (res) => {
+              let data = '';
+              
+              res.on('data', (chunk) => {
+                data += chunk.toString();
+              });
+              
+              res.on('end', () => {
+                clearTimeout(timeout);
+                
+                logger.debug('ImgBB API response:', {
+                  statusCode: res.statusCode,
+                  headers: res.headers,
+                  dataLength: data.length,
+                  dataPreview: data.substring(0, 200),
+                });
+                
+                if (!data || data.trim().length === 0) {
+                  logger.error('ImgBB API returned empty response', {
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                  });
+                  reject(new Error(`Empty response from ImgBB API (status: ${res.statusCode})`));
+                  return;
+                }
+                
+                if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+                  logger.error('ImgBB API returned error status:', {
+                    statusCode: res.statusCode,
+                    data: data.substring(0, 1000),
+                    headers: res.headers,
+                  });
+                }
+                
+                try {
+                  const jsonData = JSON.parse(data);
+                  resolve({
+                    statusCode: res.statusCode || 500,
+                    data: jsonData,
+                  });
+                } catch (parseError: any) {
+                  logger.error('Failed to parse ImgBB response:', {
+                    error: parseError.message,
+                    dataLength: data.length,
+                    dataPreview: data.substring(0, 1000),
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                    contentType: res.headers['content-type'],
+                  });
+                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res.statusCode}, Response preview: ${data.substring(0, 200)}`));
+                }
+              });
+              
+              res.on('error', (error) => {
+                clearTimeout(timeout);
+                logger.error('ImgBB API response error:', error);
+                reject(error);
+              });
+            }
+          );
+          
+          req.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+          
+          req.on('timeout', () => {
+            req.destroy();
+            clearTimeout(timeout);
+            reject(new Error('Request timeout'));
+          });
+          
+          req.write(requestBody);
+          req.end();
+        });
+
+        if (imgbbResponse.statusCode < 200 || imgbbResponse.statusCode >= 300) {
+          const errorText = typeof imgbbResponse.data === 'string' 
+            ? imgbbResponse.data 
+            : JSON.stringify(imgbbResponse.data);
+          logger.error('ImgBB API error:', {
+            status: imgbbResponse.statusCode,
+            error: errorText,
+          });
+          return res.status(imgbbResponse.statusCode).json({ 
+            error: 'Image upload failed',
+            details: process.env.NODE_ENV === 'development' ? errorText : undefined,
+          });
+        }
+
+        const imgbbData = imgbbResponse.data as {
+          success?: boolean;
+          data?: {
+            id?: string;
+            url?: string;
+            display_url?: string;
+            delete_url?: string;
+            size?: number;
+            width?: number;
+            height?: number;
+          };
+          error?: {
+            message?: string;
+            code?: number;
+          };
+        };
+
+        if (!imgbbData.success || !imgbbData.data) {
+          const errorMessage = imgbbData.error?.message || 'Unknown error';
+          logger.error('ImgBB upload failed:', errorMessage);
+          return res.status(400).json({ 
+            error: 'Image upload failed',
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+          });
+        }
+
+        logger.info('✅ Image uploaded successfully to ImgBB:', {
+          url: imgbbData.data.url,
+          size: imgbbData.data.size,
+        });
+
+        // Возвращаем данные в формате, совместимом с фронтендом
+        res.json([{
+          id: imgbbData.data.id || Date.now().toString(),
+          url: imgbbData.data.url || imgbbData.data.display_url,
+          display_url: imgbbData.data.display_url,
+          delete_url: imgbbData.data.delete_url,
+          size: imgbbData.data.size || file.size,
+          width: imgbbData.data.width,
+          height: imgbbData.data.height,
+          mime: file.mimetype,
+          name: file.originalname,
+        }]);
+      } catch (uploadError: any) {
+        logger.error('Failed to upload image to ImgBB:', {
+          error: uploadError.message,
+          code: uploadError.code,
+          stack: uploadError.stack,
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          return res.status(500).json({ 
+            error: 'Image upload failed',
+            details: uploadError.message || 'Unknown error',
+            code: uploadError.code,
+          });
+        }
+        
+        return res.status(500).json({ 
+          error: 'Image upload failed',
+        });
+      }
+    } catch (error: any) {
+      logger.error('Unexpected error in image upload handler:', {
+        error: error.message,
+        stack: error.stack,
+      });
+      return res.status(500).json({ 
+        error: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+  });
+  
   // 0. Body parser для JSON (должен быть первым для парсинга тела запросов)
   // ВАЖНО: Не применяем body parser к /api/upload/image, так как там используется multer
   app.use((req, res, next) => {
@@ -999,356 +1328,7 @@ export async function extendExpressApp(
     }
   });
 
-  // 11. Image upload endpoint
-  // Загрузка изображений через ImgBB API
-  // ВАЖНО: multer уже настроен выше
-  app.post('/api/upload/image', upload.single('files'), async (req, res) => {
-    try {
-      logger.debug('Image upload request received:', {
-        method: req.method,
-        path: req.path,
-        hasFile: !!req.file,
-        cookies: req.headers.cookie ? 'present' : 'missing',
-        contentType: req.headers['content-type'],
-      });
-
-      // Проверяем аутентификацию через KeystoneJS session
-      const ctx = context || keystoneContext;
-      if (!ctx) {
-        logger.error('KeystoneJS context not available for image upload', {
-          hasContext: !!context,
-          hasKeystoneContext: !!keystoneContext,
-        });
-        return res.status(500).json({ error: 'KeystoneJS context not available' });
-      }
-
-      if (!ctx.sessionStrategy) {
-        logger.error('KeystoneJS sessionStrategy not available', {
-          hasContext: !!ctx,
-          contextKeys: Object.keys(ctx || {}),
-        });
-        return res.status(500).json({ error: 'Session strategy not available' });
-      }
-      
-      logger.debug('KeystoneJS context available for image upload', {
-        hasSessionStrategy: !!ctx.sessionStrategy,
-        sessionStrategyType: typeof ctx.sessionStrategy,
-      });
-
-      // Создаем контекст с Express request и response для sessionStrategy
-      // sessionStrategy.get() требует context.req для чтения cookies
-      const sessionContext = {
-        ...ctx,
-        req: req,
-        res: res,
-      } as any;
-
-      // Получаем session через sessionStrategy
-      let sessionData;
-      try {
-        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
-        logger.debug('Image upload session check:', {
-          hasSession: !!sessionData,
-          itemId: sessionData?.itemId,
-          cookies: req.headers.cookie ? 'present' : 'missing',
-        });
-      } catch (sessionError: any) {
-        logger.error('Session check failed for image upload:', {
-          error: sessionError?.message,
-          stack: sessionError?.stack,
-          name: sessionError?.name,
-          cookies: req.headers.cookie ? 'present' : 'missing',
-        });
-        // Если ошибка при получении сессии, возвращаем 401
-        return res.status(401).json({ 
-          error: 'Authentication required',
-          details: process.env.NODE_ENV === 'development' ? sessionError?.message : undefined,
-        });
-      }
-
-      // Проверяем, что пользователь аутентифицирован
-      if (!sessionData?.itemId) {
-        logger.warn('Image upload attempted without authentication', {
-          hasSession: !!sessionData,
-          cookies: req.headers.cookie ? 'present' : 'missing',
-        });
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      
-      logger.debug('Image upload request from authenticated user:', {
-        userId: sessionData.itemId,
-      });
-
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file provided' });
-      }
-
-      const file = req.file;
-      
-      logger.debug('Image upload request:', {
-        filename: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-      });
-
-      // Валидация размера файла
-      const maxFileSize = 8 * 1024 * 1024; // 8MB
-      if (file.size > maxFileSize) {
-        return res.status(400).json({ 
-          error: `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB` 
-        });
-      }
-
-      // Получаем API ключ ImgBB из переменных окружения
-      const imgbbApiKey = process.env.IMGBB_API_KEY;
-      
-      if (!imgbbApiKey) {
-        logger.error('IMGBB_API_KEY not configured in environment variables');
-        // Fallback: возвращаем временный URL (в production нужно настроить ImgBB)
-        const publicUrl = process.env.PUBLIC_URL || 'http://localhost:1337';
-        const tempUrl = `${publicUrl}/uploads/${Date.now()}-${file.originalname}`;
-        
-        logger.warn('⚠️ ImgBB not configured, using temporary URL (not persisted)');
-        return res.json([{
-          id: Date.now().toString(),
-          url: tempUrl,
-          display_url: tempUrl,
-          delete_url: null,
-          size: file.size,
-          width: null,
-          height: null,
-          mime: file.mimetype,
-          name: file.originalname,
-        }]);
-      }
-
-      // Конвертируем файл в base64 для ImgBB API
-      const base64Image = file.buffer.toString('base64');
-
-      logger.debug('Preparing ImgBB upload:', {
-        filename: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-        base64Length: base64Image.length,
-        hasApiKey: !!imgbbApiKey,
-      });
-
-      // Загружаем изображение через ImgBB API
-      const formData = new URLSearchParams();
-      formData.append('key', imgbbApiKey);
-      formData.append('image', base64Image);
-      
-      if (file.originalname) {
-        formData.append('name', file.originalname);
-      }
-      
-      const requestBody = formData.toString();
-      logger.debug('ImgBB request body length:', requestBody.length);
-
-      // Отправляем запрос к ImgBB API
-      const https = await import('https');
-      const timeoutMs = 30000; // 30 секунд таймаут
-      
-      try {
-          const requestBody = formData.toString();
-        logger.debug('ImgBB request body length:', requestBody.length);
-        
-        const imgbbResponse = await new Promise<{ statusCode: number; data: any }>((resolve, reject) => {
-          let timeout: NodeJS.Timeout;
-          
-          timeout = setTimeout(() => {
-            reject(new Error('Request timeout'));
-          }, timeoutMs);
-          
-          const req = https.request(
-            {
-              hostname: 'api.imgbb.com',
-              path: '/1/upload',
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Content-Length': Buffer.byteLength(requestBody),
-              },
-            },
-            (res) => {
-              let data = '';
-              
-              res.on('data', (chunk) => {
-                data += chunk.toString();
-              });
-              
-              res.on('end', () => {
-                clearTimeout(timeout);
-                
-                // Логируем ответ для отладки
-                logger.debug('ImgBB API response:', {
-                  statusCode: res.statusCode,
-                  headers: res.headers,
-                  dataLength: data.length,
-                  dataPreview: data.substring(0, 200),
-                });
-                
-                // Проверяем, что данные не пустые
-                if (!data || data.trim().length === 0) {
-                  logger.error('ImgBB API returned empty response', {
-                    statusCode: res.statusCode,
-                    headers: res.headers,
-                  });
-                  reject(new Error(`Empty response from ImgBB API (status: ${res.statusCode})`));
-                  return;
-                }
-                
-                // Если статус код не успешный, логируем ответ перед парсингом
-                if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-                  logger.error('ImgBB API returned error status:', {
-                    statusCode: res.statusCode,
-                    data: data.substring(0, 1000),
-                    headers: res.headers,
-                  });
-                }
-                
-                try {
-                  const jsonData = JSON.parse(data);
-                  resolve({
-                    statusCode: res.statusCode || 500,
-                    data: jsonData,
-                  });
-                } catch (parseError: any) {
-                  logger.error('Failed to parse ImgBB response:', {
-                    error: parseError.message,
-                    dataLength: data.length,
-                    dataPreview: data.substring(0, 1000),
-                    statusCode: res.statusCode,
-                    headers: res.headers,
-                    contentType: res.headers['content-type'],
-                  });
-                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res.statusCode}, Response preview: ${data.substring(0, 200)}`));
-                }
-              });
-              
-              res.on('error', (error) => {
-                clearTimeout(timeout);
-                logger.error('ImgBB API response error:', error);
-                reject(error);
-              });
-            }
-          );
-          
-          req.on('error', (error) => {
-            clearTimeout(timeout);
-            reject(error);
-          });
-          
-          req.on('timeout', () => {
-            req.destroy();
-            clearTimeout(timeout);
-            reject(new Error('Request timeout'));
-          });
-          
-          req.write(requestBody);
-          req.end();
-        });
-
-        if (imgbbResponse.statusCode < 200 || imgbbResponse.statusCode >= 300) {
-          const errorText = typeof imgbbResponse.data === 'string' 
-            ? imgbbResponse.data 
-            : JSON.stringify(imgbbResponse.data);
-          logger.error('ImgBB API error:', {
-            status: imgbbResponse.statusCode,
-            error: errorText,
-          });
-          return res.status(imgbbResponse.statusCode).json({ 
-            error: 'Image upload failed',
-            details: process.env.NODE_ENV === 'development' ? errorText : undefined,
-          });
-        }
-
-        const imgbbData = imgbbResponse.data as {
-          success?: boolean;
-          data?: {
-            id?: string;
-            url?: string;
-            display_url?: string;
-            delete_url?: string;
-            size?: number;
-            width?: number;
-            height?: number;
-          };
-          error?: {
-            message?: string;
-            code?: number;
-          };
-        };
-
-        if (!imgbbData.success || !imgbbData.data) {
-          const errorMessage = imgbbData.error?.message || 'Unknown error';
-          logger.error('ImgBB upload failed:', errorMessage);
-          return res.status(400).json({ 
-            error: 'Image upload failed',
-            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-          });
-        }
-
-        logger.info('✅ Image uploaded successfully to ImgBB:', {
-          url: imgbbData.data.url,
-          size: imgbbData.data.size,
-        });
-
-        // Возвращаем данные в формате, совместимом с фронтендом
-        res.json([{
-          id: imgbbData.data.id || Date.now().toString(),
-          url: imgbbData.data.url || imgbbData.data.display_url,
-          display_url: imgbbData.data.display_url,
-          delete_url: imgbbData.data.delete_url,
-          size: imgbbData.data.size || file.size,
-          width: imgbbData.data.width,
-          height: imgbbData.data.height,
-          mime: file.mimetype,
-          name: file.originalname,
-        }]);
-      } catch (uploadError: any) {
-        logger.error('Failed to upload image to ImgBB:', {
-          error: uploadError.message,
-          code: uploadError.code,
-          stack: uploadError.stack,
-        });
-        
-        // В development показываем детали ошибки
-        if (process.env.NODE_ENV === 'development') {
-          return res.status(500).json({ 
-            error: 'Image upload failed',
-            details: uploadError.message || 'Unknown error',
-            code: uploadError.code,
-          });
-        }
-        
-        return res.status(500).json({ error: 'Image upload failed. Please try again.' });
-      }
-    } catch (error: any) {
-      logger.error('Image upload endpoint error:', {
-        error: error.message,
-        stack: error.stack,
-        name: error.name,
-        code: error.code,
-        type: typeof error,
-        keys: Object.keys(error || {}),
-      });
-      
-      // Если это ошибка аутентификации, возвращаем 401
-      if (error.message?.includes('Authentication') || error.message?.includes('session')) {
-        return res.status(401).json({ 
-          error: 'Authentication required',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        });
-      }
-      
-      res.status(500).json({ 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        code: process.env.NODE_ENV === 'development' ? error.code : undefined,
-      });
-    }
-  });
+  // 11. Image upload endpoint - УДАЛЕН (перенесен в начало функции для обработки до graphql-upload)
 
   // 11. CSRF token endpoint (для совместимости с frontend)
   // В KeystoneJS CSRF защита реализована через session cookies
