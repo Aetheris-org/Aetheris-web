@@ -37,6 +37,8 @@ export async function extendExpressApp(
     setKeystoneContext(context);
   }
   
+
+  
   // Настраиваем multer для загрузки изображений (должен быть определен до использования)
   const upload = multer({
     storage: multer.memoryStorage(), // Храним файл в памяти для отправки на ImgBB
@@ -61,10 +63,8 @@ export async function extendExpressApp(
     },
   });
   
-  // КРИТИЧЕСКИ ВАЖНО: Обрабатываем /api/upload/image ДО всех других middleware,
-  // чтобы graphql-upload не перехватил multipart запрос
-  // Это должно быть ПЕРВЫМ middleware после инициализации multer
-  app.post('/api/upload/image', upload.single('files'), async (req, res) => {
+ 
+  app.post('/upload/img', upload.single('files'), async (req, res) => {
     try {
       logger.debug('Image upload request received (early handler):', {
         method: req.method,
@@ -390,29 +390,24 @@ export async function extendExpressApp(
     }
   });
   
-  // 0. Body parser для JSON (должен быть первым для парсинга тела запросов)
-  // ВАЖНО: Не применяем body parser к /api/upload/image, так как там используется multer
+
   app.use((req, res, next) => {
     // Пропускаем body parser для multipart/form-data запросов (обрабатываются multer)
-    if (req.path === '/api/upload/image' && req.method === 'POST') {
+    if ((req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
       return next();
     }
     express.json()(req, res, next);
   });
   
   app.use((req, res, next) => {
-    // Пропускаем urlencoded parser для multipart/form-data запросов
-    if (req.path === '/api/upload/image' && req.method === 'POST') {
+
+    if ((req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
       return next();
     }
     express.urlencoded({ extended: true })(req, res, next);
   });
-
-  // 1.5. Trust proxy - для корректной работы rate limiting за reverse proxy (Render, nginx и т.д.)
   app.set('trust proxy', 1);
 
-  // 2. Helmet - Security headers
-  // В development отключаем CSP для Admin UI (Next.js требует unsafe-eval для hot reload)
   const isDevelopment = process.env.NODE_ENV === 'development';
   app.use(
     helmet({
