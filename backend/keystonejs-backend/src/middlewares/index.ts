@@ -64,7 +64,9 @@ export async function extendExpressApp(
   });
   
  
-  app.post('/upload/img', upload.single('files'), async (req, res) => {
+  // Используем путь /files/upload, чтобы graphql-upload точно не перехватил его
+  // graphql-upload обрабатывает только запросы к /api/graphql
+  app.post('/files/upload', upload.single('files'), async (req, res) => {
     try {
       logger.debug('Image upload request received (early handler):', {
         method: req.method,
@@ -393,7 +395,7 @@ export async function extendExpressApp(
 
   app.use((req, res, next) => {
     // Пропускаем body parser для multipart/form-data запросов (обрабатываются multer)
-    if ((req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
+    if ((req.path === '/files/upload' || req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
       return next();
     }
     express.json()(req, res, next);
@@ -401,7 +403,7 @@ export async function extendExpressApp(
   
   app.use((req, res, next) => {
 
-    if ((req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
+    if ((req.path === '/files/upload' || req.path === '/upload/img' || req.path === '/upload/image' || req.path === '/api/upload/image') && req.method === 'POST') {
       return next();
     }
     express.urlencoded({ extended: true })(req, res, next);

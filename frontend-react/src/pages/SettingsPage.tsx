@@ -1240,7 +1240,7 @@ function ProfileSettings() {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         logger.debug('[SettingsPage] Uploading image, attempt:', attempt)
-        const uploadResponse = await apiClient.post('/upload/img', formData, {
+        const uploadResponse = await apiClient.post('/files/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
