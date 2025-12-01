@@ -140,7 +140,7 @@ export default function CreateArticlePage() {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         logger.debug('[CreateArticlePage] Uploading preview image, attempt:', attempt)
-        const uploadResponse = await apiClient.post('/files/upload', formData, {
+        const uploadResponse = await apiClient.post('/upload/img', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
