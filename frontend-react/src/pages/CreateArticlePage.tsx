@@ -121,7 +121,6 @@ export default function CreateArticlePage() {
   const editParam = searchParams.get('edit')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
   const articleIdFromQuery = editParam ? editParam : null
-  const [isEditMode, setIsEditMode] = useState(!!articleIdFromQuery)
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
 
@@ -315,21 +314,18 @@ export default function CreateArticlePage() {
             // Преобразуем контент из JSON в HTML для редактора
             if (article.content) {
               try {
+                const content = article.content as any
                 // Если content - это объект с document (TipTap формат)
-                if (article.content.document) {
-                  setContentJSON(article.content.document)
-                  // Устанавливаем контент в редактор
-                  if (editorRef.current) {
-                    editorRef.current.setContent(article.content.document)
-                  }
-                } else if (typeof article.content === 'string') {
+                if (content && typeof content === 'object' && 'document' in content && content.document) {
+                  setContentJSON(content.document)
+                } else if (typeof content === 'string') {
                   // Если content - это строка (HTML)
-                  setContent(article.content)
-                } else if (Array.isArray(article.content)) {
+                  setContent(content)
+                } else if (Array.isArray(content)) {
                   // Если content - это массив (Slate формат)
-                  setContentJSON(article.content)
+                  setContentJSON(content)
                   // Преобразуем в HTML для отображения
-                  const htmlContent = article.content
+                  const htmlContent = content
                     .map((block: any) => {
                       if (block.type === 'paragraph') {
                         const text = block.children?.map((child: any) => child.text || '').join('') || ''
@@ -339,6 +335,9 @@ export default function CreateArticlePage() {
                     })
                     .join('')
                   setContent(htmlContent)
+                } else if (content && typeof content === 'object' && content.type === 'doc') {
+                  // Если content - это ProseMirror документ напрямую
+                  setContentJSON(content)
                 }
               } catch (error) {
                 logger.error('[CreateArticlePage] Failed to parse article content:', error)
@@ -2194,7 +2193,7 @@ export default function CreateArticlePage() {
 
       const publishedArticle = draftId
         // Если редактируем существующую статью, используем updateArticle
-        ? await (isEditMode && articleToEdit
+        ? await (articleIdFromQuery && articleToEdit
             ? updateArticle(String(articleToEdit.id), {
                 ...articleData,
                 publishedAt: articleToEdit.publishedAt || new Date().toISOString(),
