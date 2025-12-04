@@ -92,7 +92,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
     }
 
     // Получаем подписки
-    const { data: following, error: followingError } = await supabase
+    const { error: followingError } = await supabase
       .from('follows')
       .select(`
         id,
@@ -110,7 +110,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
     }
 
     // Получаем подписчиков
-    const { data: followers, error: followersError } = await supabase
+    const { error: followersError } = await supabase
       .from('follows')
       .select(`
         id,
@@ -139,33 +139,52 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
     }, {});
 
     const topTags = Object.entries(tagCounts)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 10)
       .map(([tag]) => tag);
 
     const transformedArticles: Article[] = (articles || []).map((article: any) => 
-      transformArticle(article, currentUserId)
+      transformArticle(article, currentUserId ? String(currentUserId) : undefined)
     );
 
     const userProfile: UserProfile = {
-      id: Number(profile.id) || userId,
-      username: profile.username || '',
-      bio: profile.bio || undefined,
-      avatar: profile.avatar || undefined,
-      coverImage: profile.cover_image || undefined,
-      createdAt: profile.created_at || new Date().toISOString(),
+      user: {
+        id: Number(profile.id) || userId,
+        username: profile.username || '',
+        bio: profile.bio || null,
+        memberSince: profile.created_at || new Date().toISOString(),
+        avatarUrl: profile.avatar || null,
+        coverImageUrl: profile.cover_image || null,
+      },
       stats: {
-        articlesCount: publishedArticles.length,
+        publishedArticles: publishedArticles.length,
         totalLikes,
-        commentsCount: (comments || []).length,
-        bookmarksCount: (bookmarks || []).length,
-        followersCount: (followers || []).length,
-        followingCount: (following || []).length,
+        totalComments: (comments || []).length,
+      },
+      highlights: {
+        tags: topTags,
+        recentArticleCount: publishedArticles.length,
       },
       articles: transformedArticles,
-      topTags,
-      isFollowing: false, // Будет установлено отдельно если нужно
-      isOwnProfile: currentUserId === userId,
+      comments: (comments || []).map((c: any) => ({
+        id: String(c.id),
+        text: c.text,
+        createdAt: c.created_at,
+        article: {
+          id: String(c.article?.id || ''),
+          title: c.article?.title || '',
+        },
+      })),
+      bookmarks: (bookmarks || []).map((b: any) => ({
+        id: String(b.id),
+        createdAt: b.created_at,
+        article: {
+          id: String(b.article?.id || ''),
+          title: b.article?.title || '',
+          excerpt: b.article?.excerpt || null,
+          previewImage: b.article?.preview_image || null,
+        },
+      })),
     };
 
     return userProfile;
@@ -198,12 +217,10 @@ export async function updateProfile(input: {
     if (input.avatar !== undefined) updateData.avatar = input.avatar;
     if (input.coverImage !== undefined) updateData.cover_image = input.coverImage;
 
-    const { data, error } = await supabase
-      .from('users')
+    const { error } = await supabase
+      .from('profiles')
       .update(updateData)
-      .eq('id', user.id)
-      .select()
-      .single();
+      .eq('id', user.id);
 
     if (error) {
       logger.error('Error updating profile', error);

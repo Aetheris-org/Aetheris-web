@@ -141,32 +141,13 @@ export async function signUp(
       };
     }
 
-    // Создаем профиль в таблице users
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        username: username,
-        name: name,
-        provider: 'local',
-        confirmed: false,
-        blocked: false,
-        role: 'user',
-      });
-
-    if (profileError) {
-      logger.error('Failed to create user profile', profileError);
-      // Не можем удалить пользователя из auth на фронтенде (требует admin API)
-      // Профиль будет создан автоматически через trigger или вручную
-      return {
-        success: false,
-        message: 'Failed to create user profile. Please try again.',
-      };
-    }
+    // Профиль в таблице public.users будет создан автоматически триггером 005_sync_auth_users.sql
+    // Не нужно вручную создавать профиль - триггер сделает это при INSERT в auth.users
+    logger.debug('✅ User registered in Supabase Auth, profile will be created by trigger');
 
     return {
       success: true,
+      message: 'Please check your email to confirm your account.',
     };
   } catch (error: any) {
     logger.error('Error in signUp', error);
@@ -259,7 +240,7 @@ export async function updatePassword(newPassword: string): Promise<{ success: bo
  */
 export async function signInWithOAuth(provider: 'google' | 'github'): Promise<{ success: boolean; message?: string }> {
   try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,

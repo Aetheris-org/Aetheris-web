@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import apiClient, { cancelAllRequests, deleteTokenCookie, getTokenFromCookie } from '@/lib/axios'
-import { getCurrentUser } from '@/api/auth'
+import { cancelAllRequests, deleteTokenCookie, getTokenFromCookie } from '@/lib/axios'
+import { getCurrentUser, signOut } from '@/api/auth'
 import type { User } from '@/types/user'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { logger } from '@/lib/logger'
@@ -78,8 +78,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       logger.debug('🔐 Fetching current user...')
       const user = await getCurrentUser()
-      logger.debug('🔐 Setting user:', user.nickname)
-      get().setUser(user)
+      if (user) {
+        logger.debug('🔐 Setting user:', user.nickname)
+        get().setUser(user)
+      } else {
+        logger.warn('🔐 No user returned from getCurrentUser')
+        get().setUser(null)
+      }
     } catch (error) {
       logger.warn('Failed to initialize auth state:', error)
       get().setUser(null)
@@ -95,12 +100,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       logger.warn('Failed to cancel pending requests:', error)
     }
 
+    // Используем Supabase signOut вместо старого API
     try {
-      await apiClient.post('/api/auth/logout', {}, {
-        headers: { 'X-Require-Auth': 'true' },
-      })
+      await signOut()
     } catch (error) {
-      logger.warn('Backend logout failed, continuing with local cleanup:', error)
+      logger.warn('Supabase logout failed, continuing with local cleanup:', error)
     }
 
     try {

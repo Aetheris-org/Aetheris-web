@@ -15,7 +15,7 @@ interface ArticlesResponse {
 }
 
 // Трансформация данных из Supabase в формат Article
-export function transformArticle(article: any, userId?: string): Article {
+export function transformArticle(article: any, _userId?: string): Article {
   const content = article.content || { document: [] };
   
   let contentJSON: any = null;
@@ -350,7 +350,7 @@ export async function reactToArticle(
     }
 
     // Используем Database Function для toggle реакции
-    const { data, error } = await supabase.rpc('toggle_article_reaction', {
+    const { error } = await supabase.rpc('toggle_article_reaction', {
       p_article_id: parseInt(articleId),
       p_user_id: user.id,
       p_reaction: reaction,

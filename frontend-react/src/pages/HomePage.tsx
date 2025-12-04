@@ -357,7 +357,7 @@ export default function HomePage() {
     // Prefetch только если статья еще не в кэше текущего пользователя
     queryClient.prefetchQuery({
       queryKey: ['article', articleId, user?.id],
-      queryFn: () => getArticle(articleId, { userId: user?.id }),
+      queryFn: () => getArticle(articleId),
       staleTime: 10 * 60 * 1000, // 10 минут
     })
   }, [queryClient, user?.id])

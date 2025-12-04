@@ -27,9 +27,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
-import apiClient from '@/lib/axios'
 import { createDraft, updateDraft, getDraft } from '@/api/drafts'
 import { createArticle, updateArticle, getArticle } from '@/api/articles'
+import { uploadImage } from '@/lib/upload'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 
@@ -129,56 +129,26 @@ export default function CreateArticlePage() {
       return existingPreviewImageId ? String(existingPreviewImageId) : null
     }
 
-    const formData = new FormData()
-    formData.append('files', croppedImageBlob, `article-preview-${Date.now()}.jpg`)
-
-    // Используем новый эндпоинт для загрузки через imgBB
+    // Используем Supabase Storage для загрузки изображений
     // Retry логика для отказоустойчивости
     let lastError: any = null
     const maxRetries = 3
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        logger.debug('[CreateArticlePage] Uploading preview image, attempt:', attempt)
-        const uploadResponse = await apiClient.post('/upload/img', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-          timeout: 90000, // 90 секунд таймаут (бэкенд использует 60 секунд + запас)
-    })
-
-        logger.debug('[CreateArticlePage] Upload response:', {
-          status: uploadResponse.status,
-          data: uploadResponse.data,
-          dataType: typeof uploadResponse.data,
-          isArray: Array.isArray(uploadResponse.data),
+        logger.debug('[CreateArticlePage] Uploading preview image to Supabase Storage, attempt:', attempt)
+        
+        // Создаем File из Blob
+        const file = new File([croppedImageBlob], `article-preview-${Date.now()}.jpg`, {
+          type: croppedImageBlob.type || 'image/jpeg',
         })
 
-        // Обрабатываем разные форматы ответа
-        let uploadedFile: any = null
-        if (Array.isArray(uploadResponse.data)) {
-          uploadedFile = uploadResponse.data[0]
-        } else if (uploadResponse.data && typeof uploadResponse.data === 'object') {
-          // Если ответ - объект, а не массив
-          uploadedFile = uploadResponse.data
-        }
-
-        if (!uploadedFile) {
-          logger.error('[CreateArticlePage] Invalid upload response format:', uploadResponse.data)
-          throw new Error('Invalid response format from upload service')
-        }
-
-        if (!uploadedFile.url) {
-          logger.error('[CreateArticlePage] Upload response missing URL:', uploadedFile)
-          throw new Error('Invalid response from upload service: missing URL')
-        }
-
-        // Сохраняем URL изображения (imgBB возвращает URL, а не ID)
-        const imageUrl = uploadedFile.url
-        logger.debug('[CreateArticlePage] Preview image uploaded successfully:', { imageUrl })
-        setExistingPreviewImageId(imageUrl)
-    setCroppedImageBlob(null)
-        return imageUrl
+        const result = await uploadImage(file, 'articles')
+        
+        logger.debug('[CreateArticlePage] Preview image uploaded successfully:', { url: result.url })
+        setExistingPreviewImageId(result.url)
+        setCroppedImageBlob(null)
+        return result.url
       } catch (error: any) {
         lastError = error
         logger.error(`[CreateArticlePage] Upload attempt ${attempt} failed:`, {

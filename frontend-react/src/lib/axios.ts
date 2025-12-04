@@ -3,12 +3,15 @@ import { logger } from './logger'
 import { rateLimiter, type RequestType } from './rateLimiter'
 import { RateLimitError } from './errors'
 
+// ⚠️ ВАЖНО: Старый бэкенд удален, axios больше не используется для основных API
+// Оставлен только для обратной совместимости (если где-то еще используется)
+// Все новые API используют Supabase напрямую через @supabase/supabase-js
+
 // В development используем прокси Vite (/api -> http://localhost:1337)
-// Это позволяет cookie работать, так как все запросы идут через один домен (localhost:5173)
-// В production используем прямой URL из env
+// В production - не используется (все через Supabase)
 const baseURL = import.meta.env.DEV 
-  ? '/api' // Используем прокси Vite в development
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
+  ? '/api' // Используем прокси Vite в development (если нужен для legacy)
+  : (import.meta.env.VITE_API_BASE_URL || '') // Пустой, так как бэкенд удален
 
 
 function getTokenFromCookie(): string | null {

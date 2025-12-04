@@ -75,7 +75,6 @@ import { SmartInput } from '@/extensions/smart-input'
 import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
 // import DragHandle from '@tiptap/extension-drag-handle' // Требует дополнительные зависимости
 import { DragHandle } from '@/extensions/drag-handle' // Используем кастомную реализацию
-import { offset } from '@floating-ui/dom'
 
 type SlashCommandItem = {
   id: string

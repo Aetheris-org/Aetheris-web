@@ -20,7 +20,6 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const redirectTarget = useMemo(() => searchParams.get('redirect') || '/', [searchParams])
-  const hasExplicitRedirect = useMemo(() => searchParams.has('redirect'), [searchParams])
 
   useEffect(() => {
     const errorParam = searchParams.get('error')

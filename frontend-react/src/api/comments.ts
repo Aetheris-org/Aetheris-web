@@ -29,7 +29,7 @@ interface CommentMeta {
   limit?: number;
 }
 
-function transformComment(raw: any, userId?: string): Comment {
+function transformComment(raw: any, _userId?: string): Comment {
   const author = typeof raw.author === 'object' && raw.author !== null
     ? raw.author
     : { id: raw.author_id, username: '', avatar: null };

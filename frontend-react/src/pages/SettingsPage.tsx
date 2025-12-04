@@ -75,7 +75,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileDetailsStore, type PreferredContactMethod } from '@/stores/profileDetailsStore'
 import { updateUserProfile } from '@/api/profile'
-import apiClient from '@/lib/axios'
+import { uploadImage } from '@/lib/upload'
 import { logger } from '@/lib/logger'
 import {
   Dialog,
@@ -1228,64 +1228,26 @@ function ProfileSettings() {
     })
   }
 
-  // Функция для загрузки изображения на imgBB
-  const uploadImageToImgBB = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('files', file, `profile-image-${Date.now()}.jpg`)
-
+  // Функция для загрузки изображения в Supabase Storage
+  const uploadImageToImgBB = async (file: File, folder: 'avatars' | 'covers' = 'avatars'): Promise<string> => {
     // Retry логика для отказоустойчивости
     let lastError: any = null
     const maxRetries = 3
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        logger.debug('[SettingsPage] Uploading image, attempt:', attempt)
-        const uploadResponse = await apiClient.post('/upload/img', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 90000, // 90 секунд таймаут
-        })
-
-        logger.debug('[SettingsPage] Upload response:', {
-          status: uploadResponse.status,
-          data: uploadResponse.data,
-        })
-
-        // Обрабатываем разные форматы ответа
-        let uploadedFile: any = null
-        if (Array.isArray(uploadResponse.data)) {
-          uploadedFile = uploadResponse.data[0]
-        } else if (uploadResponse.data && typeof uploadResponse.data === 'object') {
-          uploadedFile = uploadResponse.data
-        }
-
-        if (!uploadedFile) {
-          logger.error('[SettingsPage] Invalid upload response format:', uploadResponse.data)
-          throw new Error('Invalid response format from upload service')
-        }
-
-        if (!uploadedFile.url) {
-          logger.error('[SettingsPage] Upload response missing URL:', uploadedFile)
-          throw new Error('Invalid response from upload service: missing URL')
-        }
-
-        const imageUrl = uploadedFile.url
-        logger.debug('[SettingsPage] Image uploaded successfully:', { imageUrl })
-        return imageUrl
+        logger.debug('[SettingsPage] Uploading image to Supabase Storage, attempt:', attempt)
+        
+        const result = await uploadImage(file, folder)
+        
+        logger.debug('[SettingsPage] Image uploaded successfully:', { url: result.url })
+        return result.url
       } catch (error: any) {
         lastError = error
         logger.error(`[SettingsPage] Upload attempt ${attempt} failed:`, {
           error: error.message,
           code: error.code,
-          status: error.response?.status,
         })
-        
-        // Если это не сетевая ошибка или таймаут, не повторяем
-        if (error.code !== 'ECONNABORTED' && error.code !== 'ERR_NETWORK' && error.response?.status !== 408) {
-          logger.error('[SettingsPage] Non-retryable error, stopping retries')
-          break
-        }
         
         // Экспоненциальная задержка перед повтором
         if (attempt < maxRetries) {
@@ -1325,24 +1287,24 @@ function ProfileSettings() {
     setIsSaving(true)
 
     try {
-      let avatarUrl: string | null | undefined
-      let coverImageUrl: string | null | undefined
+      let avatarUrl: string | undefined
+      let coverImageUrl: string | undefined
 
       if (avatarFile) {
-        avatarUrl = await uploadImageToImgBB(avatarFile)
+        avatarUrl = await uploadImageToImgBB(avatarFile, 'avatars')
       } else if (avatarRemoved) {
-        avatarUrl = null
+        avatarUrl = undefined
       }
 
       if (coverFile) {
-        coverImageUrl = await uploadImageToImgBB(coverFile)
+        coverImageUrl = await uploadImageToImgBB(coverFile, 'covers')
       } else if (coverRemoved) {
-        coverImageUrl = null
+        coverImageUrl = undefined
       }
 
       const updatedUser = await updateUserProfile({
         username: trimmedNickname,
-        bio: bio.trim() || '', // Используем пустую строку вместо null для bio
+        bio: bio.trim() || undefined, // Используем undefined вместо пустой строки
         avatar: avatarUrl,
         coverImage: coverImageUrl,
       })

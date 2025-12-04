@@ -657,7 +657,9 @@ export default function ProfilePage() {
   const unfollowMutation = useMutation({
     mutationFn: () => {
       if (!followStatus?.id) throw new Error('Follow ID not found')
-      return unfollowUser(followStatus.id)
+      const followId = typeof followStatus.id === 'string' ? Number(followStatus.id) : followStatus.id
+      if (isNaN(followId)) throw new Error('Invalid follow ID')
+      return unfollowUser(followId)
     },
     onSuccess: () => {
       toast({
