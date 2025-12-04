@@ -1309,10 +1309,15 @@ function ProfileSettings() {
         coverImage: coverImageUrl,
       })
 
-      setUser({
-        ...updatedUser,
-        bio: updatedUser.bio ?? undefined,
-      })
+      if (user) {
+        setUser({
+          ...user,
+          nickname: updatedUser.nickname,
+          bio: updatedUser.bio ?? undefined,
+          avatar: updatedUser.avatar,
+          coverImage: updatedUser.coverImage,
+        })
+      }
 
       setAvatarFile(null)
       setCoverFile(null)
