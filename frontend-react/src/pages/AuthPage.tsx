@@ -8,12 +8,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/authStore'
 import { useTranslation } from '@/hooks/useTranslation'
 import { logger } from '@/lib/logger'
-
-// В development используем прокси Vite для всех запросов
-// Это позволяет cookie работать, так как все запросы идут через один домен
-const API_BASE = import.meta.env.DEV 
-  ? '' // Используем прокси Vite (/api -> http://localhost:1337)
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337')
+import { signInWithOAuth } from '@/api/auth'
 
 export default function AuthPage() {
   const navigate = useNavigate()
@@ -46,28 +41,30 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, navigate, redirectTarget])
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     if (isLoading) return
     setIsLoading(true)
+    setErrorMessage(null)
 
-    // Сохраняем redirect в sessionStorage, если он был явно передан в URL
-    // Это нужно для OAuth callback, чтобы вернуть пользователя на ту же страницу
-    // Важно: сохраняем даже если redirectTarget это '/', так как это может быть лендинг
-    if (hasExplicitRedirect) {
+    try {
+      // Сохраняем redirect в sessionStorage для OAuth callback
       logger.debug('💾 Saving auth_redirect to sessionStorage:', redirectTarget)
       sessionStorage.setItem('auth_redirect', redirectTarget)
-      // Проверяем, что значение действительно сохранилось
-      const saved = sessionStorage.getItem('auth_redirect')
-      logger.debug('✅ Verified saved redirect:', saved)
-    } else {
-      // Если redirect не был передан, значит пользователь зашел напрямую на /auth
-      // В этом случае после авторизации перенаправим на /forum (главная страница со статьями)
-      logger.debug('⚠️ No explicit redirect found, will use /forum after auth')
-    }
 
-    // Используем KeystoneJS OAuth endpoint
-    // Backend обработает OAuth и редиректнет на /auth/callback
-    window.location.href = `${API_BASE}/api/connect/google`
+      // Используем Supabase OAuth
+      const result = await signInWithOAuth('google')
+      
+      if (!result.success) {
+        setErrorMessage(result.message || 'Не удалось начать авторизацию')
+        setIsLoading(false)
+      }
+      // Supabase перенаправит пользователя на страницу провайдера
+      // После успешной авторизации провайдер перенаправит обратно на /auth/callback
+    } catch (error: any) {
+      logger.error('Failed to start OAuth:', error)
+      setErrorMessage(error.message || 'Не удалось начать авторизацию')
+      setIsLoading(false)
+    }
   }
 
   const benefits = [

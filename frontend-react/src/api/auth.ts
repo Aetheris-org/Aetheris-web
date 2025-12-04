@@ -157,11 +157,11 @@ export async function signUp(
 
     if (profileError) {
       logger.error('Failed to create user profile', profileError);
-      // Удаляем пользователя из auth если не удалось создать профиль
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      // Не можем удалить пользователя из auth на фронтенде (требует admin API)
+      // Профиль будет создан автоматически через trigger или вручную
       return {
         success: false,
-        message: 'Failed to create user profile',
+        message: 'Failed to create user profile. Please try again.',
       };
     }
 
@@ -250,6 +250,40 @@ export async function updatePassword(newPassword: string): Promise<{ success: bo
     return {
       success: false,
       message: error.message || 'Failed to update password',
+    };
+  }
+}
+
+/**
+ * Вход через OAuth провайдера (Google, GitHub и т.д.)
+ */
+export async function signInWithOAuth(provider: 'google' | 'github'): Promise<{ success: boolean; message?: string }> {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      logger.error(`OAuth sign in error with ${provider}`, error);
+      return {
+        success: false,
+        message: error.message || `Failed to sign in with ${provider}`,
+      };
+    }
+
+    // Supabase перенаправит пользователя на страницу провайдера
+    // После успешной авторизации провайдер перенаправит обратно на redirectTo
+    return {
+      success: true,
+    };
+  } catch (error: any) {
+    logger.error(`Unexpected OAuth sign in error with ${provider}`, error);
+    return {
+      success: false,
+      message: error.message || `An unexpected error occurred with ${provider}`,
     };
   }
 }
