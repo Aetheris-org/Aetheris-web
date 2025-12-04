@@ -12,7 +12,7 @@ import {
   Hash,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getArticles, getTrendingArticles, searchArticles, getArticle, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles-graphql'
+import { getArticles, getArticle, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'

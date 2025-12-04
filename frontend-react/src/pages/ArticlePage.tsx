@@ -36,7 +36,7 @@ import {
   Mail,
   Link2,
 } from 'lucide-react'
-import { getArticle, reactArticle, deleteArticle } from '@/api/articles-graphql'
+import { getArticle, reactArticle, deleteArticle } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
@@ -44,8 +44,8 @@ import {
   updateComment, 
   deleteComment, 
   reactToComment 
-} from '@/api/comments-graphql'
-import type { Comment as RemoteComment } from '@/api/comments-graphql'
+} from '@/api/comments'
+import type { Comment as RemoteComment } from '@/api/comments'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -57,7 +57,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { RateLimitError } from '@/lib/errors'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
-import { addBookmark, removeBookmark, isBookmarked } from '@/api/bookmarks-graphql'
+import { addBookmark, removeBookmark, isBookmarked } from '@/api/bookmarks'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'

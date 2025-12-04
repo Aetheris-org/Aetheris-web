@@ -74,7 +74,7 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileDetailsStore, type PreferredContactMethod } from '@/stores/profileDetailsStore'
-import { updateUserProfile } from '@/api/profile-graphql'
+import { updateUserProfile } from '@/api/profile'
 import apiClient from '@/lib/axios'
 import { logger } from '@/lib/logger'
 import {

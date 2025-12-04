@@ -15,7 +15,7 @@ import { useGamificationStore } from '@/stores/gamificationStore'
 import { Flame, Award, Bell, TrendingUp } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
-import { getUnreadCount } from '@/api/notifications-graphql'
+import { getUnreadCount } from '@/api/notifications'
 
 interface StatsSheetProps {
   open: boolean

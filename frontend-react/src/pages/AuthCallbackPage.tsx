@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { getCurrentUser, getCurrentUserGraphQL } from '@/api/auth-graphql'
+import { getCurrentUser } from '@/api/auth'
+// TODO: AuthCallbackPage использует OAuth callback от KeystoneJS, нужно переписать на Supabase Auth
 import { useAuthStore } from '@/stores/authStore'
 import { logger } from '@/lib/logger'
 
@@ -75,17 +76,16 @@ export default function AuthCallbackPage() {
           // Это особенно важно для кросс-доменных запросов
           await new Promise(resolve => setTimeout(resolve, 200))
 
-
-          
-          let graphqlUser: any = null
+          // TODO: Переписать на Supabase Auth
+          // Пока используем getCurrentUser напрямую
+          let user = null
           let retries = 3
           
-
-          while (!graphqlUser && retries > 0) {
+          while (!user && retries > 0) {
             try {
-              graphqlUser = await getCurrentUserGraphQL()
-              if (graphqlUser) {
-          logger.debug('👤 GraphQL user:', graphqlUser)
+              user = await getCurrentUser()
+              if (user) {
+                logger.debug('👤 User loaded:', user)
                 break
               }
             } catch (error: any) {
@@ -98,13 +98,10 @@ export default function AuthCallbackPage() {
             retries--
           }
           
-          if (!graphqlUser) {
+          if (!user) {
             logger.error('❌ Failed to get user data after OAuth (all retries exhausted)')
             throw new Error('Failed to get user data after OAuth')
           }
-
-          // Преобразуем GraphQL user в формат, ожидаемый authStore
-          const user = await getCurrentUser()
           setUser(user)
 
           const savedRedirect = sessionStorage.getItem('auth_redirect')

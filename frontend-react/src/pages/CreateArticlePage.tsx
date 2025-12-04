@@ -28,8 +28,8 @@ import {
 } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import apiClient from '@/lib/axios'
-import { createDraft, updateDraft, getDraft } from '@/api/drafts-graphql'
-import { createArticle, updateArticle, getArticle } from '@/api/articles-graphql'
+import { createDraft, updateDraft, getDraft } from '@/api/drafts'
+import { createArticle, updateArticle, getArticle } from '@/api/articles'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 

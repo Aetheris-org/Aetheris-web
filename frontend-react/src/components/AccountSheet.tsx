@@ -33,8 +33,8 @@ import { FriendsSheet } from '@/components/FriendsSheet'
 import { StatsSheet } from '@/components/StatsSheet'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
-import { getUnreadCount } from '@/api/notifications-graphql'
-import { getBookmarksCount } from '@/api/bookmarks-graphql'
+import { getUnreadCount } from '@/api/notifications'
+import { getBookmarksCount } from '@/api/bookmarks'
 
 export function AccountSheet() {
   const { t } = useTranslation()

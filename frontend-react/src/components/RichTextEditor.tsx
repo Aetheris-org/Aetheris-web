@@ -73,7 +73,8 @@ import { Callout } from '@/extensions/callout'
 import { Column, Columns, COLUMN_LAYOUTS, type ColumnPresetKey } from '@/extensions/columns'
 import { SmartInput } from '@/extensions/smart-input'
 import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
-import DragHandle from '@tiptap/extension-drag-handle'
+// import DragHandle from '@tiptap/extension-drag-handle' // Требует дополнительные зависимости
+import { DragHandle } from '@/extensions/drag-handle' // Используем кастомную реализацию
 import { offset } from '@floating-ui/dom'
 
 type SlashCommandItem = {
@@ -613,33 +614,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           // 'details', // Временно отключено
         ],
       }),
-      DragHandle.configure({
-        render: () => {
-          const element = document.createElement('div')
-          element.className = 'editor-drag-handle'
-          element.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="2" cy="2" r="1" fill="currentColor"/>
-              <circle cx="6" cy="2" r="1" fill="currentColor"/>
-              <circle cx="10" cy="2" r="1" fill="currentColor"/>
-              <circle cx="2" cy="6" r="1" fill="currentColor"/>
-              <circle cx="6" cy="6" r="1" fill="currentColor"/>
-              <circle cx="10" cy="6" r="1" fill="currentColor"/>
-              <circle cx="2" cy="10" r="1" fill="currentColor"/>
-              <circle cx="6" cy="10" r="1" fill="currentColor"/>
-              <circle cx="10" cy="10" r="1" fill="currentColor"/>
-            </svg>
-          `
-          return element
-        },
-        computePositionConfig: {
-          placement: 'left-start', // Как в Notion - слева, на уровне начала блока
-          strategy: 'fixed',
-          middleware: [
-            offset({ mainAxis: -40, crossAxis: 0 }), // Смещение влево на 40px, без вертикального смещения
-          ],
-        },
-      }),
+      DragHandle, // Кастомная реализация уже содержит всю необходимую логику
       CodeBlockWithCopy,
       TextStyle,
       Color,

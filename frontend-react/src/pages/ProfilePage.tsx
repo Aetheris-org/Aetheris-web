@@ -57,8 +57,8 @@ import {
   UserMinus,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { getUserProfile } from '@/api/profile-graphql'
-import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow-graphql'
+import { getUserProfile } from '@/api/profile'
+import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import apiClient, { cancelAllRequests, deleteTokenCookie, getTokenFromCookie } from '@/lib/axios'
-import { getCurrentUser } from '@/api/auth-graphql'
+import { getCurrentUser } from '@/api/auth'
 import type { User } from '@/types/user'
 import { useGamificationStore } from '@/stores/gamificationStore'
 import { logger } from '@/lib/logger'
