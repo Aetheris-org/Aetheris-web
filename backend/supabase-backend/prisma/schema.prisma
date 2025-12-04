@@ -1,0 +1,215 @@
+// Prisma schema for Supabase PostgreSQL
+// Все модели данных для Aetheris platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MODEL
+// ============================================
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String   @unique @db.VarChar(255)
+  username    String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(255)
+  password    String?  @db.VarChar(255) // null для OAuth пользователей
+  bio         String?  @db.Text
+  avatar      String?  @db.Text
+  coverImage  String?  @map("cover_image") @db.Text
+  provider    String   @default("local") @db.VarChar(50) // local, google
+  confirmed   Boolean  @default(false)
+  blocked     Boolean  @default(false)
+  role        String   @default("user") @db.VarChar(50) // user, admin
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relationships
+  articles         Article[]
+  comments         Comment[]
+  articleReactions ArticleReaction[]
+  commentReactions CommentReaction[]
+  bookmarks        Bookmark[]
+  following        Follow[] @relation("UserFollowing")
+  followers        Follow[] @relation("UserFollowers")
+  notifications    Notification[]
+  notificationsAsActor Notification[] @relation("NotificationActor")
+
+  @@map("users")
+  @@index([email])
+  @@index([username])
+  @@index([role])
+}
+
+// ============================================
+// ARTICLE MODEL
+// ============================================
+model Article {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(200)
+  content       Json     // Slate document format
+  excerpt       String   @db.VarChar(500)
+  authorId      String   @map("author_id") @db.Uuid
+  tags          String[] @default([])
+  difficulty    String   @default("medium") @db.VarChar(50) // easy, medium, hard
+  previewImage  String?  @db.Text
+  likesCount    Int      @default(0) @map("likes_count")
+  dislikesCount Int      @default(0) @map("dislikes_count")
+  views         Int      @default(0)
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relationships
+  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  reactions   ArticleReaction[]
+  bookmarks   Bookmark[]
+  notifications Notification[]
+
+  @@map("articles")
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([difficulty])
+  @@index([title])
+}
+
+// ============================================
+// COMMENT MODEL
+// ============================================
+model Comment {
+  id            Int      @id @default(autoincrement())
+  text          String   @db.Text
+  articleId     Int      @map("article_id")
+  authorId      String   @map("author_id") @db.Uuid
+  parentId      Int?     @map("parent_id")
+  likesCount    Int      @default(0) @map("likes_count")
+  dislikesCount Int      @default(0) @map("dislikes_count")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relationships
+  article      Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author       User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent       Comment?        @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Comment[]       @relation("CommentReplies")
+  reactions    CommentReaction[]
+  notifications Notification[]
+
+  @@map("comments")
+  @@index([articleId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// ============================================
+// ARTICLE REACTION MODEL
+// ============================================
+model ArticleReaction {
+  id        Int      @id @default(autoincrement())
+  articleId Int      @map("article_id")
+  userId    String   @map("user_id") @db.Uuid
+  reaction  String   @db.VarChar(50) // like, dislike
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relationships
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@map("article_reactions")
+  @@index([articleId])
+  @@index([userId])
+}
+
+// ============================================
+// COMMENT REACTION MODEL
+// ============================================
+model CommentReaction {
+  id        Int      @id @default(autoincrement())
+  commentId Int      @map("comment_id")
+  userId    String   @map("user_id") @db.Uuid
+  reaction  String   @db.VarChar(50) // like, dislike
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relationships
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_reactions")
+  @@index([commentId])
+  @@index([userId])
+}
+
+// ============================================
+// BOOKMARK MODEL
+// ============================================
+model Bookmark {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  articleId Int      @map("article_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@map("bookmarks")
+  @@index([userId])
+  @@index([articleId])
+}
+
+// ============================================
+// FOLLOW MODEL
+// ============================================
+model Follow {
+  id        Int      @id @default(autoincrement())
+  followerId String  @map("follower_id") @db.Uuid
+  followingId String @map("following_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relationships
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  type      String   @db.VarChar(50) // comment, comment_reply, follow, article_published, article_like, comment_like
+  actorId   String   @map("actor_id") @db.Uuid
+  articleId Int?     @map("article_id")
+  commentId Int?     @map("comment_id")
+  isRead    Boolean  @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz @db.Timestamptz
+
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor   User    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  article Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+

@@ -128,10 +128,15 @@ export const Comment = list({
       many: false,
       validation: { isRequired: true },
     }),
-    parent: relationship({
-      ref: 'Comment',
-      many: false,
-    }),
+    // ВРЕМЕННО ОТКЛЮЧЕНО: self-referencing relationship вызывает ошибку Admin Meta
+    // parent: relationship({
+    //   ref: 'Comment.children',
+    //   many: false,
+    // }),
+    // children: relationship({
+    //   ref: 'Comment.parent',
+    //   many: true,
+    // }),
     likes_count: integer({
       defaultValue: 0,
       validation: { min: 0 },

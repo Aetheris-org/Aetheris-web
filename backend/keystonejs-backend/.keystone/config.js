@@ -936,10 +936,15 @@ var Comment = (0, import_core4.list)({
       many: false,
       validation: { isRequired: true }
     }),
-    parent: (0, import_fields3.relationship)({
-      ref: "Comment",
-      many: false
-    }),
+    // ВРЕМЕННО ОТКЛЮЧЕНО: self-referencing relationship вызывает ошибку Admin Meta
+    // parent: relationship({
+    //   ref: 'Comment.children',
+    //   many: false,
+    // }),
+    // children: relationship({
+    //   ref: 'Comment.parent',
+    //   many: true,
+    // }),
     likes_count: (0, import_fields3.integer)({
       defaultValue: 0,
       validation: { min: 0 }
@@ -1256,8 +1261,10 @@ var Notification = (0, import_core10.list)({
 
 // schemas/index.ts
 var lists = {
+  // Базовые схемы (не зависят от других)
   User,
   Article,
+  // Зависимые схемы (зависят от User/Article)
   Comment,
   ArticleReaction,
   CommentReaction,
@@ -1271,8 +1278,14 @@ var import_session = require("@keystone-6/core/session");
 var import_auth = require("@keystone-6/auth");
 var session = (0, import_session.statelessSessions)({
   secret: process.env.SESSION_SECRET || "change-me-in-production",
-  maxAge: 7 * 24 * 60 * 60
+  maxAge: 7 * 24 * 60 * 60,
   // 7 дней
+  secure: process.env.NODE_ENV === "production",
+  // Только HTTPS в production
+  path: "/",
+  // Cookie доступен для всех путей
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+  // Кросс-доменные запросы в production
   // Явно указываем имя cookie для совместимости
   // По умолчанию KeystoneJS использует 'keystonejs-session'
 });
@@ -1643,18 +1656,277 @@ async function extendExpressApp(app, context) {
       }
     }
   });
+  app.post("/upload/img", upload.single("files"), async (req, res) => {
+    try {
+      logger_default.debug("Image upload request received (early handler):", {
+        method: req.method,
+        path: req.path,
+        hasFile: !!req.file,
+        cookies: req.headers.cookie ? "present" : "missing",
+        contentType: req.headers["content-type"]
+      });
+      const ctx = context || keystoneContext;
+      if (!ctx) {
+        logger_default.error("KeystoneJS context not available for image upload", {
+          hasContext: !!context,
+          hasKeystoneContext: !!keystoneContext
+        });
+        return res.status(500).json({ error: "KeystoneJS context not available" });
+      }
+      if (!ctx.sessionStrategy) {
+        logger_default.error("KeystoneJS sessionStrategy not available", {
+          hasContext: !!ctx,
+          contextKeys: Object.keys(ctx || {})
+        });
+        return res.status(500).json({ error: "Session strategy not available" });
+      }
+      logger_default.debug("KeystoneJS context available for image upload", {
+        hasSessionStrategy: !!ctx.sessionStrategy,
+        sessionStrategyType: typeof ctx.sessionStrategy
+      });
+      const sessionContext = {
+        ...ctx,
+        req,
+        res
+      };
+      let sessionData;
+      try {
+        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
+        logger_default.debug("Image upload session check:", {
+          hasSession: !!sessionData,
+          itemId: sessionData?.itemId,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
+      } catch (sessionError) {
+        logger_default.error("Session check failed for image upload:", {
+          error: sessionError?.message,
+          stack: sessionError?.stack,
+          name: sessionError?.name,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
+        return res.status(401).json({
+          error: "Authentication required",
+          details: process.env.NODE_ENV === "development" ? sessionError?.message : void 0
+        });
+      }
+      if (!sessionData?.itemId) {
+        logger_default.warn("Image upload attempted without authentication", {
+          hasSession: !!sessionData,
+          cookies: req.headers.cookie ? "present" : "missing"
+        });
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      logger_default.debug("Image upload request from authenticated user:", {
+        userId: sessionData.itemId
+      });
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+      const file = req.file;
+      logger_default.debug("Image upload request:", {
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size
+      });
+      const maxFileSize = 8 * 1024 * 1024;
+      if (file.size > maxFileSize) {
+        return res.status(400).json({
+          error: `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`
+        });
+      }
+      const imgbbApiKey = process.env.IMGBB_API_KEY;
+      if (!imgbbApiKey) {
+        logger_default.error("IMGBB_API_KEY not configured in environment variables");
+        const publicUrl = process.env.PUBLIC_URL || "http://localhost:1337";
+        const tempUrl = `${publicUrl}/uploads/${Date.now()}-${file.originalname}`;
+        logger_default.warn("\u26A0\uFE0F ImgBB not configured, using temporary URL (not persisted)");
+        return res.json([{
+          id: Date.now().toString(),
+          url: tempUrl,
+          display_url: tempUrl,
+          delete_url: null,
+          size: file.size,
+          width: null,
+          height: null,
+          mime: file.mimetype,
+          name: file.originalname
+        }]);
+      }
+      const base64Image = file.buffer.toString("base64");
+      logger_default.debug("Preparing ImgBB upload:", {
+        filename: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        base64Length: base64Image.length,
+        hasApiKey: !!imgbbApiKey
+      });
+      const formData = new URLSearchParams();
+      formData.append("key", imgbbApiKey);
+      formData.append("image", base64Image);
+      if (file.originalname) {
+        formData.append("name", file.originalname);
+      }
+      const requestBody = formData.toString();
+      logger_default.debug("ImgBB request body length:", requestBody.length);
+      const https = await import("https");
+      const timeoutMs = 3e4;
+      try {
+        const imgbbResponse = await new Promise((resolve, reject) => {
+          let timeout;
+          timeout = setTimeout(() => {
+            reject(new Error("Request timeout"));
+          }, timeoutMs);
+          const req2 = https.request(
+            {
+              hostname: "api.imgbb.com",
+              path: "/1/upload",
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": Buffer.byteLength(requestBody)
+              }
+            },
+            (res2) => {
+              let data = "";
+              res2.on("data", (chunk) => {
+                data += chunk.toString();
+              });
+              res2.on("end", () => {
+                clearTimeout(timeout);
+                logger_default.debug("ImgBB API response:", {
+                  statusCode: res2.statusCode,
+                  headers: res2.headers,
+                  dataLength: data.length,
+                  dataPreview: data.substring(0, 200)
+                });
+                if (!data || data.trim().length === 0) {
+                  logger_default.error("ImgBB API returned empty response", {
+                    statusCode: res2.statusCode,
+                    headers: res2.headers
+                  });
+                  reject(new Error(`Empty response from ImgBB API (status: ${res2.statusCode})`));
+                  return;
+                }
+                if (res2.statusCode && (res2.statusCode < 200 || res2.statusCode >= 300)) {
+                  logger_default.error("ImgBB API returned error status:", {
+                    statusCode: res2.statusCode,
+                    data: data.substring(0, 1e3),
+                    headers: res2.headers
+                  });
+                }
+                try {
+                  const jsonData = JSON.parse(data);
+                  resolve({
+                    statusCode: res2.statusCode || 500,
+                    data: jsonData
+                  });
+                } catch (parseError) {
+                  logger_default.error("Failed to parse ImgBB response:", {
+                    error: parseError.message,
+                    dataLength: data.length,
+                    dataPreview: data.substring(0, 1e3),
+                    statusCode: res2.statusCode,
+                    headers: res2.headers,
+                    contentType: res2.headers["content-type"]
+                  });
+                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res2.statusCode}, Response preview: ${data.substring(0, 200)}`));
+                }
+              });
+              res2.on("error", (error) => {
+                clearTimeout(timeout);
+                logger_default.error("ImgBB API response error:", error);
+                reject(error);
+              });
+            }
+          );
+          req2.on("error", (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+          req2.on("timeout", () => {
+            req2.destroy();
+            clearTimeout(timeout);
+            reject(new Error("Request timeout"));
+          });
+          req2.write(requestBody);
+          req2.end();
+        });
+        if (imgbbResponse.statusCode < 200 || imgbbResponse.statusCode >= 300) {
+          const errorText = typeof imgbbResponse.data === "string" ? imgbbResponse.data : JSON.stringify(imgbbResponse.data);
+          logger_default.error("ImgBB API error:", {
+            status: imgbbResponse.statusCode,
+            error: errorText
+          });
+          return res.status(imgbbResponse.statusCode).json({
+            error: "Image upload failed",
+            details: process.env.NODE_ENV === "development" ? errorText : void 0
+          });
+        }
+        const imgbbData = imgbbResponse.data;
+        if (!imgbbData.success || !imgbbData.data) {
+          const errorMessage = imgbbData.error?.message || "Unknown error";
+          logger_default.error("ImgBB upload failed:", errorMessage);
+          return res.status(400).json({
+            error: "Image upload failed",
+            details: process.env.NODE_ENV === "development" ? errorMessage : void 0
+          });
+        }
+        logger_default.info("\u2705 Image uploaded successfully to ImgBB:", {
+          url: imgbbData.data.url,
+          size: imgbbData.data.size
+        });
+        res.json([{
+          id: imgbbData.data.id || Date.now().toString(),
+          url: imgbbData.data.url || imgbbData.data.display_url,
+          display_url: imgbbData.data.display_url,
+          delete_url: imgbbData.data.delete_url,
+          size: imgbbData.data.size || file.size,
+          width: imgbbData.data.width,
+          height: imgbbData.data.height,
+          mime: file.mimetype,
+          name: file.originalname
+        }]);
+      } catch (uploadError) {
+        logger_default.error("Failed to upload image to ImgBB:", {
+          error: uploadError.message,
+          code: uploadError.code,
+          stack: uploadError.stack
+        });
+        if (process.env.NODE_ENV === "development") {
+          return res.status(500).json({
+            error: "Image upload failed",
+            details: uploadError.message || "Unknown error",
+            code: uploadError.code
+          });
+        }
+        return res.status(500).json({
+          error: "Image upload failed"
+        });
+      }
+    } catch (error) {
+      logger_default.error("Unexpected error in image upload handler:", {
+        error: error.message,
+        stack: error.stack
+      });
+      return res.status(500).json({
+        error: "Internal server error",
+        details: process.env.NODE_ENV === "development" ? error.message : void 0
+      });
+    }
+  });
   app.use((req, res, next) => {
-    if (req.path === "/api/upload/image" && req.method === "POST") {
+    if ((req.path === "/upload/img" || req.path === "/upload/image" || req.path === "/api/upload/image") && req.method === "POST") {
       return next();
     }
     import_express.default.json()(req, res, next);
   });
   app.use((req, res, next) => {
-    if (req.path === "/api/upload/image" && req.method === "POST") {
+    if ((req.path === "/upload/img" || req.path === "/upload/image" || req.path === "/api/upload/image") && req.method === "POST") {
       return next();
     }
     import_express.default.urlencoded({ extended: true })(req, res, next);
   });
+  app.set("trust proxy", 1);
   const isDevelopment = process.env.NODE_ENV === "development";
   app.use(
     (0, import_helmet.default)({
@@ -2082,6 +2354,55 @@ async function extendExpressApp(app, context) {
       next();
     });
   }
+  app.use((req, res, next) => {
+    const originalSetHeader = res.setHeader.bind(res);
+    res.setHeader = function(name, value) {
+      if (name.toLowerCase() === "set-cookie" && Array.isArray(value)) {
+        value = value.map((cookie) => {
+          if (cookie.includes("keystonejs-session=")) {
+            cookie = cookie.replace(/;\s*sameSite=[^;]*/gi, "");
+            cookie = cookie.replace(/;\s*secure/gi, "");
+            cookie = cookie.replace(/;\s*partitioned/gi, "");
+            if (process.env.NODE_ENV === "production") {
+              cookie += "; SameSite=None; Secure; Partitioned";
+            } else {
+              cookie += "; SameSite=Lax";
+            }
+            logger_default.debug("Updated keystonejs-session cookie with cross-domain attributes");
+          }
+          return cookie;
+        });
+      }
+      return originalSetHeader(name, value);
+    };
+    const originalCookie = res.cookie.bind(res);
+    res.cookie = function(name, value, options = {}) {
+      if (name === "keystonejs-session") {
+        if (process.env.NODE_ENV === "production") {
+          options.sameSite = "none";
+          options.secure = true;
+          if (!options.partitioned) {
+            setTimeout(() => {
+              const setCookieHeader = res.getHeader("Set-Cookie");
+              if (Array.isArray(setCookieHeader)) {
+                const updated = setCookieHeader.map((cookie) => {
+                  if (cookie.includes("keystonejs-session=") && !cookie.includes("Partitioned")) {
+                    return cookie + "; Partitioned";
+                  }
+                  return cookie;
+                });
+                res.setHeader("Set-Cookie", updated);
+              }
+            }, 0);
+          }
+        } else {
+          options.sameSite = "lax";
+        }
+      }
+      return originalCookie(name, value, options);
+    };
+    next();
+  });
   const redisClient2 = await getRedisClientWithFallback();
   const sessionStore = redisClient2 ? new import_connect_redis.default({ client: redisClient2, prefix: "session:" }) : new import_express_session.default.MemoryStore();
   app.use(
@@ -2093,10 +2414,10 @@ async function extendExpressApp(app, context) {
       cookie: {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1e3
-        // 7 дней
-      }
+      },
+      name: "connect.sid"
     })
   );
   app.use(import_passport2.default.initialize());
@@ -2288,8 +2609,31 @@ async function extendExpressApp(app, context) {
       if (!ctx) {
         return res.status(500).json({ error: "KeystoneJS context not available" });
       }
-      const oauthUserId = req.session?.oauthUserId;
+      logger_default.debug("OAuth session endpoint called", {
+        hasSession: !!req.session,
+        sessionId: req.session?.id,
+        cookies: req.headers.cookie,
+        sessionKeys: req.session ? Object.keys(req.session) : [],
+        oauthUserIdFromSession: req.session?.oauthUserId,
+        userIdFromBody: req.body?.userId,
+        origin: req.headers.origin,
+        referer: req.headers.referer
+      });
+      let oauthUserId = req.session?.oauthUserId;
+      if (!oauthUserId && req.body?.userId) {
+        logger_default.debug("Using userId from body as fallback (session not available)");
+        oauthUserId = req.body.userId;
+      }
       if (!oauthUserId) {
+        logger_default.error("OAuth session not found", {
+          hasSession: !!req.session,
+          sessionId: req.session?.id,
+          cookies: req.headers.cookie,
+          sessionKeys: req.session ? Object.keys(req.session) : [],
+          userIdFromBody: req.body?.userId,
+          origin: req.headers.origin,
+          referer: req.headers.referer
+        });
         return res.status(400).json({ error: "OAuth session not found" });
       }
       const user = await ctx.query.User.findOne({
@@ -2331,6 +2675,13 @@ async function extendExpressApp(app, context) {
         return res.status(500).json({ error: "Failed to create session token", details: error.message });
       }
       logger_default.info(`\u2705 OAuth session created for user: ${user.id}`);
+      const setCookieHeader = res.getHeader("Set-Cookie");
+      logger_default.debug("Cookie set in response:", {
+        hasSetCookie: !!setCookieHeader,
+        setCookieValue: setCookieHeader ? (Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toString().substring(0, 100) : null,
+        origin: req.headers.origin,
+        referer: req.headers.referer
+      });
       res.json({
         success: true,
         user: {
@@ -2346,275 +2697,6 @@ async function extendExpressApp(app, context) {
     } catch (error) {
       logger_default.error("OAuth session creation error:", error);
       res.status(500).json({ error: "Failed to create session" });
-    }
-  });
-  app.post("/api/upload/image", upload.single("files"), async (req, res) => {
-    try {
-      logger_default.debug("Image upload request received:", {
-        method: req.method,
-        path: req.path,
-        hasFile: !!req.file,
-        cookies: req.headers.cookie ? "present" : "missing",
-        contentType: req.headers["content-type"]
-      });
-      const ctx = context || keystoneContext;
-      if (!ctx) {
-        logger_default.error("KeystoneJS context not available for image upload", {
-          hasContext: !!context,
-          hasKeystoneContext: !!keystoneContext
-        });
-        return res.status(500).json({ error: "KeystoneJS context not available" });
-      }
-      if (!ctx.sessionStrategy) {
-        logger_default.error("KeystoneJS sessionStrategy not available", {
-          hasContext: !!ctx,
-          contextKeys: Object.keys(ctx || {})
-        });
-        return res.status(500).json({ error: "Session strategy not available" });
-      }
-      logger_default.debug("KeystoneJS context available for image upload", {
-        hasSessionStrategy: !!ctx.sessionStrategy,
-        sessionStrategyType: typeof ctx.sessionStrategy
-      });
-      const sessionContext = {
-        ...ctx,
-        req,
-        res
-      };
-      let sessionData;
-      try {
-        sessionData = await ctx.sessionStrategy.get({ context: sessionContext });
-        logger_default.debug("Image upload session check:", {
-          hasSession: !!sessionData,
-          itemId: sessionData?.itemId,
-          cookies: req.headers.cookie ? "present" : "missing"
-        });
-      } catch (sessionError) {
-        logger_default.error("Session check failed for image upload:", {
-          error: sessionError?.message,
-          stack: sessionError?.stack,
-          name: sessionError?.name,
-          cookies: req.headers.cookie ? "present" : "missing"
-        });
-        return res.status(401).json({
-          error: "Authentication required",
-          details: process.env.NODE_ENV === "development" ? sessionError?.message : void 0
-        });
-      }
-      if (!sessionData?.itemId) {
-        logger_default.warn("Image upload attempted without authentication", {
-          hasSession: !!sessionData,
-          cookies: req.headers.cookie ? "present" : "missing"
-        });
-        return res.status(401).json({ error: "Authentication required" });
-      }
-      logger_default.debug("Image upload request from authenticated user:", {
-        userId: sessionData.itemId
-      });
-      if (!req.file) {
-        return res.status(400).json({ error: "No file provided" });
-      }
-      const file = req.file;
-      logger_default.debug("Image upload request:", {
-        filename: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size
-      });
-      const maxFileSize = 8 * 1024 * 1024;
-      if (file.size > maxFileSize) {
-        return res.status(400).json({
-          error: `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`
-        });
-      }
-      const imgbbApiKey = process.env.IMGBB_API_KEY;
-      if (!imgbbApiKey) {
-        logger_default.error("IMGBB_API_KEY not configured in environment variables");
-        const publicUrl = process.env.PUBLIC_URL || "http://localhost:1337";
-        const tempUrl = `${publicUrl}/uploads/${Date.now()}-${file.originalname}`;
-        logger_default.warn("\u26A0\uFE0F ImgBB not configured, using temporary URL (not persisted)");
-        return res.json([{
-          id: Date.now().toString(),
-          url: tempUrl,
-          display_url: tempUrl,
-          delete_url: null,
-          size: file.size,
-          width: null,
-          height: null,
-          mime: file.mimetype,
-          name: file.originalname
-        }]);
-      }
-      const base64Image = file.buffer.toString("base64");
-      logger_default.debug("Preparing ImgBB upload:", {
-        filename: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-        base64Length: base64Image.length,
-        hasApiKey: !!imgbbApiKey
-      });
-      const formData = new URLSearchParams();
-      formData.append("key", imgbbApiKey);
-      formData.append("image", base64Image);
-      if (file.originalname) {
-        formData.append("name", file.originalname);
-      }
-      const requestBody = formData.toString();
-      logger_default.debug("ImgBB request body length:", requestBody.length);
-      const https = await import("https");
-      const timeoutMs = 3e4;
-      try {
-        const requestBody2 = formData.toString();
-        logger_default.debug("ImgBB request body length:", requestBody2.length);
-        const imgbbResponse = await new Promise((resolve, reject) => {
-          let timeout;
-          timeout = setTimeout(() => {
-            reject(new Error("Request timeout"));
-          }, timeoutMs);
-          const req2 = https.request(
-            {
-              hostname: "api.imgbb.com",
-              path: "/1/upload",
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Content-Length": Buffer.byteLength(requestBody2)
-              }
-            },
-            (res2) => {
-              let data = "";
-              res2.on("data", (chunk) => {
-                data += chunk.toString();
-              });
-              res2.on("end", () => {
-                clearTimeout(timeout);
-                logger_default.debug("ImgBB API response:", {
-                  statusCode: res2.statusCode,
-                  headers: res2.headers,
-                  dataLength: data.length,
-                  dataPreview: data.substring(0, 200)
-                });
-                if (!data || data.trim().length === 0) {
-                  logger_default.error("ImgBB API returned empty response", {
-                    statusCode: res2.statusCode,
-                    headers: res2.headers
-                  });
-                  reject(new Error(`Empty response from ImgBB API (status: ${res2.statusCode})`));
-                  return;
-                }
-                if (res2.statusCode && (res2.statusCode < 200 || res2.statusCode >= 300)) {
-                  logger_default.error("ImgBB API returned error status:", {
-                    statusCode: res2.statusCode,
-                    data: data.substring(0, 1e3),
-                    headers: res2.headers
-                  });
-                }
-                try {
-                  const jsonData = JSON.parse(data);
-                  resolve({
-                    statusCode: res2.statusCode || 500,
-                    data: jsonData
-                  });
-                } catch (parseError) {
-                  logger_default.error("Failed to parse ImgBB response:", {
-                    error: parseError.message,
-                    dataLength: data.length,
-                    dataPreview: data.substring(0, 1e3),
-                    statusCode: res2.statusCode,
-                    headers: res2.headers,
-                    contentType: res2.headers["content-type"]
-                  });
-                  reject(new Error(`Failed to parse response: ${parseError.message}. Status: ${res2.statusCode}, Response preview: ${data.substring(0, 200)}`));
-                }
-              });
-              res2.on("error", (error) => {
-                clearTimeout(timeout);
-                logger_default.error("ImgBB API response error:", error);
-                reject(error);
-              });
-            }
-          );
-          req2.on("error", (error) => {
-            clearTimeout(timeout);
-            reject(error);
-          });
-          req2.on("timeout", () => {
-            req2.destroy();
-            clearTimeout(timeout);
-            reject(new Error("Request timeout"));
-          });
-          req2.write(requestBody2);
-          req2.end();
-        });
-        if (imgbbResponse.statusCode < 200 || imgbbResponse.statusCode >= 300) {
-          const errorText = typeof imgbbResponse.data === "string" ? imgbbResponse.data : JSON.stringify(imgbbResponse.data);
-          logger_default.error("ImgBB API error:", {
-            status: imgbbResponse.statusCode,
-            error: errorText
-          });
-          return res.status(imgbbResponse.statusCode).json({
-            error: "Image upload failed",
-            details: process.env.NODE_ENV === "development" ? errorText : void 0
-          });
-        }
-        const imgbbData = imgbbResponse.data;
-        if (!imgbbData.success || !imgbbData.data) {
-          const errorMessage = imgbbData.error?.message || "Unknown error";
-          logger_default.error("ImgBB upload failed:", errorMessage);
-          return res.status(400).json({
-            error: "Image upload failed",
-            details: process.env.NODE_ENV === "development" ? errorMessage : void 0
-          });
-        }
-        logger_default.info("\u2705 Image uploaded successfully to ImgBB:", {
-          url: imgbbData.data.url,
-          size: imgbbData.data.size
-        });
-        res.json([{
-          id: imgbbData.data.id || Date.now().toString(),
-          url: imgbbData.data.url || imgbbData.data.display_url,
-          display_url: imgbbData.data.display_url,
-          delete_url: imgbbData.data.delete_url,
-          size: imgbbData.data.size || file.size,
-          width: imgbbData.data.width,
-          height: imgbbData.data.height,
-          mime: file.mimetype,
-          name: file.originalname
-        }]);
-      } catch (uploadError) {
-        logger_default.error("Failed to upload image to ImgBB:", {
-          error: uploadError.message,
-          code: uploadError.code,
-          stack: uploadError.stack
-        });
-        if (process.env.NODE_ENV === "development") {
-          return res.status(500).json({
-            error: "Image upload failed",
-            details: uploadError.message || "Unknown error",
-            code: uploadError.code
-          });
-        }
-        return res.status(500).json({ error: "Image upload failed. Please try again." });
-      }
-    } catch (error) {
-      logger_default.error("Image upload endpoint error:", {
-        error: error.message,
-        stack: error.stack,
-        name: error.name,
-        code: error.code,
-        type: typeof error,
-        keys: Object.keys(error || {})
-      });
-      if (error.message?.includes("Authentication") || error.message?.includes("session")) {
-        return res.status(401).json({
-          error: "Authentication required",
-          details: process.env.NODE_ENV === "development" ? error.message : void 0
-        });
-      }
-      res.status(500).json({
-        error: "Internal server error",
-        details: process.env.NODE_ENV === "development" ? error.message : void 0,
-        code: process.env.NODE_ENV === "development" ? error.code : void 0
-      });
     }
   });
   app.get("/api/auth/csrf", (req, res) => {
@@ -3406,14 +3488,6 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
     name: "ReactionType",
     values: import_core12.graphql.enumValues(["like", "dislike"])
   });
-  const SearchArticleAuthor = import_core12.graphql.object()({
-    name: "SearchArticleAuthor",
-    fields: {
-      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
-      username: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
-      avatar: import_core12.graphql.field({ type: import_core12.graphql.String })
-    }
-  });
   const ReactToArticleAuthor = import_core12.graphql.object()({
     name: "ReactToArticleAuthor",
     fields: {
@@ -3461,6 +3535,14 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
         resolve: (article) => article.comments
       }),
       userReaction: import_core12.graphql.field({ type: import_core12.graphql.String })
+    }
+  });
+  const SearchArticleAuthor = import_core12.graphql.object()({
+    name: "SearchArticleAuthor",
+    fields: {
+      id: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+      username: import_core12.graphql.field({ type: import_core12.graphql.nonNull(import_core12.graphql.String) }),
+      avatar: import_core12.graphql.field({ type: import_core12.graphql.String })
     }
   });
   const SearchArticleContent = import_core12.graphql.object()({
@@ -3520,541 +3602,442 @@ var extendGraphqlSchema = import_core12.graphql.extend((base) => {
       })
     }
   });
-  return {
-    query: {
-      // Query для поиска и фильтрации статей
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Возвращаем объект с articles и total вместо просто массива
-      searchArticles: import_core12.graphql.field({
-        type: SearchArticlesResult,
-        args: {
-          search: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          tags: import_core12.graphql.arg({ type: import_core12.graphql.list(import_core12.graphql.String) }),
-          difficulty: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          sort: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          skip: import_core12.graphql.arg({ type: import_core12.graphql.Int }),
-          take: import_core12.graphql.arg({ type: import_core12.graphql.Int })
-        },
-        async resolve(root, args, context) {
+  const queries = {
+    searchArticles: import_core12.graphql.field({
+      type: SearchArticlesResult,
+      args: {
+        search: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        tags: import_core12.graphql.arg({ type: import_core12.graphql.list(import_core12.graphql.String) }),
+        difficulty: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        sort: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        skip: import_core12.graphql.arg({ type: import_core12.graphql.Int }),
+        take: import_core12.graphql.arg({ type: import_core12.graphql.Int })
+      },
+      async resolve(root, args, context) {
+        try {
+          logger_default.debug("[searchArticles] Resolver called with args:", args);
+          const normalizedArgs = {
+            search: args.search ?? void 0,
+            tags: args.tags ? args.tags.filter((tag) => tag !== null) : void 0,
+            difficulty: args.difficulty ?? void 0,
+            sort: args.sort ?? void 0,
+            skip: args.skip ?? void 0,
+            take: args.take ?? void 0
+          };
+          const result = await searchAndFilterArticles(context, normalizedArgs);
+          logger_default.debug("[searchArticles] Result:", {
+            articlesCount: result.articles?.length || 0,
+            total: result.total
+          });
+          return {
+            articles: result.articles,
+            total: result.total
+          };
+        } catch (error) {
+          logger_default.error("[searchArticles] Error:", error);
+          throw error;
+        }
+      }
+    })
+  };
+  const mutations = {
+    reactToArticle: import_core12.graphql.field({
+      type: ReactToArticleResult,
+      args: {
+        articleId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+        reaction: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(ReactionType) })
+      },
+      async resolve(root, { articleId, reaction }, context) {
+        logger_default.info(`[reactToArticle] START: articleId=${articleId}, reaction=${reaction}`);
+        const session2 = context.session;
+        if (!session2?.itemId) {
+          throw new Error("Authentication required");
+        }
+        const userId = session2.itemId;
+        const userIdNum = typeof userId === "string" ? parseInt(userId, 10) : userId;
+        if (isNaN(userIdNum)) {
+          throw new Error("Invalid user ID");
+        }
+        const articleIdNum = typeof articleId === "string" ? parseInt(articleId, 10) : articleId;
+        if (isNaN(articleIdNum)) {
+          throw new Error("Invalid article ID");
+        }
+        if (reaction !== "like" && reaction !== "dislike") {
+          throw new Error("Invalid reaction type");
+        }
+        const article = await context.query.Article.findOne({
+          where: { id: String(articleIdNum) },
+          query: "id likes_count dislikes_count author { id }"
+        });
+        if (!article) {
+          throw new Error("Article not found");
+        }
+        const existingReactionResult = await context.query.ArticleReaction.findMany({
+          where: {
+            article: { id: { equals: String(articleIdNum) } },
+            user: { id: { equals: userIdNum } }
+          },
+          query: "id reaction",
+          take: 1
+        });
+        const existingReaction = Array.isArray(existingReactionResult) ? existingReactionResult : [];
+        let finalUserReaction = null;
+        const previousLikes = article.likes_count || 0;
+        if (existingReaction.length > 0) {
+          const currentReaction = existingReaction[0].reaction;
+          if (currentReaction === reaction) {
+            await context.sudo().query.ArticleReaction.deleteOne({
+              where: { id: existingReaction[0].id }
+            });
+            finalUserReaction = null;
+          } else {
+            await context.sudo().query.ArticleReaction.updateOne({
+              where: { id: existingReaction[0].id },
+              data: { reaction }
+            });
+            finalUserReaction = reaction;
+          }
+        } else {
+          await context.query.ArticleReaction.createOne({
+            data: {
+              article: { connect: { id: String(articleIdNum) } },
+              user: { connect: { id: userIdNum } },
+              reaction
+            }
+          });
+          finalUserReaction = reaction;
+        }
+        const likeReactions = await context.sudo().query.ArticleReaction.count({
+          where: {
+            article: { id: { equals: String(articleIdNum) } },
+            reaction: { equals: "like" }
+          }
+        });
+        const dislikeReactions = await context.sudo().query.ArticleReaction.count({
+          where: {
+            article: { id: { equals: String(articleIdNum) } },
+            reaction: { equals: "dislike" }
+          }
+        });
+        await context.sudo().query.Article.updateOne({
+          where: { id: String(articleIdNum) },
+          data: {
+            likes_count: likeReactions,
+            dislikes_count: dislikeReactions
+          },
+          query: "id"
+        });
+        if (reaction === "like" && finalUserReaction === "like" && article.author?.id) {
           try {
-            logger_default.debug("[searchArticles] Resolver called with args:", args);
-            const normalizedArgs = {
-              search: args.search ?? void 0,
-              tags: args.tags ? args.tags.filter((tag) => tag !== null) : void 0,
-              difficulty: args.difficulty ?? void 0,
-              sort: args.sort ?? void 0,
-              skip: args.skip ?? void 0,
-              take: args.take ?? void 0
-            };
-            const result = await searchAndFilterArticles(context, normalizedArgs);
-            logger_default.debug("[searchArticles] Result from searchAndFilterArticles:", {
-              articlesCount: result.articles?.length || 0,
-              total: result.total,
-              firstArticleId: result.articles?.[0]?.id,
-              firstArticleIdType: typeof result.articles?.[0]?.id
-            });
-            if (result.articles && result.articles.length > 0) {
-              logger_default.debug("[searchArticles] First article before return:", {
-                id: result.articles[0].id,
-                idType: typeof result.articles[0].id,
-                hasAuthor: !!result.articles[0].author,
-                author: result.articles[0].author ? {
-                  id: result.articles[0].author.id,
-                  idType: typeof result.articles[0].author.id,
-                  username: result.articles[0].author.username
-                } : null
+            const thresholds = [1, 5, 10, 50, 100, 500, 1e3];
+            const threshold = shouldNotifyAboutLike(likeReactions, previousLikes, thresholds);
+            if (threshold !== null) {
+              const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
+              const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
+              const where = {
+                user: { id: { equals: String(article.author.id) } },
+                article: { id: { equals: String(articleIdNum) } },
+                type: { equals: "article_like" }
+              };
+              if (cutoffTime) {
+                where.createdAt = { gte: cutoffTime.toISOString() };
+              }
+              const existingNotifications = await context.sudo().query.Notification.findMany({
+                where,
+                query: "id metadata createdAt"
               });
+              const hasNotificationForThreshold = existingNotifications.some(
+                (notif) => notif.metadata?.threshold === threshold
+              );
+              if (!hasNotificationForThreshold) {
+                await createNotification(context, {
+                  type: "article_like",
+                  userId: article.author.id,
+                  actorId: userIdNum,
+                  articleId: String(articleIdNum),
+                  metadata: { threshold, likesCount: likeReactions }
+                }, true);
+              }
             }
-            return {
-              articles: result.articles,
-              total: result.total
-            };
           } catch (error) {
-            logger_default.error("[searchArticles] Error:", error);
-            throw error;
+            logger_default.error(`[reactToArticle] Failed to create notification:`, error);
           }
         }
-      })
-    },
-    mutation: {
-      // Mutation для реакций на статьи
-      // Используем кастомный тип, чтобы избежать автоматической загрузки связанных данных
-      reactToArticle: import_core12.graphql.field({
-        type: ReactToArticleResult,
-        args: {
-          articleId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
-          reaction: import_core12.graphql.arg({
-            type: import_core12.graphql.nonNull(ReactionType)
-          })
-        },
-        async resolve(root, { articleId, reaction }, context) {
-          logger_default.info(`[reactToArticle] START: articleId=${articleId}, reaction=${reaction}`);
-          const session2 = context.session;
-          if (!session2?.itemId) {
-            logger_default.error(`[reactToArticle] Authentication required`);
-            throw new Error("Authentication required");
+        const articleData = await context.sudo().prisma.article.findUnique({
+          where: { id: articleIdNum },
+          include: {
+            author: { select: { id: true, username: true, avatar: true } },
+            comments: { select: { id: true } }
           }
-          const userId = session2.itemId;
-          const userIdNum = typeof userId === "string" ? parseInt(userId, 10) : userId;
-          if (isNaN(userIdNum)) {
-            logger_default.error(`[reactToArticle] Invalid userId: ${userId}`);
-            throw new Error("Invalid user ID");
-          }
-          logger_default.info(`[reactToArticle] userId=${userIdNum}`);
-          const articleIdNum = typeof articleId === "string" ? parseInt(articleId, 10) : articleId;
-          if (isNaN(articleIdNum)) {
-            logger_default.error(`[reactToArticle] Invalid articleId: ${articleId}`);
-            throw new Error("Invalid article ID");
-          }
-          if (reaction !== "like" && reaction !== "dislike") {
-            logger_default.error(`[reactToArticle] Invalid reaction type: ${reaction}`);
-            throw new Error("Invalid reaction type");
-          }
-          const article = await context.query.Article.findOne({
-            where: { id: String(articleIdNum) },
-            query: `
-              id
-              likes_count
-              dislikes_count
-              author {
-                id
-              }
-            `
-          });
-          if (!article) {
-            logger_default.error(`[reactToArticle] Article not found: articleId=${articleIdNum}`);
-            throw new Error("Article not found");
-          }
-          const existingReactionResult = await context.query.ArticleReaction.findMany({
-            where: {
-              article: { id: { equals: String(articleIdNum) } },
-              user: { id: { equals: userIdNum } }
-            },
-            query: "id reaction",
-            take: 1
-          });
-          const existingReaction = Array.isArray(existingReactionResult) ? existingReactionResult : [];
-          let finalUserReaction = null;
-          const previousLikes = article.likes_count || 0;
-          if (existingReaction.length > 0) {
-            const currentReaction = existingReaction[0].reaction;
-            if (currentReaction === reaction) {
-              await context.sudo().query.ArticleReaction.deleteOne({
-                where: { id: existingReaction[0].id }
-              });
-              finalUserReaction = null;
-            } else {
-              await context.sudo().query.ArticleReaction.updateOne({
-                where: { id: existingReaction[0].id },
-                data: { reaction }
-              });
-              finalUserReaction = reaction;
-            }
+        });
+        if (!articleData) {
+          throw new Error("Article not found");
+        }
+        const userReactionRecord = await context.sudo().prisma.articleReaction.findFirst({
+          where: { articleId: articleIdNum, userId: userIdNum },
+          select: { reaction: true }
+        });
+        const userReaction = userReactionRecord?.reaction || null;
+        return {
+          id: String(articleData.id),
+          title: articleData.title,
+          content: articleData.content,
+          excerpt: articleData.excerpt,
+          author: articleData.author ? {
+            id: String(articleData.author.id),
+            username: articleData.author.username,
+            avatar: articleData.author.avatar
+          } : null,
+          previewImage: articleData.previewImage,
+          tags: Array.isArray(articleData.tags) ? articleData.tags : [],
+          difficulty: articleData.difficulty,
+          likes_count: articleData.likes_count,
+          dislikes_count: articleData.dislikes_count,
+          views: articleData.views,
+          publishedAt: articleData.publishedAt,
+          createdAt: articleData.createdAt,
+          updatedAt: articleData.updatedAt,
+          comments: articleData.comments.map((c) => ({ id: String(c.id) })),
+          userReaction
+        };
+      }
+    }),
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем base.object() вместо создания нового типа
+    // Это предотвращает конфликты с OrderDirection и другими встроенными типами
+    reactToComment: import_core12.graphql.field({
+      type: base.object("Comment"),
+      args: {
+        commentId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
+        reaction: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(ReactionType) })
+      },
+      async resolve(root, { commentId, reaction }, context) {
+        logger_default.info(`[reactToComment] START: commentId=${commentId}, reaction=${reaction}`);
+        const session2 = context.session;
+        if (!session2?.itemId) {
+          throw new Error("Authentication required");
+        }
+        const userId = session2.itemId;
+        if (reaction !== "like" && reaction !== "dislike") {
+          throw new Error("Invalid reaction type");
+        }
+        const comment = await context.query.Comment.findOne({
+          where: { id: commentId },
+          query: "id likes_count dislikes_count author { id } article { id }"
+        });
+        if (!comment) {
+          throw new Error("Comment not found");
+        }
+        const existingReaction = await context.query.CommentReaction.findMany({
+          where: {
+            comment: { id: { equals: commentId } },
+            user: { id: { equals: userId } }
+          },
+          query: "id reaction",
+          take: 1
+        });
+        let finalUserReaction = null;
+        const previousLikes = comment.likes_count || 0;
+        if (existingReaction.length > 0) {
+          const currentReaction = existingReaction[0].reaction;
+          if (currentReaction === reaction) {
+            await context.sudo().query.CommentReaction.deleteOne({
+              where: { id: existingReaction[0].id }
+            });
+            finalUserReaction = null;
           } else {
-            await context.query.ArticleReaction.createOne({
-              data: {
-                article: { connect: { id: String(articleIdNum) } },
-                user: { connect: { id: userIdNum } },
-                reaction
-              }
+            await context.sudo().query.CommentReaction.updateOne({
+              where: { id: existingReaction[0].id },
+              data: { reaction }
             });
             finalUserReaction = reaction;
           }
-          const likeReactions = await context.sudo().query.ArticleReaction.count({
-            where: {
-              article: { id: { equals: String(articleIdNum) } },
-              reaction: { equals: "like" }
-            }
-          });
-          const dislikeReactions = await context.sudo().query.ArticleReaction.count({
-            where: {
-              article: { id: { equals: String(articleIdNum) } },
-              reaction: { equals: "dislike" }
-            }
-          });
-          const newLikes = likeReactions;
-          const newDislikes = dislikeReactions;
-          await context.sudo().query.Article.updateOne({
-            where: { id: String(articleIdNum) },
+        } else {
+          await context.query.CommentReaction.createOne({
             data: {
-              likes_count: newLikes,
-              dislikes_count: newDislikes
-            },
-            query: "id"
-          });
-          if (reaction === "like" && finalUserReaction === "like" && article.author?.id) {
-            try {
-              const thresholds = [1, 5, 10, 50, 100, 500, 1e3];
-              const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
-              if (threshold !== null) {
-                const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
-                const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
-                const where = {
-                  user: { id: { equals: String(article.author.id) } },
-                  article: { id: { equals: String(articleIdNum) } },
-                  type: { equals: "article_like" }
-                };
-                if (cutoffTime) {
-                  where.createdAt = { gte: cutoffTime.toISOString() };
-                }
-                const existingNotifications = await context.sudo().query.Notification.findMany({
-                  where,
-                  query: "id metadata createdAt"
-                });
-                const hasNotificationForThreshold = existingNotifications.some(
-                  (notif) => notif.metadata?.threshold === threshold
-                );
-                if (!hasNotificationForThreshold) {
-                  await createNotification(context, {
-                    type: "article_like",
-                    userId: article.author.id,
-                    actorId: userIdNum,
-                    articleId: String(articleIdNum),
-                    metadata: {
-                      threshold,
-                      likesCount: newLikes
-                    }
-                  }, true);
-                }
-              }
-            } catch (error) {
-              logger_default.error(`[reactToArticle] Failed to create like notification:`, error);
+              comment: { connect: { id: commentId } },
+              user: { connect: { id: userId } },
+              reaction
             }
+          });
+          finalUserReaction = reaction;
+        }
+        const likeReactions = await context.sudo().query.CommentReaction.count({
+          where: {
+            comment: { id: { equals: commentId } },
+            reaction: { equals: "like" }
           }
-          const articleData = await context.sudo().prisma.article.findUnique({
-            where: { id: articleIdNum },
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  avatar: true
-                }
-              },
-              comments: {
-                select: {
-                  id: true
-                }
+        });
+        const dislikeReactions = await context.sudo().query.CommentReaction.count({
+          where: {
+            comment: { id: { equals: commentId } },
+            reaction: { equals: "dislike" }
+          }
+        });
+        await context.sudo().query.Comment.updateOne({
+          where: { id: commentId },
+          data: {
+            likes_count: likeReactions,
+            dislikes_count: dislikeReactions
+          },
+          query: "id"
+        });
+        if (reaction === "like" && finalUserReaction === "like" && comment.author?.id) {
+          try {
+            const thresholds = [1, 3, 5, 10, 25];
+            const threshold = shouldNotifyAboutLike(likeReactions, previousLikes, thresholds);
+            if (threshold !== null) {
+              const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
+              const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
+              const where = {
+                user: { id: { equals: String(comment.author.id) } },
+                comment: { id: { equals: commentId } },
+                type: { equals: "comment_like" }
+              };
+              if (cutoffTime) {
+                where.createdAt = { gte: cutoffTime.toISOString() };
+              }
+              const existingNotifications = await context.sudo().query.Notification.findMany({
+                where,
+                query: "id metadata createdAt"
+              });
+              const hasNotificationForThreshold = existingNotifications.some(
+                (notif) => notif.metadata?.threshold === threshold
+              );
+              if (!hasNotificationForThreshold) {
+                await createNotification(context, {
+                  type: "comment_like",
+                  userId: comment.author.id,
+                  actorId: userId,
+                  articleId: comment.article?.id,
+                  commentId,
+                  metadata: { threshold, likesCount: likeReactions }
+                }, true);
               }
             }
-          });
-          if (!articleData) {
-            logger_default.error(`[reactToArticle] Article not found after update: articleId=${articleIdNum}`);
-            throw new Error("Article not found");
+          } catch (error) {
+            logger_default.error(`[reactToComment] Failed to create notification:`, error);
           }
-          const userReactionRecord = await context.sudo().prisma.articleReaction.findFirst({
-            where: {
-              articleId: articleIdNum,
-              userId: userIdNum
-            },
-            select: {
-              reaction: true
-            }
-          });
-          const userReaction = userReactionRecord?.reaction || null;
-          const updatedArticle = {
-            id: String(articleData.id),
-            title: articleData.title,
-            content: articleData.content,
-            excerpt: articleData.excerpt,
-            author: articleData.author ? {
-              id: String(articleData.author.id),
-              username: articleData.author.username,
-              avatar: articleData.author.avatar
-            } : null,
-            previewImage: articleData.previewImage,
-            tags: Array.isArray(articleData.tags) ? articleData.tags : [],
-            difficulty: articleData.difficulty,
-            likes_count: articleData.likes_count,
-            dislikes_count: articleData.dislikes_count,
-            views: articleData.views,
-            publishedAt: articleData.publishedAt,
-            createdAt: articleData.createdAt,
-            updatedAt: articleData.updatedAt,
-            comments: articleData.comments.map((c) => ({ id: String(c.id) })),
+        }
+        const updatedComment = await context.sudo().query.Comment.findOne({
+          where: { id: commentId },
+          query: `
+            id
+            text
+            likes_count
+            dislikes_count
             userReaction
-          };
-          return updatedArticle;
-        }
-      }),
-      // Mutation для реакций на комментарии
-      reactToComment: import_core12.graphql.field({
-        type: base.object("Comment"),
-        args: {
-          commentId: import_core12.graphql.arg({ type: import_core12.graphql.nonNull(import_core12.graphql.ID) }),
-          reaction: import_core12.graphql.arg({
-            type: import_core12.graphql.nonNull(ReactionType)
-          })
-        },
-        async resolve(root, { commentId, reaction }, context) {
-          logger_default.info(`[reactToComment] START: commentId=${commentId}, reaction=${reaction}`);
-          const session2 = context.session;
-          if (!session2?.itemId) {
-            logger_default.error(`[reactToComment] Authentication required`);
-            throw new Error("Authentication required");
-          }
-          const userId = session2.itemId;
-          if (reaction !== "like" && reaction !== "dislike") {
-            logger_default.error(`[reactToComment] Invalid reaction type: ${reaction}`);
-            throw new Error("Invalid reaction type");
-          }
-          const comment = await context.query.Comment.findOne({
-            where: { id: commentId },
-            query: `
+            author {
               id
-              likes_count
-              dislikes_count
-              author {
-                id
-              }
-              article {
-                id
-              }
-            `
-          });
-          if (!comment) {
-            logger_default.error(`[reactToComment] Comment not found: commentId=${commentId}`);
-            throw new Error("Comment not found");
-          }
-          const existingReaction = await context.query.CommentReaction.findMany({
-            where: {
-              comment: { id: { equals: commentId } },
-              user: { id: { equals: userId } }
-            },
-            query: "id reaction",
-            take: 1
-          });
-          let finalUserReaction = null;
-          const previousLikes = comment.likes_count || 0;
-          if (existingReaction.length > 0) {
-            const currentReaction = existingReaction[0].reaction;
-            if (currentReaction === reaction) {
-              await context.sudo().query.CommentReaction.deleteOne({
-                where: { id: existingReaction[0].id }
-              });
-              finalUserReaction = null;
-            } else {
-              await context.sudo().query.CommentReaction.updateOne({
-                where: { id: existingReaction[0].id },
-                data: { reaction }
-              });
-              finalUserReaction = reaction;
+              username
+              avatar
             }
-          } else {
-            await context.query.CommentReaction.createOne({
-              data: {
-                comment: { connect: { id: commentId } },
-                user: { connect: { id: userId } },
-                reaction
-              }
-            });
-            finalUserReaction = reaction;
-          }
-          const likeReactions = await context.sudo().query.CommentReaction.count({
-            where: {
-              comment: { id: { equals: commentId } },
-              reaction: { equals: "like" }
-            }
-          });
-          const dislikeReactions = await context.sudo().query.CommentReaction.count({
-            where: {
-              comment: { id: { equals: commentId } },
-              reaction: { equals: "dislike" }
-            }
-          });
-          const newLikes = likeReactions;
-          const newDislikes = dislikeReactions;
-          await context.sudo().query.Comment.updateOne({
-            where: { id: commentId },
-            data: {
-              likes_count: newLikes,
-              dislikes_count: newDislikes
-            },
-            query: "id"
-          });
-          if (reaction === "like" && finalUserReaction === "like" && comment.author?.id) {
-            try {
-              const thresholds = [1, 3, 5, 10, 25];
-              const threshold = shouldNotifyAboutLike(newLikes, previousLikes, thresholds);
-              if (threshold !== null) {
-                const timeWindow = threshold === 1 ? 60 * 60 * 1e3 : void 0;
-                const cutoffTime = timeWindow ? new Date(Date.now() - timeWindow) : null;
-                const where = {
-                  user: { id: { equals: String(comment.author.id) } },
-                  comment: { id: { equals: commentId } },
-                  type: { equals: "comment_like" }
-                };
-                if (cutoffTime) {
-                  where.createdAt = { gte: cutoffTime.toISOString() };
-                }
-                const existingNotifications = await context.sudo().query.Notification.findMany({
-                  where,
-                  query: "id metadata createdAt"
-                });
-                const hasNotificationForThreshold = existingNotifications.some(
-                  (notif) => notif.metadata?.threshold === threshold
-                );
-                if (!hasNotificationForThreshold) {
-                  await createNotification(context, {
-                    type: "comment_like",
-                    userId: comment.author.id,
-                    actorId: userId,
-                    articleId: comment.article?.id,
-                    commentId,
-                    metadata: {
-                      threshold,
-                      likesCount: newLikes
-                    }
-                  }, true);
-                }
-              }
-            } catch (error) {
-              logger_default.error(`[reactToComment] Failed to create like notification:`, error);
-            }
-          }
-          const updatedComment = await context.sudo().query.Comment.findOne({
-            where: { id: commentId },
-            query: `
+            parent {
               id
-              text
-              likes_count
-              dislikes_count
-              userReaction
-              author {
-                id
-                username
-                avatar
-              }
-              parent {
-                id
-              }
-              article {
-                id
-              }
-            `
-          });
-          return updatedComment;
+            }
+            article {
+              id
+            }
+          `
+        });
+        return updatedComment;
+      }
+    }),
+    updateProfile: import_core12.graphql.field({
+      type: base.object("User"),
+      args: {
+        username: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        bio: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        avatar: import_core12.graphql.arg({ type: import_core12.graphql.String }),
+        coverImage: import_core12.graphql.arg({ type: import_core12.graphql.String })
+      },
+      async resolve(root, args, context) {
+        logger_default.info("[updateProfile] START:", args);
+        const session2 = context.session;
+        if (!session2?.itemId) {
+          throw new Error("Authentication required");
         }
-      }),
-      // Mutation для обновления профиля пользователя
-      updateProfile: import_core12.graphql.field({
-        type: base.object("User"),
-        args: {
-          username: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          bio: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          avatar: import_core12.graphql.arg({ type: import_core12.graphql.String }),
-          coverImage: import_core12.graphql.arg({ type: import_core12.graphql.String })
-        },
-        async resolve(root, args, context) {
-          logger_default.info("[updateProfile] START:", {
-            hasUsername: !!args.username,
-            hasBio: args.bio !== void 0,
-            hasAvatar: args.avatar !== void 0,
-            hasCoverImage: args.coverImage !== void 0
-          });
-          const session2 = context.session;
-          if (!session2?.itemId) {
-            logger_default.error("[updateProfile] Authentication required");
-            throw new Error("Authentication required");
+        const userId = session2.itemId;
+        if (args.username !== void 0 && (args.username.length < 3 || args.username.length > 50)) {
+          throw new Error("Username must be between 3 and 50 characters");
+        }
+        if (args.bio !== void 0 && args.bio !== null && args.bio.length > 500) {
+          throw new Error("Bio must be 500 characters or less");
+        }
+        const updateData = {};
+        if (args.username !== void 0) {
+          updateData.username = args.username;
+        }
+        if (args.bio !== void 0) {
+          updateData.bio = args.bio === null || args.bio === "" ? null : args.bio.trim();
+        }
+        if (args.avatar !== void 0) {
+          updateData.avatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
+        }
+        if (args.coverImage !== void 0) {
+          updateData.coverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
+        }
+        const currentUser = await context.sudo().query.User.findOne({
+          where: { id: String(userId) },
+          query: "id username bio avatar coverImage"
+        });
+        if (!currentUser) {
+          throw new Error("User not found");
+        }
+        const finalUpdateData = {};
+        if (args.username !== void 0 && args.username !== currentUser.username) {
+          finalUpdateData.username = args.username;
+        }
+        if (args.bio !== void 0) {
+          const newBio = args.bio === null || args.bio === "" ? "" : args.bio.trim();
+          const currentBio = currentUser.bio || "";
+          if (newBio !== currentBio) {
+            finalUpdateData.bio = newBio;
           }
-          const userId = session2.itemId;
-          logger_default.info(`[updateProfile] userId=${userId}`);
-          if (args.username !== void 0 && (args.username.length < 3 || args.username.length > 50)) {
-            throw new Error("Username must be between 3 and 50 characters");
+        }
+        if (args.avatar !== void 0) {
+          const newAvatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
+          if (newAvatar !== currentUser.avatar) {
+            finalUpdateData.avatar = newAvatar;
           }
-          if (args.bio !== void 0 && args.bio !== null && args.bio.length > 500) {
-            throw new Error("Bio must be 500 characters or less");
+        }
+        if (args.coverImage !== void 0) {
+          const newCoverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
+          if (newCoverImage !== currentUser.coverImage) {
+            finalUpdateData.coverImage = newCoverImage;
           }
-          const updateData = {};
-          if (args.username !== void 0) {
-            updateData.username = args.username;
-          }
-          if (args.bio !== void 0) {
-            updateData.bio = args.bio === null || args.bio === "" ? null : args.bio.trim();
-          }
-          if (args.avatar !== void 0) {
-            updateData.avatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
-          }
-          if (args.coverImage !== void 0) {
-            updateData.coverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
-          }
-          logger_default.debug("[updateProfile] Update data prepared:", {
-            hasUsername: "username" in updateData,
-            hasBio: "bio" in updateData,
-            bioValue: "bio" in updateData ? updateData.bio === null ? "null" : `"${updateData.bio.substring(0, 50)}"` : "not set",
-            hasAvatar: "avatar" in updateData,
-            avatarValue: "avatar" in updateData ? updateData.avatar === null ? "null" : "url" : "not set",
-            hasCoverImage: "coverImage" in updateData,
-            coverImageValue: "coverImage" in updateData ? updateData.coverImage === null ? "null" : "url" : "not set"
-          });
-          logger_default.info(`[updateProfile] Updating user profile: userId=${userId}`);
-          logger_default.debug("[updateProfile] UpdateData before update:", JSON.stringify(updateData, null, 2));
-          const currentUser = await context.sudo().query.User.findOne({
+        }
+        let updatedUser;
+        if (Object.keys(finalUpdateData).length > 0) {
+          updatedUser = await context.sudo().query.User.updateOne({
             where: { id: String(userId) },
-            query: "id username bio avatar coverImage"
-            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
+            data: finalUpdateData,
+            query: "id username bio avatar coverImage createdAt updatedAt"
           });
-          if (!currentUser) {
-            logger_default.error(`[updateProfile] User not found: userId=${userId}`);
-            throw new Error("User not found");
-          }
-          const finalUpdateData = {};
-          if (args.username !== void 0 && args.username !== currentUser.username) {
-            finalUpdateData.username = args.username;
-          }
-          if (args.bio !== void 0) {
-            const newBio = args.bio === null || args.bio === "" ? "" : args.bio.trim();
-            const currentBio = currentUser.bio || "";
-            if (newBio !== currentBio) {
-              finalUpdateData.bio = newBio;
-            }
-          }
-          if (args.avatar !== void 0) {
-            const newAvatar = args.avatar === null || args.avatar === "" ? null : args.avatar;
-            if (newAvatar !== currentUser.avatar) {
-              finalUpdateData.avatar = newAvatar;
-            }
-          }
-          if (args.coverImage !== void 0) {
-            const newCoverImage = args.coverImage === null || args.coverImage === "" ? null : args.coverImage;
-            if (newCoverImage !== currentUser.coverImage) {
-              finalUpdateData.coverImage = newCoverImage;
-            }
-          }
-          logger_default.debug("[updateProfile] Final update data:", JSON.stringify(finalUpdateData, null, 2));
-          let updatedUser;
-          if (Object.keys(finalUpdateData).length > 0) {
-            updatedUser = await context.sudo().query.User.updateOne({
-              where: { id: String(userId) },
-              data: finalUpdateData,
-              query: "id username bio avatar coverImage createdAt updatedAt"
-              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
-            });
-          } else {
-            updatedUser = await context.sudo().query.User.findOne({
-              where: { id: String(userId) },
-              query: "id username bio avatar coverImage createdAt updatedAt"
-              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали email из query
-            });
-          }
-          if (!updatedUser) {
-            logger_default.error(`[updateProfile] User not found after update: userId=${userId}`);
-            throw new Error("User not found");
-          }
-          const result = {
-            ...updatedUser,
-            createdAt: updatedUser.createdAt instanceof Date ? updatedUser.createdAt : new Date(updatedUser.createdAt),
-            updatedAt: updatedUser.updatedAt instanceof Date ? updatedUser.updatedAt : new Date(updatedUser.updatedAt)
-          };
-          logger_default.info(`[updateProfile] SUCCESS: userId=${userId}, username=${result.username}`);
-          return result;
+        } else {
+          updatedUser = await context.sudo().query.User.findOne({
+            where: { id: String(userId) },
+            query: "id username bio avatar coverImage createdAt updatedAt"
+          });
         }
-      })
-    }
+        if (!updatedUser) {
+          throw new Error("User not found");
+        }
+        return {
+          ...updatedUser,
+          createdAt: updatedUser.createdAt instanceof Date ? updatedUser.createdAt : new Date(updatedUser.createdAt),
+          updatedAt: updatedUser.updatedAt instanceof Date ? updatedUser.updatedAt : new Date(updatedUser.updatedAt)
+        };
+      }
+    })
+  };
+  return {
+    query: queries,
+    mutation: mutations
   };
 });
 
 // keystone.ts
-var databaseURL = process.env.DATABASE_URL || "file:./.tmp/data.db";
+var databaseURL = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "file:./.tmp/data.db";
 var getDatabaseProvider = () => {
   if (databaseURL.startsWith("postgresql://") || databaseURL.startsWith("postgres://")) {
     return "postgresql";
@@ -4062,6 +4045,13 @@ var getDatabaseProvider = () => {
   return "sqlite";
 };
 var dbProvider = getDatabaseProvider();
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  logger_default.info("\u2705 Supabase configuration detected - using Supabase PostgreSQL");
+} else if (dbProvider === "postgresql") {
+  logger_default.info("\u2705 PostgreSQL configuration detected");
+} else {
+  logger_default.warn("\u26A0\uFE0F Using SQLite (development only). For production, configure Supabase or PostgreSQL.");
+}
 var sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret || sessionSecret.length < 32) {
   logger_default.error("\u274C SECURITY WARNING: SESSION_SECRET is too short or missing!");
@@ -4091,22 +4081,43 @@ if (!emailHmacSecret || emailHmacSecret.length < 32) {
   logger_default.info("\u2705 EMAIL_HMAC_SECRET is secure (length: " + emailHmacSecret.length + " characters)");
 }
 if (process.env.NODE_ENV === "production") {
-  const requiredVars = ["DATABASE_URL", "FRONTEND_URL", "SESSION_SECRET", "EMAIL_HMAC_SECRET"];
-  const missing = requiredVars.filter((v) => !process.env[v]);
-  if (missing.length > 0) {
-    logger_default.error(`\u274C Missing required environment variables for production: ${missing.join(", ")}`);
-    logger_default.error("   Application cannot start without these variables.");
-    process.exit(1);
+  const isSupabase = !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (isSupabase) {
+    const requiredVars = [
+      "SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_ANON_KEY",
+      "SUPABASE_DATABASE_URL",
+      "FRONTEND_URL",
+      "SESSION_SECRET",
+      "EMAIL_HMAC_SECRET"
+    ];
+    const missing = requiredVars.filter((v) => !process.env[v]);
+    if (missing.length > 0) {
+      logger_default.error(`\u274C Missing required Supabase environment variables: ${missing.join(", ")}`);
+      logger_default.error("   Application cannot start without these variables.");
+      process.exit(1);
+    }
+    logger_default.info("\u2705 All required Supabase environment variables are set for production");
+  } else {
+    const requiredVars = ["DATABASE_URL", "FRONTEND_URL", "SESSION_SECRET", "EMAIL_HMAC_SECRET"];
+    const missing = requiredVars.filter((v) => !process.env[v]);
+    if (missing.length > 0) {
+      logger_default.error(`\u274C Missing required environment variables for production: ${missing.join(", ")}`);
+      logger_default.error("   Application cannot start without these variables.");
+      process.exit(1);
+    }
+    logger_default.info("\u2705 All required environment variables are set for production");
   }
-  logger_default.info("\u2705 All required environment variables are set for production");
 }
 var keystone_default = withAuth(
   (0, import_core13.config)({
     db: {
       provider: dbProvider,
       url: databaseURL,
-      useMigrations: true,
-      idField: { kind: dbProvider === "postgresql" ? "uuid" : "autoincrement" }
+      useMigrations: false,
+      idField: { kind: "autoincrement" }
+      // Используем autoincrement, так как таблицы уже созданы с integer ID
     },
     lists,
     session,
@@ -4118,6 +4129,7 @@ var keystone_default = withAuth(
       extendGraphqlSchema
     },
     server: {
+      host: "0.0.0.0",
       port: parseInt(process.env.PORT || "1337", 10),
       extendExpressApp,
       cors: {

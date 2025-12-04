@@ -13,7 +13,8 @@ import { extendGraphqlSchema } from './src/graphql/combined';
 import logger from './src/lib/logger';
 import { logAdminAccessDenied, logAdminAccessGranted } from './src/lib/security-logger';
 
-const databaseURL = process.env.DATABASE_URL || 'file:./.tmp/data.db';
+// Приоритет: SUPABASE_DATABASE_URL > DATABASE_URL > fallback
+const databaseURL = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || 'file:./.tmp/data.db';
 
 // Определяем провайдер БД динамически по DATABASE_URL
 const getDatabaseProvider = (): 'sqlite' | 'postgresql' => {
@@ -24,6 +25,15 @@ const getDatabaseProvider = (): 'sqlite' | 'postgresql' => {
 };
 
 const dbProvider = getDatabaseProvider();
+
+// Проверка конфигурации Supabase
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  logger.info('✅ Supabase configuration detected - using Supabase PostgreSQL');
+} else if (dbProvider === 'postgresql') {
+  logger.info('✅ PostgreSQL configuration detected');
+} else {
+  logger.warn('⚠️ Using SQLite (development only). For production, configure Supabase or PostgreSQL.');
+}
 
 // Проверка силы SESSION_SECRET при старте
 const sessionSecret = process.env.SESSION_SECRET;
@@ -59,6 +69,27 @@ if (!emailHmacSecret || emailHmacSecret.length < 32) {
 
 // Проверка обязательных переменных окружения для production
 if (process.env.NODE_ENV === 'production') {
+  // Для Supabase нужны другие переменные
+  const isSupabase = !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  
+  if (isSupabase) {
+    const requiredVars = [
+      'SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'SUPABASE_ANON_KEY',
+      'SUPABASE_DATABASE_URL',
+      'FRONTEND_URL',
+      'SESSION_SECRET',
+      'EMAIL_HMAC_SECRET',
+    ];
+    const missing = requiredVars.filter(v => !process.env[v]);
+    if (missing.length > 0) {
+      logger.error(`❌ Missing required Supabase environment variables: ${missing.join(', ')}`);
+      logger.error('   Application cannot start without these variables.');
+      process.exit(1);
+    }
+    logger.info('✅ All required Supabase environment variables are set for production');
+  } else {
   const requiredVars = ['DATABASE_URL', 'FRONTEND_URL', 'SESSION_SECRET', 'EMAIL_HMAC_SECRET'];
   const missing = requiredVars.filter(v => !process.env[v]);
   if (missing.length > 0) {
@@ -67,6 +98,7 @@ if (process.env.NODE_ENV === 'production') {
     process.exit(1);
   }
   logger.info('✅ All required environment variables are set for production');
+  }
 }
 
 export default withAuth(

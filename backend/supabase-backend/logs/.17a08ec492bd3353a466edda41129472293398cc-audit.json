@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/home/ayakiro/Documents/Проекты/Aetheris-web/backend/supabase-backend/logs/.17a08ec492bd3353a466edda41129472293398cc-audit.json",
+    "files": [
+        {
+            "date": 1764856528121,
+            "name": "/home/ayakiro/Documents/Проекты/Aetheris-web/backend/supabase-backend/logs/exceptions-2025-12-04.log",
+            "hash": "842a971246089a6a36d1e79f6a26d2c7b482b838a78371bb6a784748bff62ea4"
+        }
+    ],
+    "hashType": "sha256"
+}
