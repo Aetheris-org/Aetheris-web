@@ -8,7 +8,7 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 
@@ -470,6 +470,9 @@ export default function PricingPage() {
                         <DialogTitle className="text-base sm:text-xl md:text-2xl">
                           {plan.name} - {t('pricing.allFeatures')}
                         </DialogTitle>
+                        <DialogDescription>
+                          {t('pricing.allFeaturesDescription') || 'Полный список функций и возможностей этого тарифного плана'}
+                        </DialogDescription>
                       </DialogHeader>
                       
                       <div className="space-y-4 sm:space-y-6 pt-3 sm:pt-4">

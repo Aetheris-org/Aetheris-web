@@ -43,7 +43,7 @@ interface GraphQLUserProfile {
     article: {
       id: string
       title: string
-    }
+    } | null
   }>
   bookmarks: Array<{
     id: string
@@ -53,7 +53,7 @@ interface GraphQLUserProfile {
       title: string
       excerpt?: string | null
       previewImage?: string | null
-    }
+    } | null
   }>
 }
 
@@ -102,28 +102,32 @@ function transformUserProfile(raw: GraphQLUserProfile, _currentUserId?: number):
     }
   })
 
-  // Преобразуем комментарии
-  const comments = raw.comments.map((comment) => ({
-    id: String(comment.id),
-    text: comment.text,
-    createdAt: comment.createdAt,
-    article: {
-      id: String(comment.article.id),
-      title: comment.article.title,
-    },
-  }))
+  // Преобразуем комментарии (фильтруем те, где статья удалена)
+  const comments = raw.comments
+    .filter((comment) => comment.article !== null)
+    .map((comment) => ({
+      id: String(comment.id),
+      text: comment.text,
+      createdAt: comment.createdAt,
+      article: {
+        id: String(comment.article!.id),
+        title: comment.article!.title,
+      },
+    }))
 
-  // Преобразуем закладки
-  const bookmarks = raw.bookmarks.map((bookmark) => ({
-    id: String(bookmark.id),
-    createdAt: bookmark.createdAt,
-    article: {
-      id: String(bookmark.article.id),
-      title: bookmark.article.title,
-      excerpt: bookmark.article.excerpt ?? undefined,
-      previewImage: bookmark.article.previewImage ?? undefined,
-    },
-  }))
+  // Преобразуем закладки (фильтруем те, где статья удалена)
+  const bookmarks = raw.bookmarks
+    .filter((bookmark) => bookmark.article !== null)
+    .map((bookmark) => ({
+      id: String(bookmark.id),
+      createdAt: bookmark.createdAt,
+      article: {
+        id: String(bookmark.article!.id),
+        title: bookmark.article!.title,
+        excerpt: bookmark.article!.excerpt ?? undefined,
+        previewImage: bookmark.article!.previewImage ?? undefined,
+      },
+    }))
 
   return {
     user: {
