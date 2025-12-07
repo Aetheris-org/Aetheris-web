@@ -42,6 +42,7 @@ const CONTENT_MAX_LENGTH = 20000
 const TAG_MAX_LENGTH = 20
 const MAX_TAGS = 20
 const DRAFT_SAVE_COOLDOWN = 2000 // 2 секунды между сохранениями
+const UPLOAD_PREVIEW_ENABLED = false // временно отключаем загрузку в наше хранилище
 
 function normalizeRichText(value: string | null | undefined): string {
   if (!value) return ''
@@ -127,6 +128,12 @@ export default function CreateArticlePage() {
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
+    // Временно отключаем загрузку в наше хранилище
+    if (!UPLOAD_PREVIEW_ENABLED) {
+      // Возвращаем уже выбранный/установленный URL (включая внешний)
+      return existingPreviewImageId || selectedImageUrl || originalImageUrl || null
+    }
+
     if (!croppedImageBlob) {
       return existingPreviewImageId ? String(existingPreviewImageId) : null
     }
@@ -2708,7 +2715,7 @@ export default function CreateArticlePage() {
                       variant="outline"
                       className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                       onClick={handleAdjustCrop}
-                      disabled={!originalImageUrl}
+                      disabled={!originalImageUrl || !UPLOAD_PREVIEW_ENABLED}
                     >
                       <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('createArticle.adjustCrop')}
@@ -2717,6 +2724,7 @@ export default function CreateArticlePage() {
                       variant="outline"
                       className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                       onClick={() => fileInputRef.current?.click()}
+                      disabled={!UPLOAD_PREVIEW_ENABLED}
                     >
                       <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('createArticle.replaceImage')}
@@ -2755,6 +2763,7 @@ export default function CreateArticlePage() {
                     className="mt-4 sm:mt-6 gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={!UPLOAD_PREVIEW_ENABLED}
                   >
                     <ImagePlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t('createArticle.uploadImage')}
@@ -2775,6 +2784,7 @@ export default function CreateArticlePage() {
                 accept="image/*"
                 className="hidden"
                 onChange={handleImageSelection}
+                disabled={!UPLOAD_PREVIEW_ENABLED}
               />
               <Dialog open={isExternalImageDialogOpen} onOpenChange={setIsExternalImageDialogOpen}>
                 <DialogContent className="max-w-lg">
@@ -2783,6 +2793,11 @@ export default function CreateArticlePage() {
                     <DialogDescription>
                       {t('createArticle.externalImageDescription') ||
                         'Paste a direct image link (https) from a trusted host. The image will be displayed without uploading to our storage.'}
+                      {!UPLOAD_PREVIEW_ENABLED && (
+                        <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                          {t('createArticle.uploadDisabledNotice') || 'Direct uploads are temporarily disabled. Use an external image URL.'}
+                        </div>
+                      )}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3 sm:space-y-4">
