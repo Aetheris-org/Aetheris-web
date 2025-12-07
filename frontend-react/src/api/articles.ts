@@ -500,12 +500,12 @@ export async function reactToArticle(
     ] = await Promise.all([
       supabase
         .from('article_reactions')
-        .select('id', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('article_id', validatedArticleId)
         .eq('reaction', 'like'),
       supabase
         .from('article_reactions')
-        .select('id', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('article_id', validatedArticleId)
         .eq('reaction', 'dislike'),
     ]);
