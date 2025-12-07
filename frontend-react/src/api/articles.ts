@@ -486,6 +486,49 @@ export async function reactToArticle(
           throw upsertError;
         }
       }
+
+      // 3) Пересчитываем агрегаты и обновляем статьи,
+      // чтобы likes_count / dislikes_count в таблице не оставались 0.
+      const [
+        { count: likesCountRaw, error: likesError },
+        { count: dislikesCountRaw, error: dislikesError },
+      ] = await Promise.all([
+        supabase
+          .from('article_reactions')
+          .select('id', { head: true, count: 'exact' })
+          .eq('article_id', validatedArticleId)
+          .eq('reaction', 'like'),
+        supabase
+          .from('article_reactions')
+          .select('id', { head: true, count: 'exact' })
+          .eq('article_id', validatedArticleId)
+          .eq('reaction', 'dislike'),
+      ]);
+
+      if (likesError) {
+        logger.error('Error fetching likes count', likesError);
+        throw likesError;
+      }
+      if (dislikesError) {
+        logger.error('Error fetching dislikes count', dislikesError);
+        throw dislikesError;
+      }
+
+      const likesCount = likesCountRaw ?? 0;
+      const dislikesCount = dislikesCountRaw ?? 0;
+
+      const { error: updateAggError } = await supabase
+        .from('articles')
+        .update({
+          likes_count: likesCount,
+          dislikes_count: dislikesCount,
+        })
+        .eq('id', validatedArticleId);
+
+      if (updateAggError) {
+        logger.error('Error updating article aggregates', updateAggError);
+        throw updateAggError;
+      }
     };
 
     // Всегда используем прямой toggle (RPC даёт 400/ambiguous у части пользователей)
