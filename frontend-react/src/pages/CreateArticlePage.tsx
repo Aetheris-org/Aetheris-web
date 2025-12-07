@@ -119,6 +119,10 @@ export default function CreateArticlePage() {
   const loadedDraftIdRef = useRef<number | null>(null)
 
   const effectiveImageUrl = selectedImageUrl ?? originalImageUrl
+  const resolvePreviewUrl = useCallback(
+    () => existingPreviewImageId || selectedImageUrl || originalImageUrl || null,
+    [existingPreviewImageId, selectedImageUrl, originalImageUrl]
+  )
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
   const editParam = searchParams.get('edit')
@@ -131,7 +135,7 @@ export default function CreateArticlePage() {
     // Временно отключаем загрузку в наше хранилище
     if (!UPLOAD_PREVIEW_ENABLED) {
       // Возвращаем уже выбранный/установленный URL (включая внешний)
-      return existingPreviewImageId || selectedImageUrl || originalImageUrl || null
+      return resolvePreviewUrl()
     }
 
     if (!croppedImageBlob) {
@@ -188,7 +192,7 @@ export default function CreateArticlePage() {
 
     // Если все попытки не удались, выбрасываем последнюю ошибку
     throw lastError || new Error('Failed to upload image after multiple attempts')
-  }, [croppedImageBlob, existingPreviewImageId])
+  }, [croppedImageBlob, existingPreviewImageId, resolvePreviewUrl])
 
   const applyExternalImageUrl = useCallback(() => {
     const url = externalImageUrl.trim()
@@ -204,7 +208,7 @@ export default function CreateArticlePage() {
     setSelectedImageUrl(url)
     setCroppedImageUrl(url)
     setCroppedImageBlob(null)
-    setExistingPreviewImageId(null)
+    setExistingPreviewImageId(url)
     setIsExternalImageDialogOpen(false)
   }, [externalImageUrl, toast, t])
 
@@ -540,7 +544,7 @@ export default function CreateArticlePage() {
         const currentExcerpt = excerpt
         const currentTags = tags
         const currentDifficulty = difficulty
-        const currentPreviewImage = existingPreviewImageId
+        const currentPreviewImage = resolvePreviewUrl()
         const currentDraftId = draftId
 
         // Получаем JSON из редактора
@@ -782,7 +786,7 @@ export default function CreateArticlePage() {
         logger.error('[CreateArticlePage] Preview upload failed, continuing without image:', error)
         // Продолжаем сохранение черновика даже если загрузка изображения не удалась
         // Используем existingPreviewImageId если есть
-        previewImageUrl = existingPreviewImageId || null
+        previewImageUrl = resolvePreviewUrl()
         toast({
           title: t('createArticle.imageUploadFailed'),
           description: t('createArticle.imageUploadFailedDescription'),
@@ -1269,7 +1273,7 @@ export default function CreateArticlePage() {
       } catch (error) {
         logger.error('[CreateArticlePage] Preview upload failed, using existing or continuing without:', error)
         // Используем existingPreviewImageId если есть, иначе продолжаем без изображения
-        previewImageUrl = existingPreviewImageId || null
+        previewImageUrl = resolvePreviewUrl()
         if (!previewImageUrl) {
         toast({
             title: t('createArticle.imageUploadFailed'),
