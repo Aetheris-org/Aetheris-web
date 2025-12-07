@@ -1453,7 +1453,7 @@ function ProfileSettings() {
                 </div>
               )}
             </div>
-            <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 bg-gradient-to-t from-background/95 via-background/40 to-transparent p-2 sm:p-3">
+          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 bg-gradient-to-t from-background/95 via-background/40 to-transparent p-2 sm:p-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -1645,7 +1645,7 @@ function ProfileSettings() {
                 </TooltipProvider>
               )}
             </div>
-            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
+            <div className="w-full sm:max-w-xl flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
               <Input
                 placeholder="https://example.com/avatar.jpg"
                 value={avatarUrlInput}
