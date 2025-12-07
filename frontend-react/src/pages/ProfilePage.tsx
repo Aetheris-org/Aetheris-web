@@ -619,7 +619,9 @@ export default function ProfilePage() {
   )
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
-  const isOwnProfile = profile?.user.uuid === currentUser?.uuid
+  const isOwnProfile =
+    profile?.user.uuid === currentUser?.uuid ||
+    (!profile && profileId && currentUser?.uuid && profileId === currentUser.uuid)
 
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({
@@ -988,7 +990,7 @@ export default function ProfilePage() {
                 <Separator orientation="vertical" className="h-4" />
                 <div className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span className="font-semibold text-foreground">{profile.stats.followers}</span>
+                  <span className="font-semibold text-foreground">{profile.stats.followers ?? 0}</span>
                   <span className="text-muted-foreground text-[11px] sm:text-xs">
                     {t('profile.followersLabel')}
                   </span>
@@ -1029,13 +1031,14 @@ export default function ProfilePage() {
                     variant={followStatus ? 'outline' : 'default'}
                     className="gap-1.5 flex-1 h-9 text-xs"
                     onClick={() => {
+                      if (isOwnProfile) return
                       if (followStatus) {
                         unfollowMutation.mutate()
                       } else {
                         followMutation.mutate()
                       }
                     }}
-                    disabled={followMutation.isPending || unfollowMutation.isPending}
+                    disabled={isOwnProfile || followMutation.isPending || unfollowMutation.isPending}
                   >
                     {followStatus ? (
                       <>
@@ -1115,7 +1118,7 @@ export default function ProfilePage() {
                   <Separator orientation="vertical" className="h-3 sm:h-4" />
                   <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
                     <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                    <span className="font-medium">{profile.stats.followers}</span>
+                    <span className="font-medium">{profile.stats.followers ?? 0}</span>
                     <span className="text-muted-foreground/70 hidden md:inline">{t('profile.followersLabel')}</span>
                   </div>
                 </div>
@@ -1191,13 +1194,14 @@ export default function ProfilePage() {
                       variant={followStatus ? 'outline' : 'default'}
                       className="gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
                       onClick={() => {
+                        if (isOwnProfile) return
                         if (followStatus) {
                           unfollowMutation.mutate()
                         } else {
                           followMutation.mutate()
                         }
                       }}
-                      disabled={followMutation.isPending || unfollowMutation.isPending}
+                      disabled={isOwnProfile || followMutation.isPending || unfollowMutation.isPending}
                     >
                       {followStatus ? (
                         <>

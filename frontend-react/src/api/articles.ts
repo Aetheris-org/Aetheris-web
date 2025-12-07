@@ -82,6 +82,60 @@ const sortClientArticles = (articles: Article[], sort: ArticleSortOption): Artic
   return articles;
 };
 
+// --- Read time helpers ---
+const stripHtml = (input: string): string =>
+  input
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const extractReadMeta = (raw: any) => {
+  const asString = (() => {
+    if (typeof raw === 'string') return raw;
+    if (raw && typeof raw === 'object') return JSON.stringify(raw);
+    return '';
+  })();
+
+  const images = (asString.match(/<(img|picture|figure)\b/gi) || []).length;
+  const codeBlocks = (asString.match(/<(pre|code)\b/gi) || []).length;
+  const text = stripHtml(asString);
+  const words = text ? text.split(/\s+/).length : 0;
+  const longTokens =
+    text && words > 0
+      ? text.split(/\s+/).filter((token) => token.length > 12).length / words
+      : 0;
+
+  return { words, images, codeBlocks, longTokensRatio: longTokens };
+};
+
+const computeReadTimeMinutes = (article: any): number | undefined => {
+  // prefer explicit field if backend provides
+  if (typeof article.read_time_minutes === 'number') return article.read_time_minutes;
+
+  const { words, images, codeBlocks, longTokensRatio } = extractReadMeta(article.content || article.excerpt || '');
+
+  if (!words || Number.isNaN(words)) return undefined;
+
+  const language = article.language || article.locale;
+  const wpm = language === 'ru' ? 180 : 200;
+
+  let baseSeconds = (words / wpm) * 60;
+  baseSeconds += images * 10; // average glance per image
+  baseSeconds += codeBlocks * 25; // code takes longer
+
+  if (longTokensRatio > 0.12) {
+    baseSeconds *= 1.1; // technical/long words bump
+  }
+
+  const minutes = baseSeconds / 60;
+
+  // round to nearest 0.5, min 1 min
+  const rounded = Math.max(1, Math.round(minutes * 2) / 2);
+  return Number.isFinite(rounded) ? rounded : undefined;
+};
+
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
   const rawContent = article.content ?? { document: [] };
@@ -133,6 +187,7 @@ export function transformArticle(article: any, _userId?: string): Article {
         : undefined;
 
   const reactionsCount = (article.likes_count || 0) + (article.dislikes_count || 0);
+  const readTimeMinutes = computeReadTimeMinutes(article);
 
   return {
     id: String(article.id),
