@@ -5,6 +5,14 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
+function validateUuid(id: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!id || (typeof id !== 'string') || !uuidRegex.test(id)) {
+    throw new Error(`Invalid UUID format: ${id}`);
+  }
+  return id;
+}
+
 export interface CommentAuthor {
   id: number | string;
   username: string;
@@ -73,7 +81,7 @@ export async function getArticleComments(
           avatar
         )
       `)
-      .eq('article_id', parseInt(articleId))
+      .eq('article_id', validateUuid(articleId))
       .order('created_at', { ascending: true })
       .range(skip, skip + take - 1);
 
@@ -84,7 +92,7 @@ export async function getArticleComments(
 
     // Получаем реакции пользователя для каждого комментария
     const commentsWithReactions = await Promise.all(
-      (data || []).map(async (comment) => {
+      (data || []).map(async (comment: any) => {
         if (!user) {
           return { ...comment, user_reaction: null };
         }
@@ -103,7 +111,7 @@ export async function getArticleComments(
       })
     );
 
-    const comments = commentsWithReactions.map((c) => transformComment(c, user?.id));
+    const comments = commentsWithReactions.map((c: any) => transformComment(c, user?.id));
 
     return {
       comments,
@@ -138,9 +146,9 @@ export async function createComment(data: {
       .from('comments')
       .insert({
         text: data.text,
-        article_id: parseInt(data.articleId),
+        article_id: validateUuid(data.articleId),
         author_id: user.id,
-        parent_id: data.parentId ? parseInt(data.parentId) : null,
+        parent_id: data.parentId ? validateUuid(data.parentId) : null,
       })
       .select(`
         *,
@@ -182,7 +190,7 @@ export async function updateComment(
     const { data: existingComment } = await supabase
       .from('comments')
       .select('author_id')
-      .eq('id', parseInt(id))
+      .eq('id', validateUuid(id))
       .single();
 
     if (!existingComment) {
@@ -196,7 +204,7 @@ export async function updateComment(
     const { data: comment, error } = await supabase
       .from('comments')
       .update({ text: data.text })
-      .eq('id', parseInt(id))
+      .eq('id', validateUuid(id))
       .select(`
         *,
         author:profiles!comments_author_id_fkey (
@@ -234,7 +242,7 @@ export async function deleteComment(id: string): Promise<boolean> {
     const { data: existingComment } = await supabase
       .from('comments')
       .select('author_id')
-      .eq('id', parseInt(id))
+      .eq('id', validateUuid(id))
       .single();
 
     if (!existingComment) {
@@ -248,7 +256,7 @@ export async function deleteComment(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('comments')
       .delete()
-      .eq('id', parseInt(id));
+      .eq('id', validateUuid(id));
 
     if (error) {
       logger.error('Error deleting comment', error);
@@ -280,7 +288,7 @@ export async function reactToComment(
     const { data: existing } = await supabase
       .from('comment_reactions')
       .select('reaction')
-      .eq('comment_id', parseInt(commentId))
+      .eq('comment_id', validateUuid(commentId))
       .eq('user_id', user.id)
       .single();
 
@@ -289,14 +297,14 @@ export async function reactToComment(
       await supabase
         .from('comment_reactions')
         .delete()
-        .eq('comment_id', parseInt(commentId))
+        .eq('comment_id', validateUuid(commentId))
         .eq('user_id', user.id);
     } else {
       // Создаем или обновляем реакцию
       await supabase
         .from('comment_reactions')
         .upsert({
-          comment_id: parseInt(commentId),
+          comment_id: validateUuid(commentId),
           user_id: user.id,
           reaction: reaction,
         }, {
@@ -315,7 +323,7 @@ export async function reactToComment(
           avatar
         )
       `)
-      .eq('id', parseInt(commentId))
+      .eq('id', validateUuid(commentId))
       .single();
 
     if (!comment) {
@@ -326,7 +334,7 @@ export async function reactToComment(
     const { data: userReaction } = await supabase
       .from('comment_reactions')
       .select('reaction')
-      .eq('comment_id', parseInt(commentId))
+      .eq('comment_id', validateUuid(commentId))
       .eq('user_id', user.id)
       .single();
 

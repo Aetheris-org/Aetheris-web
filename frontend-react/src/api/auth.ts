@@ -31,7 +31,6 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    // Получаем профиль пользователя из таблицы profiles
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
