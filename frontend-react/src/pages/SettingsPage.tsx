@@ -1560,7 +1560,6 @@ function ProfileSettings() {
               </Button>
             </div>
           </div>
-          </div>
         </section>
 
         <section className="space-y-2 sm:space-y-3">
