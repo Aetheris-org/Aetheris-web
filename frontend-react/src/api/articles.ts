@@ -442,99 +442,50 @@ export async function reactToArticle(
       return articleId;
     })();
 
-    // Прямой toggle в таблице article_reactions (без RPC, чтобы избежать 400/ambiguous)
-    const toggleDirect = async () => {
-      // 1) Узнаём текущую реакцию пользователя
-      const { data: existing, error: existingError } = await supabase
+    // Упрощённо: прямой toggle + возврат статьи с актуальными данными
+    const { data: existing, error: existingError } = await supabase
+      .from('article_reactions')
+      .select('reaction')
+      .eq('article_id', validatedArticleId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      logger.error('Error fetching existing article reaction', existingError);
+      throw existingError;
+    }
+
+    if (existing && existing.reaction === reaction) {
+      const { error: deleteError } = await supabase
         .from('article_reactions')
-        .select('reaction')
+        .delete()
         .eq('article_id', validatedArticleId)
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-      if (existingError && existingError.code !== 'PGRST116') {
-        logger.error('Error fetching existing article reaction', existingError);
-        throw existingError;
+      if (deleteError) {
+        logger.error('Error deleting article reaction', deleteError);
+        throw deleteError;
       }
+    } else {
+      const { error: upsertError } = await supabase
+        .from('article_reactions')
+        .upsert(
+          {
+            article_id: validatedArticleId,
+            user_id: user.id,
+            reaction,
+          },
+          { onConflict: 'article_id,user_id' }
+        );
 
-      // 2) Если та же реакция — удаляем, иначе upsert
-      if (existing && existing.reaction === reaction) {
-        const { error: deleteError } = await supabase
-          .from('article_reactions')
-          .delete()
-          .eq('article_id', validatedArticleId)
-          .eq('user_id', user.id);
-
-        if (deleteError) {
-          logger.error('Error deleting article reaction', deleteError);
-          throw deleteError;
-        }
-      } else {
-        const { error: upsertError } = await supabase
-          .from('article_reactions')
-          .upsert(
-            {
-              article_id: validatedArticleId,
-              user_id: user.id,
-              reaction,
-            },
-            { onConflict: 'article_id,user_id' }
-          );
-
-        if (upsertError) {
-          logger.error('Error upserting article reaction', upsertError);
-          throw upsertError;
-        }
+      if (upsertError) {
+        logger.error('Error upserting article reaction', upsertError);
+        throw upsertError;
       }
+    }
 
-      // 3) Пересчитываем агрегаты и обновляем статьи,
-      // чтобы likes_count / dislikes_count в таблице не оставались 0.
-      const [
-        { count: likesCountRaw, error: likesError },
-        { count: dislikesCountRaw, error: dislikesError },
-      ] = await Promise.all([
-        supabase
-          .from('article_reactions')
-          .select('id', { head: true, count: 'exact' })
-          .eq('article_id', validatedArticleId)
-          .eq('reaction', 'like'),
-        supabase
-          .from('article_reactions')
-          .select('id', { head: true, count: 'exact' })
-          .eq('article_id', validatedArticleId)
-          .eq('reaction', 'dislike'),
-      ]);
-
-      if (likesError) {
-        logger.error('Error fetching likes count', likesError);
-        throw likesError;
-      }
-      if (dislikesError) {
-        logger.error('Error fetching dislikes count', dislikesError);
-        throw dislikesError;
-      }
-
-      const likesCount = likesCountRaw ?? 0;
-      const dislikesCount = dislikesCountRaw ?? 0;
-
-      const { error: updateAggError } = await supabase
-        .from('articles')
-        .update({
-          likes_count: likesCount,
-          dislikes_count: dislikesCount,
-        })
-        .eq('id', validatedArticleId);
-
-      if (updateAggError) {
-        logger.error('Error updating article aggregates', updateAggError);
-        throw updateAggError;
-      }
-    };
-
-    // Всегда используем прямой toggle (RPC даёт 400/ambiguous у части пользователей)
-    await toggleDirect();
-
-    // Получаем обновленную статью
+    // Возвращаем свежую статью; если нужно точное обновление агрегатов,
+    // getArticle возьмет данные из RPC get_article_with_details.
     return await getArticle(articleId);
   } catch (error: any) {
     logger.error('Error in reactToArticle', error);
