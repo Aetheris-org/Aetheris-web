@@ -16,12 +16,17 @@ interface ArticlesResponse {
 
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
-  const content = article.content || { document: [] };
-  
-  let contentJSON: any = null;
-  if (content && typeof content === 'object' && content.document) {
-    contentJSON = content;
-  }
+  const rawContent = article.content ?? { document: [] };
+
+  // content: строка для HTML fallback; contentJSON: объект (ProseMirror/Slate/TipTap)
+  const content =
+    typeof rawContent === 'string'
+      ? rawContent
+      : Array.isArray(rawContent)
+        ? { document: rawContent }
+        : rawContent || '';
+
+  const contentJSON = typeof content === 'object' ? content : null;
 
   // Преобразуем author из JSONB объекта
   const author = typeof article.author === 'object' && article.author !== null
