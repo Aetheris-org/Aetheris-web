@@ -985,6 +985,14 @@ export default function ProfilePage() {
                   <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/70" />
                   <span className="font-semibold text-foreground">{profile.stats.totalComments}</span>
                 </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  <span className="font-semibold text-foreground">{profile.stats.followers}</span>
+                  <span className="text-muted-foreground text-[11px] sm:text-xs">
+                    {t('profile.followersLabel')}
+                  </span>
+                </div>
               </div>
 
               {/* Био */}
@@ -1003,7 +1011,7 @@ export default function ProfilePage() {
                   className="gap-1.5 flex-1 h-9 text-xs"
                     >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  <span className="truncate">{t('profile.openArticles')}</span>
+                        <span className="truncate">{t('profile.openArticles')}</span>
                     </Button>
                 {isOwnProfile ? (
                     <Button
@@ -1032,12 +1040,12 @@ export default function ProfilePage() {
                     {followStatus ? (
                       <>
                         <UserMinus className="h-3.5 w-3.5" />
-                        <span className="truncate">{t('profile.unfollow') || 'Отписаться'}</span>
+                        <span className="truncate">{t('profile.unsubscribe') || 'Отписаться'}</span>
                         </>
                       ) : (
                         <>
                         <UserPlus className="h-3.5 w-3.5" />
-                        <span className="truncate">{t('profile.follow') || 'Подписаться'}</span>
+                        <span className="truncate">{t('profile.subscribe') || 'Подписаться'}</span>
                         </>
                       )}
                     </Button>
@@ -1103,6 +1111,12 @@ export default function ProfilePage() {
                     <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                     <span className="font-medium">{profile.stats.totalComments}</span>
                     <span className="text-muted-foreground/70 hidden md:inline">{t('profile.commentsCount')}</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-3 sm:h-4" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="font-medium">{profile.stats.followers}</span>
+                    <span className="text-muted-foreground/70 hidden md:inline">{t('profile.followersLabel')}</span>
                   </div>
                 </div>
 
@@ -1188,13 +1202,13 @@ export default function ProfilePage() {
                       {followStatus ? (
                         <>
                           <UserMinus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('profile.unfollow') || 'Отписаться'}</span>
+                          <span className="hidden sm:inline">{t('profile.unsubscribe') || 'Отписаться'}</span>
                           <span className="sm:hidden">-</span>
                         </>
                       ) : (
                         <>
                           <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('profile.follow') || 'Подписаться'}</span>
+                          <span className="hidden sm:inline">{t('profile.subscribe') || 'Подписаться'}</span>
                           <span className="sm:hidden">+</span>
                         </>
                       )}

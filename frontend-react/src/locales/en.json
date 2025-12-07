@@ -3264,6 +3264,7 @@
     "articlesCount": "articles",
     "likesCount": "likes",
     "commentsCount": "comments",
+    "followersLabel": "followers",
     "draftsCount": "drafts",
     "levelBadge": "Level {level}",
     "shareProfile": "Share profile",
@@ -3296,7 +3297,12 @@
     "copyError": "Failed to copy link",
     "shareTitle": "Check out {username}'s profile on Aetheris",
     "shareText": "View {username}'s articles and achievements on Aetheris",
-    "reportDescription": "Report functionality will be implemented soon"
+    "reportDescription": "Report functionality will be implemented soon",
+    "subscribe": "Subscribe",
+    "unsubscribe": "Unsubscribe",
+    "subscribed": "Subscribed",
+    "subscribedDescription": "You are now subscribed to this author",
+    "unsubscribeDescription": "Subscription removed"
   },
   "trending": {
     "title": "Trending",

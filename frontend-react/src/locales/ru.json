@@ -3240,6 +3240,7 @@
     "articlesCount": "статей",
     "likesCount": "лайков",
     "commentsCount": "комментариев",
+    "followersLabel": "подписчиков",
     "draftsCount": "черновиков",
     "levelBadge": "Уровень {level}",
     "shareProfile": "Поделиться профилем",
@@ -3272,7 +3273,12 @@
     "copyError": "Не удалось скопировать ссылку",
     "shareTitle": "Посмотрите профиль {username} на Aetheris",
     "shareText": "Просмотрите статьи и достижения {username} на Aetheris",
-    "reportDescription": "Функция жалобы будет реализована в ближайшее время"
+    "reportDescription": "Функция жалобы будет реализована в ближайшее время",
+    "subscribe": "Подписаться",
+    "unsubscribe": "Отписаться",
+    "subscribed": "Подписка оформлена",
+    "subscribedDescription": "Вы подписались на этого автора",
+    "unsubscribeDescription": "Подписка отменена"
   },
   "trending": {
     "title": "В тренде",

@@ -68,6 +68,20 @@ const applyClientFilters = (articles: Article[], filters: Partial<ArticleQueryPa
   });
 };
 
+const sortClientArticles = (articles: Article[], sort: ArticleSortOption): Article[] => {
+  if (sort === 'popular') {
+    return [...articles].sort((a, b) => {
+      const viewsA = a.views ?? 0;
+      const viewsB = b.views ?? 0;
+      if (viewsA !== viewsB) return viewsB - viewsA;
+      const reactionsA = (a.likes || 0) + (a.dislikes || 0);
+      const reactionsB = (b.likes || 0) + (b.dislikes || 0);
+      return reactionsB - reactionsA;
+    });
+  }
+  return articles;
+};
+
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
   const rawContent = article.content ?? { document: [] };
@@ -247,9 +261,11 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       minViews,
     });
 
+    const sorted = sortClientArticles(filtered, sort);
+
     return {
-      data: filtered,
-      total: Number(filtered.length),
+      data: sorted,
+      total: Number(sorted.length),
     };
   } catch (error: any) {
     logger.error('Error in getArticles', error);
@@ -783,10 +799,11 @@ export async function searchArticles(
 
     const articles = data.map((item: any) => transformArticle(item, userId));
     const filtered = applyClientFilters(articles, extraFilters || {});
+    const sorted = sortClientArticles(filtered, 'popular');
 
     return {
-      data: filtered,
-      total: Number(filtered.length),
+      data: sorted,
+      total: Number(sorted.length),
     };
   } catch (error: any) {
     logger.error('Error in searchArticles', error);

@@ -4,6 +4,8 @@ export interface ProfileStats {
   publishedArticles: number
   totalLikes: number
   totalComments: number
+  followers: number
+  following: number
 }
 
 export interface ProfileHighlights {

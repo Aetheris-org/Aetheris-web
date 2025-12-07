@@ -93,7 +93,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     }
 
     // Получаем подписки
-    const { error: followingError } = await supabase
+    const { data: followingData, error: followingError } = await supabase
       .from('follows')
       .select(`
         id,
@@ -111,7 +111,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     }
 
     // Получаем подписчиков
-    const { error: followersError } = await supabase
+    const { data: followersData, error: followersError } = await supabase
       .from('follows')
       .select(`
         id,
@@ -161,6 +161,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     const userProfile: UserProfile = {
       user: {
         id: profile.id ? uuidToNumber(profile.id) : 0,
+        uuid: profile.id,
         username: profile.username || '',
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
@@ -171,6 +172,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         publishedArticles: publishedArticles.length,
         totalLikes,
         totalComments: (comments || []).length,
+        followers: (followersData || []).length,
+        following: (followingData || []).length,
       },
       highlights: {
         tags: topTags,
