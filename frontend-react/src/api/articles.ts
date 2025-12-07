@@ -491,20 +491,34 @@ export async function reactToArticle(
           );
       }
 
-      // Пересчёт лайков/дизлайков, чтобы вернуть актуальные данные,
-      // даже если RPC упал и не обновил агрегаты.
-      const { data: reactionCounts, error: countsError } = await supabase
-        .from('article_reactions')
-        .select('reaction, count:count()', { group: 'reaction' })
-        .eq('article_id', validatedArticleId);
+      // Пересчёт лайков/дизлайков без group (supabase-js select не принимает group в типах)
+      const [
+        { count: likesCountRaw, error: likesError },
+        { count: dislikesCountRaw, error: dislikesError },
+      ] = await Promise.all([
+        supabase
+          .from('article_reactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('article_id', validatedArticleId)
+          .eq('reaction', 'like'),
+        supabase
+          .from('article_reactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('article_id', validatedArticleId)
+          .eq('reaction', 'dislike'),
+      ]);
 
-      if (countsError) {
-        logger.error('Error fetching article reaction counts', countsError);
-        throw countsError;
+      if (likesError) {
+        logger.error('Error fetching likes count', likesError);
+        throw likesError;
+      }
+      if (dislikesError) {
+        logger.error('Error fetching dislikes count', dislikesError);
+        throw dislikesError;
       }
 
-      const likesCount = reactionCounts?.find((r: any) => r.reaction === 'like')?.count || 0;
-      const dislikesCount = reactionCounts?.find((r: any) => r.reaction === 'dislike')?.count || 0;
+      const likesCount = likesCountRaw ?? 0;
+      const dislikesCount = dislikesCountRaw ?? 0;
       const userReaction =
         existing && existing.reaction === reaction ? null : reaction;
 
