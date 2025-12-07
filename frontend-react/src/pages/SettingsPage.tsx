@@ -1433,7 +1433,7 @@ function ProfileSettings() {
             </Label>
             <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{t('settings.profile.coverRecommended')}</span>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-dashed bg-card/50 w-full">
+          <div className="overflow-hidden rounded-2xl border border-dashed bg-card/50 w-full">
             <div className="aspect-[4/1] w-full min-h-[120px] sm:min-h-[160px]">
               {coverPreview ? (
                 <img
@@ -1453,7 +1453,8 @@ function ProfileSettings() {
                 </div>
               )}
             </div>
-          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 bg-gradient-to-t from-background/95 via-background/40 to-transparent p-2 sm:p-3">
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 p-2 sm:p-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -1521,8 +1522,8 @@ function ProfileSettings() {
                   </Tooltip>
                 </TooltipProvider>
               )}
-            </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 p-2 sm:p-3">
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
             <Input
               placeholder="https://example.com/cover.jpg"
               value={coverUrlInput}
