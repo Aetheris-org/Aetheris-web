@@ -62,7 +62,7 @@ export function transformArticle(article: any, _userId?: string): Article {
       username: author.username || author.name || '',
       avatar: author.avatar || null,
     },
-    previewImage: article.preview_image || article.previewImage || null,
+    previewImage: article.preview_image || article.previewImage || article.cover_url || null,
     tags: Array.isArray(article.tags) ? article.tags : [],
     difficulty: (article.difficulty || 'medium') as ArticleDifficulty,
     likes: article.likes_count || 0,

@@ -651,7 +651,8 @@ export default function CreateArticlePage() {
         // Добавляем previewImage только если он есть
         if (currentPreviewImage) {
           draftData.previewImage = currentPreviewImage
-          draftData.preview_image = currentPreviewImage // дублируем для бэка со snake_case
+          draftData.preview_image = currentPreviewImage // snake_case
+          draftData.cover_url = currentPreviewImage // полное имя поля в базе
         }
 
         // ВАЖНО: Сначала сохраняем в localStorage для быстрого восстановления при потере соединения
@@ -928,6 +929,7 @@ export default function CreateArticlePage() {
       if (previewImageUrl) {
         draftData.previewImage = previewImageUrl
         draftData.preview_image = previewImageUrl // snake_case для бэка
+        draftData.cover_url = previewImageUrl // явное поле в таблице
       }
 
       const saved = draftId
@@ -2180,6 +2182,7 @@ export default function CreateArticlePage() {
       if (previewImageUrl) {
         articleData.previewImage = previewImageUrl
         articleData.preview_image = previewImageUrl // snake_case для бэка
+        articleData.cover_url = previewImageUrl // поле в таблице
       }
 
       logger.debug('[CreateArticlePage] Article data prepared:', {
