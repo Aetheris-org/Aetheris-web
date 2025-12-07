@@ -484,9 +484,56 @@ export async function reactToArticle(
       }
     }
 
-    // Возвращаем свежую статью; если нужно точное обновление агрегатов,
-    // getArticle возьмет данные из RPC get_article_with_details.
-    return await getArticle(articleId);
+    // Пересчёт лайков/дизлайков и обновление агрегатов в articles
+    const [
+      { count: likesCountRaw, error: likesError },
+      { count: dislikesCountRaw, error: dislikesError },
+    ] = await Promise.all([
+      supabase
+        .from('article_reactions')
+        .select('id', { head: true, count: 'exact' })
+        .eq('article_id', validatedArticleId)
+        .eq('reaction', 'like'),
+      supabase
+        .from('article_reactions')
+        .select('id', { head: true, count: 'exact' })
+        .eq('article_id', validatedArticleId)
+        .eq('reaction', 'dislike'),
+    ]);
+
+    if (likesError) {
+      logger.error('Error fetching likes count', likesError);
+      throw likesError;
+    }
+    if (dislikesError) {
+      logger.error('Error fetching dislikes count', dislikesError);
+      throw dislikesError;
+    }
+
+    const likesCount = likesCountRaw ?? 0;
+    const dislikesCount = dislikesCountRaw ?? 0;
+
+    const { error: updateAggError } = await supabase
+      .from('articles')
+      .update({
+        likes_count: likesCount,
+        dislikes_count: dislikesCount,
+      })
+      .eq('id', validatedArticleId);
+
+    if (updateAggError) {
+      logger.error('Error updating article aggregates', updateAggError);
+      throw updateAggError;
+    }
+
+    // Возвращаем свежую статью, но поверх ставим пересчитанные значения,
+    // чтобы UI сразу увидел актуальные лайки/дизлайки.
+    const article = await getArticle(articleId);
+    return {
+      ...article,
+      likes: likesCount,
+      dislikes: dislikesCount,
+    };
   } catch (error: any) {
     logger.error('Error in reactToArticle', error);
     throw error;
