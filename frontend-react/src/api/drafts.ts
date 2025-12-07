@@ -22,7 +22,7 @@ export async function getDrafts(skip: number = 0, take: number = 100): Promise<A
       .from('articles')
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,
@@ -61,7 +61,7 @@ export async function getDraft(id: string): Promise<Article> {
       .from('articles')
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,
@@ -121,7 +121,7 @@ export async function createDraft(data: {
       })
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,
@@ -196,7 +196,7 @@ export async function updateDraft(
       .eq('id', parseInt(id))
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,

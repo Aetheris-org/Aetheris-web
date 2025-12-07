@@ -108,7 +108,7 @@ export async function getFollowing(userId: number): Promise<any[]> {
       .from('follows')
       .select(`
         id,
-        following:users!follows_following_id_fkey (
+        following:profiles!follows_following_id_fkey (
           id,
           username,
           avatar,
@@ -138,7 +138,7 @@ export async function getFollowers(userId: number): Promise<any[]> {
       .from('follows')
       .select(`
         id,
-        follower:users!follows_follower_id_fkey (
+        follower:profiles!follows_follower_id_fkey (
           id,
           username,
           avatar,

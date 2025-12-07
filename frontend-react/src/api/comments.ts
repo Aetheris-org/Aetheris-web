@@ -67,7 +67,7 @@ export async function getArticleComments(
       .from('comments')
       .select(`
         *,
-        author:users!comments_author_id_fkey (
+        author:profiles!comments_author_id_fkey (
           id,
           username,
           avatar
@@ -144,7 +144,7 @@ export async function createComment(data: {
       })
       .select(`
         *,
-        author:users!comments_author_id_fkey (
+        author:profiles!comments_author_id_fkey (
           id,
           username,
           avatar
@@ -199,7 +199,7 @@ export async function updateComment(
       .eq('id', parseInt(id))
       .select(`
         *,
-        author:users!comments_author_id_fkey (
+        author:profiles!comments_author_id_fkey (
           id,
           username,
           avatar
@@ -309,7 +309,7 @@ export async function reactToComment(
       .from('comments')
       .select(`
         *,
-        author:users!comments_author_id_fkey (
+        author:profiles!comments_author_id_fkey (
           id,
           username,
           avatar

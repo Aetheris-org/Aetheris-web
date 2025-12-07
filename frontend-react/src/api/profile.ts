@@ -18,7 +18,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
 
     // Получаем профиль пользователя
     const { data: profile, error: profileError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', String(userId))
       .single();
@@ -96,7 +96,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
       .from('follows')
       .select(`
         id,
-        following:users!follows_following_id_fkey (
+        following:profiles!follows_following_id_fkey (
           id,
           username,
           avatar,
@@ -114,7 +114,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
       .from('follows')
       .select(`
         id,
-        follower:users!follows_follower_id_fkey (
+        follower:profiles!follows_follower_id_fkey (
           id,
           username,
           avatar,

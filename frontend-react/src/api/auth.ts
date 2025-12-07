@@ -31,9 +31,9 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    // Получаем профиль пользователя из таблицы users
+    // Получаем профиль пользователя из таблицы profiles
     const { data: profile, error: profileError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -43,15 +43,25 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    // Адаптируем к типу User
+
+    const uuidToNumber = (uuid: string): number => {
+      let hash = 0;
+      for (let i = 0; i < uuid.length; i++) {
+        const char = uuid.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; 
+      }
+      return Math.abs(hash);
+    };
+
     const user: User = {
-      id: Number(profile.id) || 0,
-      nickname: profile.username || '',
-      email: profile.email || '', // Email может быть скрыт для безопасности
-      avatar: profile.avatar || undefined,
+      id: profile.id ? uuidToNumber(profile.id) : 0, 
+      nickname: profile.nickname || profile.username || '',
+      email: '',
+      avatar: profile.avatar || profile.avatar_url || undefined,
       bio: profile.bio || undefined,
       role: (profile.role || 'user') as 'user' | 'moderator' | 'admin' | 'super_admin',
-      articlesCount: 0, // Будет загружено отдельно если нужно
+      articlesCount: 0,
       commentsCount: 0,
       likesReceived: 0,
       viewsReceived: 0,
@@ -141,7 +151,7 @@ export async function signUp(
       };
     }
 
-    // Профиль в таблице public.users будет создан автоматически триггером 005_sync_auth_users.sql
+    // Профиль в таблице public.profiles будет создан автоматически триггером
     // Не нужно вручную создавать профиль - триггер сделает это при INSERT в auth.users
     logger.debug('✅ User registered in Supabase Auth, profile will be created by trigger');
 

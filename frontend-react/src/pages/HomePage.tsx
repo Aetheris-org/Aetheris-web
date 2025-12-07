@@ -152,23 +152,23 @@ export default function HomePage() {
     ],
     queryFn: async () => {
       // Логирование для отладки
-      logger.debug('[HomePage] Fetching articles with filters:', {
-        page,
-        pageSize,
-        tags: selectedTags,
-        difficulty: difficultyFilter,
-        sort: sortOption,
-        search: debouncedSearchQuery,
-      });
-      try {
-        const result = await getArticles({
+        logger.debug('[HomePage] Fetching articles with filters:', {
           page,
           pageSize,
-          tags: selectedTags.length ? selectedTags : undefined,
-          difficulty: difficultyFilter,
-          sort: sortOption,
-          search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
+          tags: selectedTags,
+        difficulty: difficultyFilter,
+        sort: sortOption,
+          search: debouncedSearchQuery,
         });
+      try {
+        const result = await getArticles({
+        page,
+        pageSize,
+        tags: selectedTags.length ? selectedTags : undefined,
+        difficulty: difficultyFilter,
+        sort: sortOption,
+        search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
+      });
         logger.debug('[HomePage] Articles fetched successfully:', result);
         return result;
       } catch (error) {

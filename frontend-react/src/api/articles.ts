@@ -228,7 +228,7 @@ export async function createArticle(input: {
       })
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,
@@ -328,7 +328,7 @@ export async function updateArticle(
       .eq('id', articleId)
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,
