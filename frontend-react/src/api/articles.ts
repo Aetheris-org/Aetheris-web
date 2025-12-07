@@ -415,6 +415,29 @@ export async function deleteArticle(id: string): Promise<boolean> {
 /**
  * Реакция на статью (like/dislike)
  */
+type NormalizedArticleId = string | number;
+
+function normalizeArticleId(id: string): NormalizedArticleId {
+  // Поддерживаем UUID и числовые ID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+  const numericRegex = /^\d+$/;
+
+  if (!id || typeof id !== 'string') {
+    throw new Error(`Invalid article ID: ${id}`);
+  }
+
+  if (uuidRegex.test(id) || uuidNoDashesRegex.test(id)) {
+    return id;
+  }
+
+  if (numericRegex.test(id)) {
+    return Number(id);
+  }
+
+  throw new Error(`Invalid article ID format (expected UUID or numeric): ${id}`);
+}
+
 export async function reactToArticle(
   articleId: string,
   reaction: 'like' | 'dislike'
@@ -426,21 +449,7 @@ export async function reactToArticle(
       throw new Error('Not authenticated');
     }
 
-    // Валидация ID (UUID)
-    const validatedArticleId = (() => {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
-      
-      if (!articleId || (typeof articleId !== 'string')) {
-        throw new Error(`Invalid article ID: ${articleId}`);
-      }
-      
-      if (!uuidRegex.test(articleId) && !uuidNoDashesRegex.test(articleId)) {
-        throw new Error(`Invalid article ID format (expected UUID): ${articleId}`);
-      }
-      
-      return articleId;
-    })();
+    const validatedArticleId = normalizeArticleId(articleId);
 
     // Упрощённо: прямой toggle + возврат статьи с актуальными данными
     const { data: existing, error: existingError } = await supabase
@@ -491,12 +500,12 @@ export async function reactToArticle(
     ] = await Promise.all([
       supabase
         .from('article_reactions')
-        .select('id', { head: true, count: 'exact' })
+        .select('id', { count: 'exact' })
         .eq('article_id', validatedArticleId)
         .eq('reaction', 'like'),
       supabase
         .from('article_reactions')
-        .select('id', { head: true, count: 'exact' })
+        .select('id', { count: 'exact' })
         .eq('article_id', validatedArticleId)
         .eq('reaction', 'dislike'),
     ]);
