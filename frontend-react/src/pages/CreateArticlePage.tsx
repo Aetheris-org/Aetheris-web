@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
-import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -106,6 +106,8 @@ export default function CreateArticlePage() {
   const [isContentExpanded, setIsContentExpanded] = useState(false)
   const [shouldShowExpandButton, setShouldShowExpandButton] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [isExternalImageDialogOpen, setIsExternalImageDialogOpen] = useState(false)
+  const [externalImageUrl, setExternalImageUrl] = useState('')
   const excerptTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const contentPreviewRef = useRef<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -180,6 +182,24 @@ export default function CreateArticlePage() {
     // Если все попытки не удались, выбрасываем последнюю ошибку
     throw lastError || new Error('Failed to upload image after multiple attempts')
   }, [croppedImageBlob, existingPreviewImageId])
+
+  const applyExternalImageUrl = useCallback(() => {
+    const url = externalImageUrl.trim()
+    if (!url.startsWith('http')) {
+      toast({
+        title: t('common.error') || 'Ошибка',
+        description: t('createArticle.invalidImageUrl') || 'Укажите корректную ссылку (http/https)',
+        variant: 'destructive',
+      })
+      return
+    }
+    setOriginalImageUrl(url)
+    setSelectedImageUrl(url)
+    setCroppedImageUrl(url)
+    setCroppedImageBlob(null)
+    setExistingPreviewImageId(null)
+    setIsExternalImageDialogOpen(false)
+  }, [externalImageUrl, toast, t])
 
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim()
@@ -2702,6 +2722,14 @@ export default function CreateArticlePage() {
                       {t('createArticle.replaceImage')}
                     </Button>
                     <Button
+                      variant="outline"
+                      className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                      onClick={() => setIsExternalImageDialogOpen(true)}
+                    >
+                      <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {t('createArticle.useExternalImage') || 'Use external URL'}
+                    </Button>
+                    <Button
                       variant="ghost"
                       className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm text-destructive hover:text-destructive"
                       onClick={resetPreviewImage}
@@ -2731,6 +2759,14 @@ export default function CreateArticlePage() {
                     <ImagePlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t('createArticle.uploadImage')}
                   </Button>
+                  <Button
+                    className="mt-2 gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
+                    variant="ghost"
+                    onClick={() => setIsExternalImageDialogOpen(true)}
+                  >
+                    <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    {t('createArticle.useExternalImage') || 'Use external URL'}
+                  </Button>
                 </div>
               )}
               <input
@@ -2740,6 +2776,58 @@ export default function CreateArticlePage() {
                 className="hidden"
                 onChange={handleImageSelection}
               />
+              <Dialog open={isExternalImageDialogOpen} onOpenChange={setIsExternalImageDialogOpen}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>{t('createArticle.externalImageTitle') || 'Use external image URL'}</DialogTitle>
+                    <DialogDescription>
+                      {t('createArticle.externalImageDescription') ||
+                        'Paste a direct image link (https) from a trusted host. The image will be displayed without uploading to our storage.'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="external-image-url">{t('createArticle.externalImageLabel') || 'Image URL'}</Label>
+                      <Input
+                        id="external-image-url"
+                        placeholder="https://example.com/image.jpg"
+                        value={externalImageUrl}
+                        onChange={(e) => setExternalImageUrl(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {t('createArticle.externalImagePresets') || 'Popular hosts:'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          'https://i.imgur.com/example.jpg',
+                          'https://res.cloudinary.com/<cloud>/image/upload/v123/sample.jpg',
+                          'https://images.unsplash.com/photo-123?w=1200',
+                          'https://your-supabase-project.supabase.co/storage/v1/object/public/bucket/path.jpg',
+                        ].map((url) => (
+                          <Button
+                            key={url}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-[11px] sm:text-xs"
+                            onClick={() => setExternalImageUrl(url)}
+                          >
+                            {url.replace(/^https?:\/\//, '')}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={() => setIsExternalImageDialogOpen(false)}>
+                      {t('common.cancel') || 'Cancel'}
+                    </Button>
+                    <Button onClick={applyExternalImageUrl}>{t('common.apply') || 'Apply'}</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>

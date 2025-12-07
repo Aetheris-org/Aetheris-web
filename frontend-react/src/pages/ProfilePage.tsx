@@ -849,6 +849,7 @@ export default function ProfilePage() {
   }
 
   const publishedArticles = profile.articles.filter((a) => a.status === 'published')
+  const displayedArticles = profile.articles || []
 
   return (
     <div className="min-h-screen app-surface">
@@ -1263,9 +1264,9 @@ export default function ProfilePage() {
                     >
                       <NotebookPen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate min-w-0">{t('profile.articlesTab')}</span>
-                      {publishedArticles.length > 0 && (
+                      {displayedArticles.length > 0 && (
                         <Badge variant="secondary" className="ml-0.5 sm:ml-1 shrink-0 text-[10px] sm:text-xs px-1 sm:px-1.5 h-4 sm:h-5">
-                          {publishedArticles.length}
+                          {displayedArticles.length}
                         </Badge>
                       )}
                     </TabsTrigger>
@@ -1297,7 +1298,7 @@ export default function ProfilePage() {
               </div>
 
               <TabsContent value="articles" className="mt-0">
-                    {publishedArticles.length === 0 ? (
+                    {displayedArticles.length === 0 ? (
                       <Card className="border-dashed">
                     <CardContent className="py-8 sm:py-12 text-center px-4">
                       <NotebookPen className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mx-auto mb-2 sm:mb-3" />
@@ -1317,7 +1318,7 @@ export default function ProfilePage() {
                       </Card>
                     ) : (
                   <div className="space-y-4 sm:space-y-4">
-                    {publishedArticles.map((article) => (
+                    {displayedArticles.map((article) => (
                         <ArticleCard
                           key={article.id}
                           article={article}
