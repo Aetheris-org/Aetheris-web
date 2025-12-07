@@ -148,8 +148,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         username: profile.username || '',
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
-        avatarUrl: profile.avatar || null,
-        coverImageUrl: profile.cover_image || null,
+        avatarUrl: profile.avatar || profile.avatar_url || null,
+        coverImageUrl: profile.cover_image || profile.cover_url || null,
       },
       stats: {
         publishedArticles: publishedArticles.length,
