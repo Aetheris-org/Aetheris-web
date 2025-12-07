@@ -11,16 +11,17 @@ import { transformArticle } from './articles';
 /**
  * Получить профиль пользователя
  */
-export async function getUserProfile(userId: number): Promise<UserProfile> {
+export async function getUserProfile(userId: string): Promise<UserProfile> {
   try {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
-    const currentUserId = currentUser ? Number(currentUser.id) : undefined;
+    const currentUserId = currentUser ? currentUser.id : undefined;
 
-    // Получаем профиль пользователя
+    const profileUuid = userId;
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', String(userId))
+      .eq('id', profileUuid)
       .single();
 
     if (profileError || !profile) {
@@ -43,7 +44,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
           id
         )
       `)
-      .eq('author_id', String(userId))
+      .eq('author_id', profileUuid)
       .order('created_at', { ascending: false });
 
     if (articlesError) {
@@ -62,7 +63,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
           title
         )
       `)
-      .eq('author_id', String(userId))
+      .eq('author_id', profileUuid)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -83,7 +84,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
           preview_image
         )
       `)
-      .eq('user_id', String(userId))
+      .eq('user_id', profileUuid)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -103,7 +104,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
           name
         )
       `)
-      .eq('follower_id', String(userId));
+      .eq('follower_id', profileUuid);
 
     if (followingError) {
       logger.error('Error fetching following', followingError);
@@ -121,7 +122,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
           name
         )
       `)
-      .eq('following_id', String(userId));
+      .eq('following_id', profileUuid);
 
     if (followersError) {
       logger.error('Error fetching followers', followersError);
@@ -147,9 +148,19 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
       transformArticle(article, currentUserId ? String(currentUserId) : undefined)
     );
 
+    const uuidToNumber = (uuid: string): number => {
+      let hash = 0;
+      for (let i = 0; i < uuid.length; i++) {
+        const char = uuid.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    };
+
     const userProfile: UserProfile = {
       user: {
-        id: Number(profile.id) || userId,
+        id: profile.id ? uuidToNumber(profile.id) : 0,
         username: profile.username || '',
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
@@ -228,7 +239,7 @@ export async function updateProfile(input: {
     }
 
     // Получаем обновленный профиль
-    return await getUserProfile(Number(user.id));
+    return await getUserProfile(user.id);
   } catch (error: any) {
     logger.error('Error in updateProfile', error);
     throw error;

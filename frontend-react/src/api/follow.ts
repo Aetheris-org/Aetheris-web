@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 /**
  * Подписаться на пользователя
  */
-export async function followUser(followingId: number): Promise<{ id: string }> {
+export async function followUser(followingId: string): Promise<{ id: string }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -16,9 +16,9 @@ export async function followUser(followingId: number): Promise<{ id: string }> {
       throw new Error('Not authenticated');
     }
 
-    // Используем Database Function
+    // Используем Database Function с UUID
     const { data, error } = await supabase.rpc('toggle_follow', {
-      p_following_id: String(followingId),
+      p_following_id: followingId,
       p_follower_id: user.id,
     });
 
@@ -43,7 +43,7 @@ export async function followUser(followingId: number): Promise<{ id: string }> {
 /**
  * Отписаться от пользователя
  */
-export async function unfollowUser(followingId: number): Promise<void> {
+export async function unfollowUser(followingId: string): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -51,9 +51,9 @@ export async function unfollowUser(followingId: number): Promise<void> {
       throw new Error('Not authenticated');
     }
 
-    // Используем Database Function
+    // Используем Database Function с UUID
     const { data, error } = await supabase.rpc('toggle_follow', {
-      p_following_id: String(followingId),
+      p_following_id: followingId,
       p_follower_id: user.id,
     });
 
@@ -75,15 +75,15 @@ export async function unfollowUser(followingId: number): Promise<void> {
  * Проверить, подписан ли текущий пользователь на другого пользователя
  */
 export async function checkFollowStatus(
-  followingId: number,
-  currentUserId: number
+  followingId: string,
+  currentUserId: string
 ): Promise<{ id: string } | null> {
   try {
     const { data, error } = await supabase
       .from('follows')
       .select('id')
-      .eq('follower_id', String(currentUserId))
-      .eq('following_id', String(followingId))
+      .eq('follower_id', currentUserId)
+      .eq('following_id', followingId)
       .limit(1)
       .single();
 
@@ -102,7 +102,7 @@ export async function checkFollowStatus(
 /**
  * Получить список подписок пользователя
  */
-export async function getFollowing(userId: number): Promise<any[]> {
+export async function getFollowing(userId: string): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from('follows')
@@ -115,7 +115,7 @@ export async function getFollowing(userId: number): Promise<any[]> {
           name
         )
       `)
-      .eq('follower_id', String(userId));
+      .eq('follower_id', userId);
 
     if (error) {
       logger.error('Error fetching following', error);
@@ -132,7 +132,7 @@ export async function getFollowing(userId: number): Promise<any[]> {
 /**
  * Получить список подписчиков пользователя
  */
-export async function getFollowers(userId: number): Promise<any[]> {
+export async function getFollowers(userId: string): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from('follows')
@@ -145,7 +145,7 @@ export async function getFollowers(userId: number): Promise<any[]> {
           name
         )
       `)
-      .eq('following_id', String(userId));
+      .eq('following_id', userId);
 
     if (error) {
       logger.error('Error fetching followers', error);

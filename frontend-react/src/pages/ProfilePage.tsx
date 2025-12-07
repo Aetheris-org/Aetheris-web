@@ -588,12 +588,12 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'articles' | 'comments' | 'bookmarks'>('articles')
 
-  const routeProfileId = id ? Number(id) : undefined
-  const profileId = !Number.isNaN(routeProfileId ?? NaN) ? routeProfileId : currentUser?.id
+  const routeProfileId = id || undefined
+  const profileId = routeProfileId || currentUser?.uuid
 
   useEffect(() => {
-    if (!routeProfileId && currentUser?.id) {
-      navigate(`/profile/${currentUser.id}`, { replace: true })
+    if (!routeProfileId && currentUser?.uuid) {
+      navigate(`/profile/${currentUser.uuid}`, { replace: true })
     }
   }, [routeProfileId, currentUser, navigate])
 
@@ -623,12 +623,12 @@ export default function ProfilePage() {
 
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({
-    queryKey: ['follow-status', profileId, currentUser?.id],
+    queryKey: ['follow-status', profileId, currentUser?.uuid],
     queryFn: () => {
-      if (!currentUser?.id || !profileId || isOwnProfile) return null
-      return checkFollowStatus(profileId, currentUser.id)
+      if (!currentUser?.uuid || !profileId || isOwnProfile) return null
+      return checkFollowStatus(profileId, currentUser.uuid)
     },
-    enabled: !!currentUser?.id && !!profileId && !isOwnProfile,
+    enabled: !!currentUser?.uuid && !!profileId && !isOwnProfile,
   })
 
   const followMutation = useMutation({
@@ -639,7 +639,7 @@ export default function ProfilePage() {
         description: t('profile.followedDescription') || 'Вы подписались на этого пользователя',
       })
       // Обновляем статус подписки
-      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
+      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.uuid] })
     },
     onError: (error: any) => {
       if (handleRateLimitError(error)) {
@@ -656,10 +656,8 @@ export default function ProfilePage() {
 
   const unfollowMutation = useMutation({
     mutationFn: () => {
-      if (!followStatus?.id) throw new Error('Follow ID not found')
-      const followId = typeof followStatus.id === 'string' ? Number(followStatus.id) : followStatus.id
-      if (isNaN(followId)) throw new Error('Invalid follow ID')
-      return unfollowUser(followId)
+      if (!profileId) throw new Error('Profile ID not found')
+      return unfollowUser(profileId)
     },
     onSuccess: () => {
       toast({
@@ -667,7 +665,7 @@ export default function ProfilePage() {
         description: t('profile.unfollowedDescription') || 'Вы отписались от этого пользователя',
       })
       // Обновляем статус подписки
-      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.id] })
+      queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.uuid] })
     },
     onError: (error: any) => {
       if (handleRateLimitError(error)) {
