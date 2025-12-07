@@ -442,24 +442,8 @@ export async function reactToArticle(
       return articleId;
     })();
 
-    // Попытка использовать RPC (основной путь)
-    const { error } = await supabase.rpc('toggle_article_reaction', {
-      p_article_id: validatedArticleId,
-      p_user_id: user.id,
-      p_reaction: reaction,
-    });
-
-    // Если RPC падает из-за неоднозначности article_id (ошибка 42702),
-    // переходим на прямую работу с таблицей как fallback.
-    if (error) {
-      if (error.code !== '42702') {
-        logger.error('Error reacting to article via RPC', error);
-        throw error;
-      }
-
-      logger.warn('toggle_article_reaction RPC failed, falling back to direct toggle', error);
-
-      // Проверяем существующую реакцию
+    // Fallback: прямой toggle в таблице article_reactions
+    const toggleDirect = async () => {
       const { data: existing, error: existingError } = await supabase
         .from('article_reactions')
         .select('reaction')
@@ -473,13 +457,18 @@ export async function reactToArticle(
       }
 
       if (existing && existing.reaction === reaction) {
-        await supabase
+        const { error: deleteError } = await supabase
           .from('article_reactions')
           .delete()
           .eq('article_id', validatedArticleId)
           .eq('user_id', user.id);
+
+        if (deleteError) {
+          logger.error('Error deleting article reaction', deleteError);
+          throw deleteError;
+        }
       } else {
-        await supabase
+        const { error: upsertError } = await supabase
           .from('article_reactions')
           .upsert(
             {
@@ -489,46 +478,27 @@ export async function reactToArticle(
             },
             { onConflict: 'article_id,user_id' }
           );
+
+        if (upsertError) {
+          logger.error('Error upserting article reaction', upsertError);
+          throw upsertError;
+        }
       }
+    };
 
-      // Пересчёт лайков/дизлайков без group (supabase-js select не принимает group в типах)
-      const [
-        { count: likesCountRaw, error: likesError },
-        { count: dislikesCountRaw, error: dislikesError },
-      ] = await Promise.all([
-        supabase
-          .from('article_reactions')
-          .select('id', { count: 'exact', head: true })
-          .eq('article_id', validatedArticleId)
-          .eq('reaction', 'like'),
-        supabase
-          .from('article_reactions')
-          .select('id', { count: 'exact', head: true })
-          .eq('article_id', validatedArticleId)
-          .eq('reaction', 'dislike'),
-      ]);
+    // Попытка использовать RPC (основной путь)
+    const { error } = await supabase.rpc('toggle_article_reaction', {
+      p_article_id: validatedArticleId,
+      p_user_id: user.id,
+      p_reaction: reaction,
+    });
 
-      if (likesError) {
-        logger.error('Error fetching likes count', likesError);
-        throw likesError;
-      }
-      if (dislikesError) {
-        logger.error('Error fetching dislikes count', dislikesError);
-        throw dislikesError;
-      }
-
-      const likesCount = likesCountRaw ?? 0;
-      const dislikesCount = dislikesCountRaw ?? 0;
-      const userReaction =
-        existing && existing.reaction === reaction ? null : reaction;
-
+    // Если RPC падает, переходим на прямой toggle.
+    if (error) {
+      logger.warn('toggle_article_reaction RPC failed, falling back to direct toggle', error);
+      await toggleDirect();
       const article = await getArticle(articleId);
-      return {
-        ...article,
-        likes: likesCount,
-        dislikes: dislikesCount,
-        userReaction,
-      };
+      return article;
     }
 
     // Получаем обновленную статью
