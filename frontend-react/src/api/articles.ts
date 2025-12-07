@@ -442,8 +442,9 @@ export async function reactToArticle(
       return articleId;
     })();
 
-    // Fallback: прямой toggle в таблице article_reactions
+    // Прямой toggle в таблице article_reactions (без RPC, чтобы избежать 400/ambiguous)
     const toggleDirect = async () => {
+      // 1) Узнаём текущую реакцию пользователя
       const { data: existing, error: existingError } = await supabase
         .from('article_reactions')
         .select('reaction')
@@ -456,6 +457,7 @@ export async function reactToArticle(
         throw existingError;
       }
 
+      // 2) Если та же реакция — удаляем, иначе upsert
       if (existing && existing.reaction === reaction) {
         const { error: deleteError } = await supabase
           .from('article_reactions')
@@ -486,20 +488,8 @@ export async function reactToArticle(
       }
     };
 
-    // Попытка использовать RPC (основной путь)
-    const { error } = await supabase.rpc('toggle_article_reaction', {
-      p_article_id: validatedArticleId,
-      p_user_id: user.id,
-      p_reaction: reaction,
-    });
-
-    // Если RPC падает, переходим на прямой toggle.
-    if (error) {
-      logger.warn('toggle_article_reaction RPC failed, falling back to direct toggle', error);
-      await toggleDirect();
-      const article = await getArticle(articleId);
-      return article;
-    }
+    // Всегда используем прямой toggle (RPC даёт 400/ambiguous у части пользователей)
+    await toggleDirect();
 
     // Получаем обновленную статью
     return await getArticle(articleId);
