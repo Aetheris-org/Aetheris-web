@@ -48,7 +48,7 @@ function transformComment(raw: any, _userId?: string): Comment {
 
   return {
     id: String(raw.id),
-    text: raw.text || '',
+    text: raw.text || raw.content || '',
     createdAt: raw.created_at || new Date().toISOString(),
     updatedAt: raw.updated_at || undefined,
     author: {
@@ -150,7 +150,9 @@ export async function createComment(data: {
     const { data: comment, error } = await supabase
       .from('comments')
       .insert({
+        // Некоторые схемы используют "content" как not-null; дублируем в оба поля на всякий случай
         text: data.text,
+        content: data.text,
         article_id: validateUuid(data.articleId),
         author_id: user.id,
         parent_id: data.parentId ? validateUuid(data.parentId) : null,
