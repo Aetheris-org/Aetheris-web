@@ -233,9 +233,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       return { data: [], total: 0 };
     }
 
-    // Первая запись содержит total_count
-    const total = data[0]?.total_count || 0;
-    
     // Трансформируем данные
     const articles = data.map((item: any) => transformArticle(item, userId));
 
@@ -784,7 +781,6 @@ export async function searchArticles(
       return { data: [], total: 0 };
     }
 
-    const total = data[0]?.total_count || 0;
     const articles = data.map((item: any) => transformArticle(item, userId));
     const filtered = applyClientFilters(articles, extraFilters || {});
 
