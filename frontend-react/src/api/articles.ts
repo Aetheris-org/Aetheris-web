@@ -18,20 +18,34 @@ interface ArticlesResponse {
 export function transformArticle(article: any, _userId?: string): Article {
   const rawContent = article.content ?? { document: [] };
 
-  // content: строка для HTML fallback; contentJSON: объект (ProseMirror/Slate/TipTap)
-  const content =
-    typeof rawContent === 'string'
-      ? rawContent
-      : Array.isArray(rawContent)
-        ? { document: rawContent }
-        : rawContent || '';
+  // Пытаемся распарсить JSON-строку, если content приходит строкой
+  let contentJSON: any = null;
+  let content: any = '';
 
-  const contentJSON = typeof content === 'object' ? content : null;
+  if (typeof rawContent === 'string') {
+    try {
+      const parsed = JSON.parse(rawContent);
+      contentJSON = parsed;
+      content = rawContent; // сохраняем оригинал для HTML fallback
+    } catch {
+      content = rawContent; // обычный HTML
+      contentJSON = null;
+    }
+  } else if (Array.isArray(rawContent)) {
+    contentJSON = { document: rawContent };
+    content = rawContent;
+  } else if (rawContent && typeof rawContent === 'object') {
+    contentJSON = rawContent;
+    content = rawContent;
+  } else {
+    content = '';
+    contentJSON = null;
+  }
 
   // Преобразуем author из JSONB объекта
   const author = typeof article.author === 'object' && article.author !== null
     ? article.author
-    : { id: article.author_id, username: '', avatar: null, name: '' };
+    : { id: article.author_id, username: article.author_username || article.author_name || '', avatar: null, name: article.author_name || '' };
 
   // author.id из Supabase - это UUID (строка)
   const authorId = author.id || article.author_id;
@@ -45,10 +59,10 @@ export function transformArticle(article: any, _userId?: string): Article {
     author: {
       id: authorId, // UUID из базы данных
       uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
-      username: author.username || '',
+      username: author.username || author.name || '',
       avatar: author.avatar || null,
     },
-    previewImage: article.preview_image || null,
+    previewImage: article.preview_image || article.previewImage || null,
     tags: Array.isArray(article.tags) ? article.tags : [],
     difficulty: (article.difficulty || 'medium') as ArticleDifficulty,
     likes: article.likes_count || 0,
