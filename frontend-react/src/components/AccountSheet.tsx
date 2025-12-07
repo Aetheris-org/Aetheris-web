@@ -212,7 +212,7 @@ export function AccountSheet() {
               <SheetClose asChild>
                 <Button
                   className="justify-start gap-2"
-                  onClick={() => navigate(`/profile/${user.id}`)}
+                  onClick={() => navigate(`/profile/${user.uuid || user.id}`)}
                 >
                   <User className="h-4 w-4" />
                   {t('accountSheet.viewProfile')}

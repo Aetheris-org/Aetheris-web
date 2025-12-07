@@ -810,7 +810,7 @@ function ProfileWidget({ size, user, level, createSafeClickHandler }: { size: Wi
 
   if (size === 'small') {
     return (
-      <Card className="h-full w-full flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden" onClick={createSafeClickHandler(() => navigate(`/profile/${user.id}`))}>
+      <Card className="h-full w-full flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden" onClick={createSafeClickHandler(() => navigate(`/profile/${user.uuid || user.id}`))}>
         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-primary mb-1 sm:mb-2">
           <AvatarImage src={user.avatar} />
           <AvatarFallback className="text-xs sm:text-sm">{user.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
@@ -823,7 +823,7 @@ function ProfileWidget({ size, user, level, createSafeClickHandler }: { size: Wi
 
   if (size === 'medium') {
     return (
-      <Card className="h-full w-full flex flex-col cursor-pointer hover:border-primary/50 transition-colors overflow-hidden" onClick={createSafeClickHandler(() => navigate(`/profile/${user.id}`))}>
+      <Card className="h-full w-full flex flex-col cursor-pointer hover:border-primary/50 transition-colors overflow-hidden" onClick={createSafeClickHandler(() => navigate(`/profile/${user.uuid || user.id}`))}>
         <CardContent className="flex-1 flex items-center gap-3 sm:gap-4 p-3 sm:p-4 h-full">
           <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-primary shrink-0">
             <AvatarImage src={user.avatar} />
@@ -867,7 +867,7 @@ function ProfileWidget({ size, user, level, createSafeClickHandler }: { size: Wi
         </div>
         <Progress value={progress} className="h-2 w-full flex-shrink-0" />
         <div className="flex gap-2 w-full flex-shrink-0">
-          <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm h-8 sm:h-9" onClick={createSafeClickHandler(() => navigate(`/profile/${user.id}`))}>
+          <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm h-8 sm:h-9" onClick={createSafeClickHandler(() => navigate(`/profile/${user.uuid || user.id}`))}>
             Профиль
           </Button>
           <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm h-8 sm:h-9" onClick={createSafeClickHandler(() => navigate('/settings'))}>

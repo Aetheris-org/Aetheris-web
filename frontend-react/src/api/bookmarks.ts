@@ -7,6 +7,17 @@ import { logger } from '@/lib/logger';
 import type { Article } from '@/types/article';
 import { transformArticle } from './articles';
 
+/**
+ * Валидация UUID
+ */
+function validateUuid(id: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!id || (typeof id !== 'string') || !uuidRegex.test(id)) {
+    throw new Error(`Invalid UUID format: ${id}`);
+  }
+  return id;
+}
+
 export interface Bookmark {
   id: string;
   article: Article;
@@ -70,9 +81,12 @@ export async function toggleBookmark(articleId: string): Promise<{ isBookmarked:
       throw new Error('Not authenticated');
     }
 
+    // Валидируем UUID
+    const validatedArticleId = validateUuid(articleId);
+
     // Используем Database Function
     const { data, error } = await supabase.rpc('toggle_bookmark', {
-      p_article_id: parseInt(articleId),
+      p_article_id: validatedArticleId,
       p_user_id: user.id,
     });
 
@@ -101,13 +115,16 @@ export async function isBookmarked(articleId: string): Promise<boolean> {
       return false;
     }
 
+    // Валидируем UUID
+    const validatedArticleId = validateUuid(articleId);
+
     const { data, error } = await supabase
       .from('bookmarks')
       .select('id')
-      .eq('article_id', parseInt(articleId))
+      .eq('article_id', validatedArticleId)
       .eq('user_id', user.id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       logger.error('Error checking bookmark', error);

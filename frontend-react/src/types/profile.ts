@@ -35,6 +35,7 @@ export interface ProfileBookmark {
 export interface UserProfile {
   user: {
     id: number
+    uuid?: string // UUID для навигации к профилю
     username: string
     bio?: string | null
     memberSince: string

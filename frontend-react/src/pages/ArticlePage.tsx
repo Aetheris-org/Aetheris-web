@@ -1352,7 +1352,7 @@ export default function ArticlePage() {
             <CardContent className="pt-3 sm:pt-4 space-y-2 sm:space-y-3 p-3 sm:p-6">
               <div className="flex items-start gap-2 sm:gap-3">
                 <button
-                  onClick={() => navigate(`/profile/${node.author.id}`)}
+                  onClick={() => navigate(`/profile/${node.author.uuid || node.author.id}`)}
                   className="hover:opacity-80 transition-opacity shrink-0"
                 >
                   <Avatar className="h-7 w-7 sm:h-9 sm:w-9">
@@ -1365,7 +1365,7 @@ export default function ArticlePage() {
                 <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <button
-                      onClick={() => navigate(`/profile/${node.author.id}`)}
+                      onClick={() => navigate(`/profile/${node.author.uuid || node.author.id}`)}
                       className="text-xs sm:text-sm font-semibold text-foreground hover:underline"
                     >
                       {node.author.username}
@@ -1405,7 +1405,7 @@ export default function ArticlePage() {
                         <span className="hidden xs:inline">{t('article.inReplyTo', { username: '' })}</span>
                     </button>
                       <button
-                        onClick={() => navigate(`/profile/${parentNode.author.id}`)}
+                        onClick={() => navigate(`/profile/${parentNode.author.uuid || parentNode.author.id}`)}
                         className="text-[10px] sm:text-[11px] font-medium hover:underline"
                       >
                         {parentNode.author.username}
@@ -1633,7 +1633,7 @@ export default function ArticlePage() {
                         @{node.author.username}
                       </DropdownMenuLabel>
                       <DropdownMenuItem
-                        onClick={() => navigate(`/profile/${node.author.id}`)}
+                        onClick={() => navigate(`/profile/${node.author.uuid || node.author.id}`)}
                         className="flex items-center gap-2 px-2 py-2 text-sm"
                       >
                         <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -2062,7 +2062,7 @@ export default function ArticlePage() {
             {/* Meta Info */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-muted-foreground">
               <button
-                onClick={() => navigate(`/profile/${article.author.id}`)}
+                onClick={() => navigate(`/profile/${article.author.uuid || article.author.id}`)}
                 className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity"
               >
                 <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
@@ -2473,7 +2473,7 @@ export default function ArticlePage() {
             <div className="space-y-5">
               <div className="flex items-start gap-3 rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-muted/30 p-3">
                 <button
-                  onClick={() => navigate(`/profile/${infoComment.author.id}`)}
+                  onClick={() => navigate(`/profile/${infoComment.author.uuid || infoComment.author.id}`)}
                   className="hover:opacity-80 transition-opacity"
                 >
                 <Avatar className="h-10 w-10">
@@ -2492,7 +2492,7 @@ export default function ArticlePage() {
                 </button>
                 <div className="space-y-1">
                   <button
-                    onClick={() => navigate(`/profile/${infoComment.author.id}`)}
+                    onClick={() => navigate(`/profile/${infoComment.author.uuid || infoComment.author.id}`)}
                     className="text-sm font-semibold text-foreground hover:underline"
                   >
                     @{infoComment.author.username}
@@ -2504,7 +2504,7 @@ export default function ArticlePage() {
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span>{t('article.replyTo', { username: '' })}</span>
                       <button
-                        onClick={() => navigate(`/profile/${infoParent.author.id}`)}
+                        onClick={() => navigate(`/profile/${infoParent.author.uuid || infoParent.author.id}`)}
                         className="hover:underline"
                       >
                         {infoParent.author.username}

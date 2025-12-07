@@ -6,6 +6,17 @@ import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 /**
+ * Валидация UUID
+ */
+function validateUuid(id: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!id || (typeof id !== 'string') || !uuidRegex.test(id)) {
+    throw new Error(`Invalid UUID format: ${id}`);
+  }
+  return id;
+}
+
+/**
  * Подписаться на пользователя
  */
 export async function followUser(followingId: string): Promise<{ id: string }> {
@@ -51,9 +62,12 @@ export async function unfollowUser(followingId: string): Promise<void> {
       throw new Error('Not authenticated');
     }
 
+    // Валидируем UUID
+    const validatedFollowingId = validateUuid(followingId);
+
     // Используем Database Function с UUID
     const { data, error } = await supabase.rpc('toggle_follow', {
-      p_following_id: followingId,
+      p_following_id: validatedFollowingId,
       p_follower_id: user.id,
     });
 
@@ -79,13 +93,22 @@ export async function checkFollowStatus(
   currentUserId: string
 ): Promise<{ id: string } | null> {
   try {
+    // Валидируем UUID
+    const validatedFollowingId = validateUuid(followingId);
+    const validatedCurrentUserId = validateUuid(currentUserId);
+    
+    // Не позволяем пользователю подписаться сам на себя
+    if (validatedFollowingId === validatedCurrentUserId) {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('follows')
       .select('id')
-      .eq('follower_id', currentUserId)
-      .eq('following_id', followingId)
+      .eq('follower_id', validatedCurrentUserId)
+      .eq('following_id', validatedFollowingId)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       logger.error('Error checking follow status', error);
@@ -104,6 +127,8 @@ export async function checkFollowStatus(
  */
 export async function getFollowing(userId: string): Promise<any[]> {
   try {
+    const validatedUserId = validateUuid(userId);
+    
     const { data, error } = await supabase
       .from('follows')
       .select(`
@@ -115,7 +140,7 @@ export async function getFollowing(userId: string): Promise<any[]> {
           name
         )
       `)
-      .eq('follower_id', userId);
+      .eq('follower_id', validatedUserId);
 
     if (error) {
       logger.error('Error fetching following', error);
@@ -134,6 +159,8 @@ export async function getFollowing(userId: string): Promise<any[]> {
  */
 export async function getFollowers(userId: string): Promise<any[]> {
   try {
+    const validatedUserId = validateUuid(userId);
+    
     const { data, error } = await supabase
       .from('follows')
       .select(`
@@ -145,7 +172,7 @@ export async function getFollowers(userId: string): Promise<any[]> {
           name
         )
       `)
-      .eq('following_id', userId);
+      .eq('following_id', validatedUserId);
 
     if (error) {
       logger.error('Error fetching followers', error);

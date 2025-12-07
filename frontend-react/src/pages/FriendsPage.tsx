@@ -272,7 +272,7 @@ export default function FriendsPage() {
                           key={friendship.id}
                           friendship={friendship}
                           onMessage={() => navigate(`/messages/${friendship.friend.id}`)}
-                          onViewProfile={() => navigate(`/profile/${friendship.friend.id}`)}
+                          onViewProfile={() => navigate(`/profile/${friendship.friend.uuid || friendship.friend.id}`)}
                         />
                       ))}
                     </div>
@@ -836,7 +836,7 @@ function UserSearchCard({ user }: UserSearchCardProps) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button size="sm" variant="outline" className="flex-1 gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm" onClick={() => navigate(`/profile/${user.id}`)}>
+          <Button size="sm" variant="outline" className="flex-1 gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm" onClick={() => navigate(`/profile/${user.uuid || user.id}`)}>
             <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Профиль
           </Button>

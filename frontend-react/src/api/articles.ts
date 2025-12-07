@@ -28,6 +28,9 @@ export function transformArticle(article: any, _userId?: string): Article {
     ? article.author
     : { id: article.author_id, username: '', avatar: null, name: '' };
 
+  // author.id из Supabase - это UUID (строка)
+  const authorId = author.id || article.author_id;
+
   return {
     id: String(article.id),
     title: article.title || '',
@@ -35,7 +38,8 @@ export function transformArticle(article: any, _userId?: string): Article {
     contentJSON: contentJSON,
     excerpt: article.excerpt || '',
     author: {
-      id: author.id || article.author_id,
+      id: authorId, // UUID из базы данных
+      uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
       username: author.username || '',
       avatar: author.avatar || null,
     },

@@ -14,9 +14,10 @@ function validateUuid(id: string): string {
 }
 
 export interface CommentAuthor {
-  id: number | string;
+  id: number | string; // Может быть UUID (string) или числовой ID
   username: string;
   avatar?: string;
+  uuid?: string; // UUID для навигации к профилю
 }
 
 export interface Comment {
@@ -42,13 +43,17 @@ function transformComment(raw: any, _userId?: string): Comment {
     ? raw.author
     : { id: raw.author_id, username: '', avatar: null };
 
+  // author.id из Supabase - это UUID (строка)
+  const authorId = author.id || raw.author_id;
+
   return {
     id: String(raw.id),
     text: raw.text || '',
     createdAt: raw.created_at || new Date().toISOString(),
     updatedAt: raw.updated_at || undefined,
     author: {
-      id: author.id || raw.author_id,
+      id: authorId, // UUID из базы данных
+      uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
       username: author.username || '',
       avatar: author.avatar || undefined,
     },

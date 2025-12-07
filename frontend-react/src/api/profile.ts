@@ -34,7 +34,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       .from('articles')
       .select(`
         *,
-        author:users!articles_author_id_fkey (
+        author:profiles!articles_author_id_fkey (
           id,
           username,
           avatar,

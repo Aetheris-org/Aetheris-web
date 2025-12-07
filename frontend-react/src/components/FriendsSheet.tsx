@@ -184,7 +184,7 @@ export function FriendsSheet({ open, onOpenChange }: FriendsSheetProps) {
                         }}
                         onViewProfile={() => {
                           onOpenChange(false)
-                          navigate(`/profile/${friendship.friend.id}`)
+                          navigate(`/profile/${friendship.friend.uuid || friendship.friend.id}`)
                         }}
                       />
                     ))}

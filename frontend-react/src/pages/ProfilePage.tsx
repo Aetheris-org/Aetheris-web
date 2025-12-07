@@ -619,7 +619,7 @@ export default function ProfilePage() {
   )
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
-  const isOwnProfile = profile?.user.id === currentUser?.id
+  const isOwnProfile = profile?.user.uuid === currentUser?.uuid
 
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({

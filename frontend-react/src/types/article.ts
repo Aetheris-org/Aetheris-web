@@ -1,5 +1,5 @@
 export interface Author {
-  id: number
+  id: number | string // Может быть UUID (string) или числовой ID
   username: string
 }
 
@@ -11,7 +11,8 @@ export interface Article {
   contentJSON?: any // Slate JSON для использования с TipTap
   excerpt?: string
   author: {
-    id: number
+    id: number | string // Может быть UUID (string) или числовой ID
+    uuid?: string // UUID для навигации к профилю
     username: string
     avatar?: string
   }

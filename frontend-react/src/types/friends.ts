@@ -11,6 +11,7 @@ export type FriendRequestStatus = 'pending' | 'accepted' | 'declined'
 // User basic info (for friend cards)
 export interface FriendUser {
   id: string
+  uuid?: string // UUID для навигации к профилю
   username: string
   displayName?: string
   avatar?: string
