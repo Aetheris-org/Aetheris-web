@@ -31,6 +31,43 @@ export interface ArticleQueryParams {
   minViews?: number;
 }
 
+const applyClientFilters = (articles: Article[], filters: Partial<ArticleQueryParams>): Article[] => {
+  return articles.filter((article) => {
+    if (filters.category && filters.category !== 'all') {
+      if (!article.category || article.category !== filters.category) return false;
+    }
+    if (filters.language && filters.language !== 'all') {
+      if (!article.language || article.language !== filters.language) return false;
+    }
+    if (filters.authorId && filters.authorId.trim()) {
+      const target = filters.authorId.trim();
+      const authorIdStr = String(article.author.id ?? '');
+      if (authorIdStr !== target) return false;
+    }
+    if (filters.publishedFrom) {
+      const publishedAt = article.publishedAt || article.createdAt;
+      if (!publishedAt || new Date(publishedAt) < new Date(filters.publishedFrom)) return false;
+    }
+    if (filters.publishedTo) {
+      const publishedAt = article.publishedAt || article.createdAt;
+      if (!publishedAt || new Date(publishedAt) > new Date(filters.publishedTo)) return false;
+    }
+    if (typeof filters.minReadMinutes === 'number') {
+      const readMinutes = article.readTimeMinutes ?? 0;
+      if (readMinutes < filters.minReadMinutes) return false;
+    }
+    if (typeof filters.minReactions === 'number') {
+      const reactions = article.reactionsCount ?? (article.likes || 0) + (article.dislikes || 0);
+      if (reactions < filters.minReactions) return false;
+    }
+    if (typeof filters.minViews === 'number') {
+      const views = article.views ?? 0;
+      if (views < filters.minViews) return false;
+    }
+    return true;
+  });
+};
+
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
   const rawContent = article.content ?? { document: [] };
@@ -172,6 +209,7 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       p_user_id: userId || null,
     });
 
+    // Supabase RPC currently supports only these parameters
     const rpcPayload: Record<string, any> = {
       p_search: search || null,
       p_tags: tags || null,
@@ -180,14 +218,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       p_skip: (page - 1) * pageSize,
       p_take: pageSize,
       p_user_id: userId || null,
-      p_category: category || null,
-      p_author_id: authorId || null,
-      p_language: language || null,
-      p_published_from: publishedFrom || null,
-      p_published_to: publishedTo || null,
-      p_min_read_minutes: minReadMinutes ?? null,
-      p_min_reactions: minReactions ?? null,
-      p_min_views: minViews ?? null,
     };
 
     const { data, error } = await supabase.rpc('search_articles', rpcPayload as any);
@@ -209,9 +239,20 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
     // Трансформируем данные
     const articles = data.map((item: any) => transformArticle(item, userId));
 
+    const filtered = applyClientFilters(articles, {
+      category,
+      authorId,
+      language,
+      publishedFrom,
+      publishedTo,
+      minReadMinutes,
+      minReactions,
+      minViews,
+    });
+
     return {
-      data: articles,
-      total: Number(total),
+      data: filtered,
+      total: Number(filtered.length),
     };
   } catch (error: any) {
     logger.error('Error in getArticles', error);
@@ -730,14 +771,6 @@ export async function searchArticles(
       p_skip: start,
       p_take: limit,
       p_user_id: userId || null,
-      p_category: extraFilters?.category?.trim() || null,
-      p_author_id: extraFilters?.authorId?.trim() || null,
-      p_language: extraFilters?.language?.trim() || null,
-      p_published_from: extraFilters?.publishedFrom || null,
-      p_published_to: extraFilters?.publishedTo || null,
-      p_min_read_minutes: typeof extraFilters?.minReadMinutes === 'number' ? extraFilters?.minReadMinutes : null,
-      p_min_reactions: typeof extraFilters?.minReactions === 'number' ? extraFilters?.minReactions : null,
-      p_min_views: typeof extraFilters?.minViews === 'number' ? extraFilters?.minViews : null,
     };
 
     const { data, error } = await supabase.rpc('search_articles', rpcPayload as any);
@@ -753,10 +786,11 @@ export async function searchArticles(
 
     const total = data[0]?.total_count || 0;
     const articles = data.map((item: any) => transformArticle(item, userId));
+    const filtered = applyClientFilters(articles, extraFilters || {});
 
     return {
-      data: articles,
-      total: Number(total),
+      data: filtered,
+      total: Number(filtered.length),
     };
   } catch (error: any) {
     logger.error('Error in searchArticles', error);
