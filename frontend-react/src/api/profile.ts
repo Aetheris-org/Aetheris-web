@@ -211,8 +211,14 @@ export async function updateProfile(input: {
     const updateData: any = {};
     if (input.username !== undefined) updateData.username = input.username;
     if (input.bio !== undefined) updateData.bio = input.bio;
-    if (input.avatar !== undefined) updateData.avatar = input.avatar;
-    if (input.coverImage !== undefined) updateData.cover_image = input.coverImage;
+    if (input.avatar !== undefined) {
+      updateData.avatar = input.avatar;
+      updateData.avatar_url = input.avatar; // дублируем в snake_case колонку
+    }
+    if (input.coverImage !== undefined) {
+      updateData.cover_image = input.coverImage;
+      updateData.cover_url = input.coverImage; // дублируем в snake_case колонку
+    }
 
     const { error } = await supabase
       .from('profiles')
