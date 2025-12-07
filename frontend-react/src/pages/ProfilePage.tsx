@@ -848,7 +848,6 @@ export default function ProfilePage() {
     )
   }
 
-  const publishedArticles = profile.articles.filter((a) => a.status === 'published')
   const displayedArticles = profile.articles || []
 
   return (
