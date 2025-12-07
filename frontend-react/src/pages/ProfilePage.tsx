@@ -900,21 +900,28 @@ export default function ProfilePage() {
               {/* Верхняя строка: аватар, имя, бейдж, меню */}
               <div className="flex items-start gap-3 w-full">
                 {/* Аватар */}
-                {profile.user.avatarUrl ? (
-                  <img
-                    src={profile.user.avatarUrl}
-                    alt={profile.user.username}
-                    className="h-16 w-16 rounded-full border-2 object-cover shadow-md shrink-0"
-                    style={{ borderColor: 'hsl(var(--border))' }}
-                        />
-                      ) : (
+                <div className="relative h-16 w-16 shrink-0">
+                  {profile.user.avatarUrl && (
+                    <img
+                      src={profile.user.avatarUrl}
+                      alt={profile.user.username}
+                      className="h-16 w-16 rounded-full border-2 object-cover shadow-md"
+                      style={{ borderColor: 'hsl(var(--border))' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const fallback = target.nextElementSibling as HTMLDivElement | null
+                        if (fallback) fallback.style.display = 'flex'
+                      }}
+                    />
+                  )}
                   <div
-                    className="flex h-16 w-16 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md shrink-0"
+                    className={`${profile.user.avatarUrl ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md`}
                     style={{ borderColor: 'hsl(var(--border))' }}
                   >
-                    {profile.user.username.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                    {(profile.user.username || '?').charAt(0).toUpperCase()}
+                  </div>
+                </div>
 
                 {/* Имя, бейдж и меню */}
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
@@ -1059,23 +1066,28 @@ export default function ProfilePage() {
             {/* Десктопный лайаут: аватар слева, информация в центре, кнопки справа */}
             <div className="hidden sm:flex sm:flex-row sm:items-start sm:gap-4 md:gap-6 lg:gap-8">
               {/* Аватар */}
-              <div className="flex-shrink-0">
-                {profile.user.avatarUrl ? (
+              <div className="relative flex-shrink-0 h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32">
+                {profile.user.avatarUrl && (
                   <img
                     src={profile.user.avatarUrl}
                     alt={profile.user.username}
-                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-2 object-cover shadow-lg md:h-32 md:w-32"
+                    className="h-full w-full rounded-full border-2 object-cover shadow-lg"
                     style={{ borderColor: 'hsl(var(--border))' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      const fallback = target.nextElementSibling as HTMLDivElement | null
+                      if (fallback) fallback.style.display = 'flex'
+                    }}
                   />
-                ) : (
-                  <div
-                    className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:h-32 md:w-32 md:text-4xl"
-                    style={{ borderColor: 'hsl(var(--border))' }}
-                  >
-                    {profile.user.username.charAt(0).toUpperCase()}
-                  </div>
                 )}
-                  </div>
+                <div
+                  className={`${profile.user.avatarUrl ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:text-4xl`}
+                  style={{ borderColor: 'hsl(var(--border))' }}
+                >
+                  {(profile.user.username || '?').charAt(0).toUpperCase()}
+                </div>
+              </div>
 
               {/* Основная информация */}
               <div className="flex flex-1 flex-col gap-3 sm:gap-4 min-w-0">
