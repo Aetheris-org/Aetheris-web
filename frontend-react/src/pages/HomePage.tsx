@@ -150,7 +150,7 @@ export default function HomePage() {
       sortOption,
       debouncedSearchQuery,
     ],
-    queryFn: () => {
+    queryFn: async () => {
       // Логирование для отладки
       logger.debug('[HomePage] Fetching articles with filters:', {
         page,
@@ -160,20 +160,28 @@ export default function HomePage() {
         sort: sortOption,
         search: debouncedSearchQuery,
       });
-      return getArticles({
-        page,
-        pageSize,
-        tags: selectedTags.length ? selectedTags : undefined,
-        difficulty: difficultyFilter,
-        sort: sortOption,
-        search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
-      });
+      try {
+        const result = await getArticles({
+          page,
+          pageSize,
+          tags: selectedTags.length ? selectedTags : undefined,
+          difficulty: difficultyFilter,
+          sort: sortOption,
+          search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
+        });
+        logger.debug('[HomePage] Articles fetched successfully:', result);
+        return result;
+      } catch (error) {
+        logger.error('[HomePage] Error fetching articles:', error);
+        throw error;
+      }
     },
     // Явно включаем запрос (переопределяем глобальный refetchOnMount: false)
     enabled: true,
-    refetchOnMount: true,
-    // Кэшируем на 5 минут (данные статей не меняются часто)
-    staleTime: 5 * 60 * 1000,
+    refetchOnMount: 'always', // Всегда рефетчить при монтировании
+    refetchOnWindowFocus: false, // Не рефетчить при фокусе окна
+    // Кэшируем на 0 секунд (всегда запрашиваем свежие данные)
+    staleTime: 0,
     // Храним в кэше 30 минут
     gcTime: 30 * 60 * 1000,
     // Retry только на сетевые ошибки

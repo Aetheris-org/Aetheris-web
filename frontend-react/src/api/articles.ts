@@ -74,11 +74,34 @@ export async function getArticles(params?: {
   const search = params?.search && params.search.trim().length >= 2 ? params.search.trim() : undefined;
 
   try {
+    logger.debug('[getArticles] Starting fetch with params:', {
+      page,
+      pageSize,
+      sort,
+      difficulty,
+      tags,
+      search,
+    });
+
     // Получаем текущего пользователя
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      logger.error('[getArticles] Auth error:', authError);
+    }
     const userId = user?.id;
+    logger.debug('[getArticles] User ID:', userId);
 
     // Используем Database Function для поиска
+    logger.debug('[getArticles] Calling search_articles RPC with:', {
+      p_search: search || null,
+      p_tags: tags || null,
+      p_difficulty: difficulty || null,
+      p_sort: sort,
+      p_skip: (page - 1) * pageSize,
+      p_take: pageSize,
+      p_user_id: userId || null,
+    });
+
     const { data, error } = await supabase.rpc('search_articles', {
       p_search: search || null,
       p_tags: tags || null,
@@ -88,6 +111,8 @@ export async function getArticles(params?: {
       p_take: pageSize,
       p_user_id: userId || null,
     });
+
+    logger.debug('[getArticles] RPC response:', { hasData: !!data, dataLength: data?.length, error });
 
     if (error) {
       logger.error('Error fetching articles', error);

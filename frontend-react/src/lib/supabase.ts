@@ -9,10 +9,20 @@ import { logger } from './logger';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+logger.debug('[supabase] Environment check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  urlLength: supabaseUrl?.length || 0,
+  keyLength: supabaseAnonKey?.length || 0,
+  urlPrefix: supabaseUrl?.substring(0, 20) || 'N/A',
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
+  const error = new Error(
     'Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY'
   );
+  logger.error('[supabase] Configuration error:', error);
+  throw error;
 }
 
 // Создаем клиент Supabase
