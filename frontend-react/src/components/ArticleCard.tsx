@@ -91,20 +91,31 @@ export function ArticleCard({
       onClick={() => onArticleClick?.(article.id)}
       onMouseEnter={onMouseEnter}
     >
-      {!hidePreview && article.previewImage && (
-        <div className="relative w-full overflow-hidden border-b border-border/40">
+      {!hidePreview && (
+        <div className="relative w-full overflow-hidden border-b border-border/40 bg-muted/10">
           <div className="aspect-video w-full">
-            <img
-              src={article.previewImage}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-              onError={(e) => {
-                // Скрываем изображение при ошибке загрузки
-                const target = e.target as HTMLImageElement
-                target.style.display = 'none'
-              }}
-            />
+            {article.previewImage ? (
+              <img
+                src={article.previewImage}
+                alt={article.title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                onError={(e) => {
+                  // Скрываем изображение при ошибке загрузки, показываем заглушку
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const placeholder = target.nextElementSibling as HTMLDivElement | null
+                  if (placeholder) {
+                    placeholder.style.display = 'flex'
+                  }
+                }}
+              />
+            ) : null}
+            <div
+              className={`${article.previewImage ? 'hidden' : 'flex'} h-full w-full items-center justify-center bg-muted text-muted-foreground text-xs`}
+            >
+              No preview
+            </div>
           </div>
         </div>
       )}

@@ -71,23 +71,29 @@ export function ArticleCardSquare({
       onClick={() => onArticleClick?.(article.id)}
       onMouseEnter={onMouseEnter}
     >
-      {article.previewImage && (
-        <div className="relative w-full overflow-hidden border-b border-border/40">
-          <div className="aspect-video w-full">
-          <img
-            src={article.previewImage}
-            alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            onError={(e) => {
-              // Скрываем изображение при ошибке загрузки
-              const target = e.target as HTMLImageElement
-              target.style.display = 'none'
-            }}
-          />
+      <div className="relative w-full overflow-hidden border-b border-border/40 bg-muted/10">
+        <div className="aspect-video w-full">
+          {article.previewImage ? (
+            <img
+              src={article.previewImage}
+              alt={article.title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                const placeholder = target.nextElementSibling as HTMLDivElement | null
+                if (placeholder) placeholder.style.display = 'flex'
+              }}
+            />
+          ) : null}
+          <div
+            className={`${article.previewImage ? 'hidden' : 'flex'} h-full w-full items-center justify-center bg-muted text-muted-foreground text-xs`}
+          >
+            No preview
           </div>
         </div>
-      )}
+      </div>
       <div className="p-5 space-y-3 flex-1 flex flex-col">
         {/* Header */}
         <div className="space-y-2 flex-1">
