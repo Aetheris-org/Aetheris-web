@@ -155,7 +155,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         publishedArticles: publishedArticles.length,
         totalLikes,
         totalComments: (comments || []).length,
-        followers: typeof profile.followers_count === 'number' ? profile.followers_count : (followersData || []).length,
+        followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
         following: (followingData || []).length,
       },
       highlights: {

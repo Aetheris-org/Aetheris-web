@@ -179,13 +179,6 @@ export function transformArticle(article: any, _userId?: string): Article {
         ? new Date(article.publishedAt).toISOString()
         : undefined;
 
-  const readTimeMinutes =
-    typeof article.read_time_minutes === 'number'
-      ? article.read_time_minutes
-      : typeof article.read_time === 'number'
-        ? article.read_time
-        : undefined;
-
   const reactionsCount = (article.likes_count || 0) + (article.dislikes_count || 0);
   const readTimeMinutes = computeReadTimeMinutes(article);
 
