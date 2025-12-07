@@ -152,16 +152,14 @@ export default function HomePage() {
     ],
     queryFn: () => {
       // Логирование для отладки
-      if (import.meta.env.DEV) {
-        logger.debug('[HomePage] Fetching articles with filters:', {
-          page,
-          pageSize,
-          tags: selectedTags,
+      logger.debug('[HomePage] Fetching articles with filters:', {
+        page,
+        pageSize,
+        tags: selectedTags,
         difficulty: difficultyFilter,
         sort: sortOption,
-          search: debouncedSearchQuery,
-        });
-      }
+        search: debouncedSearchQuery,
+      });
       return getArticles({
         page,
         pageSize,
@@ -171,6 +169,9 @@ export default function HomePage() {
         search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
       });
     },
+    // Явно включаем запрос (переопределяем глобальный refetchOnMount: false)
+    enabled: true,
+    refetchOnMount: true,
     // Кэшируем на 5 минут (данные статей не меняются часто)
     staleTime: 5 * 60 * 1000,
     // Храним в кэше 30 минут
@@ -187,6 +188,8 @@ export default function HomePage() {
   const { data: trendingArticles = [], isLoading: loadingTrending } = useQuery({
     queryKey: ['trending-articles', user?.id],
     queryFn: () => getTrendingArticles(user?.id ? String(user.id) : undefined, 5),
+    enabled: true,
+    refetchOnMount: true,
     // Трендовые статьи кэшируем дольше (10 минут)
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,

@@ -122,9 +122,25 @@ export async function getArticle(id: string): Promise<Article> {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
 
+    // Валидация ID (UUID)
+    const articleId = (() => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      
+      if (!id || (typeof id !== 'string')) {
+        throw new Error(`Invalid article ID: ${id}`);
+      }
+      
+      if (!uuidRegex.test(id) && !uuidNoDashesRegex.test(id)) {
+        throw new Error(`Invalid article ID format (expected UUID): ${id}`);
+      }
+      
+      return id;
+    })();
+
     // Используем Database Function для получения статьи с деталями
     const { data, error } = await supabase.rpc('get_article_with_details', {
-      p_article_id: parseInt(id),
+      p_article_id: articleId,
       p_user_id: userId || null,
       p_increment_views: true,
     });
@@ -230,11 +246,27 @@ export async function updateArticle(
       throw new Error('Not authenticated');
     }
 
+    // Валидация ID (UUID)
+    const articleId = (() => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      
+      if (!id || (typeof id !== 'string')) {
+        throw new Error(`Invalid article ID: ${id}`);
+      }
+      
+      if (!uuidRegex.test(id) && !uuidNoDashesRegex.test(id)) {
+        throw new Error(`Invalid article ID format (expected UUID): ${id}`);
+      }
+      
+      return id;
+    })();
+
     // Проверяем права доступа (RLS сделает это автоматически, но лучше проверить)
     const { data: existingArticle } = await supabase
       .from('articles')
       .select('author_id')
-      .eq('id', parseInt(id))
+      .eq('id', articleId)
       .single();
 
     if (!existingArticle) {
@@ -268,7 +300,7 @@ export async function updateArticle(
     const { data, error } = await supabase
       .from('articles')
       .update(updateData)
-      .eq('id', parseInt(id))
+      .eq('id', articleId)
       .select(`
         *,
         author:users!articles_author_id_fkey (
@@ -303,11 +335,27 @@ export async function deleteArticle(id: string): Promise<boolean> {
       throw new Error('Not authenticated');
     }
 
+    // Валидация ID (UUID)
+    const articleId = (() => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      
+      if (!id || (typeof id !== 'string')) {
+        throw new Error(`Invalid article ID: ${id}`);
+      }
+      
+      if (!uuidRegex.test(id) && !uuidNoDashesRegex.test(id)) {
+        throw new Error(`Invalid article ID format (expected UUID): ${id}`);
+      }
+      
+      return id;
+    })();
+
     // Проверяем права доступа
     const { data: existingArticle } = await supabase
       .from('articles')
       .select('author_id')
-      .eq('id', parseInt(id))
+      .eq('id', articleId)
       .single();
 
     if (!existingArticle) {
@@ -321,7 +369,7 @@ export async function deleteArticle(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('articles')
       .delete()
-      .eq('id', parseInt(id));
+      .eq('id', articleId);
 
     if (error) {
       logger.error('Error deleting article', error);
@@ -349,9 +397,25 @@ export async function reactToArticle(
       throw new Error('Not authenticated');
     }
 
+    // Валидация ID (UUID)
+    const validatedArticleId = (() => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      
+      if (!articleId || (typeof articleId !== 'string')) {
+        throw new Error(`Invalid article ID: ${articleId}`);
+      }
+      
+      if (!uuidRegex.test(articleId) && !uuidNoDashesRegex.test(articleId)) {
+        throw new Error(`Invalid article ID format (expected UUID): ${articleId}`);
+      }
+      
+      return articleId;
+    })();
+
     // Используем Database Function для toggle реакции
     const { error } = await supabase.rpc('toggle_article_reaction', {
-      p_article_id: parseInt(articleId),
+      p_article_id: validatedArticleId,
       p_user_id: user.id,
       p_reaction: reaction,
     });
@@ -380,8 +444,24 @@ export async function toggleBookmark(articleId: string): Promise<{ isBookmarked:
       throw new Error('Not authenticated');
     }
 
+    // Валидация ID (UUID)
+    const validatedArticleId = (() => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      
+      if (!articleId || (typeof articleId !== 'string')) {
+        throw new Error(`Invalid article ID: ${articleId}`);
+      }
+      
+      if (!uuidRegex.test(articleId) && !uuidNoDashesRegex.test(articleId)) {
+        throw new Error(`Invalid article ID format (expected UUID): ${articleId}`);
+      }
+      
+      return articleId;
+    })();
+
     const { data, error } = await supabase.rpc('toggle_bookmark', {
-      p_article_id: parseInt(articleId),
+      p_article_id: validatedArticleId,
       p_user_id: user.id,
     });
 
