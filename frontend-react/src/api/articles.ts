@@ -442,16 +442,54 @@ export async function reactToArticle(
       return articleId;
     })();
 
-    // Используем Database Function для toggle реакции
+    // Попытка использовать RPC (основной путь)
     const { error } = await supabase.rpc('toggle_article_reaction', {
       p_article_id: validatedArticleId,
       p_user_id: user.id,
       p_reaction: reaction,
     });
 
+    // Если RPC падает из-за неоднозначности article_id (ошибка 42702),
+    // переходим на прямую работу с таблицей как fallback.
     if (error) {
-      logger.error('Error reacting to article', error);
-      throw error;
+      if (error.code !== '42702') {
+        logger.error('Error reacting to article via RPC', error);
+        throw error;
+      }
+
+      logger.warn('toggle_article_reaction RPC failed, falling back to direct toggle', error);
+
+      // Проверяем существующую реакцию
+      const { data: existing, error: existingError } = await supabase
+        .from('article_reactions')
+        .select('reaction')
+        .eq('article_id', validatedArticleId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingError && existingError.code !== 'PGRST116') {
+        logger.error('Error fetching existing article reaction', existingError);
+        throw existingError;
+      }
+
+      if (existing && existing.reaction === reaction) {
+        await supabase
+          .from('article_reactions')
+          .delete()
+          .eq('article_id', validatedArticleId)
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('article_reactions')
+          .upsert(
+            {
+              article_id: validatedArticleId,
+              user_id: user.id,
+              reaction,
+            },
+            { onConflict: 'article_id,user_id' }
+          );
+      }
     }
 
     // Получаем обновленную статью
