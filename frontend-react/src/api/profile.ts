@@ -111,23 +111,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     }
 
     // Получаем подписчиков
-    const { data: followersData, error: followersError } = await supabase
-      .from('follows')
-      .select(`
-        id,
-        follower:profiles!follows_follower_id_fkey (
-          id,
-          username,
-          avatar,
-          name
-        )
-      `)
-      .eq('following_id', profileUuid);
-
-    if (followersError) {
-      logger.error('Error fetching followers', followersError);
-    }
-
     // Трансформируем данные
     const publishedArticles = (articles || []).filter((a: any) => a.published_at !== null);
     const totalLikes = publishedArticles.reduce((sum: number, article: any) => sum + (article.likes_count || 0), 0);
@@ -172,7 +155,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         publishedArticles: publishedArticles.length,
         totalLikes,
         totalComments: (comments || []).length,
-        followers: (followersData || []).length,
+        followers: typeof profile.followers_count === 'number' ? profile.followers_count : (followersData || []).length,
         following: (followingData || []).length,
       },
       highlights: {
