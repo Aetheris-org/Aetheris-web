@@ -651,6 +651,7 @@ export default function CreateArticlePage() {
         // Добавляем previewImage только если он есть
         if (currentPreviewImage) {
           draftData.previewImage = currentPreviewImage
+          draftData.preview_image = currentPreviewImage // дублируем для бэка со snake_case
         }
 
         // ВАЖНО: Сначала сохраняем в localStorage для быстрого восстановления при потере соединения
@@ -926,6 +927,7 @@ export default function CreateArticlePage() {
       // Добавляем previewImage только если он есть
       if (previewImageUrl) {
         draftData.previewImage = previewImageUrl
+        draftData.preview_image = previewImageUrl // snake_case для бэка
       }
 
       const saved = draftId
@@ -2177,6 +2179,7 @@ export default function CreateArticlePage() {
       // Добавляем previewImage только если он есть (опциональное поле)
       if (previewImageUrl) {
         articleData.previewImage = previewImageUrl
+        articleData.preview_image = previewImageUrl // snake_case для бэка
       }
 
       logger.debug('[CreateArticlePage] Article data prepared:', {
