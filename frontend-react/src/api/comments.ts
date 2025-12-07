@@ -7,10 +7,17 @@ import { logger } from '@/lib/logger';
 
 function validateUuid(id: string): string {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!id || (typeof id !== 'string') || !uuidRegex.test(id)) {
-    throw new Error(`Invalid UUID format: ${id}`);
+  const numericRegex = /^\d+$/;
+
+  if (!id || typeof id !== 'string') {
+    throw new Error(`Invalid ID: ${id}`);
   }
-  return id;
+
+  if (uuidRegex.test(id) || numericRegex.test(id)) {
+    return id;
+  }
+
+  throw new Error(`Invalid ID format: ${id}`);
 }
 
 export interface CommentAuthor {
@@ -291,11 +298,13 @@ export async function reactToComment(
       throw new Error('Not authenticated');
     }
 
+    const validatedCommentId = validateUuid(commentId);
+
     // Проверяем существующую реакцию
     const { data: existing } = await supabase
       .from('comment_reactions')
       .select('reaction')
-      .eq('comment_id', validateUuid(commentId))
+      .eq('comment_id', validatedCommentId)
       .eq('user_id', user.id)
       .single();
 
@@ -304,19 +313,61 @@ export async function reactToComment(
       await supabase
         .from('comment_reactions')
         .delete()
-        .eq('comment_id', validateUuid(commentId))
+        .eq('comment_id', validatedCommentId)
         .eq('user_id', user.id);
     } else {
       // Создаем или обновляем реакцию
       await supabase
         .from('comment_reactions')
         .upsert({
-          comment_id: validateUuid(commentId),
+          comment_id: validatedCommentId,
           user_id: user.id,
           reaction: reaction,
         }, {
           onConflict: 'comment_id,user_id',
         });
+    }
+
+    // Пересчёт лайков/дизлайков и обновление агрегатов в comments
+    const [
+      { count: likesCountRaw, error: likesError },
+      { count: dislikesCountRaw, error: dislikesError },
+    ] = await Promise.all([
+      supabase
+        .from('comment_reactions')
+        .select('id', { head: true, count: 'exact' })
+        .eq('comment_id', validatedCommentId)
+        .eq('reaction', 'like'),
+      supabase
+        .from('comment_reactions')
+        .select('id', { head: true, count: 'exact' })
+        .eq('comment_id', validatedCommentId)
+        .eq('reaction', 'dislike'),
+    ]);
+
+    if (likesError) {
+      logger.error('Error fetching comment likes count', likesError);
+      throw likesError;
+    }
+    if (dislikesError) {
+      logger.error('Error fetching comment dislikes count', dislikesError);
+      throw dislikesError;
+    }
+
+    const likesCount = likesCountRaw ?? 0;
+    const dislikesCount = dislikesCountRaw ?? 0;
+
+    const { error: updateAggError } = await supabase
+      .from('comments')
+      .update({
+        likes_count: likesCount,
+        dislikes_count: dislikesCount,
+      })
+      .eq('id', validatedCommentId);
+
+    if (updateAggError) {
+      logger.error('Error updating comment aggregates', updateAggError);
+      throw updateAggError;
     }
 
     // Получаем обновленный комментарий
@@ -330,24 +381,22 @@ export async function reactToComment(
           avatar
         )
       `)
-      .eq('id', validateUuid(commentId))
+      .eq('id', validatedCommentId)
       .single();
 
     if (!comment) {
       throw new Error('Comment not found');
     }
 
-    // Получаем реакцию пользователя
-    const { data: userReaction } = await supabase
-      .from('comment_reactions')
-      .select('reaction')
-      .eq('comment_id', validateUuid(commentId))
-      .eq('user_id', user.id)
-      .single();
+    // Текущая реакция пользователя после операции
+    const userReaction =
+      existing && existing.reaction === reaction ? null : reaction;
 
     return transformComment({
       ...comment,
-      user_reaction: userReaction?.reaction || null,
+      likes_count: likesCount,
+      dislikes_count: dislikesCount,
+      user_reaction: userReaction,
     }, user.id);
   } catch (error: any) {
     logger.error('Error in reactToComment', error);

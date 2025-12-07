@@ -1,4 +1,4 @@
-import { Calendar, Clock, Eye, User, TrendingUp } from 'lucide-react'
+import { Calendar, Clock, User, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
@@ -178,14 +178,8 @@ export function ArticleCard({
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {article.views !== undefined && (
               <div className="flex items-center gap-1.5">
-                <Eye className="h-4 w-4" />
-                <span className="font-medium">{article.views}</span>
-              </div>
-            )}
-            {article.likes !== undefined && (
-              <div className="flex items-center gap-1.5">
                 <TrendingUp className="h-4 w-4" />
-                <span className="font-medium">{article.likes}</span>
+                <span className="font-medium">{article.views}</span>
               </div>
             )}
           </div>
