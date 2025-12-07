@@ -490,6 +490,31 @@ export async function reactToArticle(
             { onConflict: 'article_id,user_id' }
           );
       }
+
+      // Пересчёт лайков/дизлайков, чтобы вернуть актуальные данные,
+      // даже если RPC упал и не обновил агрегаты.
+      const { data: reactionCounts, error: countsError } = await supabase
+        .from('article_reactions')
+        .select('reaction, count:count()', { group: 'reaction' })
+        .eq('article_id', validatedArticleId);
+
+      if (countsError) {
+        logger.error('Error fetching article reaction counts', countsError);
+        throw countsError;
+      }
+
+      const likesCount = reactionCounts?.find((r: any) => r.reaction === 'like')?.count || 0;
+      const dislikesCount = reactionCounts?.find((r: any) => r.reaction === 'dislike')?.count || 0;
+      const userReaction =
+        existing && existing.reaction === reaction ? null : reaction;
+
+      const article = await getArticle(articleId);
+      return {
+        ...article,
+        likes: likesCount,
+        dislikes: dislikesCount,
+        userReaction,
+      };
     }
 
     // Получаем обновленную статью
