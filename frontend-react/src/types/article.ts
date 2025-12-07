@@ -30,6 +30,11 @@ export interface Article {
   difficulty?: string
   author_id?: number
   views?: number
+  publishedAt?: string
+  category?: string
+  language?: string
+  readTimeMinutes?: number
+  reactionsCount?: number
 }
 
 export interface ArticlesResponse {

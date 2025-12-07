@@ -571,8 +571,6 @@ function ProfileSettings() {
   const [coverRemoved, setCoverRemoved] = useState(false)
   const [avatarUrlInput, setAvatarUrlInput] = useState('')
   const [coverUrlInput, setCoverUrlInput] = useState('')
-  const [avatarUrlInput, setAvatarUrlInput] = useState('')
-  const [coverUrlInput, setCoverUrlInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isAvatarProcessing, setIsAvatarProcessing] = useState(false)
   const [isCoverProcessing, setIsCoverProcessing] = useState(false)

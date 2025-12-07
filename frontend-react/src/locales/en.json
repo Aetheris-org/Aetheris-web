@@ -2675,7 +2675,8 @@
       "label": "Filters:",
       "clearAll": "Clear all",
       "difficulty": "Difficulty:",
-      "reset": "reset"
+      "reset": "reset",
+      "more": "More filters:"
     },
     "articles": {
       "notFound": "No articles found",
@@ -2719,7 +2720,20 @@
       "noTagsSelected": "No tags selected yet.",
       "quickPick": "Quick pick",
       "resetFilters": "Reset filters",
-      "applyFilters": "Apply filters"
+      "applyFilters": "Apply filters",
+      "category": "Category",
+      "allCategories": "All categories",
+      "author": "Author",
+      "authorPlaceholder": "Author name or ID",
+      "language": "Language",
+      "allLanguages": "All languages",
+      "publishedDate": "Published date",
+      "from": "From",
+      "to": "To",
+      "metrics": "Minimum metrics",
+      "minReadMinutes": "Min. read time (min)",
+      "minReactions": "Min. reactions",
+      "minViews": "Min. views"
     },
     "viewModes": {
       "standardCards": "Standard cards",

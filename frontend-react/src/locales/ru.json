@@ -2651,7 +2651,8 @@
       "label": "Фильтры:",
       "clearAll": "Очистить все",
       "difficulty": "Сложность:",
-      "reset": "сбросить"
+      "reset": "сбросить",
+      "more": "Доп. фильтры:"
     },
     "articles": {
       "notFound": "Статьи не найдены",
@@ -2695,7 +2696,20 @@
       "noTagsSelected": "Теги еще не выбраны.",
       "quickPick": "Быстрый выбор",
       "resetFilters": "Сбросить",
-      "applyFilters": "Применить"
+      "applyFilters": "Применить",
+      "category": "Категория",
+      "allCategories": "Все категории",
+      "author": "Автор",
+      "authorPlaceholder": "Имя или ID автора",
+      "language": "Язык",
+      "allLanguages": "Все языки",
+      "publishedDate": "Дата публикации",
+      "from": "От",
+      "to": "До",
+      "metrics": "Минимальные метрики",
+      "minReadMinutes": "Мин. время чтения (мин)",
+      "minReactions": "Мин. реакций",
+      "minViews": "Мин. просмотров"
     },
     "viewModes": {
       "standardCards": "Стандартные карточки",

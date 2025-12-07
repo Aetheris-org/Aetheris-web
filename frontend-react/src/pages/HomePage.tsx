@@ -36,6 +36,13 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -97,6 +104,14 @@ export default function HomePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [difficultyFilter, setDifficultyFilter] = useState<ArticleDifficulty | 'all'>('all')
   const [sortOption, setSortOption] = useState<ArticleSortOption>('newest')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [authorFilter, setAuthorFilter] = useState<string>('')
+  const [languageFilter, setLanguageFilter] = useState<string>('all')
+  const [publishedFrom, setPublishedFrom] = useState<string>('')
+  const [publishedTo, setPublishedTo] = useState<string>('')
+  const [minReadMinutes, setMinReadMinutes] = useState<number | ''>('')
+  const [minReactions, setMinReactions] = useState<number | ''>('')
+  const [minViews, setMinViews] = useState<number | ''>('')
   const [page, setPage] = useState(1)
   const pageRef = useRef(page)
   const [_isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
@@ -110,6 +125,8 @@ export default function HomePage() {
   }, [page])
   const pageSize = 10
   const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
+  const categoryOptions = ['all', 'Frontend', 'Backend', 'DevOps', 'AI', 'Product', 'Design']
+  const languageOptions = ['all', 'en', 'ru', 'es', 'de', 'fr']
   // const _quickDestinations = useMemo( // Unused, but may be needed in future
   //   () => [
   //     {
@@ -149,6 +166,14 @@ export default function HomePage() {
       difficultyFilter,
       sortOption,
       debouncedSearchQuery,
+      categoryFilter,
+      authorFilter.trim(),
+      languageFilter,
+      publishedFrom,
+      publishedTo,
+      typeof minReadMinutes === 'number' ? minReadMinutes : '',
+      typeof minReactions === 'number' ? minReactions : '',
+      typeof minViews === 'number' ? minViews : '',
     ],
     queryFn: async () => {
       // Логирование для отладки
@@ -159,8 +184,19 @@ export default function HomePage() {
         difficulty: difficultyFilter,
         sort: sortOption,
           search: debouncedSearchQuery,
+          category: categoryFilter,
+          author: authorFilter,
+          language: languageFilter,
+          publishedFrom,
+          publishedTo,
+          minReadMinutes,
+          minReactions,
+          minViews,
         });
       try {
+        const minReadMinutesSafe = typeof minReadMinutes === 'number' ? minReadMinutes : undefined
+        const minReactionsSafe = typeof minReactions === 'number' ? minReactions : undefined
+        const minViewsSafe = typeof minViews === 'number' ? minViews : undefined
         const result = await getArticles({
         page,
         pageSize,
@@ -168,6 +204,14 @@ export default function HomePage() {
         difficulty: difficultyFilter,
         sort: sortOption,
         search: debouncedSearchQuery.length >= 2 ? debouncedSearchQuery : undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        authorId: authorFilter.trim() || undefined,
+        language: languageFilter !== 'all' ? languageFilter : undefined,
+        publishedFrom: publishedFrom || undefined,
+        publishedTo: publishedTo || undefined,
+        minReadMinutes: minReadMinutesSafe,
+        minReactions: minReactionsSafe,
+        minViews: minViewsSafe,
       });
         logger.debug('[HomePage] Articles fetched successfully:', result);
         return result;
@@ -395,6 +439,14 @@ export default function HomePage() {
     setSelectedTags([])
     setDifficultyFilter('all')
     setSortOption('newest')
+    setCategoryFilter('all')
+    setAuthorFilter('')
+    setLanguageFilter('all')
+    setPublishedFrom('')
+    setPublishedTo('')
+    setMinReadMinutes('')
+    setMinReactions('')
+    setMinViews('')
     setPage(1)
   }
 
@@ -643,6 +695,49 @@ export default function HomePage() {
                   </Badge>
                   <Button variant="ghost" size="sm" onClick={() => setDifficultyFilter('all')} className="h-7 px-2 sm:px-3 text-xs">
                     {t('home.filters.reset')}
+                  </Button>
+                </div>
+              )}
+              {(categoryFilter !== 'all' || languageFilter !== 'all' || authorFilter.trim() || publishedFrom || publishedTo || minReadMinutes !== '' || minReactions !== '' || minViews !== '') && (
+                <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <span className="text-muted-foreground">{t('home.filters.more')}</span>
+                  {categoryFilter !== 'all' && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.category')}: {categoryFilter}
+                    </Badge>
+                  )}
+                  {languageFilter !== 'all' && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.language')}: {languageFilter.toUpperCase()}
+                    </Badge>
+                  )}
+                  {authorFilter.trim() && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.author')}: {authorFilter.trim()}
+                    </Badge>
+                  )}
+                  {(publishedFrom || publishedTo) && (
+                    <Badge variant="outline" className="text-xs">
+                      {publishedFrom || '—'} → {publishedTo || '—'}
+                    </Badge>
+                  )}
+                  {minReadMinutes !== '' && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.minReadMinutes')}: {minReadMinutes}
+                    </Badge>
+                  )}
+                  {minReactions !== '' && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.minReactions')}: {minReactions}
+                    </Badge>
+                  )}
+                  {minViews !== '' && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('home.filtersDrawer.minViews')}: {minViews}
+                    </Badge>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs px-2 sm:px-3">
+                    {t('home.filters.clearAll')}
                   </Button>
                 </div>
               )}
@@ -895,18 +990,44 @@ export default function HomePage() {
         difficulty={difficultyFilter}
         sortOption={sortOption}
         allTags={popularTags}
-        onApply={({ tags, difficulty, sort }) => {
+        category={categoryFilter}
+        author={authorFilter}
+        language={languageFilter}
+        publishedFrom={publishedFrom}
+        publishedTo={publishedTo}
+        minReadMinutes={minReadMinutes}
+        minReactions={minReactions}
+        minViews={minViews}
+        categoryOptions={categoryOptions}
+        languageOptions={languageOptions}
+        onApply={({ tags, difficulty, sort, category, author, language, publishedFrom: from, publishedTo: to, minReadMinutes: readMinutes, minReactions: reactions, minViews: views }) => {
           // Логирование для отладки
           if (import.meta.env.DEV) {
             logger.debug('[HomePage] Filters applied:', {
               tags,
               difficulty,
               sort,
+              category,
+              author,
+              language,
+              publishedFrom: from,
+              publishedTo: to,
+              minReadMinutes: readMinutes,
+              minReactions: reactions,
+              minViews: views,
             });
           }
           setSelectedTags(tags)
           setDifficultyFilter(difficulty)
           setSortOption(sort)
+          setCategoryFilter(category)
+          setAuthorFilter(author)
+          setLanguageFilter(language)
+          setPublishedFrom(from)
+          setPublishedTo(to)
+          setMinReadMinutes(readMinutes)
+          setMinReactions(reactions)
+          setMinViews(views)
           setPage(1)
         }}
         onClear={handleClearFilters}
@@ -953,7 +1074,29 @@ interface FiltersDrawerProps {
   difficulty: ArticleDifficulty | 'all'
   sortOption: ArticleSortOption
   allTags: string[]
-  onApply: (filters: { tags: string[]; difficulty: ArticleDifficulty | 'all'; sort: ArticleSortOption }) => void
+  category: string
+  author: string
+  language: string
+  publishedFrom: string
+  publishedTo: string
+  minReadMinutes: number | ''
+  minReactions: number | ''
+  minViews: number | ''
+  categoryOptions: string[]
+  languageOptions: string[]
+  onApply: (filters: {
+    tags: string[]
+    difficulty: ArticleDifficulty | 'all'
+    sort: ArticleSortOption
+    category: string
+    author: string
+    language: string
+    publishedFrom: string
+    publishedTo: string
+    minReadMinutes: number | ''
+    minReactions: number | ''
+    minViews: number | ''
+  }) => void
   onClear: () => void
 }
 
@@ -964,6 +1107,16 @@ function FiltersDrawer({
   difficulty,
   sortOption,
   allTags,
+  category,
+  author,
+  language,
+  publishedFrom,
+  publishedTo,
+  minReadMinutes,
+  minReactions,
+  minViews,
+  categoryOptions,
+  languageOptions,
   onApply,
   onClear,
 }: FiltersDrawerProps) {
@@ -972,13 +1125,29 @@ function FiltersDrawer({
   const [localDifficulty, setLocalDifficulty] = useState<ArticleDifficulty | 'all'>(difficulty)
   const [localSort, setLocalSort] = useState<ArticleSortOption>(sortOption)
   const [tagInput, setTagInput] = useState('')
+  const [localCategory, setLocalCategory] = useState<string>(category)
+  const [localAuthor, setLocalAuthor] = useState<string>(author)
+  const [localLanguage, setLocalLanguage] = useState<string>(language)
+  const [localPublishedFrom, setLocalPublishedFrom] = useState<string>(publishedFrom)
+  const [localPublishedTo, setLocalPublishedTo] = useState<string>(publishedTo)
+  const [localMinReadMinutes, setLocalMinReadMinutes] = useState<number | ''>(minReadMinutes)
+  const [localMinReactions, setLocalMinReactions] = useState<number | ''>(minReactions)
+  const [localMinViews, setLocalMinViews] = useState<number | ''>(minViews)
 
   const resetLocalState = useCallback(() => {
     setLocalTags(selectedTags)
     setLocalDifficulty(difficulty)
     setLocalSort(sortOption)
     setTagInput('')
-  }, [selectedTags, difficulty, sortOption])
+    setLocalCategory(category)
+    setLocalAuthor(author)
+    setLocalLanguage(language)
+    setLocalPublishedFrom(publishedFrom)
+    setLocalPublishedTo(publishedTo)
+    setLocalMinReadMinutes(minReadMinutes)
+    setLocalMinReactions(minReactions)
+    setLocalMinViews(minViews)
+  }, [selectedTags, difficulty, sortOption, category, author, language, publishedFrom, publishedTo, minReadMinutes, minReactions, minViews])
 
   useEffect(() => {
     if (open) {
@@ -1011,6 +1180,14 @@ function FiltersDrawer({
       tags: localTags,
       difficulty: localDifficulty,
       sort: localSort,
+      category: localCategory,
+      author: localAuthor,
+      language: localLanguage,
+      publishedFrom: localPublishedFrom,
+      publishedTo: localPublishedTo,
+      minReadMinutes: localMinReadMinutes,
+      minReactions: localMinReactions,
+      minViews: localMinViews,
     })
     onOpenChange(false)
   }
@@ -1019,8 +1196,25 @@ function FiltersDrawer({
     setLocalTags([])
     setLocalDifficulty('all')
     setLocalSort('newest')
+    setLocalCategory('all')
+    setLocalAuthor('')
+    setLocalLanguage('all')
+    setLocalPublishedFrom('')
+    setLocalPublishedTo('')
+    setLocalMinReadMinutes('')
+    setLocalMinReactions('')
+    setLocalMinViews('')
     onClear()
     onOpenChange(false)
+  }
+
+  const handleNumericChange = (value: string, setter: (next: number | '') => void) => {
+    if (value === '') {
+      setter('')
+      return
+    }
+    const parsed = Number(value)
+    setter(Number.isNaN(parsed) ? '' : parsed)
   }
 
   const difficultyOptions: Array<{ label: string; value: ArticleDifficulty | 'all' }> = [
@@ -1080,6 +1274,121 @@ function FiltersDrawer({
                   <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">{option.description}</p>
                 </button>
               ))}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.category')}</Label>
+            <Select value={localCategory} onValueChange={(val) => setLocalCategory(val)}>
+              <SelectTrigger className="h-10 sm:h-10">
+                <SelectValue placeholder={t('home.filtersDrawer.category')} />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option === 'all' ? t('home.filtersDrawer.allCategories') : option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.author')}</Label>
+            <Input
+              value={localAuthor}
+              onChange={(event) => setLocalAuthor(event.target.value)}
+              placeholder={t('home.filtersDrawer.authorPlaceholder')}
+              className="h-10 sm:h-10 text-sm sm:text-sm"
+            />
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.language')}</Label>
+            <Select value={localLanguage} onValueChange={(val) => setLocalLanguage(val)}>
+              <SelectTrigger className="h-10 sm:h-10">
+                <SelectValue placeholder={t('home.filtersDrawer.language')} />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option === 'all' ? t('home.filtersDrawer.allLanguages') : option.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3 sm:space-y-3">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.publishedDate')}</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="text-[11px] text-muted-foreground">{t('home.filtersDrawer.from')}</span>
+                <Input
+                  type="date"
+                  value={localPublishedFrom}
+                  onChange={(event) => setLocalPublishedFrom(event.target.value)}
+                  className="h-10 sm:h-10 text-sm sm:text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[11px] text-muted-foreground">{t('home.filtersDrawer.to')}</span>
+                <Input
+                  type="date"
+                  value={localPublishedTo}
+                  onChange={(event) => setLocalPublishedTo(event.target.value)}
+                  className="h-10 sm:h-10 text-sm sm:text-sm"
+                />
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-4 sm:space-y-4">
+            <Label className="text-xs sm:text-xs uppercase tracking-wide text-muted-foreground">{t('home.filtersDrawer.metrics')}</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <span className="text-[11px] text-muted-foreground">{t('home.filtersDrawer.minReadMinutes')}</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={localMinReadMinutes === '' ? '' : localMinReadMinutes}
+                  onChange={(event) => handleNumericChange(event.target.value, setLocalMinReadMinutes)}
+                  className="h-10 sm:h-10 text-sm sm:text-sm"
+                  placeholder="5"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[11px] text-muted-foreground">{t('home.filtersDrawer.minReactions')}</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={localMinReactions === '' ? '' : localMinReactions}
+                  onChange={(event) => handleNumericChange(event.target.value, setLocalMinReactions)}
+                  className="h-10 sm:h-10 text-sm sm:text-sm"
+                  placeholder="10"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[11px] text-muted-foreground">{t('home.filtersDrawer.minViews')}</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={localMinViews === '' ? '' : localMinViews}
+                  onChange={(event) => handleNumericChange(event.target.value, setLocalMinViews)}
+                  className="h-10 sm:h-10 text-sm sm:text-sm"
+                  placeholder="100"
+                />
+              </div>
             </div>
           </section>
 

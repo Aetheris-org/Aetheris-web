@@ -14,6 +14,23 @@ interface ArticlesResponse {
   total: number;
 }
 
+export interface ArticleQueryParams {
+  page?: number;
+  pageSize?: number;
+  sort?: ArticleSortOption;
+  difficulty?: ArticleDifficulty | 'all';
+  tags?: string[];
+  search?: string;
+  category?: string;
+  authorId?: string;
+  language?: string;
+  publishedFrom?: string;
+  publishedTo?: string;
+  minReadMinutes?: number;
+  minReactions?: number;
+  minViews?: number;
+}
+
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
   const rawContent = article.content ?? { document: [] };
@@ -50,6 +67,22 @@ export function transformArticle(article: any, _userId?: string): Article {
   // author.id из Supabase - это UUID (строка)
   const authorId = author.id || article.author_id;
 
+  const publishedAt =
+    article.published_at
+      ? new Date(article.published_at).toISOString()
+      : article.publishedAt
+        ? new Date(article.publishedAt).toISOString()
+        : undefined;
+
+  const readTimeMinutes =
+    typeof article.read_time_minutes === 'number'
+      ? article.read_time_minutes
+      : typeof article.read_time === 'number'
+        ? article.read_time
+        : undefined;
+
+  const reactionsCount = (article.likes_count || 0) + (article.dislikes_count || 0);
+
   return {
     id: String(article.id),
     title: article.title || '',
@@ -70,6 +103,11 @@ export function transformArticle(article: any, _userId?: string): Article {
     views: article.views || 0,
     createdAt: article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString(),
     updatedAt: article.updated_at ? new Date(article.updated_at).toISOString() : new Date().toISOString(),
+    publishedAt,
+    category: article.category || (Array.isArray(article.categories) ? article.categories[0] : undefined),
+    language: article.language || article.locale || undefined,
+    readTimeMinutes,
+    reactionsCount,
     commentsCount: 0, // Будет загружено отдельно если нужно
     userReaction: article.user_reaction || null,
     isBookmarked: false, // Будет загружено отдельно если нужно
@@ -81,20 +119,21 @@ export function transformArticle(article: any, _userId?: string): Article {
  * Получение статей с фильтрацией и поиском
  * Использует Database Function search_articles
  */
-export async function getArticles(params?: {
-  page?: number;
-  pageSize?: number;
-  sort?: ArticleSortOption;
-  difficulty?: ArticleDifficulty | 'all';
-  tags?: string[];
-  search?: string;
-}): Promise<ArticlesResponse> {
+export async function getArticles(params?: ArticleQueryParams): Promise<ArticlesResponse> {
   const page = params?.page || 1;
   const pageSize = params?.pageSize || 10;
   const sort = params?.sort || 'newest';
   const difficulty = params?.difficulty === 'all' ? undefined : params?.difficulty;
   const tags = params?.tags && params.tags.length > 0 ? params.tags : undefined;
   const search = params?.search && params.search.trim().length >= 2 ? params.search.trim() : undefined;
+  const category = params?.category?.trim() || undefined;
+  const authorId = params?.authorId?.trim() || undefined;
+  const language = params?.language?.trim() || undefined;
+  const publishedFrom = params?.publishedFrom || undefined;
+  const publishedTo = params?.publishedTo || undefined;
+  const minReadMinutes = typeof params?.minReadMinutes === 'number' ? params?.minReadMinutes : undefined;
+  const minReactions = typeof params?.minReactions === 'number' ? params?.minReactions : undefined;
+  const minViews = typeof params?.minViews === 'number' ? params?.minViews : undefined;
 
   try {
     logger.debug('[getArticles] Starting fetch with params:', {
@@ -104,6 +143,14 @@ export async function getArticles(params?: {
       difficulty,
       tags,
       search,
+      category,
+      authorId,
+      language,
+      publishedFrom,
+      publishedTo,
+      minReadMinutes,
+      minReactions,
+      minViews,
     });
 
     // Получаем текущего пользователя
@@ -125,7 +172,7 @@ export async function getArticles(params?: {
       p_user_id: userId || null,
     });
 
-    const { data, error } = await supabase.rpc('search_articles', {
+    const rpcPayload: Record<string, any> = {
       p_search: search || null,
       p_tags: tags || null,
       p_difficulty: difficulty || null,
@@ -133,7 +180,17 @@ export async function getArticles(params?: {
       p_skip: (page - 1) * pageSize,
       p_take: pageSize,
       p_user_id: userId || null,
-    });
+      p_category: category || null,
+      p_author_id: authorId || null,
+      p_language: language || null,
+      p_published_from: publishedFrom || null,
+      p_published_to: publishedTo || null,
+      p_min_read_minutes: minReadMinutes ?? null,
+      p_min_reactions: minReactions ?? null,
+      p_min_views: minViews ?? null,
+    };
+
+    const { data, error } = await supabase.rpc('search_articles', rpcPayload as any);
 
     logger.debug('[getArticles] RPC response:', { hasData: !!data, dataLength: data?.length, error });
 
@@ -658,13 +715,14 @@ export async function searchArticles(
   searchQuery: string,
   _userId?: string | number,
   start: number = 0,
-  limit: number = 10
+  limit: number = 10,
+  extraFilters?: Partial<Omit<ArticleQueryParams, 'page' | 'pageSize' | 'search'>>
 ): Promise<ArticlesResponse> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
 
-    const { data, error } = await supabase.rpc('search_articles', {
+    const rpcPayload: Record<string, any> = {
       p_search: searchQuery && searchQuery.trim().length >= 2 ? searchQuery.trim() : null,
       p_tags: null,
       p_difficulty: null,
@@ -672,7 +730,17 @@ export async function searchArticles(
       p_skip: start,
       p_take: limit,
       p_user_id: userId || null,
-    });
+      p_category: extraFilters?.category?.trim() || null,
+      p_author_id: extraFilters?.authorId?.trim() || null,
+      p_language: extraFilters?.language?.trim() || null,
+      p_published_from: extraFilters?.publishedFrom || null,
+      p_published_to: extraFilters?.publishedTo || null,
+      p_min_read_minutes: typeof extraFilters?.minReadMinutes === 'number' ? extraFilters?.minReadMinutes : null,
+      p_min_reactions: typeof extraFilters?.minReactions === 'number' ? extraFilters?.minReactions : null,
+      p_min_views: typeof extraFilters?.minViews === 'number' ? extraFilters?.minViews : null,
+    };
+
+    const { data, error } = await supabase.rpc('search_articles', rpcPayload as any);
 
     if (error) {
       logger.error('Error searching articles', error);
