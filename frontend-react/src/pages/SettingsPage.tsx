@@ -569,6 +569,10 @@ function ProfileSettings() {
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [avatarRemoved, setAvatarRemoved] = useState(false)
   const [coverRemoved, setCoverRemoved] = useState(false)
+  const [avatarUrlInput, setAvatarUrlInput] = useState('')
+  const [coverUrlInput, setCoverUrlInput] = useState('')
+  const [avatarUrlInput, setAvatarUrlInput] = useState('')
+  const [coverUrlInput, setCoverUrlInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isAvatarProcessing, setIsAvatarProcessing] = useState(false)
   const [isCoverProcessing, setIsCoverProcessing] = useState(false)
@@ -1294,12 +1298,16 @@ function ProfileSettings() {
         avatarUrl = await uploadImageToImgBB(avatarFile, 'avatars')
       } else if (avatarRemoved) {
         avatarUrl = undefined
+      } else if (avatarPreview && avatarPreview.startsWith('http')) {
+        avatarUrl = avatarPreview
       }
 
       if (coverFile) {
         coverImageUrl = await uploadImageToImgBB(coverFile, 'covers')
       } else if (coverRemoved) {
         coverImageUrl = undefined
+      } else if (coverPreview && coverPreview.startsWith('http')) {
+        coverImageUrl = coverPreview
       }
 
       const updatedUser = await updateUserProfile({
@@ -1323,6 +1331,8 @@ function ProfileSettings() {
       setCoverFile(null)
       setAvatarRemoved(false)
       setCoverRemoved(false)
+      setAvatarUrlInput('')
+      setCoverUrlInput('')
       setNickname(updatedUser.nickname)
       setBio(updatedUser.bio ?? '')
 
@@ -1514,6 +1524,43 @@ function ProfileSettings() {
                 </TooltipProvider>
               )}
             </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 p-2 sm:p-3">
+            <Input
+              placeholder="https://example.com/cover.jpg"
+              value={coverUrlInput}
+              onChange={(e) => setCoverUrlInput(e.target.value)}
+              disabled={isSaving || isCoverProcessing}
+              className="h-9 sm:h-10 text-sm"
+            />
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+                disabled={isSaving || isCoverProcessing || !coverUrlInput.trim().startsWith('http')}
+                onClick={() => {
+                  const url = coverUrlInput.trim()
+                  if (!url) return
+                  setCoverPreview(url)
+                  setCoverFile(null)
+                  setCoverRemoved(false)
+                }}
+              >
+                {t('settings.profile.useUrl') || 'Use URL'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+                disabled={isSaving || isCoverProcessing}
+                onClick={() => setCoverUrlInput('')}
+              >
+                {t('common.clear') || 'Clear'}
+              </Button>
+            </div>
+          </div>
           </div>
         </section>
 
@@ -1599,6 +1646,43 @@ function ProfileSettings() {
                   </Tooltip>
                 </TooltipProvider>
               )}
+            </div>
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
+              <Input
+                placeholder="https://example.com/avatar.jpg"
+                value={avatarUrlInput}
+                onChange={(e) => setAvatarUrlInput(e.target.value)}
+                disabled={isSaving || isAvatarProcessing}
+                className="h-9 sm:h-10 text-sm"
+              />
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 sm:h-10 text-xs sm:text-sm"
+                  disabled={isSaving || isAvatarProcessing || !avatarUrlInput.trim().startsWith('http')}
+                  onClick={() => {
+                    const url = avatarUrlInput.trim()
+                    if (!url) return
+                    setAvatarPreview(url)
+                    setAvatarFile(null)
+                    setAvatarRemoved(false)
+                  }}
+                >
+                  {t('settings.profile.useUrl') || 'Use URL'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 sm:h-10 text-xs sm:text-sm"
+                  disabled={isSaving || isAvatarProcessing}
+                  onClick={() => setAvatarUrlInput('')}
+                >
+                  {t('common.clear') || 'Clear'}
+                </Button>
+              </div>
             </div>
           </div>
         </section>
