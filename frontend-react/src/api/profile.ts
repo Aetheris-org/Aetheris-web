@@ -20,7 +20,19 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        id,
+        username,
+        tag,
+        handle,
+        bio,
+        avatar,
+        avatar_url,
+        cover_image,
+        cover_url,
+        created_at,
+        followers_count
+      `)
       .eq('id', profileUuid)
       .single();
 
@@ -141,12 +153,19 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       return Math.abs(hash);
     };
 
+    const normalizedTag =
+      typeof profile.tag === 'string' && profile.tag.trim().length > 0
+        ? profile.tag.trim()
+        : typeof profile.handle === 'string' && profile.handle.trim().length > 0
+          ? profile.handle.trim()
+          : null
+
     const userProfile: UserProfile = {
       user: {
         id: profile.id ? uuidToNumber(profile.id) : 0,
         uuid: profile.id,
         username: profile.username || '',
-        tag: profile.tag || profile.handle || null,
+        tag: normalizedTag,
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
         avatarUrl: profile.avatar || profile.avatar_url || null,
