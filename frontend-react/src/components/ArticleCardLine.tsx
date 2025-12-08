@@ -145,10 +145,10 @@ export function ArticleCardLine({
           </div>
 
           {/* Stats */}
-          {article.likes !== undefined && (
+          {article.views !== undefined && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <TrendingUp className="h-4 w-4" />
-              <span className="font-medium">{article.likes}</span>
+              <span className="font-medium">{article.views}</span>
             </div>
           )}
         </div>

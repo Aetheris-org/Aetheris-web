@@ -144,10 +144,10 @@ export function ArticleCardSquare({
             </div>
           </div>
 
-          {article.likes !== undefined && (
+          {article.views !== undefined && (
             <div className="flex items-center gap-1">
               <TrendingUp className="h-3.5 w-3.5" />
-              <span className="font-medium">{article.likes}</span>
+              <span className="font-medium">{article.views}</span>
             </div>
           )}
         </div>
