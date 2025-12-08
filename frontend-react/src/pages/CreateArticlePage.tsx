@@ -266,8 +266,15 @@ export default function CreateArticlePage() {
       getArticle(articleIdFromQuery)
         .then((article) => {
           if (article) {
-            // Проверяем, что пользователь является автором статьи
-            if (user.id !== article.author.id) {
+            // Проверяем, что пользователь является автором статьи (сравниваем по id/uuid/username)
+            const userIdStr = user?.id ? String(user.id) : null
+            const authorIdStr = article.author?.id ? String(article.author.id) : null
+            const isAuthor =
+              (userIdStr && authorIdStr && userIdStr === authorIdStr) ||
+              (article.author?.uuid && userIdStr && String(article.author.uuid) === userIdStr) ||
+              (article.author?.username && user.nickname && article.author.username === user.nickname)
+
+            if (!isAuthor) {
               toast({
                 title: t('createArticle.editNotAuthorized') || 'Not authorized',
                 description: t('createArticle.editNotAuthorizedDescription') || 'You can only edit your own articles',
@@ -276,7 +283,7 @@ export default function CreateArticlePage() {
               navigate('/forum')
               return
             }
-            
+
             setArticleToEdit(article)
             setTitle(article.title)
             setExcerpt(article.excerpt || '')
