@@ -329,7 +329,20 @@ export async function getArticle(id: string): Promise<Article> {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
 
-    const articleId = id;
+    // Поддерживаем UUID и числовые ID
+    const normalizeId = (rawId: string): string | number => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      const numericRegex = /^\d+$/;
+      if (!rawId || typeof rawId !== 'string') {
+        throw new Error(`Invalid article ID: ${rawId}`);
+      }
+      if (uuidRegex.test(rawId) || uuidNoDashesRegex.test(rawId)) return rawId;
+      if (numericRegex.test(rawId)) return Number(rawId);
+      throw new Error(`Invalid article ID format (expected UUID or numeric): ${rawId}`);
+    };
+
+    const articleId = normalizeId(id);
 
     // Используем Database Function для получения статьи с деталями
     const { data, error } = await supabase.rpc('get_article_with_details', {
