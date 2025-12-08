@@ -255,25 +255,7 @@ export default function OnboardingPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <Label>Avatar</Label>
-                  <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 aspect-square rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    {avatarPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={avatarPreview}
-                        alt="avatar preview"
-                        className="h-full w-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <span className="text-sm text-muted-foreground">No avatar</span>
-                    )}
-                    </div>
-                    <Input type="file" accept="image/*" onChange={handleAvatarChange} />
-                  </div>
-                </div>
+              <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="avatar-url">Avatar URL</Label>
                   <div className="flex gap-2">
@@ -288,21 +270,27 @@ export default function OnboardingPage() {
                     </Button>
                   </div>
                 </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 aspect-square rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                      {avatarPreview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={avatarPreview}
+                          alt="avatar preview"
+                          className="h-full w-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground text-center leading-tight px-1">No avatar</span>
+                      )}
+                    </div>
+                    <Input type="file" accept="image/*" onChange={handleAvatarChange} />
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <Label>Profile cover</Label>
-                  <div className="w-full h-28 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
-                  {coverPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={coverPreview} alt="cover preview" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No cover</span>
-                  )}
-                  </div>
-                  <Input type="file" accept="image/*" onChange={handleCoverChange} />
-                </div>
+              <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="cover-url">Cover URL</Label>
                   <div className="flex gap-2">
@@ -316,6 +304,18 @@ export default function OnboardingPage() {
                       Use URL
                     </Button>
                   </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Profile cover</Label>
+                  <div className="w-full h-28 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
+                    {coverPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverPreview} alt="cover preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No cover</span>
+                    )}
+                  </div>
+                  <Input type="file" accept="image/*" onChange={handleCoverChange} />
                 </div>
               </div>
             </div>
