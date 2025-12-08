@@ -644,7 +644,7 @@ export default function ProfilePage() {
 
   const avatarSrc = avatarError ? null : rawAvatar
   const coverSrc = coverError ? null : rawCover
-  const displayTag = profile?.user?.tag ?? null
+  const displayTag = profile?.user?.tag ?? (currentUser as any)?.tag ?? null
 
   useEffect(() => {
     setAvatarError(false)
