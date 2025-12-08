@@ -142,11 +142,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     };
 
     const normalizedTag =
-      typeof profile.tag === 'string' && profile.tag.trim().length > 0
-        ? profile.tag.trim()
-        : typeof profile.handle === 'string' && profile.handle.trim().length > 0
-          ? profile.handle.trim()
-          : null
+      (typeof profile.tag === 'string' && profile.tag.trim().length > 0 && profile.tag.trim()) ||
+      (typeof profile.handle === 'string' && profile.handle.trim().length > 0 && profile.handle.trim()) ||
+      (typeof profile.username === 'string' && profile.username.trim().length > 0 && profile.username.trim()) ||
+      null
 
     const userProfile: UserProfile = {
       user: {
