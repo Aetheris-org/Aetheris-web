@@ -146,13 +146,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     const normalizedTag =
       normalizeStr(profile.tag) ||
       normalizeStr(profile.handle) ||
-      normalizeStr(profile.username) ||
       null
 
     const normalizedAvatar =
       normalizeStr(profile.avatar) ||
       normalizeStr(profile.avatar_url) ||
       normalizeStr((profile as any).avatarUrl) ||
+      normalizeStr((profile as any).avatar_url) ||
+      normalizeStr((profile as any).avatar) ||
+      normalizeStr((profile as any).photo_url) ||
       null
 
     const normalizedCover =
@@ -160,6 +162,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       normalizeStr(profile.cover_url) ||
       normalizeStr((profile as any).coverImageUrl) ||
       normalizeStr((profile as any).coverImage) ||
+      normalizeStr((profile as any).cover_image) ||
+      normalizeStr((profile as any).coverUrl) ||
+      normalizeStr((profile as any).cover) ||
+      normalizeStr((profile as any).banner_url) ||
       null
 
     const userProfile: UserProfile = {
