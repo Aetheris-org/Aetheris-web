@@ -1293,7 +1293,11 @@ export default function ArticlePage() {
       const parentId = parentById.get(node.id) ?? null
       const parentNode = parentId ? nodeLookup.get(parentId) : undefined
       const replyDescendants = descendantCountById.get(node.id) ?? node.replies.length
-      const isOwnComment = user ? String(node.author.id) === String(user.id) : false
+      const isOwnComment = user
+        ? String(node.author.id) === String(user.id) ||
+          (node.author.uuid && String(node.author.uuid) === String(user.id)) ||
+          (node.author.username && node.author.username === user.nickname)
+        : false
       const isDimmedByDepth =
         highlightDepth !== null &&
         commentDepth < highlightDepth
@@ -1630,7 +1634,7 @@ export default function ArticlePage() {
                       className="w-60 rounded-[calc(var(--radius)*1.05)] border border-border/60 bg-popover/95 p-2 shadow-lg backdrop-blur"
                     >
                       <DropdownMenuLabel className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        @{node.author.username}
+                        @{node.author.tag || node.author.username}
                       </DropdownMenuLabel>
                       <DropdownMenuItem
                         onClick={() => navigate(`/profile/${node.author.uuid || node.author.id}`)}
@@ -2326,7 +2330,7 @@ export default function ArticlePage() {
                               navigate(`/profile/${node.author.id}`)
                             }}
                           >
-                            @{node.author.username}
+                    @{node.author.tag || node.author.username}
                           </button>
                           {index !== chain.length - 1 && (
                             <span className="text-muted-foreground/60">/</span>

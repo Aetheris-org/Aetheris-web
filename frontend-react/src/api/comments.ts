@@ -25,6 +25,7 @@ export interface CommentAuthor {
   username: string;
   avatar?: string;
   uuid?: string; // UUID для навигации к профилю
+  tag?: string;
 }
 
 export interface Comment {
@@ -63,6 +64,7 @@ function transformComment(raw: any, _userId?: string): Comment {
       uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
       username: author.username || '',
       avatar: author.avatar || undefined,
+      tag: author.tag || undefined,
     },
     parentId: raw.parent_id ? String(raw.parent_id) : null,
     likes: raw.likes_count || 0,
@@ -90,7 +92,8 @@ export async function getArticleComments(
         author:profiles!comments_author_id_fkey (
           id,
           username,
-          avatar
+          avatar,
+          tag
         )
       `)
       .eq('article_id', validateUuid(articleId))
@@ -169,7 +172,8 @@ export async function createComment(data: {
         author:profiles!comments_author_id_fkey (
           id,
           username,
-          avatar
+          avatar,
+          tag
         )
       `)
       .single();
