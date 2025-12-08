@@ -587,6 +587,8 @@ export default function ProfilePage() {
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'articles' | 'comments' | 'bookmarks'>('articles')
+  const [avatarError, setAvatarError] = useState(false)
+  const [coverError, setCoverError] = useState(false)
 
   const routeProfileId = id || undefined
   const profileId = routeProfileId || currentUser?.uuid
@@ -624,10 +626,30 @@ export default function ProfilePage() {
     (!profile && profileId && currentUser?.uuid && profileId === currentUser.uuid)
 
   // Unified media/tag fallbacks
-  const avatarSrc = profile?.user?.avatarUrl || (profile?.user as any)?.avatar || currentUser?.avatar || null
-  const coverSrc =
-    profile?.user?.coverImageUrl || (profile?.user as any)?.coverImage || currentUser?.coverImage || null
+  const rawAvatar =
+    profile?.user?.avatarUrl ||
+    (profile?.user as any)?.avatar ||
+    (profile?.user as any)?.avatar_url ||
+    (profile?.user as any)?.photo_url ||
+    currentUser?.avatar ||
+    null
+  const rawCover =
+    profile?.user?.coverImageUrl ||
+    (profile?.user as any)?.coverImage ||
+    (profile?.user as any)?.cover_image ||
+    (profile?.user as any)?.cover_url ||
+    (profile?.user as any)?.banner_url ||
+    currentUser?.coverImage ||
+    null
+
+  const avatarSrc = avatarError ? null : rawAvatar
+  const coverSrc = coverError ? null : rawCover
   const displayTag = profile?.user?.tag ?? profile?.user?.username ?? currentUser?.nickname ?? ''
+
+  useEffect(() => {
+    setAvatarError(false)
+    setCoverError(false)
+  }, [profile?.user?.uuid, profile?.user?.avatarUrl, profile?.user?.coverImageUrl])
 
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({
@@ -887,6 +909,7 @@ export default function ProfilePage() {
                   src={coverSrc}
                     alt={`${profile.user.username} cover`}
                     className="h-full w-full object-cover"
+                  onError={() => setCoverError(true)}
                   />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
                 </div>
@@ -913,12 +936,7 @@ export default function ProfilePage() {
                       alt={profile.user.username}
                       className="h-16 w-16 rounded-full border-2 object-cover shadow-md"
                       style={{ borderColor: 'hsl(var(--border))' }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.style.display = 'none'
-                        const fallback = target.nextElementSibling as HTMLDivElement | null
-                        if (fallback) fallback.style.display = 'flex'
-                      }}
+                      onError={() => setAvatarError(true)}
                     />
                   )}
                   <div
@@ -1080,12 +1098,7 @@ export default function ProfilePage() {
                     alt={profile.user.username}
                     className="h-full w-full rounded-full border-2 object-cover shadow-lg"
                     style={{ borderColor: 'hsl(var(--border))' }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.style.display = 'none'
-                      const fallback = target.nextElementSibling as HTMLDivElement | null
-                      if (fallback) fallback.style.display = 'flex'
-                    }}
+                    onError={() => setAvatarError(true)}
                   />
                 )}
                 <div
