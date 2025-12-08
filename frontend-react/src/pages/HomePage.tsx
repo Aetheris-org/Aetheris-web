@@ -144,8 +144,8 @@ export default function HomePage() {
       })
     }
 
-    accumulate(articles)
-    accumulate(trendingArticles)
+    accumulate(articles || [])
+    accumulate(trendingArticles || [])
 
     const ranked = Object.entries(tagCounts)
       .sort((a, b) => b[1] - a[1])
