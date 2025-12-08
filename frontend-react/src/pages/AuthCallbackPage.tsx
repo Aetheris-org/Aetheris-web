@@ -85,8 +85,9 @@ export default function AuthCallbackPage() {
         // Очищаем hash из URL
         window.history.replaceState({}, document.title, window.location.pathname)
 
-        // Если профиль «сырой» (нет tag или ник пуст), отправляем на онбординг
-        if (!user.tag || !user.nickname) {
+        // Если профиль «сырой» (нет tag или ник пуст) и онбординг не проходили ранее, отправляем на онбординг
+        const hasLocalOnboarding = typeof window !== 'undefined' && localStorage.getItem('onboarding_completed') === 'true'
+        if ((!user.tag || !user.nickname) && !hasLocalOnboarding) {
           logger.debug('➡️ Redirecting to onboarding due to incomplete profile')
           navigate('/onboarding', { replace: true })
           return

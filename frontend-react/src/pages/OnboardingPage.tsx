@@ -177,6 +177,11 @@ export default function OnboardingPage() {
 
       setTheme(themeChoice)
 
+      // Помечаем локально, что онбординг пройден
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('onboarding_completed', 'true')
+      }
+
       toast({
         title: 'Profile saved',
         description: 'Welcome aboard!',
