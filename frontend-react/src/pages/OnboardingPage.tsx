@@ -75,6 +75,9 @@ export default function OnboardingPage() {
       setCoverPreview(url)
     } else {
       setCoverPreview(null)
+    }
+  }
+
   const applyAvatarUrl = () => {
     const url = avatarUrlInput.trim()
     if (!url.startsWith('http')) {
@@ -101,9 +104,6 @@ export default function OnboardingPage() {
     }
     setCoverFile(null)
     setCoverPreview(url)
-  }
-
-    }
   }
 
   const uploadIfNeeded = async (file: File | null, bucket: 'avatars' | 'covers') => {
