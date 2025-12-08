@@ -928,7 +928,7 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                     <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username}</h1>
-                    <p className="text-xs text-muted-foreground truncate">@{profile.user.username}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{profile.user.tag || profile.user.username}</p>
                       <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
                         <span>{level}</span>
@@ -1096,7 +1096,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-2 sm:gap-3">
                   <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">{profile.user.username}</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">@{profile.user.username}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">@{profile.user.tag || profile.user.username}</p>
                     <Badge variant="default" className="gap-1 shrink-0 text-xs sm:text-sm">
                       <Trophy className="h-3 w-3" />
                       {t('profile.levelBadge', { level })}

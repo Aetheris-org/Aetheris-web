@@ -39,6 +39,7 @@ export interface UserProfile {
     id: number
     uuid?: string // UUID для навигации к профилю
     username: string
+    tag?: string
     bio?: string | null
     memberSince: string
     avatarUrl?: string | null

@@ -146,6 +146,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         id: profile.id ? uuidToNumber(profile.id) : 0,
         uuid: profile.id,
         username: profile.username || '',
+        tag: profile.tag || profile.handle || null,
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
         avatarUrl: profile.avatar || profile.avatar_url || null,
@@ -200,6 +201,7 @@ export async function updateProfile(input: {
   bio?: string;
   avatar?: string;
   coverImage?: string;
+  tag?: string;
 }): Promise<UserProfile> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -218,6 +220,29 @@ export async function updateProfile(input: {
     if (input.coverImage !== undefined) {
       updateData.cover_image = input.coverImage;
       updateData.cover_url = input.coverImage; // дублируем в snake_case колонку
+    }
+    if (input.tag !== undefined) {
+      const trimmedTag = input.tag.trim();
+      if (!/^[a-zA-Z0-9_]{3,24}$/.test(trimmedTag)) {
+        throw new Error('Tag must be 3-24 chars: letters, numbers, underscore');
+      }
+      // Проверка уникальности
+      const { data: existingTag, error: tagError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('tag', trimmedTag)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (tagError) {
+        logger.error('Error checking tag uniqueness', tagError);
+        throw tagError;
+      }
+      if (existingTag) {
+        throw new Error('Tag is already taken');
+      }
+
+      updateData.tag = trimmedTag;
     }
 
     const { error } = await supabase
@@ -246,13 +271,15 @@ export async function updateUserProfile(input: {
   bio?: string;
   avatar?: string;
   coverImage?: string;
-}): Promise<{ nickname: string; bio?: string; avatar?: string; coverImage?: string }> {
+  tag?: string;
+}): Promise<{ nickname: string; bio?: string; avatar?: string; coverImage?: string; tag?: string }> {
   const profile = await updateProfile(input);
   return {
     nickname: profile.user.username,
     bio: profile.user.bio || undefined,
     avatar: profile.user.avatarUrl || undefined,
     coverImage: profile.user.coverImageUrl || undefined,
+    tag: profile.user.tag || undefined,
   };
 }
 

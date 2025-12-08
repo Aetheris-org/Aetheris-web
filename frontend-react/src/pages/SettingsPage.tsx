@@ -529,6 +529,7 @@ function ProfileSettings() {
   }))
 
   const [nickname, setNickname] = useState(user?.nickname ?? '')
+  const [tag, setTag] = useState((user as any)?.tag ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
@@ -580,6 +581,7 @@ function ProfileSettings() {
 
   const initialNickname = user?.nickname ?? ''
   const initialBio = user?.bio ?? ''
+  const initialTag = (user as any)?.tag ?? ''
   const initialAvatar = user?.avatar ?? null
   const initialCover = user?.coverImage ?? null
   const initialFirstName = user?.firstName ?? ''
@@ -1277,6 +1279,18 @@ function ProfileSettings() {
       return
     }
 
+    const trimmedTag = tag.trim()
+    if (trimmedTag.length > 0 && !/^[a-zA-Z0-9_]{3,24}$/.test(trimmedTag)) {
+      toast({
+        title: t('settings.profile.tagInvalid') || 'Invalid tag',
+        description:
+          t('settings.profile.tagInvalidDescription') ||
+          'Use 3-24 characters: letters, numbers or underscore.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     if (bioLength > BIO_LIMIT) {
       toast({
         title: t('settings.profile.bioTooLong'),
@@ -1313,6 +1327,7 @@ function ProfileSettings() {
         bio: bio.trim() || undefined, // Используем undefined вместо пустой строки
         avatar: avatarUrl,
         coverImage: coverImageUrl,
+        tag: trimmedTag || undefined,
       })
 
       if (user) {
@@ -1322,6 +1337,7 @@ function ProfileSettings() {
           bio: updatedUser.bio ?? undefined,
           avatar: updatedUser.avatar,
           coverImage: updatedUser.coverImage,
+          tag: updatedUser.tag ?? (user as any)?.tag,
         })
       }
 
@@ -1687,16 +1703,34 @@ function ProfileSettings() {
 
         <section className="space-y-3 sm:space-y-4">
         <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="settings-nickname" className="text-xs sm:text-sm">{t('settings.profile.nickname')}</Label>
+          <Label htmlFor="settings-nickname" className="text-xs sm:text-sm">{t('settings.profile.nickname')}</Label>
+          <Input
+            id="settings-nickname"
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+            placeholder="fluy1337"
+            maxLength={60}
+            disabled={isSaving}
+            className="h-9 sm:h-10 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label htmlFor="settings-tag" className="text-xs sm:text-sm">{t('settings.profile.tag') || 'Tag'}</Label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">@</span>
             <Input
-              id="settings-nickname"
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              placeholder="fluy1337"
-              maxLength={60}
+              id="settings-tag"
+              value={tag}
+              onChange={(event) => setTag(event.target.value)}
+              placeholder="your_tag"
+              maxLength={24}
               disabled={isSaving}
               className="h-9 sm:h-10 text-sm"
             />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {t('settings.profile.tagHint') || '3-24 chars, letters/numbers/underscore. Must be unique.'}
+          </p>
         </div>
         <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between gap-2">
