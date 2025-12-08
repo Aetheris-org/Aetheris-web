@@ -31,15 +31,69 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    const { data: profile, error: profileError } = await supabase
+    // helper: ensure profile row exists for auth user (handles missing profiles for OAuth)
+    const ensureProfile = async () => {
+      const usernameFromMeta =
+        (authUser.user_metadata as any)?.username ||
+        (authUser.user_metadata as any)?.name ||
+        authUser.email?.split('@')[0] ||
+        'user';
+      const avatarFromMeta =
+        (authUser.user_metadata as any)?.avatar_url ||
+        (authUser.user_metadata as any)?.picture ||
+        null;
+
+      // check again before insert to avoid duplicates
+      const { data: existing, error: existingError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (existing && !existingError) {
+        return existing;
+      }
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authUser.id,
+          username: existing?.username || usernameFromMeta,
+          nickname: existing?.nickname || usernameFromMeta,
+          name: (authUser.user_metadata as any)?.name || null,
+          avatar: avatarFromMeta,
+          avatar_url: avatarFromMeta,
+          email: authUser.email || null,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        logger.error('Failed to create profile for auth user', insertError);
+        return null;
+      }
+
+      return inserted;
+    };
+
+    let profile = null;
+    let profileError = null;
+
+    const { data: profileData, error: fetchError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', authUser.id)
       .single();
 
+    profile = profileData;
+    profileError = fetchError;
+
     if (profileError || !profile) {
-      logger.error('Failed to get user profile', profileError);
-      return null;
+      logger.warn('Profile missing for auth user, attempting to create...', profileError);
+      profile = await ensureProfile();
+      if (!profile) {
+        return null;
+      }
     }
 
 
