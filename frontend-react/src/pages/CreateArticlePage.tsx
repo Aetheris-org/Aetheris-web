@@ -126,19 +126,27 @@ export default function CreateArticlePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
-  // Сохраняем ID статьи для редактирования в state, чтобы не потерять его при смене query params
-  const [editArticleId, setEditArticleId] = useState<string | null>(null)
+  // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
+  const initialEditId =
+    (searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id') || '').trim() ||
+    null
+  const [editArticleId, setEditArticleId] = useState<string | null>(initialEditId)
+  const editArticleIdRef = useRef<string | null>(initialEditId)
   useEffect(() => {
     const raw =
       searchParams.get('edit') ||
       searchParams.get('articleId') ||
       searchParams.get('id') ||
       null
-    setEditArticleId(raw && raw.trim() ? raw.trim() : null)
+    const normalized = raw && raw.trim() ? raw.trim() : null
+    if (normalized && normalized !== editArticleIdRef.current) {
+      editArticleIdRef.current = normalized
+      setEditArticleId(normalized)
+    }
   }, [searchParams])
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
-  const isEditing = Boolean(editArticleId || articleToEdit?.id)
+  const isEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     // Временно отключаем загрузку в наше хранилище
@@ -269,9 +277,10 @@ export default function CreateArticlePage() {
 
   // Загрузка статьи для редактирования
   useEffect(() => {
-    if (editArticleId && user && !isLoadingArticle && !articleToEdit) {
+    const targetEditId = editArticleIdRef.current
+    if (targetEditId && user && !isLoadingArticle && !articleToEdit) {
       setIsLoadingArticle(true)
-      getArticle(editArticleId)
+      getArticle(targetEditId)
         .then((article) => {
           if (article) {
             // Проверяем, что пользователь является автором статьи (сравниваем по id/uuid/username)
@@ -388,7 +397,7 @@ export default function CreateArticlePage() {
           setIsLoadingArticle(false)
         })
     }
-  }, [editArticleId, user, isLoadingArticle, articleToEdit, navigate, toast, t])
+  }, [editArticleIdRef, user, isLoadingArticle, articleToEdit, navigate, toast, t])
 
   // Check if content is long enough to need collapsing
   useEffect(() => {
@@ -2220,11 +2229,26 @@ export default function CreateArticlePage() {
       let publishedArticle
       let wasUpdated = false
 
-      // Определяем целевой ID для редактирования (из сохраненного query-параметра или загруженной статьи)
-      const editingTargetId = editArticleId || (articleToEdit?.id ? String(articleToEdit.id) : null)
+      // Жёстко: если есть edit-id, только обновляем
+      const editingTargetId =
+        editArticleIdRef.current ||
+        (articleToEdit?.id ? String(articleToEdit.id) : null) ||
+        editArticleId ||
+        null
 
-      if (editingTargetId) {
-        // Всегда обновляем существующую статью, если есть целевой ID редактирования
+      const isEditMode = Boolean(editingTargetId)
+
+      if (isEditMode) {
+        if (!editingTargetId) {
+          toast({
+            title: t('createArticle.articleNotFound') || 'Article not found',
+            description: t('createArticle.articleNotFoundDescription') || 'The article you are trying to edit does not exist',
+            variant: 'destructive',
+          })
+          setIsPublishing(false)
+          return
+        }
+
         publishedArticle = await updateArticle(editingTargetId, {
           ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
