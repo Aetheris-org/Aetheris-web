@@ -2070,8 +2070,16 @@ export default function ArticlePage() {
           {/* Article Header */}
           <div className="space-y-4 sm:space-y-6">
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-              {article.title}
+            <h1 className="flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+              <span className="break-words overflow-wrap-anywhere">{article.title}</span>
+              {article.updatedAt &&
+                article.createdAt &&
+                new Date(article.updatedAt).getTime() - new Date(article.createdAt).getTime() > 1000 && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                    <Pencil className="h-3.5 w-3.5" />
+                    {t('article.edited') || 'Edited'}
+                  </span>
+                )}
             </h1>
 
             {/* Meta Info */}
@@ -2191,26 +2199,16 @@ export default function ArticlePage() {
                   }
                   return null
                 }
-                
-                const userId = Number(user.id)
-                const authorId = Number(article.author.id)
-                const isAuthor = userId === authorId
-                
-                // Отладка в development режиме
-                if (import.meta.env.DEV) {
-                  logger.debug('[ArticlePage] Author check:', {
-                    userId,
-                    authorId,
-                    isAuthor,
-                    userNickname: user.nickname,
-                    authorUsername: article.author.username,
-                  })
-                }
-                
+
+                const isAuthor =
+                  String(article.author.id) === String(user.id) ||
+                  article.author.uuid === user.id ||
+                  article.author.username === user.nickname
+
                 if (!isAuthor) {
                   return null
                 }
-                
+
                 return (
                   <>
                     <Button
