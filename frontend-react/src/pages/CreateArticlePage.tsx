@@ -2210,18 +2210,23 @@ export default function CreateArticlePage() {
       })
 
       let publishedArticle
-      if (articleIdFromQuery && articleToEdit) {
-        // Обновляем существующую статью
-        publishedArticle = await updateArticle(String(articleToEdit.id), {
+      let wasUpdated = false
+
+      if (articleIdFromQuery) {
+        // Всегда обновляем существующую статью, если есть edit-параметр
+        const targetId = articleToEdit?.id ?? articleIdFromQuery
+        publishedArticle = await updateArticle(String(targetId), {
           ...articleData,
-          publishedAt: articleToEdit.publishedAt || new Date().toISOString(),
+          publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
         })
+        wasUpdated = true
       } else if (draftId) {
         // Обновляем по draftId (обратная совместимость)
         publishedArticle = await updateArticle(String(draftId), {
           ...articleData,
           publishedAt: new Date().toISOString(),
         })
+        wasUpdated = true
       } else {
         // Создаем новую статью
         publishedArticle = await createArticle({
@@ -2244,8 +2249,12 @@ export default function CreateArticlePage() {
       })
 
       toast({
-        title: t('createArticle.articlePublished'),
-        description: t('createArticle.articlePublishedDescription'),
+        title: wasUpdated
+          ? t('createArticle.success.updated') || 'Article updated'
+          : t('createArticle.articlePublished'),
+        description: wasUpdated
+          ? t('createArticle.success.updatedDescription') || 'Your article has been successfully updated'
+          : t('createArticle.articlePublishedDescription'),
       })
       resetPreviewImage()
       setTitle('')
