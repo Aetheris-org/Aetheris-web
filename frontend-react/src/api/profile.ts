@@ -141,10 +141,25 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       return Math.abs(hash);
     };
 
+    const normalizeStr = (value: any) => (typeof value === 'string' && value.trim().length > 0 ? value.trim() : null)
+
     const normalizedTag =
-      (typeof profile.tag === 'string' && profile.tag.trim().length > 0 && profile.tag.trim()) ||
-      (typeof profile.handle === 'string' && profile.handle.trim().length > 0 && profile.handle.trim()) ||
-      (typeof profile.username === 'string' && profile.username.trim().length > 0 && profile.username.trim()) ||
+      normalizeStr(profile.tag) ||
+      normalizeStr(profile.handle) ||
+      normalizeStr(profile.username) ||
+      null
+
+    const normalizedAvatar =
+      normalizeStr(profile.avatar) ||
+      normalizeStr(profile.avatar_url) ||
+      normalizeStr((profile as any).avatarUrl) ||
+      null
+
+    const normalizedCover =
+      normalizeStr(profile.cover_image) ||
+      normalizeStr(profile.cover_url) ||
+      normalizeStr((profile as any).coverImageUrl) ||
+      normalizeStr((profile as any).coverImage) ||
       null
 
     const userProfile: UserProfile = {
@@ -155,8 +170,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         tag: normalizedTag ?? undefined,
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
-        avatarUrl: profile.avatar || profile.avatar_url || null,
-        coverImageUrl: profile.cover_image || profile.cover_url || null,
+        avatarUrl: normalizedAvatar ?? undefined,
+        coverImageUrl: normalizedCover ?? undefined,
       },
       stats: {
         publishedArticles: publishedArticles.length,
