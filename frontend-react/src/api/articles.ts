@@ -329,21 +329,7 @@ export async function getArticle(id: string): Promise<Article> {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
 
-    // Валидация ID (UUID)
-    const articleId = (() => {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
-      
-      if (!id || (typeof id !== 'string')) {
-        throw new Error(`Invalid article ID: ${id}`);
-      }
-      
-      if (!uuidRegex.test(id) && !uuidNoDashesRegex.test(id)) {
-        throw new Error(`Invalid article ID format (expected UUID): ${id}`);
-      }
-      
-      return id;
-    })();
+    const articleId = id;
 
     // Используем Database Function для получения статьи с деталями
     const { data, error } = await supabase.rpc('get_article_with_details', {
@@ -453,21 +439,7 @@ export async function updateArticle(
       throw new Error('Not authenticated');
     }
 
-    // Валидация ID (UUID)
-    const articleId = (() => {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
-      
-      if (!id || (typeof id !== 'string')) {
-        throw new Error(`Invalid article ID: ${id}`);
-      }
-      
-      if (!uuidRegex.test(id) && !uuidNoDashesRegex.test(id)) {
-        throw new Error(`Invalid article ID format (expected UUID): ${id}`);
-      }
-      
-      return id;
-    })();
+    const articleId = id;
 
     // Проверяем права доступа (RLS сделает это автоматически, но лучше проверить)
     const { data: existingArticle } = await supabase
