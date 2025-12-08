@@ -128,7 +128,7 @@ export default function HomePage() {
   const computedPopularTags = useMemo(() => {
     const tagCounts: Record<string, number> = {}
 
-    const accumulate = (items: any[]) => {
+    const accumulate = (items: Array<{ tags?: string[] | string }>) => {
       items.forEach((item) => {
         const tags = Array.isArray(item.tags)
           ? item.tags
@@ -138,7 +138,7 @@ export default function HomePage() {
         tags
           .map((t) => (typeof t === 'string' ? t.trim() : ''))
           .filter(Boolean)
-          .forEach((tag) => {
+          .forEach((tag: string) => {
             tagCounts[tag] = (tagCounts[tag] || 0) + 1
           })
       })
