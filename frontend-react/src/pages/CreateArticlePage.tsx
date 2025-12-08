@@ -2413,6 +2413,7 @@ export default function CreateArticlePage() {
               const isActive = currentStep === step.id
               const isCompleted = currentStep > step.id
               const isUpcoming = currentStep < step.id
+              const canNavigate = isEditing || isCompleted || isActive
               const stepNumber = index + 1
 
               return (
@@ -2421,13 +2422,14 @@ export default function CreateArticlePage() {
                     {/* Step Circle */}
                     <button
                       type="button"
-                      onClick={() => (isCompleted || isActive) && setCurrentStep(step.id)}
-                      disabled={isUpcoming}
+                      onClick={() => canNavigate && setCurrentStep(step.id)}
+                      disabled={!isEditing && isUpcoming}
                       className={cn(
                         'relative flex items-center justify-center transition-all duration-200',
                         isActive && 'cursor-default',
                         isCompleted && 'cursor-pointer hover:scale-105',
-                        isUpcoming && 'cursor-not-allowed opacity-50'
+                        isEditing && 'cursor-pointer hover:scale-105',
+                        !isEditing && isUpcoming && 'cursor-not-allowed opacity-50'
                       )}
                       title={step.label}
                     >

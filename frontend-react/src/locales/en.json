@@ -2915,6 +2915,7 @@
   },
   "createArticle": {
     "title": "Create Article",
+    "editingTitle": "Editing Article",
     "draft": "Draft",
     "publish": "Publish",
     "update": "Update",
