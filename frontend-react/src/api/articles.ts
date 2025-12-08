@@ -774,7 +774,7 @@ export async function toggleBookmark(articleId: string): Promise<{ isBookmarked:
 }
 
 /**
- * Получить трендовые статьи (по просмотрам)
+ * Получить трендовые статьи за 7 дней по количеству просмотров
  */
 export async function getTrendingArticles(
   _userId?: string | number,
@@ -784,15 +784,25 @@ export async function getTrendingArticles(
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
 
-    const { data, error } = await supabase.rpc('search_articles', {
-      p_search: null,
-      p_tags: null,
-      p_difficulty: null,
-      p_sort: 'popular',
-      p_skip: 0,
-      p_take: limit,
-      p_user_id: userId || null,
-    });
+    // Последние 7 дней
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+      .from('articles')
+      .select(
+        `
+          *,
+          author:profiles!articles_author_id_fkey (
+            id,
+            username,
+            name,
+            avatar
+          )
+        `
+      )
+      .gte('created_at', weekAgo)
+      .order('views', { ascending: false })
+      .limit(limit);
 
     if (error) {
       logger.error('Error fetching trending articles', error);
