@@ -623,6 +623,12 @@ export default function ProfilePage() {
     profile?.user.uuid === currentUser?.uuid ||
     (!profile && profileId && currentUser?.uuid && profileId === currentUser.uuid)
 
+  // Unified media/tag fallbacks
+  const avatarSrc = profile?.user?.avatarUrl || (profile?.user as any)?.avatar || currentUser?.avatar || null
+  const coverSrc =
+    profile?.user?.coverImageUrl || (profile?.user as any)?.coverImage || currentUser?.coverImage || null
+  const displayTag = profile?.user?.tag ?? profile?.user?.username ?? currentUser?.nickname ?? ''
+
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({
     queryKey: ['follow-status', profileId, currentUser?.uuid],
@@ -875,10 +881,10 @@ export default function ProfilePage() {
         {/* Шапка профиля */}
         <Card className="mb-4 sm:mb-4 md:mb-6 overflow-hidden border-border/60 bg-card shadow-sm">
           <div className="relative w-full overflow-hidden">
-            {profile.user.coverImageUrl ? (
+            {coverSrc ? (
               <div className="relative aspect-[3/1] sm:aspect-[4/1] w-full">
                 <img
-                  src={profile.user.coverImageUrl}
+                  src={coverSrc}
                     alt={`${profile.user.username} cover`}
                     className="h-full w-full object-cover"
                   />
@@ -901,9 +907,9 @@ export default function ProfilePage() {
               <div className="flex items-start gap-3 w-full">
                 {/* Аватар */}
                 <div className="relative h-16 w-16 shrink-0">
-                  {profile.user.avatarUrl && (
+                  {avatarSrc && (
                     <img
-                      src={profile.user.avatarUrl}
+                      src={avatarSrc}
                       alt={profile.user.username}
                       className="h-16 w-16 rounded-full border-2 object-cover shadow-md"
                       style={{ borderColor: 'hsl(var(--border))' }}
@@ -916,7 +922,7 @@ export default function ProfilePage() {
                     />
                   )}
                   <div
-                    className={`${profile.user.avatarUrl ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md`}
+                    className={`${avatarSrc ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md`}
                     style={{ borderColor: 'hsl(var(--border))' }}
                   >
                     {(profile.user.username || '?').charAt(0).toUpperCase()}
@@ -972,7 +978,7 @@ export default function ProfilePage() {
                     </DropdownMenu>
                         </div>
                   {/* Дата регистрации */}
-                  <p className="text-xs text-muted-foreground truncate">@{profile.user.tag ?? profile.user.username}</p>
+                  <p className="text-xs text-muted-foreground truncate">@{displayTag}</p>
                   <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
                     {formatDate(profile.user.memberSince)}
                   </Badge>
@@ -1068,9 +1074,9 @@ export default function ProfilePage() {
             <div className="hidden sm:flex sm:flex-row sm:items-start sm:gap-4 md:gap-6 lg:gap-8">
               {/* Аватар */}
               <div className="relative flex-shrink-0 h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32">
-                {profile.user.avatarUrl && (
+                {avatarSrc && (
                   <img
-                    src={profile.user.avatarUrl}
+                    src={avatarSrc}
                     alt={profile.user.username}
                     className="h-full w-full rounded-full border-2 object-cover shadow-lg"
                     style={{ borderColor: 'hsl(var(--border))' }}
@@ -1083,7 +1089,7 @@ export default function ProfilePage() {
                   />
                 )}
                 <div
-                  className={`${profile.user.avatarUrl ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:text-4xl`}
+                  className={`${avatarSrc ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:text-4xl`}
                   style={{ borderColor: 'hsl(var(--border))' }}
                 >
                   {(profile.user.username || '?').charAt(0).toUpperCase()}
@@ -1101,7 +1107,7 @@ export default function ProfilePage() {
                       {t('profile.levelBadge', { level })}
                     </Badge>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate">@{profile.user.tag ?? profile.user.username}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">@{displayTag}</p>
                   <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
                     {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
                   </Badge>
