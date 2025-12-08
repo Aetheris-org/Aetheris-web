@@ -143,10 +143,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
     const normalizeStr = (value: any) => (typeof value === 'string' && value.trim().length > 0 ? value.trim() : null)
 
-    const normalizedTag =
-      normalizeStr(profile.tag) ||
-      normalizeStr(profile.handle) ||
-      null
+    const normalizedTag = normalizeStr(profile.tag) || null
 
     const normalizedAvatar =
       normalizeStr(profile.avatar) ||
