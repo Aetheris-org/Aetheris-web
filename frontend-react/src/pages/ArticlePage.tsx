@@ -2200,10 +2200,12 @@ export default function ArticlePage() {
                   return null
                 }
 
+                const authorId = article.author?.id ? String(article.author.id) : null
+                const userIdStr = user?.id ? String(user.id) : null
                 const isAuthor =
-                  String(article.author.id) === String(user.id) ||
-                  article.author.uuid === user.id ||
-                  article.author.username === user.nickname
+                  (authorId && userIdStr && authorId === userIdStr) ||
+                  (article.author.uuid && userIdStr && String(article.author.uuid) === userIdStr) ||
+                  (article.author.username && user.nickname && article.author.username === user.nickname)
 
                 if (!isAuthor) {
                   return null
