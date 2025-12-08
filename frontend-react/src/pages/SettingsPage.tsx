@@ -529,6 +529,7 @@ function ProfileSettings() {
   }))
 
   const [nickname, setNickname] = useState(user?.nickname ?? '')
+  const [tag, setTag] = useState((user as any)?.tag ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
@@ -1080,7 +1081,9 @@ function ProfileSettings() {
   ], [t])
 
   const hasTextChanges =
-    nickname.trim() !== initialNickname || (bio ?? '').trim() !== (initialBio ?? '')
+    nickname.trim() !== initialNickname ||
+    (bio ?? '').trim() !== (initialBio ?? '') ||
+    tag.trim() !== (initialTag ?? '')
   const hasImageChanges =
     avatarFile !== null ||
     coverFile !== null ||
