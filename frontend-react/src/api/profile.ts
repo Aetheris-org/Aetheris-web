@@ -20,19 +20,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select(`
-        id,
-        username,
-        tag,
-        handle,
-        bio,
-        avatar,
-        avatar_url,
-        cover_image,
-        cover_url,
-        created_at,
-        followers_count
-      `)
+      .select('*')
       .eq('id', profileUuid)
       .single();
 
