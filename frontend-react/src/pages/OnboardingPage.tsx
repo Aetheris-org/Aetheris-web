@@ -39,6 +39,8 @@ export default function OnboardingPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [avatarUrlInput, setAvatarUrlInput] = useState('')
+  const [coverUrlInput, setCoverUrlInput] = useState('')
   const [themeChoice, setThemeChoice] = useState<'light' | 'dark' | 'system'>('system')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -55,6 +57,7 @@ export default function OnboardingPage() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setAvatarFile(file)
+    setAvatarUrlInput('')
     if (file) {
       const url = URL.createObjectURL(file)
       setAvatarPreview(url)
@@ -66,11 +69,40 @@ export default function OnboardingPage() {
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setCoverFile(file)
+    setCoverUrlInput('')
     if (file) {
       const url = URL.createObjectURL(file)
       setCoverPreview(url)
     } else {
       setCoverPreview(null)
+  const applyAvatarUrl = () => {
+    const url = avatarUrlInput.trim()
+    if (!url.startsWith('http')) {
+      toast({
+        title: 'Invalid avatar URL',
+        description: 'Use a full http/https link',
+        variant: 'destructive',
+      })
+      return
+    }
+    setAvatarFile(null)
+    setAvatarPreview(url)
+  }
+
+  const applyCoverUrl = () => {
+    const url = coverUrlInput.trim()
+    if (!url.startsWith('http')) {
+      toast({
+        title: 'Invalid cover URL',
+        description: 'Use a full http/https link',
+        variant: 'destructive',
+      })
+      return
+    }
+    setCoverFile(null)
+    setCoverPreview(url)
+  }
+
     }
   }
 
@@ -223,10 +255,11 @@ export default function OnboardingPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Avatar</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full border bg-muted flex items-center justify-center overflow-hidden">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 aspect-square rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
                     {avatarPreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -237,22 +270,53 @@ export default function OnboardingPage() {
                     ) : (
                       <span className="text-sm text-muted-foreground">No avatar</span>
                     )}
+                    </div>
+                    <Input type="file" accept="image/*" onChange={handleAvatarChange} />
                   </div>
-                  <Input type="file" accept="image/*" onChange={handleAvatarChange} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="avatar-url">Avatar URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="avatar-url"
+                      value={avatarUrlInput}
+                      onChange={(e) => setAvatarUrlInput(e.target.value)}
+                      placeholder="https://example.com/avatar.jpg"
+                    />
+                    <Button type="button" variant="secondary" onClick={applyAvatarUrl}>
+                      Use URL
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label>Profile cover</Label>
-                <div className="w-full h-28 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <Label>Profile cover</Label>
+                  <div className="w-full h-28 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
                   {coverPreview ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={coverPreview} alt="cover preview" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-sm text-muted-foreground">No cover</span>
                   )}
+                  </div>
+                  <Input type="file" accept="image/*" onChange={handleCoverChange} />
                 </div>
-                <Input type="file" accept="image/*" onChange={handleCoverChange} />
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cover-url">Cover URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="cover-url"
+                      value={coverUrlInput}
+                      onChange={(e) => setCoverUrlInput(e.target.value)}
+                      placeholder="https://example.com/cover.jpg"
+                    />
+                    <Button type="button" variant="secondary" onClick={applyCoverUrl}>
+                      Use URL
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
