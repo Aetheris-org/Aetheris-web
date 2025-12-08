@@ -144,12 +144,19 @@ export function ArticleCardSquare({
             </div>
           </div>
 
-          {article.views !== undefined && (
-            <div className="flex items-center gap-1">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span className="font-medium">{article.views}</span>
-            </div>
-          )}
+          {(() => {
+            const viewsCount =
+              article.views ??
+              // fallback in case backend returns alternative field
+              (article as any).views_count ??
+              0
+            return (
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3.5 w-3.5" />
+                <span className="font-medium">{viewsCount}</span>
+              </div>
+            )
+          })()}
         </div>
       </div>
     </Card>
