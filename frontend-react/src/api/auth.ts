@@ -63,7 +63,6 @@ export async function getCurrentUser(): Promise<User | null> {
           name: (authUser.user_metadata as any)?.name || null,
           avatar: avatarFromMeta,
           avatar_url: avatarFromMeta,
-          email: authUser.email || null,
         })
         .select()
         .single();
