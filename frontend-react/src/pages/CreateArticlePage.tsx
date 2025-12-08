@@ -318,6 +318,9 @@ export default function CreateArticlePage() {
             if (article.previewImage) {
               setExistingPreviewImageId(article.previewImage)
               setOriginalImageUrl(article.previewImage)
+              setSelectedImageUrl(article.previewImage)
+              originalImageUrlRef.current = article.previewImage
+              selectedImageUrlRef.current = article.previewImage
             }
             
             // Преобразуем контент из JSON в HTML для редактора
@@ -2206,21 +2209,26 @@ export default function CreateArticlePage() {
         existingPreviewImageId: existingPreviewImageId,
       })
 
-      const publishedArticle = draftId
-        // Если редактируем существующую статью, используем updateArticle
-        ? await (articleIdFromQuery && articleToEdit
-            ? updateArticle(String(articleToEdit.id), {
-                ...articleData,
-                publishedAt: articleToEdit.publishedAt || new Date().toISOString(),
-              })
-            : updateArticle(String(draftId), {
-                ...articleData,
-                publishedAt: new Date().toISOString(),
-              }))
-        : await createArticle({
-            ...articleData,
-            publishedAt: new Date().toISOString(),
-          })
+      let publishedArticle
+      if (articleIdFromQuery && articleToEdit) {
+        // Обновляем существующую статью
+        publishedArticle = await updateArticle(String(articleToEdit.id), {
+          ...articleData,
+          publishedAt: articleToEdit.publishedAt || new Date().toISOString(),
+        })
+      } else if (draftId) {
+        // Обновляем по draftId (обратная совместимость)
+        publishedArticle = await updateArticle(String(draftId), {
+          ...articleData,
+          publishedAt: new Date().toISOString(),
+        })
+      } else {
+        // Создаем новую статью
+        publishedArticle = await createArticle({
+          ...articleData,
+          publishedAt: new Date().toISOString(),
+        })
+      }
       
       // После успешной публикации инвалидируем кэш списка и трендовых статей,
       // чтобы на HomePage новые статьи появились сразу, без жесткого перезагруза.
