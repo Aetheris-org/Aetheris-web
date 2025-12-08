@@ -244,7 +244,10 @@ export default function OnboardingPage() {
                       key={opt}
                       type="button"
                       variant={themeChoice === opt ? 'default' : 'outline'}
-                      onClick={() => setThemeChoice(opt)}
+                      onClick={() => {
+                        setThemeChoice(opt)
+                        setTheme(opt)
+                      }}
                       className="w-full"
                     >
                       {opt === 'light' ? 'Light' : opt === 'dark' ? 'Dark' : 'Auto'}
