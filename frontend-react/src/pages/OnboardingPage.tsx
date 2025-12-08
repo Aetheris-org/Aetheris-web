@@ -229,7 +229,11 @@ export default function OnboardingPage() {
                   <div className="h-16 w-16 rounded-full border bg-muted flex items-center justify-center overflow-hidden">
                     {avatarPreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatarPreview} alt="avatar preview" className="h-full w-full object-cover" />
+                      <img
+                        src={avatarPreview}
+                        alt="avatar preview"
+                        className="h-full w-full object-cover rounded-full"
+                      />
                     ) : (
                       <span className="text-sm text-muted-foreground">No avatar</span>
                     )}
