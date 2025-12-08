@@ -87,7 +87,11 @@ export default function AuthCallbackPage() {
 
         // Если профиль «сырой» (нет tag или ник пуст) и онбординг не проходили ранее, отправляем на онбординг
         const hasLocalOnboarding = typeof window !== 'undefined' && localStorage.getItem('onboarding_completed') === 'true'
-        if ((!user.tag || !user.nickname) && !hasLocalOnboarding) {
+        const hasMetaOnboarding =
+          (session.user?.user_metadata as any)?.onboarding_completed === true ||
+          (session.user?.app_metadata as any)?.onboarding_completed === true
+
+        if ((!user.tag || !user.nickname) && !hasLocalOnboarding && !hasMetaOnboarding) {
           logger.debug('➡️ Redirecting to onboarding due to incomplete profile')
           navigate('/onboarding', { replace: true })
           return

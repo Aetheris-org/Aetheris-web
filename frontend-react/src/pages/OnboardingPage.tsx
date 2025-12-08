@@ -181,6 +181,14 @@ export default function OnboardingPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('onboarding_completed', 'true')
       }
+      // Ставим флаг в user_metadata, чтобы не показывать онбординг повторно даже без localStorage
+      try {
+        await supabase.auth.updateUser({
+          data: { onboarding_completed: true },
+        })
+      } catch (err) {
+        logger.warn('Failed to set onboarding flag in user metadata', err)
+      }
 
       toast({
         title: 'Profile saved',
