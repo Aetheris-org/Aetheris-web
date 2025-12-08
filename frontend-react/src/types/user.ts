@@ -2,6 +2,7 @@ export interface User {
   id: number
   uuid?: string // Оригинальный UUID из базы данных для запросов
   nickname: string
+  tag?: string
   email?: string // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email опциональный (скрыт для безопасности)
   avatar?: string
   coverImage?: string

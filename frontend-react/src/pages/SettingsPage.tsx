@@ -529,7 +529,6 @@ function ProfileSettings() {
   }))
 
   const [nickname, setNickname] = useState(user?.nickname ?? '')
-  const [tag, setTag] = useState((user as any)?.tag ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
@@ -582,6 +581,7 @@ function ProfileSettings() {
   const initialNickname = user?.nickname ?? ''
   const initialBio = user?.bio ?? ''
   const initialTag = (user as any)?.tag ?? ''
+  const [tag, setTag] = useState(initialTag)
   const initialAvatar = user?.avatar ?? null
   const initialCover = user?.coverImage ?? null
   const initialFirstName = user?.firstName ?? ''
