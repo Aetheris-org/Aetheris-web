@@ -124,7 +124,36 @@ export default function HomePage() {
     pageRef.current = page
   }, [page])
   const pageSize = 10
-  const popularTags = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
+
+  const computedPopularTags = useMemo(() => {
+    const tagCounts: Record<string, number> = {}
+
+    const accumulate = (items: any[]) => {
+      items.forEach((item) => {
+        const tags = Array.isArray(item.tags)
+          ? item.tags
+          : typeof item.tags === 'string'
+            ? [item.tags]
+            : []
+        tags
+          .map((t) => (typeof t === 'string' ? t.trim() : ''))
+          .filter(Boolean)
+          .forEach((tag) => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1
+          })
+      })
+    }
+
+    accumulate(articles)
+    accumulate(trendingArticles)
+
+    const ranked = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag]) => tag)
+
+    const fallback = ['React', 'TypeScript', 'Next.js', 'Tailwind', 'shadcn/ui']
+    return ranked.length ? ranked.slice(0, 12) : fallback
+  }, [articles, trendingArticles])
   const categoryOptions = ['all', 'Frontend', 'Backend', 'DevOps', 'AI', 'Product', 'Design']
   const languageOptions = ['all', 'en', 'ru', 'es', 'de', 'fr']
   // const _quickDestinations = useMemo( // Unused, but may be needed in future
@@ -965,7 +994,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="flex flex-wrap items-start gap-1.5 sm:gap-2">
-                  {popularTags.map((tag) => {
+                  {computedPopularTags.map((tag) => {
                     const isActive = selectedTags.includes(tag)
 
                     return (
@@ -997,7 +1026,7 @@ export default function HomePage() {
         selectedTags={selectedTags}
         difficulty={difficultyFilter}
         sortOption={sortOption}
-        allTags={popularTags}
+        allTags={computedPopularTags}
         category={categoryFilter}
         author={authorFilter}
         language={languageFilter}
