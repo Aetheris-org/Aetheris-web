@@ -128,6 +128,7 @@ export default function CreateArticlePage() {
   const editParam = searchParams.get('edit')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
   const articleIdFromQuery = editParam ? editParam : null
+  const isEditing = Boolean(articleIdFromQuery)
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
 
@@ -2382,7 +2383,11 @@ export default function CreateArticlePage() {
               <span className="hidden sm:inline">{t('common.back')}</span>
             </Button>
             <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
-            <h1 className="text-base sm:text-lg font-semibold truncate">{t('createArticle.title')}</h1>
+            <h1 className="text-base sm:text-lg font-semibold truncate">
+              {isEditing
+                ? t('createArticle.editingTitle') || t('article.edit') || 'Editing article'
+                : t('createArticle.title')}
+            </h1>
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
