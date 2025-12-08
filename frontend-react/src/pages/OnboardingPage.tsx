@@ -5,17 +5,25 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Card } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { uploadImage } from '@/lib/upload'
 import { updateProfile } from '@/api/profile'
 import { useThemeStore } from '@/stores/themeStore'
 import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
 
 const NICKNAME_MIN = 3
 const TAG_REGEX = /^[a-zA-Z0-9_]{3,24}$/
+
+const uuidToNumber = (uuid: string): number => {
+  let hash = 0
+  for (let i = 0; i < uuid.length; i++) {
+    const char = uuid.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
@@ -101,10 +109,18 @@ export default function OnboardingPage() {
         tag: tagTrimmed,
       })
 
+      const userIdNumber = (() => {
+        if (typeof profile.user.id === 'number') return profile.user.id
+        if (profile.user.uuid) return uuidToNumber(profile.user.uuid)
+        if (profile.user.id) return uuidToNumber(String(profile.user.id))
+        if (authUser?.id) return uuidToNumber(String(authUser.id))
+        return 0
+      })()
+
       // обновляем юзера в сторах (минимально)
       setUser({
-        id: profile.user.id || profile.user.uuid || 0,
-        uuid: profile.user.uuid,
+        id: userIdNumber,
+        uuid: profile.user.uuid || (typeof profile.user.id === 'string' ? profile.user.id : undefined),
         nickname: profile.user.username,
         email: authUser?.email || '',
         avatar: profile.user.avatarUrl || undefined,
@@ -190,24 +206,19 @@ export default function OnboardingPage() {
 
               <div className="flex flex-col gap-2">
                 <Label>Theme</Label>
-                <RadioGroup
-                  value={themeChoice}
-                  onValueChange={(v) => setThemeChoice(v as 'light' | 'dark' | 'system')}
-                  className="grid grid-cols-3 gap-2"
-                >
-                  <label className={cn('flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer', themeChoice === 'light' && 'border-primary')}>
-                    <RadioGroupItem value="light" id="theme-light" />
-                    <span>Light</span>
-                  </label>
-                  <label className={cn('flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer', themeChoice === 'dark' && 'border-primary')}>
-                    <RadioGroupItem value="dark" id="theme-dark" />
-                    <span>Dark</span>
-                  </label>
-                  <label className={cn('flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer', themeChoice === 'system' && 'border-primary')}>
-                    <RadioGroupItem value="system" id="theme-system" />
-                    <span>Auto</span>
-                  </label>
-                </RadioGroup>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['light', 'dark', 'system'] as const).map((opt) => (
+                    <Button
+                      key={opt}
+                      type="button"
+                      variant={themeChoice === opt ? 'default' : 'outline'}
+                      onClick={() => setThemeChoice(opt)}
+                      className="w-full"
+                    >
+                      {opt === 'light' ? 'Light' : opt === 'dark' ? 'Dark' : 'Auto'}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
