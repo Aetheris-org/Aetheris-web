@@ -307,6 +307,8 @@ export async function signInWithOAuth(provider: 'google' | 'github'): Promise<{ 
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        // Минимальные scope для Google, чтобы не тянуть email/avatar в raw_user_meta_data
+        scopes: provider === 'google' ? 'openid profile' : undefined,
       },
     });
 
