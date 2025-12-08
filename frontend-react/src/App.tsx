@@ -31,6 +31,7 @@ import FeedbackPage from '@/pages/FeedbackPage'
 import DashboardPage from '@/pages/DashboardPage'
 import TermsOfServicePage from '@/pages/TermsOfServicePage'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage'
+import OnboardingPage from '@/pages/OnboardingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
@@ -127,6 +128,7 @@ function App() {
           <Route path="/profile/:id" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/create" element={<CreateArticlePage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/reading-list" element={<ReadingListPage />} />

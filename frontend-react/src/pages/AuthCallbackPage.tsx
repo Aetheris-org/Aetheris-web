@@ -85,6 +85,13 @@ export default function AuthCallbackPage() {
         // Очищаем hash из URL
         window.history.replaceState({}, document.title, window.location.pathname)
 
+        // Если профиль «сырой» (нет tag или ник пуст), отправляем на онбординг
+        if (!user.tag || !user.nickname) {
+          logger.debug('➡️ Redirecting to onboarding due to incomplete profile')
+          navigate('/onboarding', { replace: true })
+          return
+        }
+
         // Перенаправляем на сохраненный URL или на главную
         const savedRedirect = sessionStorage.getItem('auth_redirect')
         logger.debug('🔍 Checking auth_redirect from sessionStorage:', savedRedirect)
