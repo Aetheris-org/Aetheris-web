@@ -125,12 +125,12 @@ export default function CreateArticlePage() {
   )
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
-  const editParam = searchParams.get('edit')
+  const editParam = searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id')
   const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
-  const articleIdFromQuery = editParam ? editParam : null
-  const isEditing = Boolean(articleIdFromQuery)
+  const articleIdFromQuery = editParam && editParam.trim() ? editParam.trim() : null
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
+  const isEditing = Boolean(articleIdFromQuery || articleToEdit?.id)
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     // Временно отключаем загрузку в наше хранилище
@@ -2212,10 +2212,12 @@ export default function CreateArticlePage() {
       let publishedArticle
       let wasUpdated = false
 
-      if (articleIdFromQuery) {
-        // Всегда обновляем существующую статью, если есть edit-параметр
-        const targetId = articleToEdit?.id ?? articleIdFromQuery
-        publishedArticle = await updateArticle(String(targetId), {
+      // Определяем целевой ID для редактирования (из query или загруженной статьи)
+      const editingTargetId = articleIdFromQuery || (articleToEdit?.id ? String(articleToEdit.id) : null)
+
+      if (editingTargetId) {
+        // Всегда обновляем существующую статью, если есть целевой ID редактирования
+        publishedArticle = await updateArticle(editingTargetId, {
           ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
         })

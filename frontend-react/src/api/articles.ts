@@ -438,8 +438,20 @@ export async function updateArticle(
     if (!user) {
       throw new Error('Not authenticated');
     }
+    // Разрешаем UUID и числовые ID
+    const normalizeId = (rawId: string): string | number => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidNoDashesRegex = /^[0-9a-f]{32}$/i;
+      const numericRegex = /^\d+$/;
+      if (!rawId || typeof rawId !== 'string') {
+        throw new Error(`Invalid article ID: ${rawId}`);
+      }
+      if (uuidRegex.test(rawId) || uuidNoDashesRegex.test(rawId)) return rawId;
+      if (numericRegex.test(rawId)) return Number(rawId);
+      throw new Error(`Invalid article ID format (expected UUID or numeric): ${rawId}`);
+    };
 
-    const articleId = id;
+    const articleId = normalizeId(id);
 
     // Проверяем права доступа (RLS сделает это автоматически, но лучше проверить)
     const { data: existingArticle } = await supabase
