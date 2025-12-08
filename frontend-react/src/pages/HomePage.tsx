@@ -292,6 +292,14 @@ export default function HomePage() {
 
   const articles = articlesData?.data || []
   const totalRecords = articlesData?.total || 0
+
+  const sortedTrending = useMemo(
+    () =>
+      (trendingArticles || [])
+        .slice()
+        .sort((a, b) => (Number(b.views || 0) - Number(a.views || 0)) || (b.createdAt || '').localeCompare(a.createdAt || '')),
+    [trendingArticles]
+  )
   
   // Логирование для отладки (только в development)
   useEffect(() => {
@@ -893,7 +901,7 @@ export default function HomePage() {
           </div>
 
           <aside className="space-y-4 sm:space-y-6 order-1 lg:order-2 min-w-0 max-w-full">
-            <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
+            <Card className="border-border/70 bg-card shadow-sm">
               <CardHeader className="space-y-3 pb-3 sm:pb-4 p-4 sm:p-6">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -920,7 +928,7 @@ export default function HomePage() {
                     {t('home.trending.nothingYet')}
                   </div>
                 ) : (
-                  trendingArticles.map((article, index) => (
+                  sortedTrending.map((article, index) => (
                     <button
                       key={article.id}
                       type="button"
