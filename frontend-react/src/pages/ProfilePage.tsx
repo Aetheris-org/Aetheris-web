@@ -972,7 +972,9 @@ export default function ProfilePage() {
                     </DropdownMenu>
                         </div>
                   {/* Дата регистрации */}
-                  <p className="text-xs text-muted-foreground truncate">@{profile.user.tag || profile.user.username}</p>
+                  {profile.user.tag && (
+                    <p className="text-xs text-muted-foreground truncate">@{profile.user.tag}</p>
+                  )}
                   <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
                     {formatDate(profile.user.memberSince)}
                   </Badge>
@@ -1101,7 +1103,9 @@ export default function ProfilePage() {
                       {t('profile.levelBadge', { level })}
                     </Badge>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate">@{profile.user.tag || profile.user.username}</p>
+                  {profile.user.tag && (
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">@{profile.user.tag}</p>
+                  )}
                   <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
                     {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
                   </Badge>
