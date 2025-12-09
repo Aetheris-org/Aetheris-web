@@ -806,7 +806,7 @@ export default function ProfilePage() {
     developer: { bg: 'bg-purple-500', label: t('roles.developer') },
     moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
   }
-  const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
+  const activeRole = roleStyles[roleValue] || roleStyles.owner
 
   if (!profileId && !isLoading) {
     return (
@@ -972,17 +972,15 @@ export default function ProfilePage() {
                   >
                     {(displayUsername || 'U').charAt(0).toUpperCase()}
                   </div>
-                {activeRole && (
-                  <div
-                    className={cn(
-                      'absolute -bottom-2 -right-2 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
-                      activeRole.bg
-                    )}
-                    title={activeRole.label}
-                  >
-                    <Zap className="h-5 w-5" />
-                  </div>
-                )}
+                <div
+                  className={cn(
+                    'absolute -bottom-2 -right-2 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
+                    activeRole.bg
+                  )}
+                  title={activeRole.label}
+                >
+                  <Zap className="h-5 w-5" />
+                </div>
                 </div>
 
                 {/* Имя, бейдж и меню */}
@@ -991,15 +989,13 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
-                  {activeRole && (
-                    <Badge
-                      variant="default"
-                      className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
-                    >
-                      <Zap className="h-3.5 w-3.5" />
-                      <span className="truncate">{activeRole.label}</span>
-                    </Badge>
-                  )}
+                  <Badge
+                    variant="default"
+                    className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    <span className="truncate">{activeRole.label}</span>
+                  </Badge>
                     </div>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
@@ -1169,17 +1165,15 @@ export default function ProfilePage() {
                 >
                   {(displayUsername || 'U').charAt(0).toUpperCase()}
                 </div>
-                {activeRole && (
-                  <div
-                    className={cn(
-                      'absolute -bottom-2 -right-2 h-11 w-11 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
-                      activeRole.bg
-                    )}
-                    title={activeRole.label}
-                  >
-                    <Zap className="h-5 w-5" />
-                  </div>
-                )}
+                <div
+                  className={cn(
+                    'absolute -bottom-2 -right-2 h-11 w-11 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
+                    activeRole.bg
+                  )}
+                  title={activeRole.label}
+                >
+                  <Zap className="h-5 w-5" />
+                </div>
               </div>
 
               {/* Основная информация */}
