@@ -856,20 +856,18 @@ export default function ProfilePage() {
   const showRoleBadge = Boolean(activeRole)
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      // Быстрая проверка, что прилетает из API и что отрисовываем
-      // eslint-disable-next-line no-console
-      console.debug('Profile role debug', {
-        profileId,
-        routeProfileId,
-        rawRole,
-        normalized: roleValue,
-        activeRole: activeRole?.label,
-        normalizedUuid,
-        overrideRole: getRoleByUuid(normalizedUuid),
-      })
-    }
-  }, [profileId, rawRole, roleValue, activeRole])
+    // Лог в любом окружении: видно UUID, роль из БД и override
+    // eslint-disable-next-line no-console
+    console.debug('Profile role debug', {
+      profileId,
+      routeProfileId,
+      rawRole,
+      normalized: roleValue,
+      activeRole: activeRole?.label,
+      normalizedUuid,
+      overrideRole: getRoleByUuid(normalizedUuid),
+    })
+  }, [profileId, rawRole, roleValue, activeRole, normalizedUuid])
 
   if (!profileId && !isLoading) {
     return (
