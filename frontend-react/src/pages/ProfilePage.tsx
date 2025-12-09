@@ -83,7 +83,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { RateLimitError } from '@/lib/errors'
 import { useTranslation } from '@/hooks/useTranslation'
-import { isAdminUuid } from '@/config/admins'
+import { getRoleByUuid } from '@/config/admins'
 import { isAdminUuid } from '@/config/admins'
 import {
   mockAudienceInsights,
@@ -809,8 +809,8 @@ export default function ProfilePage() {
 
   const normalizedUuid = profile?.user.uuid || profile?.user.id?.toString() || ''
 
-  // Берем роль строго из данных профиля/текущего пользователя, без фолбэков
-  const roleValue = normalizeRole(rawRole) || (isAdminUuid(normalizedUuid) ? 'owner' : undefined)
+  // Берем роль из профиля, иначе — фронтовый override по UUID
+  const roleValue = normalizeRole(rawRole) || normalizeRole(getRoleByUuid(normalizedUuid))
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
