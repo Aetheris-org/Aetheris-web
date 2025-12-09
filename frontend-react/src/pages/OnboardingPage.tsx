@@ -142,6 +142,27 @@ export default function OnboardingPage() {
         tag: tagTrimmed,
       })
 
+      // Отмечаем профиль как подтвержденный (profiles.confirmed = true)
+      let confirmed = false
+      const profileId =
+        profile.user.uuid ||
+        (typeof profile.user.id === 'string' ? profile.user.id : undefined) ||
+        (authUser as any)?.uuid ||
+        (authUser as any)?.id
+
+      if (profileId) {
+        const { error: confirmError } = await supabaseClient
+          .from('profiles')
+          .update({ confirmed: true })
+          .eq('id', profileId)
+
+        if (confirmError) {
+          logger.warn('Failed to mark profile as confirmed after onboarding', confirmError)
+        } else {
+          confirmed = true
+        }
+      }
+
       const userIdNumber = (() => {
         if (typeof profile.user.id === 'number') return profile.user.id
         if (profile.user.uuid) return uuidToNumber(profile.user.uuid)
@@ -167,6 +188,7 @@ export default function OnboardingPage() {
         updatedAt: new Date().toISOString(),
         status: 'active',
         isVerified: false,
+        confirmed,
         isProfilePublic: true,
         showEmail: false,
         showLastSeen: false,

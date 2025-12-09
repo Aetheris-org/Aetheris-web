@@ -30,6 +30,7 @@ export interface User {
   status: 'active' | 'inactive' | 'banned' | 'pending'
   role: 'user' | 'moderator' | 'admin' | 'super_admin'
   isVerified: boolean
+  confirmed?: boolean
 
   isProfilePublic: boolean
   showEmail: boolean
