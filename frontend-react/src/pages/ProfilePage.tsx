@@ -951,7 +951,7 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username || profile.user.tag || 'User'}</h1>
+                    <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username || profile.user.tag || 'User'}</h1>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
                         <span>{level}</span>
