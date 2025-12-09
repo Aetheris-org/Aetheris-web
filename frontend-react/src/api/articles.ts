@@ -425,8 +425,7 @@ export async function createArticle(input: {
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .single();
@@ -523,8 +522,7 @@ export async function updateArticle(
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .single();
@@ -805,7 +803,6 @@ export async function getTrendingArticles(
           author:profiles!articles_author_id_fkey (
             id,
             username,
-            name,
             avatar
           )
         `
