@@ -2013,6 +2013,12 @@ export default function ArticlePage() {
     )
   }
 
+  const previewSrc =
+    article.previewImage ||
+    (article as any)?.preview_image ||
+    (article as any)?.cover_url ||
+    null
+
   return (
     <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-background">
@@ -2049,11 +2055,11 @@ export default function ArticlePage() {
 
       <div className="container pt-4 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6">
         <article className="w-full">
-          {(article.previewImage || true) && (
+          {(previewSrc || true) && (
             <div className="mb-4 sm:mb-8 overflow-hidden rounded-xl sm:rounded-2xl border border-border/40 bg-muted/10">
-              {article.previewImage ? (
+              {previewSrc ? (
                 <img
-                  src={article.previewImage}
+                  src={previewSrc}
                   alt={article.title}
                   onError={(e) => {
                     // Показываем заглушку при ошибке загрузки
@@ -2068,7 +2074,7 @@ export default function ArticlePage() {
                 />
               ) : null}
               <div
-                className={`${article.previewImage ? 'hidden' : 'flex'} min-h-[200px] sm:min-h-[260px] items-center justify-center bg-muted text-muted-foreground text-sm`}
+                className={`${previewSrc ? 'hidden' : 'flex'} min-h-[200px] sm:min-h-[260px] items-center justify-center bg-muted text-muted-foreground text-sm`}
               >
                 {t('article.previewNotAvailable') || 'Preview image is not available'}
               </div>

@@ -2886,6 +2886,7 @@
     "useDeviceSharing": "Use your device's sharing options",
     "notFound": "Article not found",
     "notFoundDescription": "The article you're looking for doesn't exist or has been removed.",
+    "previewNotAvailable": "Preview image is not available",
     "backToHome": "Back to Home",
     "copyLinkDescription": "Copy article link",
     "shareOnX": "Share on X",
