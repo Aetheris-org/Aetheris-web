@@ -800,8 +800,14 @@ export default function ProfilePage() {
     return cleaned.toLowerCase().replace(/[\s-]+/g, '_')
   }
 
-  // Роль только из данных профиля/текущего пользователя, без принудительного fallback
-  const roleValue = normalizeRole(profile?.user.role) || normalizeRole((currentUser as any)?.role) || undefined
+  const rawRole =
+    profile?.user.role ??
+    (profile as any)?.role ??
+    (currentUser as any)?.role ??
+    undefined
+
+  // Берем роль строго из данных профиля/текущего пользователя, без фолбэков
+  const roleValue = normalizeRole(rawRole) || undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
