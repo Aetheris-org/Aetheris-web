@@ -645,10 +645,9 @@ export default function ProfilePage() {
   const avatarSrc = avatarError ? null : rawAvatar
   const coverSrc = coverError ? null : rawCover
   const displayTag = profile?.user?.tag ?? (currentUser as any)?.tag ?? null
-  const displayUsername =
-    profile?.user?.username ||
-    (isOwnProfile ? currentUser?.nickname || displayTag || '' : '') ||
-    'User'
+  const displayUsername = isOwnProfile
+    ? currentUser?.nickname || (currentUser as any)?.username || currentUser?.email?.split('@')[0] || 'User'
+    : profile?.user.username || 'Unkown Nickname'
 
   useEffect(() => {
     setAvatarError(false)
@@ -738,8 +737,8 @@ export default function ProfilePage() {
   const handleShareProfile = async () => {
     const profileUrl = `${window.location.origin}/profile/${profileId}`
     const shareData = {
-      title: t('profile.shareTitle', { username: profile?.user.username || '' }),
-      text: t('profile.shareText', { username: profile?.user.username || '' }),
+      title: t('profile.shareTitle', { username: displayUsername }),
+      text: t('profile.shareText', { username: displayUsername }),
       url: profileUrl,
     }
 
@@ -955,7 +954,7 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
+                    <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
                         <span>{level}</span>
@@ -1105,7 +1104,7 @@ export default function ProfilePage() {
                       className="h-full w-full rounded-full border-2 object-cover shadow-lg"
                       style={{ borderColor: 'hsl(var(--border))' }}
                       onError={() => setAvatarError(true)}
-                  />
+                    />
                 )}
                 <div
                   className={`${avatarSrc ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:text-4xl`}
