@@ -24,8 +24,8 @@ const destinationKeys = [
 ]
 
 const communityLinks = [
-  { key: 'discord', icon: MessageCircle, href: 'https://discord.gg/aetheris' },
-  { key: 'telegram', icon: Send, href: 'https://t.me/aetheris' },
+  { key: 'discord', icon: MessageCircle, href: 'https://discord.gg/9aR7KyjAYX' },
+  { key: 'telegram', icon: Send, href: 'https://t.me/AetherisNews' },
 ]
 
 interface SiteHeaderProps {

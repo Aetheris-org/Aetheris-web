@@ -38,8 +38,8 @@ export function SiteFooter() {
   ]
 
   const contactItems = [
-    { icon: MessageCircle, label: t('footer.discord'), href: 'https://discord.gg/aetheris' },
-    { icon: Send, label: t('footer.telegram'), href: 'https://t.me/aetheris' },
+    { icon: MessageCircle, label: t('footer.discord'), href: 'https://discord.gg/9aR7KyjAYX' },
+    { icon: Send, label: t('footer.telegram'), href: 'https://t.me/AetherisNews' },
     { icon: Github, label: 'GitHub', href: 'https://github.com' },
     { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },
     { icon: Mail, label: t('footer.email'), href: 'mailto:contact@aetheris.com' },
