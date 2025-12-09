@@ -785,14 +785,17 @@ export default function ProfilePage() {
       year: 'numeric',
     })
 
-  const role = profile?.user.role?.toLowerCase()
+  const roleValue =
+    profile?.user.role && typeof profile.user.role === 'string'
+      ? profile.user.role.trim().toLowerCase()
+      : undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
     developer: { bg: 'bg-purple-500', label: t('roles.developer') },
     moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
   }
-  const activeRole = role && roleStyles[role] ? roleStyles[role] : null
+  const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
 
   if (!profileId && !isLoading) {
     return (
