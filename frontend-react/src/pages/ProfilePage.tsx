@@ -83,7 +83,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { RateLimitError } from '@/lib/errors'
 import { useTranslation } from '@/hooks/useTranslation'
-import { getRoleByUuid } from '@/config/admins'
+import { getRoleByUuid, ROLE_BY_UUID } from '@/config/admins'
 import {
   mockAudienceInsights,
   mockContentMix,
@@ -824,7 +824,13 @@ export default function ProfilePage() {
     ''
 
   const normalizedRawRole = normalizeRole(rawRole)
-  const overrideRole = normalizeRole(getRoleByUuid(normalizedUuid))
+  const overrideRole = (() => {
+    const cleaned = normalizedUuid.toLowerCase()
+    const fromFn = getRoleByUuid(normalizedUuid) || getRoleByUuid(cleaned)
+    if (fromFn) return normalizeRole(fromFn)
+    const direct = ROLE_BY_UUID[normalizedUuid] || ROLE_BY_UUID[cleaned]
+    return normalizeRole(direct)
+  })()
 
   // Приоритет: override по UUID, затем роль из профиля (кроме "user")
   const roleValue =
@@ -867,11 +873,13 @@ export default function ProfilePage() {
     console.debug('Profile role debug', {
       profileId,
       routeProfileId,
+      ROLE_BY_UUID,
       rawRole,
       normalized: roleValue,
       activeRole: activeRole?.label,
       normalizedUuid,
       overrideRole: getRoleByUuid(normalizedUuid),
+      effectiveRoleValue,
     })
   }, [profileId, routeProfileId, rawRole, roleValue, activeRole, normalizedUuid])
 
