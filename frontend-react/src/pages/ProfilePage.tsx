@@ -975,7 +975,7 @@ export default function ProfilePage() {
                   {activeRole && (
                     <div
                       className={cn(
-                        'absolute -bottom-1 -right-1 h-8 w-8 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg translate-x-1 translate-y-1',
+                        'absolute -bottom-1.5 -right-1.5 h-9 w-9 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
                         activeRole.bg
                       )}
                       title={activeRole.label}
@@ -991,12 +991,15 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
-                      {activeRole && (
-                        <Badge variant="secondary" className="gap-1 h-5 px-2 py-0 text-[10px] shrink-0">
-                          <Zap className="h-3 w-3" />
-                          <span className="truncate">{activeRole.label}</span>
-                        </Badge>
-                      )}
+                  {activeRole && (
+                    <Badge
+                      variant="default"
+                      className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                      <span className="truncate">{activeRole.label}</span>
+                    </Badge>
+                  )}
                     </div>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
@@ -1158,12 +1161,12 @@ export default function ProfilePage() {
                 {activeRole && (
                   <div
                     className={cn(
-                      'absolute -bottom-1 -right-1 h-9 w-9 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg translate-x-1 translate-y-1',
+                      'absolute -bottom-1.5 -right-1.5 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
                       activeRole.bg
                     )}
                     title={activeRole.label}
                   >
-                    <Zap className="h-4.5 w-4.5" />
+                    <Zap className="h-5 w-5" />
                   </div>
                 )}
               </div>
