@@ -972,17 +972,17 @@ export default function ProfilePage() {
                   >
                     {(displayUsername || 'U').charAt(0).toUpperCase()}
                   </div>
-                  {activeRole && (
-                    <div
-                      className={cn(
-                        'absolute -bottom-1.5 -right-1.5 h-9 w-9 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
-                        activeRole.bg
-                      )}
-                      title={activeRole.label}
-                    >
-                      <Zap className="h-4.5 w-4.5" />
-                    </div>
-                  )}
+                {activeRole && (
+                  <div
+                    className={cn(
+                      'absolute -bottom-2 -right-2 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
+                      activeRole.bg
+                    )}
+                    title={activeRole.label}
+                  >
+                    <Zap className="h-5 w-5" />
+                  </div>
+                )}
                 </div>
 
                 {/* Имя, бейдж и меню */}
@@ -1172,7 +1172,7 @@ export default function ProfilePage() {
                 {activeRole && (
                   <div
                     className={cn(
-                      'absolute -bottom-1.5 -right-1.5 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
+                      'absolute -bottom-2 -right-2 h-11 w-11 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
                       activeRole.bg
                     )}
                     title={activeRole.label}
