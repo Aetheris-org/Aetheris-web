@@ -793,14 +793,15 @@ export default function ProfilePage() {
       year: 'numeric',
     })
 
-  const normalizeRole = (val?: string | null) =>
-    typeof val === 'string' && val.trim().length > 0 ? val.trim().toLowerCase() : undefined
+  const normalizeRole = (val?: string | null) => {
+    if (typeof val !== 'string') return undefined
+    const cleaned = val.trim()
+    if (!cleaned) return undefined
+    return cleaned.toLowerCase().replace(/[\s-]+/g, '_')
+  }
 
   // Роль только из данных профиля/текущего пользователя, без принудительного fallback
-  const roleValue =
-    normalizeRole(profile?.user.role) ||
-    normalizeRole((currentUser as any)?.role) ||
-    undefined
+  const roleValue = normalizeRole(profile?.user.role) || normalizeRole((currentUser as any)?.role) || undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
@@ -808,14 +809,8 @@ export default function ProfilePage() {
     moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
     super_admin: { bg: 'bg-orange-500', label: t('roles.admin') },
   }
-  const hasAnyRole = Boolean(roleValue)
-  const activeRole =
-    roleValue && roleStyles[roleValue]
-      ? roleStyles[roleValue]
-      : roleValue
-      ? { bg: 'bg-muted-foreground', label: roleValue }
-      : null
-  const showRoleBadge = Boolean(activeRole && hasAnyRole)
+  const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
+  const showRoleBadge = Boolean(activeRole)
 
   if (!profileId && !isLoading) {
     return (
