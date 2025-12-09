@@ -84,7 +84,6 @@ import { useToast } from '@/components/ui/use-toast'
 import { RateLimitError } from '@/lib/errors'
 import { useTranslation } from '@/hooks/useTranslation'
 import { getRoleByUuid } from '@/config/admins'
-import { isAdminUuid } from '@/config/admins'
 import {
   mockAudienceInsights,
   mockContentMix,
