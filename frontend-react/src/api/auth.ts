@@ -108,7 +108,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const user: User = {
       id: profile.id ? uuidToNumber(profile.id) : 0,
       uuid: profile.id, // Сохраняем оригинальный UUID для запросов к базе 
-      nickname: profile.nickname || profile.username || '',
+      nickname: profile.username || '',
       email: '',
       avatar: profile.avatar || profile.avatar_url || undefined,
       tag: profile.tag || undefined,
