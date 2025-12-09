@@ -975,12 +975,12 @@ export default function ProfilePage() {
                   {activeRole && (
                     <div
                       className={cn(
-                        'absolute -bottom-1 -right-1 h-7 w-7 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
+                        'absolute -bottom-1 -right-1 h-8 w-8 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg translate-x-1 translate-y-1',
                         activeRole.bg
                       )}
                       title={activeRole.label}
                     >
-                      <Zap className="h-4 w-4" />
+                      <Zap className="h-4.5 w-4.5" />
                     </div>
                   )}
                 </div>
@@ -1158,12 +1158,12 @@ export default function ProfilePage() {
                 {activeRole && (
                   <div
                     className={cn(
-                      'absolute -bottom-1 -right-1 h-8 w-8 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
+                      'absolute -bottom-1 -right-1 h-9 w-9 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg translate-x-1 translate-y-1',
                       activeRole.bg
                     )}
                     title={activeRole.label}
                   >
-                    <Zap className="h-4 w-4" />
+                    <Zap className="h-4.5 w-4.5" />
                   </div>
                 )}
               </div>
