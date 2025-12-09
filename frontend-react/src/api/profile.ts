@@ -29,16 +29,14 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       throw new Error('User not found');
     }
 
-    // Если роль не вернулась (или null), пытаемся подтянуть только колонку role отдельно
-    if (profile && (profile as any).role === undefined) {
-      const { data: roleRow } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', profileUuid)
-        .single()
-      if (roleRow?.role) {
-        (profile as any).role = roleRow.role
-      }
+    // Всегда явно подтягиваем role, чтобы не потерять колонку из-за кеша/различий типов
+    const { data: roleRow } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', profileUuid)
+      .single()
+    if (roleRow?.role) {
+      (profile as any).role = roleRow.role
     }
 
     // Если username пуст, поднимаем его отдельным запросом по id
