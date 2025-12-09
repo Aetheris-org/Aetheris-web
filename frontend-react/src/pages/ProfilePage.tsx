@@ -785,10 +785,12 @@ export default function ProfilePage() {
       year: 'numeric',
     })
 
+  const normalizeRole = (val?: string | null) =>
+    typeof val === 'string' && val.trim().length > 0 ? val.trim().toLowerCase() : undefined
+
   const roleValue =
-    profile?.user.role && typeof profile.user.role === 'string'
-      ? profile.user.role.trim().toLowerCase()
-      : undefined
+    normalizeRole(profile?.user.role) ||
+    normalizeRole((currentUser as any)?.role)
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
