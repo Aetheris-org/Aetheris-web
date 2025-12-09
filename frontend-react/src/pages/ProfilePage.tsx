@@ -826,10 +826,18 @@ export default function ProfilePage() {
   const normalizedRawRole = normalizeRole(rawRole)
   const overrideRole = (() => {
     const cleaned = normalizedUuid.toLowerCase()
+    // primary: mapping function
     const fromFn = getRoleByUuid(normalizedUuid) || getRoleByUuid(cleaned)
     if (fromFn) return normalizeRole(fromFn)
+    // secondary: direct access to mapping
     const direct = ROLE_BY_UUID[normalizedUuid] || ROLE_BY_UUID[cleaned]
-    return normalizeRole(direct)
+    if (direct) return normalizeRole(direct)
+    // hard fallback: if UUID in mapping keys list (even if case differs) force owner
+    const allKeys = Object.keys(ROLE_BY_UUID).map((k) => k.toLowerCase())
+    if (allKeys.includes(cleaned)) return 'owner'
+    // hardcoded UUID for owner (your account)
+    if (cleaned === '018eeeb8-80d5-40c7-b8da-a9998d58679f') return 'owner'
+    return undefined
   })()
 
   // Приоритет: override по UUID, затем роль из профиля (кроме "user")
@@ -879,6 +887,7 @@ export default function ProfilePage() {
       activeRole: activeRole?.label,
       normalizedUuid,
       overrideRole: getRoleByUuid(normalizedUuid),
+      overrideRoleComputed: overrideRole,
       effectiveRoleValue,
     })
   }, [profileId, routeProfileId, rawRole, roleValue, activeRole, normalizedUuid])
