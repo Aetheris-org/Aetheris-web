@@ -820,7 +820,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading) {
-  return (
+    return (
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container flex h-16 items-center justify-between">
@@ -838,7 +838,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </header>
-      <div className="container py-10">
+        <div className="container py-10">
           <ProfileSkeleton />
         </div>
       </div>
