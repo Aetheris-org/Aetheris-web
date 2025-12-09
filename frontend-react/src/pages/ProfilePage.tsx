@@ -814,11 +814,26 @@ export default function ProfilePage() {
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
+    super_admin: { bg: 'bg-orange-500', label: t('roles.admin') },
     developer: { bg: 'bg-purple-500', label: t('roles.developer') },
     moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
-    super_admin: { bg: 'bg-orange-500', label: t('roles.admin') },
+    manager: { bg: 'bg-emerald-500', label: 'Manager' },
+    editor: { bg: 'bg-amber-500', label: 'Editor' },
+    writer: { bg: 'bg-pink-500', label: 'Writer' },
+    designer: { bg: 'bg-indigo-500', label: 'Designer' },
+    tester: { bg: 'bg-lime-500', label: 'Tester' },
+    support: { bg: 'bg-cyan-500', label: 'Support' },
   }
-  const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
+
+  const resolveRoleStyle = (val?: string | null) => {
+    if (!val) return null
+    if (val === 'user') return null // не показываем бейдж для обычных пользователей
+    if (roleStyles[val]) return roleStyles[val]
+    // fallback для новых ролей: серый бейдж с исходным именем роли
+    return { bg: 'bg-muted-foreground', label: val }
+  }
+
+  const activeRole = resolveRoleStyle(roleValue)
   const showRoleBadge = Boolean(activeRole)
 
   useEffect(() => {
