@@ -69,6 +69,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Callout } from '@/extensions/callout'
 import { Column, Columns, COLUMN_LAYOUTS, type ColumnPresetKey } from '@/extensions/columns'
 import { SmartInput } from '@/extensions/smart-input'
@@ -525,6 +526,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   ariaDescribedBy,
   jsonValue,
 }, ref) => {
+  const { t } = useTranslation()
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkValue, setLinkValue] = useState('')
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)

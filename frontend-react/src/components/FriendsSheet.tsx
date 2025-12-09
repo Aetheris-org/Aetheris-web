@@ -40,6 +40,7 @@ import {
   mockReceivedRequests,
   mockFriendStats,
 } from '@/data/friendsMockData'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface FriendsSheetProps {
   open: boolean
@@ -49,6 +50,7 @@ interface FriendsSheetProps {
 export function FriendsSheet({ open, onOpenChange }: FriendsSheetProps) {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
+  const { t } = useTranslation()
 
   // Filter friends
   const filteredFriends = useMemo(() => {
