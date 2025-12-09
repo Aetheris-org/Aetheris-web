@@ -816,9 +816,9 @@ export default function ProfilePage() {
   }
 
   const normalizedUuid =
-    cleanId(profile?.user.uuid) ||
     cleanId(routeProfileId) ||
     cleanId(profileId) ||
+    cleanId(profile?.user.uuid) ||
     cleanId(profile?.user.id?.toString()) ||
     cleanId((currentUser as any)?.uuid) ||
     ''
@@ -833,8 +833,9 @@ export default function ProfilePage() {
 
   // TEMP fallback: force owner if visiting own profile and override present
   const effectiveRoleValue =
+    overrideRole ||
     roleValue ||
-    (overrideRole ? 'owner' : undefined)
+    undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
@@ -872,7 +873,7 @@ export default function ProfilePage() {
       normalizedUuid,
       overrideRole: getRoleByUuid(normalizedUuid),
     })
-  }, [profileId, rawRole, roleValue, activeRole, normalizedUuid])
+  }, [profileId, routeProfileId, rawRole, roleValue, activeRole, normalizedUuid])
 
   if (!profileId && !isLoading) {
     return (
