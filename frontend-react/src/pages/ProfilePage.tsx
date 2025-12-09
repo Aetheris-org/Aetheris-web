@@ -1001,33 +1001,24 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                  {showRoleBadge && activeRole && (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge
-                            variant="default"
-                            className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
-                          >
-                            <Zap className="h-3.5 w-3.5" />
-                            <span className="truncate">{activeRole.label}</span>
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>{activeRole.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        <p>{activeRole.label}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                      {showRoleBadge && activeRole && (
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge
+                                variant="default"
+                                className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
+                              >
+                                <Zap className="h-3.5 w-3.5" />
+                                <span className="truncate">{activeRole.label}</span>
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>{activeRole.label}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
