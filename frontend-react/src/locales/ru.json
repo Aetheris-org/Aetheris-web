@@ -3251,6 +3251,7 @@
     "profileNotFoundDescription": "Не удалось определить, какой профиль показать. Попробуйте выбрать автора из списка статей.",
     "loadingError": "Ошибка загрузки",
     "loadingErrorDescription": "Не удалось загрузить профиль. Обновите страницу или попробуйте позже.",
+    "unknownNickname": "Неизвестный пользователь",
     "memberSince": "Участник с {date}",
     "articlesCount": "статей",
     "likesCount": "лайков",

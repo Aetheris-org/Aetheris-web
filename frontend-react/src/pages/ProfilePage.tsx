@@ -648,7 +648,7 @@ export default function ProfilePage() {
   const displayTag = profile?.user?.tag ?? (currentUser as any)?.tag ?? null
   const displayUsername = isOwnProfile
     ? currentUser?.nickname || (currentUser as any)?.username || currentUser?.email?.split('@')[0] || 'User'
-    : profile?.user.username || 'Unkown Nickname'
+    : profile?.user.username || t('profile.unknownNickname')
 
   useEffect(() => {
     setAvatarError(false)

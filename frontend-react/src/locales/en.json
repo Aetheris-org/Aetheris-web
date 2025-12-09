@@ -3275,6 +3275,7 @@
     "profileNotFoundDescription": "Could not determine which profile to show. Try selecting an author from the article list.",
     "loadingError": "Loading error",
     "loadingErrorDescription": "Failed to load profile. Refresh the page or try again later.",
+    "unknownNickname": "Unknown user",
     "memberSince": "Member since {date}",
     "articlesCount": "articles",
     "likesCount": "likes",
