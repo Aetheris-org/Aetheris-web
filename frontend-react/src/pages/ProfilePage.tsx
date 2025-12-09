@@ -776,7 +776,12 @@ export default function ProfilePage() {
   const contentMix = isOwnProfile ? mockContentMix : []
   const activityFeed = isOwnProfile ? mockActivityFeed : []
   const creatorGoals = isOwnProfile ? mockCreatorGoals : []
-  const quickActions = isOwnProfile ? mockQuickActions : []
+  const quickActions = isOwnProfile
+    ? mockQuickActions.map((action) => ({
+        ...action,
+        label: t(`profile.quickActions.actions.${action.id}`, { defaultValue: action.label }),
+      }))
+    : []
   const pinnedCollections = isOwnProfile ? mockPinnedCollections : []
 
   const formatDate = (date: string) =>

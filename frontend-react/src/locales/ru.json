@@ -3227,6 +3227,11 @@
     "xp": "XP",
     "xpRemaining": "Осталось: {xp} XP",
     "quickActions": "Быстрые действия",
+    "quickActions.actions": {
+      "action-1": "Создать статью",
+      "action-2": "Настройки профиля",
+      "action-3": "Мои черновики"
+    },
     "createArticle": "Создать статью",
     "settings": "Настройки",
     "drafts": "Черновики",

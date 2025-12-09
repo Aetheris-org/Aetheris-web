@@ -3251,6 +3251,11 @@
     "xp": "XP",
     "xpRemaining": "Remaining: {xp} XP",
     "quickActions": "Quick actions",
+    "quickActions.actions": {
+      "action-1": "Create article",
+      "action-2": "Profile settings",
+      "action-3": "My drafts"
+    },
     "createArticle": "Create article",
     "settings": "Settings",
     "drafts": "Drafts",
