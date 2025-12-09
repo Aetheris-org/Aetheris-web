@@ -817,6 +817,19 @@ export default function ProfilePage() {
   const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
   const showRoleBadge = Boolean(activeRole)
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      // Быстрая проверка, что прилетает из API и что отрисовываем
+      // eslint-disable-next-line no-console
+      console.debug('Profile role debug', {
+        profileId,
+        rawRole,
+        normalized: roleValue,
+        activeRole: activeRole?.label,
+      })
+    }
+  }, [profileId, rawRole, roleValue, activeRole])
+
   if (!profileId && !isLoading) {
     return (
       <div className="min-h-screen app-surface">
