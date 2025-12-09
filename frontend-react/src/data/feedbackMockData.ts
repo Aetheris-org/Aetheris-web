@@ -232,7 +232,7 @@ export const mockBugs: Feedback[] = [
     type: 'bug',
     title: 'Ошибка при сохранении черновика статьи',
     description: 'При попытке сохранить черновик статьи с большим количеством изображений (более 10) возникает ошибка 500. Консоль показывает проблему с размером payload.',
-    stepsToReproduce: '1. Создать новую статью\n2. Добавить более 10 изображений в редактор\n3. Нажать "Сохранить в черновик"\n4. Ошибка 500 появляется в консоли',
+    stepsToReproduce: '1. Create a new article\n2. Add more than 10 images to the editor\n3. Click "Save as draft"\n4. A 500 error appears in the console',
     status: 'in-progress',
     priority: 'high',
     author: {
@@ -258,7 +258,7 @@ export const mockBugs: Feedback[] = [
     type: 'bug',
     title: 'Пагинация не работает после применения фильтров',
     description: 'После применения фильтров по тегам и сложности, пагинация перестает работать корректно - показывает неправильное количество страниц и не переключается.',
-    stepsToReproduce: '1. Применить фильтр по тегу (например, "React")\n2. Применить фильтр по сложности (например, "medium")\n3. Попытаться переключиться на следующую страницу\n4. Пагинация не реагирует или показывает неправильное количество страниц',
+    stepsToReproduce: '1. Apply a tag filter (e.g., "React")\n2. Apply a difficulty filter (e.g., "medium")\n3. Try switching to the next page\n4. Pagination does not respond or shows wrong page count',
     status: 'open',
     priority: 'high',
     author: {

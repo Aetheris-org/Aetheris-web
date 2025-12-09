@@ -257,7 +257,7 @@ export default function FriendsPage() {
                   <div className="relative">
                     <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Поиск друзей..."
+                    placeholder={t('friends.search.placeholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
@@ -279,8 +279,8 @@ export default function FriendsPage() {
                   ) : (
                     <EmptyState
                       icon={Users}
-                      title="Друзья не найдены"
-                      description="Попробуйте изменить фильтры или поисковый запрос"
+                      title={t('friends.empty.friends.title')}
+                      description={t('friends.empty.friends.description')}
                     />
                   )}
                 </div>
@@ -312,8 +312,8 @@ export default function FriendsPage() {
                   ) : (
                     <EmptyState
                       icon={Clock}
-                      title="Нет входящих запросов"
-                      description="Когда кто-то отправит вам запрос, он появится здесь"
+                      title={t('friends.empty.incoming.title')}
+                      description={t('friends.empty.incoming.description')}
                       compact
                     />
                   )}
@@ -341,8 +341,8 @@ export default function FriendsPage() {
                   ) : (
                     <EmptyState
                       icon={Send}
-                      title="Нет исходящих запросов"
-                      description="Отправьте запрос, чтобы добавить друга"
+                    title={t('friends.empty.outgoing.title')}
+                    description={t('friends.empty.outgoing.description')}
                       compact
                     />
                   )}
@@ -387,7 +387,7 @@ export default function FriendsPage() {
                 <div className="relative">
                   <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Введите имя пользователя..."
+                    placeholder={t('friends.search.inputPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 sm:pl-10 h-9 sm:h-10 md:h-12 text-xs sm:text-sm"
@@ -405,15 +405,15 @@ export default function FriendsPage() {
                   ) : (
                     <EmptyState
                       icon={Search}
-                      title="Пользователи не найдены"
-                      description="Попробуйте изменить поисковый запрос"
+                    title={t('friends.empty.searchNoResults.title')}
+                    description={t('friends.empty.searchNoResults.description')}
                     />
                   )
                 ) : (
                   <EmptyState
                     icon={Search}
-                    title="Начните поиск"
-                    description="Введите имя пользователя для поиска"
+                    title={t('friends.empty.searchStart.title')}
+                    description={t('friends.empty.searchStart.description')}
                   />
                 )}
               </CardContent>
@@ -440,11 +440,11 @@ export default function FriendsPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState
-                    icon={Activity}
-                    title="Нет активности"
-                    description="Активность ваших друзей появится здесь"
-                  />
+                    <EmptyState
+                      icon={Activity}
+                      title={t('friends.empty.activity.title')}
+                      description={t('friends.empty.activity.description')}
+                    />
                 )}
               </CardContent>
             </Card>

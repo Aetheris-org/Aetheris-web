@@ -1443,7 +1443,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 id="image-alt"
                 value={imageAlt}
                 onChange={(event) => setImageAlt(event.target.value)}
-                placeholder="Описание изображения"
+                placeholder={t('editor.imageDescription')}
               />
             </div>
           </div>
@@ -1513,7 +1513,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                     id="anchor-text"
                     value={anchorText}
                     onChange={(event) => setAnchorText(event.target.value)}
-                    placeholder="Перейти к разделу"
+                    placeholder={t('editor.tocPlaceholder')}
                   />
                 </div>
               </>

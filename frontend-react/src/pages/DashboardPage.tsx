@@ -588,7 +588,7 @@ export default function DashboardPage() {
             </Button>
             <Dialog open={isCustomizing} onOpenChange={setIsCustomizing}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="icon" title="Настроить виджеты">
+                <Button variant="outline" size="icon" title={t('dashboard.configureWidgetsTooltip')}>
                   <Settings className="h-4 w-4" />
                 </Button>
               </DialogTrigger>

@@ -3877,12 +3877,64 @@
     }
   },
   "friends": {
-    "pageTitle": "Friends"
+    "pageTitle": "Friends",
+    "hero": {
+      "title": "Friends",
+      "subtitle": "Manage your friends and find new ones",
+      "cta": "Find friends"
+    },
+    "stats": {
+      "total": "Total friends",
+      "online": "Online",
+      "requests": "Requests",
+      "activity": "Activity"
+    },
+    "tabs": {
+      "friends": "Friends",
+      "requests": "Requests",
+      "search": "Search",
+      "activity": "Activity"
+    },
+    "search": {
+      "placeholder": "Search friends...",
+      "inputPlaceholder": "Enter username..."
+    },
+    "empty": {
+      "friends": {
+        "title": "No friends found",
+        "description": "Try changing filters or search query"
+      },
+      "incoming": {
+        "title": "No incoming requests",
+        "description": "When someone sends a request, it will appear here"
+      },
+      "outgoing": {
+        "title": "No outgoing requests",
+        "description": "Send a request to add a friend"
+      },
+      "searchNoResults": {
+        "title": "Users not found",
+        "description": "Try changing the search query"
+      },
+      "searchStart": {
+        "title": "Start searching",
+        "description": "Enter a username to search"
+      },
+      "activity": {
+        "title": "No activity",
+        "description": "Your friends' activity will appear here"
+      }
+    }
   },
   "dashboard": {
     "pageTitle": "Dashboard",
     "editMode": "Edit mode",
-    "editModeDescription": "You are in edit mode. Turn it off to interact with widgets."
+    "editModeDescription": "You are in edit mode. Turn it off to interact with widgets.",
+    "configureWidgetsTooltip": "Configure widgets"
+  },
+  "editor": {
+    "imageDescription": "Image description",
+    "tocPlaceholder": "Go to section"
   },
   "pricing": {
     "pageTitle": "Pricing",

@@ -116,7 +116,7 @@ export function FriendsSheet({ open, onOpenChange }: FriendsSheetProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Поиск друзей..."
+                placeholder={t('friends.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-9"
