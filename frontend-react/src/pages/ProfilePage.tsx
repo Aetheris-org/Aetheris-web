@@ -830,6 +830,11 @@ export default function ProfilePage() {
   const roleValue =
     overrideRole ||
     (normalizedRawRole && normalizedRawRole !== 'user' ? normalizedRawRole : overrideRole || undefined)
+
+  // TEMP fallback: force owner if visiting own profile and override present
+  const effectiveRoleValue =
+    roleValue ||
+    (overrideRole ? 'owner' : undefined)
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
@@ -852,7 +857,7 @@ export default function ProfilePage() {
     return { bg: 'bg-muted-foreground', label: val }
   }
 
-  const activeRole = resolveRoleStyle(roleValue)
+  const activeRole = resolveRoleStyle(effectiveRoleValue)
   const showRoleBadge = Boolean(activeRole)
 
   useEffect(() => {
