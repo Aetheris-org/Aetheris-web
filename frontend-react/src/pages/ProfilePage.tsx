@@ -975,7 +975,7 @@ export default function ProfilePage() {
                   </div>
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                       <div
                         className={cn(
                           'absolute -bottom-2 -right-2 h-10 w-10 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
@@ -1000,7 +1000,7 @@ export default function ProfilePage() {
                       <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger asChild>
+                      <TooltipTrigger>
                         <Badge
                           variant="default"
                           className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
@@ -1069,7 +1069,7 @@ export default function ProfilePage() {
                     {activeRole && (
                       <TooltipProvider delayDuration={0}>
                         <Tooltip>
-                          <TooltipTrigger asChild>
+                          <TooltipTrigger>
                             <Badge
                               variant="default"
                               className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
@@ -1194,7 +1194,7 @@ export default function ProfilePage() {
                 </div>
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                       <div
                         className={cn(
                           'absolute -bottom-2 -right-2 h-11 w-11 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-xl z-10',
@@ -1223,7 +1223,7 @@ export default function ProfilePage() {
                       {activeRole && (
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>
-                            <TooltipTrigger asChild>
+                            <TooltipTrigger>
                               <Badge variant="secondary" className="gap-1 h-6 px-2 py-0 text-xs shrink-0">
                                 <Zap className="h-3.5 w-3.5" />
                                 <span className="truncate">{activeRole.label}</span>
@@ -1251,7 +1251,7 @@ export default function ProfilePage() {
                     {activeRole && (
                       <TooltipProvider delayDuration={0}>
                         <Tooltip>
-                          <TooltipTrigger asChild>
+                          <TooltipTrigger>
                             <Badge
                               variant="default"
                               className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
