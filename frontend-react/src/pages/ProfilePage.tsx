@@ -1048,9 +1048,20 @@ export default function ProfilePage() {
                   {displayTag && (
                     <p className="text-xs text-muted-foreground truncate">@{displayTag}</p>
                   )}
-                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
-                    {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
-                  </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
+                      {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
+                    </Badge>
+                    {activeRole && (
+                      <Badge
+                        variant="default"
+                        className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        <span className="truncate">{activeRole.label}</span>
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1195,9 +1206,20 @@ export default function ProfilePage() {
                   {displayTag && (
                     <p className="text-xs sm:text-sm text-muted-foreground truncate">@{displayTag}</p>
                   )}
-                  <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
-                    {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
-                  </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
+                      {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
+                    </Badge>
+                    {activeRole && (
+                      <Badge
+                        variant="default"
+                        className="gap-1 h-6 px-2.5 py-0 text-xs shrink-0 ring-1 ring-background/60 shadow-sm"
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        <span className="truncate">{activeRole.label}</span>
+                      </Badge>
+                    )}
+                  </div>
                   {profile.user.bio && (
                     <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl break-words">{profile.user.bio}</p>
                   )}
