@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords } from 'lucide-react'
+import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -21,6 +21,11 @@ const destinationKeys = [
   { key: 'networking', icon: UsersRound, path: '/networking' },
   { key: 'courses', icon: GraduationCap, path: '/courses' },
   { key: 'developers', icon: Code2, path: '/developers' },
+]
+
+const communityLinks = [
+  { key: 'discord', icon: MessageCircle, href: 'https://discord.gg/aetheris' },
+  { key: 'telegram', icon: Send, href: 'https://t.me/aetheris' },
 ]
 
 interface SiteHeaderProps {
@@ -119,6 +124,44 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {!isLandingPage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
+                  aria-label={t('header.community')}
+                >
+                  <Share2 className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t('header.community')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t('header.communityLinks')}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {communityLinks.map((link) => {
+                  const Icon = link.icon
+                  return (
+                    <DropdownMenuItem key={link.key} asChild>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{t(`header.${link.key}`)}</span>
+                      </a>
+                    </DropdownMenuItem>
+                  )
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {isLandingPage && (
             <Button
               size="sm"

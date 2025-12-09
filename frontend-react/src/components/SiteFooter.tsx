@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Github, Twitter, Mail, Heart, Code2, MessageSquare, UsersRound, GraduationCap, ChevronUp } from 'lucide-react'
+import { Github, Twitter, Mail, Heart, Code2, MessageSquare, UsersRound, GraduationCap, ChevronUp, Send, MessageCircle } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -38,9 +38,11 @@ export function SiteFooter() {
   ]
 
   const contactItems = [
+    { icon: MessageCircle, label: t('footer.discord'), href: 'https://discord.gg/aetheris' },
+    { icon: Send, label: t('footer.telegram'), href: 'https://t.me/aetheris' },
     { icon: Github, label: 'GitHub', href: 'https://github.com' },
     { icon: Twitter, label: 'Twitter', href: 'https://twitter.com' },
-    { icon: Mail, label: 'Email', href: 'mailto:contact@aetheris.com' },
+    { icon: Mail, label: t('footer.email'), href: 'mailto:contact@aetheris.com' },
   ]
 
   return (

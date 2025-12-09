@@ -2585,7 +2585,11 @@
     "exploreDescription": "Дуэли, войны кланов, таблицы лидеров и эпические события.",
     "networkingDescription": "Возможности, менторы и проверенные команды-партнеры.",
     "coursesDescription": "Руководящие треки, воркшопы и обучение в когортах.",
-    "developersDescription": "Инструменты, журнал изменений и плейбуки интеграции."
+    "developersDescription": "Инструменты, журнал изменений и плейбуки интеграции.",
+    "community": "Сообщество",
+    "communityLinks": "Ссылки сообщества",
+    "discord": "Discord",
+    "telegram": "Telegram"
   },
   "explore": {
     "title": "Исследовать",
@@ -3206,6 +3210,9 @@
     "navigation": "Навигация",
     "resources": "Ресурсы",
     "contacts": "Контакты",
+    "discord": "Discord",
+    "telegram": "Telegram",
+    "email": "Email",
     "poweredBy": "Powered by",
     "passion": "passion"
   },

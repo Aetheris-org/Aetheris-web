@@ -2603,7 +2603,11 @@
     "exploreDescription": "Duels, clan wars, leaderboards, and epic events.",
     "networkingDescription": "Opportunities, mentors, and verified partner teams.",
     "coursesDescription": "Guided tracks, workshops, and cohort-based learning.",
-    "developersDescription": "Toolkits, changelog, and integration playbooks."
+    "developersDescription": "Toolkits, changelog, and integration playbooks.",
+    "community": "Community",
+    "communityLinks": "Community links",
+    "discord": "Discord",
+    "telegram": "Telegram"
   },
   "explore": {
     "title": "Explore",
@@ -3230,6 +3234,9 @@
     "navigation": "Navigation",
     "resources": "Resources",
     "contacts": "Contacts",
+    "discord": "Discord",
+    "telegram": "Telegram",
+    "email": "Email",
     "poweredBy": "Powered by",
     "passion": "passion"
   },
