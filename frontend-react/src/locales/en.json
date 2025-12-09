@@ -3307,6 +3307,12 @@
     "subscribedDescription": "You are now subscribed to this author",
     "unsubscribeDescription": "Subscription removed"
   },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "moderator": "Moderator",
+    "developer": "Developer"
+  },
   "trending": {
     "title": "Trending",
     "pageTitle": "Trending",

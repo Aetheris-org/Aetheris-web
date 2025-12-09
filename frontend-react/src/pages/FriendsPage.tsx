@@ -131,14 +131,14 @@ export default function FriendsPage() {
         <div className="space-y-3 sm:space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Друзья</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('friends.hero.title')}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Управляйте своими друзьями и находите новых
+                {t('friends.hero.subtitle')}
               </p>
             </div>
             <Button className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm w-full sm:w-auto" onClick={() => setActiveTab('search')}>
               <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Найти друзей
+              {t('friends.hero.cta')}
             </Button>
           </div>
 
@@ -146,19 +146,19 @@ export default function FriendsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
               icon={Users}
-              label="Всего друзей"
+              label={t('friends.stats.total')}
               value={stats.totalFriends}
               variant="default"
             />
             <StatCard
               icon={Activity}
-              label="Онлайн"
+              label={t('friends.stats.online')}
               value={stats.onlineFriends}
               variant="success"
             />
             <StatCard
               icon={Clock}
-              label="Запросы"
+              label={t('friends.stats.requests')}
               value={stats.pendingRequests}
               variant="warning"
               onClick={() => setActiveTab('requests')}
@@ -166,7 +166,7 @@ export default function FriendsPage() {
             />
             <StatCard
               icon={TrendingUp}
-              label="Активность"
+              label={t('friends.stats.activity')}
               value={stats.recentActivity}
               variant="info"
               onClick={() => setActiveTab('activity')}
@@ -184,7 +184,7 @@ export default function FriendsPage() {
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
               >
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="hidden sm:inline truncate">Друзья</span>
+                <span className="hidden sm:inline truncate">{t('friends.tabs.friends')}</span>
                 <Badge variant="secondary" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
                 {stats.totalFriends}
               </Badge>
@@ -194,7 +194,7 @@ export default function FriendsPage() {
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
               >
                 <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="hidden sm:inline truncate">Запросы</span>
+                <span className="hidden sm:inline truncate">{t('friends.tabs.requests')}</span>
               {stats.pendingRequests > 0 && (
                   <Badge variant="default" className="ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5">
                   {stats.pendingRequests}
@@ -206,14 +206,14 @@ export default function FriendsPage() {
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
               >
                 <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="hidden sm:inline truncate">Поиск</span>
+                <span className="hidden sm:inline truncate">{t('friends.tabs.search')}</span>
             </TabsTrigger>
               <TabsTrigger 
                 value="activity" 
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2"
               >
                 <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="hidden sm:inline truncate">Активность</span>
+                <span className="hidden sm:inline truncate">{t('friends.tabs.activity')}</span>
             </TabsTrigger>
           </TabsList>
           </div>

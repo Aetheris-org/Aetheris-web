@@ -785,6 +785,15 @@ export default function ProfilePage() {
       year: 'numeric',
     })
 
+  const role = profile?.user.role?.toLowerCase()
+  const roleStyles: Record<string, { bg: string; label: string }> = {
+    owner: { bg: 'bg-red-500', label: t('roles.owner') },
+    admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
+    developer: { bg: 'bg-purple-500', label: t('roles.developer') },
+    moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
+  }
+  const activeRole = role && roleStyles[role] ? roleStyles[role] : null
+
   if (!profileId && !isLoading) {
     return (
       <div className="min-h-screen app-surface">
@@ -949,6 +958,17 @@ export default function ProfilePage() {
                   >
                     {(displayUsername || 'U').charAt(0).toUpperCase()}
                   </div>
+                  {activeRole && (
+                    <div
+                      className={cn(
+                        'absolute -bottom-1 -right-1 h-7 w-7 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
+                        activeRole.bg
+                      )}
+                      title={activeRole.label}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Имя, бейдж и меню */}
@@ -1113,6 +1133,17 @@ export default function ProfilePage() {
                 >
                   {(displayUsername || 'U').charAt(0).toUpperCase()}
                 </div>
+                {activeRole && (
+                  <div
+                    className={cn(
+                      'absolute -bottom-1 -right-1 h-8 w-8 rounded-full ring-2 ring-background flex items-center justify-center text-white shadow-lg',
+                      activeRole.bg
+                    )}
+                    title={activeRole.label}
+                  >
+                    <Zap className="h-4 w-4" />
+                  </div>
+                )}
               </div>
 
               {/* Основная информация */}

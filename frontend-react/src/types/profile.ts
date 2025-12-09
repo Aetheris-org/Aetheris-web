@@ -45,6 +45,7 @@ export interface UserProfile {
     memberSince: string
     avatarUrl?: string | null
     coverImageUrl?: string | null
+    role?: string
   }
   stats: ProfileStats
   highlights: ProfileHighlights

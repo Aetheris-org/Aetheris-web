@@ -181,6 +181,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         id: profile.id ? uuidToNumber(profile.id) : 0,
         uuid: profile.id,
         username: profile.username || '',
+        role: (profile as any).role || undefined,
         tag: normalizedTag ?? undefined,
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
