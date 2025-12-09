@@ -138,7 +138,7 @@ function LevelCard({
   xpRequired: number
   streak: number
 }) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   return (
     <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
@@ -564,17 +564,18 @@ export default function ProfilePage() {
       const waitTime = error.waitTime
       if (waitTime > 0) {
         toast({
-          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
-          description: waitTime === 1
-            ? t('common.waitOneSecond') || 'Подождите 1 секунду перед следующим действием'
-            : t('common.waitSeconds', { seconds: waitTime }) || `Подождите ${waitTime} секунд перед следующим действием`,
+          title: t('common.rateLimitExceeded'),
+          description:
+            waitTime === 1
+              ? t('common.waitOneSecond')
+              : t('common.waitSeconds', { seconds: waitTime }),
           variant: 'destructive',
           dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
         })
       } else {
         toast({
-          title: t('common.rateLimitExceeded') || 'Слишком много запросов',
-          description: t('common.waitAMoment') || 'Вы слишком часто отправляете запросы. Подождите немного.',
+          title: t('common.rateLimitExceeded'),
+          description: t('common.waitAMoment'),
           variant: 'destructive',
           dedupeKey: 'rate-limit', // Дедупликация для rate limit тостов
         })
@@ -668,8 +669,8 @@ export default function ProfilePage() {
     mutationFn: () => followUser(profileId!),
     onSuccess: () => {
       toast({
-        title: t('profile.followed') || 'Подписка оформлена',
-        description: t('profile.followedDescription') || 'Вы подписались на этого пользователя',
+        title: t('profile.followed'),
+        description: t('profile.followedDescription'),
       })
       // Обновляем статус подписки
       queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.uuid] })
@@ -680,8 +681,8 @@ export default function ProfilePage() {
       }
       logger.error('Failed to follow user:', error)
       toast({
-        title: t('common.error') || 'Ошибка',
-        description: error?.response?.data?.error?.message || t('profile.followError') || 'Не удалось подписаться',
+        title: t('common.error'),
+        description: error?.response?.data?.error?.message || t('profile.followError'),
         variant: 'destructive',
       })
     },
@@ -694,8 +695,8 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       toast({
-        title: t('profile.unfollowed') || 'Отписка оформлена',
-        description: t('profile.unfollowedDescription') || 'Вы отписались от этого пользователя',
+        title: t('profile.unfollowed'),
+        description: t('profile.unfollowedDescription'),
       })
       // Обновляем статус подписки
       queryClient.invalidateQueries({ queryKey: ['follow-status', profileId, currentUser?.uuid] })
@@ -706,8 +707,8 @@ export default function ProfilePage() {
       }
       logger.error('Failed to unfollow user:', error)
       toast({
-        title: t('common.error') || 'Ошибка',
-        description: error?.response?.data?.error?.message || t('profile.unfollowError') || 'Не удалось отписаться',
+        title: t('common.error'),
+        description: error?.response?.data?.error?.message || t('profile.unfollowError'),
         variant: 'destructive',
       })
     },
@@ -779,7 +780,7 @@ export default function ProfilePage() {
   const pinnedCollections = isOwnProfile ? mockPinnedCollections : []
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('ru-RU', {
+    new Date(date).toLocaleDateString(language === 'en' ? 'en-US' : 'ru-RU', {
       month: 'long',
       year: 'numeric',
     })
@@ -1003,7 +1004,7 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground truncate">@{displayTag}</p>
                   )}
                   <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
-                    {formatDate(profile.user.memberSince)}
+                    {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
                   </Badge>
                 </div>
               </div>
@@ -1080,12 +1081,12 @@ export default function ProfilePage() {
                     {followStatus ? (
                       <>
                         <UserMinus className="h-3.5 w-3.5" />
-                        <span className="truncate">{t('profile.unsubscribe') || 'Отписаться'}</span>
+                        <span className="truncate">{t('profile.unsubscribe')}</span>
                         </>
                       ) : (
                         <>
                         <UserPlus className="h-3.5 w-3.5" />
-                        <span className="truncate">{t('profile.subscribe') || 'Подписаться'}</span>
+                        <span className="truncate">{t('profile.subscribe')}</span>
                         </>
                       )}
                     </Button>
@@ -1246,13 +1247,13 @@ export default function ProfilePage() {
                       {followStatus ? (
                         <>
                           <UserMinus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('profile.unsubscribe') || 'Отписаться'}</span>
+                          <span className="hidden sm:inline">{t('profile.unsubscribe')}</span>
                           <span className="sm:hidden">-</span>
                         </>
                       ) : (
                         <>
                           <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('profile.subscribe') || 'Подписаться'}</span>
+                          <span className="hidden sm:inline">{t('profile.subscribe')}</span>
                           <span className="sm:hidden">+</span>
                         </>
                       )}
