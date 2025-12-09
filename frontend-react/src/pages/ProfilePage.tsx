@@ -802,7 +802,6 @@ export default function ProfilePage() {
 
   const rawRole =
     profile?.user.role ??
-    (profile as any)?.role ??
     (currentUser as any)?.role ??
     undefined
 
