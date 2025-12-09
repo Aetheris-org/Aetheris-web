@@ -823,21 +823,21 @@ export default function ProfilePage() {
   return (
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
+          <div className="container flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
                 {t('common.back')}
-          </Button>
+              </Button>
               <Separator orientation="vertical" className="h-6" />
               <h1 className="text-lg font-semibold">{t('profile.pageTitle')}</h1>
             </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <AccountSheet />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <AccountSheet />
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
       <div className="container py-10">
           <ProfileSkeleton />
         </div>
@@ -850,7 +850,6 @@ export default function ProfilePage() {
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container flex h-16 items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               {t('common.back')}
