@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
+import { supabase as supabaseClient } from '@/lib/supabase'
 import { uploadImage } from '@/lib/upload'
 import { updateProfile } from '@/api/profile'
 import { useThemeStore } from '@/stores/themeStore'
@@ -183,7 +184,7 @@ export default function OnboardingPage() {
       }
       // Ставим флаг в user_metadata, чтобы не показывать онбординг повторно даже без localStorage
       try {
-        await supabase.auth.updateUser({
+        await supabaseClient.auth.updateUser({
           data: { onboarding_completed: true },
         })
       } catch (err) {

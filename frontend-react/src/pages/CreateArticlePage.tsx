@@ -2463,7 +2463,6 @@ export default function CreateArticlePage() {
               const StepIcon = step.icon
               const isActive = currentStep === step.id
               const isCompleted = currentStep > step.id
-              const isUpcoming = currentStep < step.id
               const canNavigate = true // свободная навигация между шагами
               const stepNumber = index + 1
 

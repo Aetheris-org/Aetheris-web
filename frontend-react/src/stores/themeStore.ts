@@ -559,9 +559,9 @@ const SURFACE_STYLE_VALUES: SurfaceStyle[] = [
 ]
 
 const DEFAULT_PREFERENCES: StoredPreferences = {
-  theme: 'dark',
+  theme: 'system',
   accent: 'pure',
-  surface: 'carbon',
+  surface: 'obsidian',
   radius: 0.5,
   customAccent: DEFAULT_CUSTOM_ACCENT,
   typography: 'default',
