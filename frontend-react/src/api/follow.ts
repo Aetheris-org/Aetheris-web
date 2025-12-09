@@ -136,8 +136,7 @@ export async function getFollowing(userId: string): Promise<any[]> {
         following:profiles!follows_following_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .eq('follower_id', validatedUserId);
@@ -168,8 +167,7 @@ export async function getFollowers(userId: string): Promise<any[]> {
         follower:profiles!follows_follower_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .eq('following_id', validatedUserId);

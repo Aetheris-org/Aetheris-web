@@ -45,8 +45,7 @@ export async function getBookmarks(skip: number = 0, take: number = 100): Promis
           author:profiles!articles_author_id_fkey (
             id,
             username,
-            avatar,
-            name
+            avatar
           )
         )
       `)

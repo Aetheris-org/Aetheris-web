@@ -37,8 +37,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         ),
         comments:comments!comments_article_id_fkey (
           id

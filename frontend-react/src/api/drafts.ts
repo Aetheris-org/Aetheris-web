@@ -25,8 +25,7 @@ export async function getDrafts(skip: number = 0, take: number = 100): Promise<A
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .eq('author_id', user.id)
@@ -64,8 +63,7 @@ export async function getDraft(id: string): Promise<Article> {
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .eq('id', parseInt(id))
@@ -124,8 +122,7 @@ export async function createDraft(data: {
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .single();
@@ -199,8 +196,7 @@ export async function updateDraft(
         author:profiles!articles_author_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .single();

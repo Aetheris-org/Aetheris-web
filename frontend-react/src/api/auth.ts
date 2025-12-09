@@ -10,7 +10,6 @@ export interface SupabaseUser {
   id: string;
   email: string;
   username: string;
-  name?: string;
   avatar?: string;
   bio?: string;
   cover_image?: string;
@@ -182,8 +181,7 @@ export async function signIn(email: string, password: string): Promise<{ success
 export async function signUp(
   email: string,
   password: string,
-  username: string,
-  name: string
+  username: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
     // Регистрируем пользователя в Supabase Auth
@@ -193,7 +191,6 @@ export async function signUp(
       options: {
         data: {
           username,
-          name,
         },
       },
     });
