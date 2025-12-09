@@ -72,20 +72,20 @@ export function ArticleCardSquare({
       onMouseEnter={onMouseEnter}
     >
       <div className="relative w-full overflow-hidden border-b border-border/40 bg-muted/10">
-        <div className="aspect-video w-full">
+          <div className="aspect-video w-full">
           {article.previewImage ? (
-            <img
-              src={article.previewImage}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.style.display = 'none'
+          <img
+            src={article.previewImage}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
                 const placeholder = target.nextElementSibling as HTMLDivElement | null
                 if (placeholder) placeholder.style.display = 'flex'
-              }}
-            />
+            }}
+          />
           ) : null}
           <div
             className={`${article.previewImage ? 'hidden' : 'flex'} h-full w-full items-center justify-center bg-muted text-muted-foreground text-xs`}
@@ -151,10 +151,10 @@ export function ArticleCardSquare({
               (article as any).views_count ??
               0
             return (
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1">
+              <TrendingUp className="h-3.5 w-3.5" />
                 <span className="font-medium">{viewsCount}</span>
-              </div>
+            </div>
             )
           })()}
         </div>

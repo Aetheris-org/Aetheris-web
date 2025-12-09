@@ -300,7 +300,7 @@ export default function CreateArticlePage() {
               navigate('/forum')
               return
             }
-
+            
             setArticleToEdit(article)
             setTitle(article.title)
             setExcerpt(article.excerpt || '')
@@ -2250,23 +2250,23 @@ export default function CreateArticlePage() {
         }
 
         publishedArticle = await updateArticle(editingTargetId, {
-          ...articleData,
+                ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
-        })
+              })
         wasUpdated = true
       } else if (draftId) {
         // Обновляем по draftId (обратная совместимость)
         publishedArticle = await updateArticle(String(draftId), {
-          ...articleData,
-          publishedAt: new Date().toISOString(),
+                ...articleData,
+                publishedAt: new Date().toISOString(),
         })
         wasUpdated = true
       } else {
         // Создаем новую статью
         publishedArticle = await createArticle({
-          ...articleData,
-          publishedAt: new Date().toISOString(),
-        })
+            ...articleData,
+            publishedAt: new Date().toISOString(),
+          })
       }
       
       // После успешной публикации инвалидируем кэш списка и трендовых статей,

@@ -3,7 +3,7 @@
 // Example: '018eeeb8-80d5-40c7-b8da-a99900000000'
 export const ROLE_BY_UUID: Record<string, string> = {
   // owner
-  // '018eeeb8-80d5-40c7-b8da-a99900000000': 'owner',
+  '018eeeb8-80d5-40c7-b8da-a9998d58679f': 'owner',
 
   // admin
   // '018eeeb8-80d5-40c7-b8da-a99900000001': 'admin',
