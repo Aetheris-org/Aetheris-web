@@ -29,6 +29,18 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       throw new Error('User not found');
     }
 
+    // Если username пуст, поднимаем его отдельным запросом по id
+    if (!profile.username) {
+      const { data: usernameRow } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', profileUuid)
+        .single();
+      if (usernameRow?.username) {
+        (profile as any).username = usernameRow.username;
+      }
+    }
+
     // Получаем статьи пользователя
     const { data: articles, error: articlesError } = await supabase
       .from('articles')
