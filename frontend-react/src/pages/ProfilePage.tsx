@@ -807,7 +807,13 @@ export default function ProfilePage() {
     (currentUser as any)?.role ??
     undefined
 
-  const normalizedUuid = profile?.user.uuid || profile?.user.id?.toString() || ''
+  const normalizedUuid =
+    profile?.user.uuid ||
+    routeProfileId ||
+    profileId ||
+    profile?.user.id?.toString() ||
+    (currentUser as any)?.uuid ||
+    ''
 
   // Берем роль из профиля, иначе — фронтовый override по UUID
   const roleValue = normalizeRole(rawRole) || normalizeRole(getRoleByUuid(normalizedUuid))
@@ -842,9 +848,12 @@ export default function ProfilePage() {
       // eslint-disable-next-line no-console
       console.debug('Profile role debug', {
         profileId,
+        routeProfileId,
         rawRole,
         normalized: roleValue,
         activeRole: activeRole?.label,
+        normalizedUuid,
+        overrideRole: getRoleByUuid(normalizedUuid),
       })
     }
   }, [profileId, rawRole, roleValue, activeRole])
