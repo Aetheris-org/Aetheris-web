@@ -850,7 +850,8 @@ export default function ProfilePage() {
       <div className="min-h-screen app-surface">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
           <div className="container flex h-16 items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               {t('common.back')}
             </Button>
@@ -869,7 +870,7 @@ export default function ProfilePage() {
                 {t('profile.loadingErrorDescription')}
               </p>
               <div className="flex justify-center gap-2">
-                <Button variant="outline" onClick={() => navigate(-1)}>
+                <Button variant="outline" onClick={() => navigate('/forum')}>
                   {t('common.back')}
                 </Button>
                 <Button onClick={() => navigate('/')}>{t('common.back')}</Button>
@@ -888,7 +889,7 @@ export default function ProfilePage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/forum')} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 shrink-0">
               <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{t('common.back')}</span>
             </Button>

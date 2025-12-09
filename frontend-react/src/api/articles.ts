@@ -348,23 +348,32 @@ export async function getArticle(id: string): Promise<Article> {
 
     const articleId = normalizeId(id);
 
-    // Используем Database Function для получения статьи с деталями
-    const { data, error } = await supabase.rpc('get_article_with_details', {
-      p_article_id: articleId,
-      p_user_id: userId || null,
-      p_increment_views: true,
-    });
+    // Получаем статью напрямую через select, без RPC (RPC требует поля name)
+    const { data, error } = await supabase
+      .from('articles')
+      .select(
+        `
+          *,
+          author:profiles!articles_author_id_fkey (
+            id,
+            username,
+            avatar
+          )
+        `
+      )
+      .eq('id', articleId)
+      .single()
 
     if (error) {
-      logger.error('Error fetching article', error);
-      throw error;
+      logger.error('Error fetching article', error)
+      throw error
     }
 
-    if (!data || data.length === 0) {
-      throw new Error('Article not found');
+    if (!data) {
+      throw new Error('Article not found')
     }
 
-    return transformArticle(data[0], userId);
+    return transformArticle(data, userId)
   } catch (error: any) {
     logger.error('Error in getArticle', error);
     throw error;
