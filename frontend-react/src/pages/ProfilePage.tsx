@@ -795,11 +795,11 @@ export default function ProfilePage() {
   const normalizeRole = (val?: string | null) =>
     typeof val === 'string' && val.trim().length > 0 ? val.trim().toLowerCase() : undefined
 
-  // TEMP: show owner badge for testing when role not provided
+  // Берем роль только из профиля/текущего пользователя без заглушек
   const roleValue =
     normalizeRole(profile?.user.role) ||
     normalizeRole((currentUser as any)?.role) ||
-    'owner'
+    undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
