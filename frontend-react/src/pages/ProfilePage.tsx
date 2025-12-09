@@ -777,10 +777,12 @@ export default function ProfilePage() {
   const activityFeed = isOwnProfile ? mockActivityFeed : []
   const creatorGoals = isOwnProfile ? mockCreatorGoals : []
   const quickActions = isOwnProfile
-    ? mockQuickActions.map((action) => ({
-        ...action,
-        label: t(`profile.quickActions.actions.${action.id}`, { defaultValue: action.label }),
-      }))
+    ? mockQuickActions.map((action) => {
+        const key = `profile.quickActions.actions.${action.id}`
+        const translated = t(key)
+        const label = translated === key ? action.label : translated
+        return { ...action, label }
+      })
     : []
   const pinnedCollections = isOwnProfile ? mockPinnedCollections : []
 
