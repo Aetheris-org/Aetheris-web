@@ -138,7 +138,7 @@ function LevelCard({
   xpRequired: number
   streak: number
 }) {
-  const { t, language } = useTranslation()
+  const { t } = useTranslation()
   return (
     <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
@@ -557,6 +557,7 @@ export default function ProfilePage() {
   const location = useLocation()
   const { user: currentUser } = useAuthStore()
   const { toast } = useToast()
+  const { t, language } = useTranslation()
 
   // Helper функция для обработки RateLimitError
   const handleRateLimitError = (error: any) => {
@@ -584,7 +585,6 @@ export default function ProfilePage() {
     }
     return false
   }
-  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'articles' | 'comments' | 'bookmarks'>('articles')
