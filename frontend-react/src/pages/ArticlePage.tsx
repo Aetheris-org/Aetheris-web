@@ -259,6 +259,14 @@ export default function ArticlePage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 
+  const authorName = useMemo(
+    () =>
+      article?.author?.nickname?.trim() ||
+      article?.author?.username?.trim() ||
+      'User',
+    [article?.author?.nickname, article?.author?.username]
+  )
+
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
   useEffect(() => {
     if (user?.id && id) {
@@ -2090,10 +2098,10 @@ export default function ArticlePage() {
               >
                 <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
                   {article.author.avatar ? (
-                    <AvatarImage src={article.author.avatar} alt={article.author.username} />
+                    <AvatarImage src={article.author.avatar} alt={authorName} />
                   ) : null}
                   <AvatarFallback className="text-[10px] sm:text-xs">
-                    {article.author.username
+                    {authorName
                       .split(' ')
                       .map((word) => word[0])
                       .join('')
@@ -2101,7 +2109,7 @@ export default function ArticlePage() {
                       .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-medium hover:underline text-xs sm:text-sm">{article.author.username}</span>
+                <span className="font-medium hover:underline text-xs sm:text-sm">{authorName}</span>
               </button>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />

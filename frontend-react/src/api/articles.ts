@@ -170,6 +170,8 @@ export function transformArticle(article: any, _userId?: string): Article {
     : {
         id: article.author_id,
         username: article.author_username || '',
+        nickname: article.author_nickname || '',
+        tag: article.author_tag || '',
         avatar: null,
       };
 
@@ -196,6 +198,8 @@ export function transformArticle(article: any, _userId?: string): Article {
       id: authorId, // UUID из базы данных
       uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
       username: author.username || '',
+      nickname: author.nickname || '',
+      tag: author.tag || '',
       avatar: author.avatar || null,
     },
     previewImage: article.preview_image || article.previewImage || article.cover_url || null,
@@ -357,6 +361,8 @@ export async function getArticle(id: string): Promise<Article> {
           author:profiles!articles_author_id_fkey (
             id,
             username,
+            nickname,
+            tag,
             avatar
           )
         `
@@ -425,6 +431,8 @@ export async function createArticle(input: {
         author:profiles!articles_author_id_fkey (
           id,
           username,
+          nickname,
+          tag,
           avatar
         )
       `)
@@ -803,6 +811,8 @@ export async function getTrendingArticles(
           author:profiles!articles_author_id_fkey (
             id,
             username,
+            nickname,
+            tag,
             avatar
           )
         `

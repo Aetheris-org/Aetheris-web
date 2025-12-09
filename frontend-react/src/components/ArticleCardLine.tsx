@@ -2,6 +2,7 @@ import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
+import { useMemo } from 'react'
 
 interface ArticleCardLineProps {
   article: Article
@@ -16,6 +17,13 @@ export function ArticleCardLine({
   onArticleClick,
   onMouseEnter,
 }: ArticleCardLineProps) {
+  const authorName = useMemo(
+    () =>
+      article.author.nickname?.trim() ||
+      article.author.username?.trim() ||
+      'User',
+    [article.author.nickname, article.author.username]
+  )
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -103,7 +111,7 @@ export function ArticleCardLine({
             </h3>
 
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="font-medium">{article.author.username || 'User'}</span>
+              <span className="font-medium">{authorName}</span>
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 <span>{formatDate(article.createdAt)}</span>

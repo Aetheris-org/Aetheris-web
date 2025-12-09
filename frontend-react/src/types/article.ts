@@ -1,6 +1,9 @@
 export interface Author {
   id: number | string // Может быть UUID (string) или числовой ID
   username: string
+  nickname?: string
+  tag?: string
+  avatar?: string
 }
 
 export interface Article {
@@ -14,6 +17,8 @@ export interface Article {
     id: number | string // Может быть UUID (string) или числовой ID
     uuid?: string // UUID для навигации к профилю
     username: string
+    nickname?: string
+    tag?: string
     avatar?: string
   }
   tags: string[]

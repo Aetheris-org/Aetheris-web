@@ -20,6 +20,10 @@ export function ArticleCard({
   hidePreview = false,
 }: ArticleCardProps) {
   const { t } = useTranslation()
+  const authorName =
+    article.author.nickname?.trim() ||
+    article.author.username?.trim() ||
+    'User'
 
   // Map old difficulty values to new ones for backward compatibility
   const getDifficultyKey = (difficulty: string | undefined): string => {
@@ -133,7 +137,7 @@ export function ArticleCard({
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
-              <span className="font-medium">{article.author.username || 'User'}</span>
+              <span className="font-medium">{authorName}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
