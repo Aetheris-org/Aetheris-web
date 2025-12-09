@@ -806,9 +806,16 @@ export default function ProfilePage() {
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
     developer: { bg: 'bg-purple-500', label: t('roles.developer') },
     moderator: { bg: 'bg-sky-400', label: t('roles.moderator') },
+    super_admin: { bg: 'bg-orange-500', label: t('roles.admin') },
   }
-  const activeRole = roleValue && roleStyles[roleValue] ? roleStyles[roleValue] : null
-  const showRoleBadge = Boolean(activeRole)
+  const hasAnyRole = Boolean(roleValue)
+  const activeRole =
+    roleValue && roleStyles[roleValue]
+      ? roleStyles[roleValue]
+      : roleValue
+      ? { bg: 'bg-muted-foreground', label: roleValue }
+      : null
+  const showRoleBadge = Boolean(activeRole && hasAnyRole)
 
   if (!profileId && !isLoading) {
     return (
