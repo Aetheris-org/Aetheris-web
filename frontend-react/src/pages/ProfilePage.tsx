@@ -989,7 +989,15 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h1 className="text-lg font-bold tracking-tight truncate">{displayUsername}</h1>
+                      {activeRole && (
+                        <Badge variant="secondary" className="gap-1 h-5 px-2 py-0 text-[10px] shrink-0">
+                          <Zap className="h-3 w-3" />
+                          <span className="truncate">{activeRole.label}</span>
+                        </Badge>
+                      )}
+                    </div>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
                         <span>{level}</span>
@@ -1165,7 +1173,17 @@ export default function ProfilePage() {
                 {/* Верхняя строка: имя и бейджи */}
                 <div className="flex flex-col gap-2 sm:gap-3">
                   <div className="flex flex-wrap items-center gap-2 min-w-0">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">{displayUsername}</h1>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">
+                        {displayUsername}
+                      </h1>
+                      {activeRole && (
+                        <Badge variant="secondary" className="gap-1 h-6 px-2 py-0 text-xs shrink-0">
+                          <Zap className="h-3.5 w-3.5" />
+                          <span className="truncate">{activeRole.label}</span>
+                        </Badge>
+                      )}
+                    </div>
                     <Badge variant="default" className="gap-1 shrink-0 text-xs sm:text-sm">
                       <Trophy className="h-3 w-3" />
                       {t('profile.levelBadge', { level })}
