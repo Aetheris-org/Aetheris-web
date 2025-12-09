@@ -806,12 +806,21 @@ export default function ProfilePage() {
     (currentUser as any)?.role ??
     undefined
 
+  const cleanId = (val?: string | null) => {
+    if (!val) return ''
+    try {
+      return decodeURIComponent(val).split('?')[0].split('#')[0].trim()
+    } catch {
+      return val.split('?')[0].split('#')[0].trim()
+    }
+  }
+
   const normalizedUuid =
-    profile?.user.uuid ||
-    routeProfileId ||
-    profileId ||
-    profile?.user.id?.toString() ||
-    (currentUser as any)?.uuid ||
+    cleanId(profile?.user.uuid) ||
+    cleanId(routeProfileId) ||
+    cleanId(profileId) ||
+    cleanId(profile?.user.id?.toString()) ||
+    cleanId((currentUser as any)?.uuid) ||
     ''
 
   const normalizedRawRole = normalizeRole(rawRole)
