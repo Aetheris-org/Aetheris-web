@@ -1166,7 +1166,7 @@ export default function ArticlePage() {
   }, [activeReply])
 
   const formatCommentTimestamp = (date: string) =>
-    new Date(date).toLocaleString('ru-RU', {
+    new Date(date).toLocaleString(language === 'ru' ? 'ru-RU' : 'en-US', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
