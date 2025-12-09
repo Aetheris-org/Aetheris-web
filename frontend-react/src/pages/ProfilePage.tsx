@@ -815,8 +815,13 @@ export default function ProfilePage() {
     (currentUser as any)?.uuid ||
     ''
 
-  // Берем роль из профиля, иначе — фронтовый override по UUID
-  const roleValue = normalizeRole(rawRole) || normalizeRole(getRoleByUuid(normalizedUuid))
+  const normalizedRawRole = normalizeRole(rawRole)
+  const overrideRole = normalizeRole(getRoleByUuid(normalizedUuid))
+
+  // Приоритет: override по UUID, затем роль из профиля (кроме "user")
+  const roleValue =
+    overrideRole ||
+    (normalizedRawRole && normalizedRawRole !== 'user' ? normalizedRawRole : overrideRole || undefined)
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
