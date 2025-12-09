@@ -907,10 +907,10 @@ export default function ProfilePage() {
               <div className="relative aspect-[3/1] sm:aspect-[4/1] w-full">
                 <img
                   src={coverSrc}
-                    alt={`${profile.user.username} cover`}
-                    className="h-full w-full object-cover"
+                  alt={`${profile.user.username || profile.user.tag || 'User'} cover`}
+                  className="h-full w-full object-cover"
                   onError={() => setCoverError(true)}
-                  />
+                />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
                 </div>
               ) : (
@@ -933,7 +933,7 @@ export default function ProfilePage() {
                   {avatarSrc && (
                     <img
                       src={avatarSrc}
-                      alt={profile.user.username}
+                      alt={profile.user.username || profile.user.tag || 'User'}
                       className="h-16 w-16 rounded-full border-2 object-cover shadow-md"
                       style={{ borderColor: 'hsl(var(--border))' }}
                       onError={() => setAvatarError(true)}
@@ -943,7 +943,7 @@ export default function ProfilePage() {
                     className={`${avatarSrc ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl font-semibold text-primary shadow-md`}
                     style={{ borderColor: 'hsl(var(--border))' }}
                   >
-                    {(profile.user.username || '?').charAt(0).toUpperCase()}
+                    {(profile.user.username || profile.user.tag || 'U').charAt(0).toUpperCase()}
                   </div>
                 </div>
 
@@ -951,7 +951,7 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username}</h1>
+                      <h1 className="text-lg font-bold tracking-tight truncate">{profile.user.username || profile.user.tag || 'User'}</h1>
                     <Badge variant="default" className="gap-1 shrink-0 text-[10px] px-2 py-0.5 h-5">
                         <Trophy className="h-3 w-3" />
                         <span>{level}</span>
@@ -1095,19 +1095,19 @@ export default function ProfilePage() {
               {/* Аватар */}
               <div className="relative flex-shrink-0 h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32">
                 {avatarSrc && (
-                  <img
-                    src={avatarSrc}
-                    alt={profile.user.username}
-                    className="h-full w-full rounded-full border-2 object-cover shadow-lg"
-                    style={{ borderColor: 'hsl(var(--border))' }}
-                    onError={() => setAvatarError(true)}
+                    <img
+                      src={avatarSrc}
+                      alt={profile.user.username || profile.user.tag || 'User'}
+                      className="h-full w-full rounded-full border-2 object-cover shadow-lg"
+                      style={{ borderColor: 'hsl(var(--border))' }}
+                      onError={() => setAvatarError(true)}
                   />
                 )}
                 <div
                   className={`${avatarSrc ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center rounded-full border-2 bg-primary/15 text-2xl sm:text-3xl font-semibold text-primary shadow-lg md:text-4xl`}
                   style={{ borderColor: 'hsl(var(--border))' }}
                 >
-                  {(profile.user.username || '?').charAt(0).toUpperCase()}
+                  {(profile.user.username || profile.user.tag || 'U').charAt(0).toUpperCase()}
                 </div>
               </div>
 
@@ -1116,7 +1116,7 @@ export default function ProfilePage() {
                 {/* Верхняя строка: имя и бейджи */}
                 <div className="flex flex-col gap-2 sm:gap-3">
                   <div className="flex flex-wrap items-center gap-2 min-w-0">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">{profile.user.username}</h1>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">{profile.user.username || profile.user.tag || 'User'}</h1>
                     <Badge variant="default" className="gap-1 shrink-0 text-xs sm:text-sm">
                       <Trophy className="h-3 w-3" />
                       {t('profile.levelBadge', { level })}

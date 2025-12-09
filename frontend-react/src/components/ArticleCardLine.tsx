@@ -103,7 +103,7 @@ export function ArticleCardLine({
             </h3>
 
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="font-medium">{article.author.username}</span>
+              <span className="font-medium">{article.author.username || 'User'}</span>
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 <span>{formatDate(article.createdAt)}</span>

@@ -167,7 +167,13 @@ export function transformArticle(article: any, _userId?: string): Article {
   // Преобразуем author из JSONB объекта
   const author = typeof article.author === 'object' && article.author !== null
     ? article.author
-    : { id: article.author_id, username: article.author_username || '', nickname: (article as any).author_nickname || '', avatar: null };
+    : {
+        id: article.author_id,
+        username: article.author_username || '',
+        nickname: (article as any).author_nickname || '',
+        tag: (article as any).author_tag || '',
+        avatar: null,
+      };
 
   // author.id из Supabase - это UUID (строка)
   const authorId = author.id || article.author_id;
@@ -191,7 +197,7 @@ export function transformArticle(article: any, _userId?: string): Article {
     author: {
       id: authorId, // UUID из базы данных
       uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
-      username: author.username || (author as any).nickname || '',
+      username: author.username || (author as any).nickname || (author as any).tag || '',
       avatar: author.avatar || null,
     },
     previewImage: article.preview_image || article.previewImage || article.cover_url || null,

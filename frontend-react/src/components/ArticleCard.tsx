@@ -133,7 +133,7 @@ export function ArticleCard({
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
-              <span className="font-medium">{article.author.username}</span>
+              <span className="font-medium">{article.author.username || 'User'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
