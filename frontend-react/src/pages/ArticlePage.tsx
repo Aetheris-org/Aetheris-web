@@ -271,11 +271,10 @@ export default function ArticlePage() {
 
   // Засчитываем просмотр спустя 10 секунд пребывания на странице
   useEffect(() => {
-    const articleId = article?.id
+    const articleId = article?.id ? String(article.id) : undefined
     if (!articleId) return
-    const articleIdStr = String(articleId)
     const timer = setTimeout(() => {
-      incrementArticleView(articleIdStr, user?.id).catch(() => {})
+      incrementArticleView(articleId, user?.id).catch(() => {})
     }, 10_000)
     return () => clearTimeout(timer)
   }, [article?.id, user?.id])
