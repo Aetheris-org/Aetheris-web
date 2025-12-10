@@ -82,7 +82,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         article:articles!comments_article_id_fkey (
           id,
           title,
-          deleted_at
+          deleted_at,
+          author_id
         )
       `)
       .eq('author_id', profileUuid)
@@ -104,7 +105,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           title,
           excerpt,
           preview_image,
-          deleted_at
+          deleted_at,
+          author_id
         )
       `)
       .eq('user_id', profileUuid)
@@ -196,6 +198,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       normalizeStr((profile as any).banner_url) ||
       null
 
+    const normalizeId = (value: any) => (value === undefined || value === null ? '' : String(value).toLowerCase())
+    const ownerId = normalizeId(profile.id)
+
     const userProfile: UserProfile = {
       user: {
         id: profile.id ? uuidToNumber(profile.id) : 0,
@@ -211,7 +216,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       stats: {
         publishedArticles: visibleArticles.length,
         totalLikes,
-        totalComments: (comments || []).filter((c: any) => isValidArticle(c.article) && !isSoftDeleted(c.article)).length,
+        totalComments: (comments || []).filter((c: any) => {
+          if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
+          const articleAuthorId = normalizeId((c.article as any)?.author_id)
+          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+        }).length,
         followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
         following: (followingData || []).length,
       },
@@ -221,7 +230,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       },
       articles: transformedArticles,
       comments: (comments || [])
-        .filter((c: any) => isValidArticle(c.article) && !isSoftDeleted(c.article))
+        .filter((c: any) => {
+          if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
+          const articleAuthorId = normalizeId((c.article as any)?.author_id)
+          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+        })
         .map((c: any) => ({
           id: String(c.id),
           text: c.text,
@@ -232,7 +245,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           },
         })),
       bookmarks: (bookmarks || [])
-        .filter((b: any) => isValidArticle(b.article) && !isSoftDeleted(b.article))
+        .filter((b: any) => {
+          if (!isValidArticle(b.article) || isSoftDeleted(b.article)) return false
+          const articleAuthorId = normalizeId((b.article as any)?.author_id)
+          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+        })
         .map((b: any) => ({
           id: String(b.id),
           createdAt: b.created_at,
