@@ -131,9 +131,16 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       logger.error('Error fetching following', followingError);
     }
 
-    // Получаем подписчиков
+    // Фильтруем удаленные статьи (soft delete / статус deleted)
+    const filteredArticlesRaw = (articles || []).filter((a: any) => {
+      const status = a.status || (a as any).article_status
+      const deletedAt = (a as any).deleted_at || (a as any).deletedAt
+      const isDeleted = Boolean(deletedAt) || status === 'deleted'
+      return !isDeleted
+    })
+
     // Трансформируем данные
-    const publishedArticles = (articles || []).filter((a: any) => a.published_at !== null);
+    const publishedArticles = filteredArticlesRaw.filter((a: any) => a.published_at !== null);
     const totalLikes = publishedArticles.reduce((sum: number, article: any) => sum + (article.likes_count || 0), 0);
 
     // Получаем все уникальные теги
@@ -148,7 +155,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       .slice(0, 10)
       .map(([tag]) => tag);
 
-    const transformedArticles: Article[] = (articles || []).map((article: any) => 
+    const transformedArticles: Article[] = filteredArticlesRaw.map((article: any) => 
       transformArticle(article, currentUserId ? String(currentUserId) : undefined)
     );
 
