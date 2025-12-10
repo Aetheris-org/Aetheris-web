@@ -453,13 +453,17 @@ export async function getArticle(id: string): Promise<Article> {
 /**
  * Отдельно инкрементирует просмотры статьи после порога времени
  */
-export async function incrementArticleView(id: string | undefined, userId?: string): Promise<void> {
+export async function incrementArticleView(
+  id: string | number | undefined,
+  userId?: string | number | undefined
+): Promise<void> {
   try {
-    if (!id) return
+    if (id === undefined || id === null) return
 
-    const normalizeId = (rawId: string): number | null => {
+    const normalizeId = (rawId: string | number): number | null => {
+      const raw = typeof rawId === 'number' ? rawId.toString() : rawId
       const numericRegex = /^\d+$/;
-      if (numericRegex.test(rawId)) return Number(rawId);
+      if (numericRegex.test(raw)) return Number(raw);
       return null; // RPC принимает только int4
     };
 
@@ -469,9 +473,16 @@ export async function incrementArticleView(id: string | undefined, userId?: stri
       return;
     }
 
+    const userIdStr =
+      userId === undefined || userId === null
+        ? undefined
+        : typeof userId === 'number'
+          ? String(userId)
+          : userId
+
     const { error } = await supabase.rpc('get_article_with_details', {
       p_article_id: articleId,
-      p_user_id: userId,
+      p_user_id: userIdStr,
       p_increment_views: true,
     });
 
