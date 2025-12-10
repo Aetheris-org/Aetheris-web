@@ -175,12 +175,29 @@ export function transformArticle(article: any, _userId?: string): Article {
         avatar: null,
       };
 
-  // Fallbacks: some RPC responses may provide username under different keys
+  // Fallbacks: RPC/joins may surface username under different nested keys
+  const pickUsername = (source: any): string => {
+    if (!source || typeof source !== 'object') return '';
+    return (
+      source.username ||
+      source.user_name || // alt casing
+      source.profile_username ||
+      source.handle ||
+      source.name ||
+      ''
+    );
+  };
+
   const authorUsername =
-    author.username ||
+    pickUsername(author) ||
     article.author_username ||
+    pickUsername(article.author_profile) ||
+    pickUsername(article.profile) ||
+    pickUsername(article.profiles) ||
+    pickUsername(article.user) ||
+    pickUsername(article.users) ||
+    pickUsername(article.created_by) ||
     article.username ||
-    article.user?.username ||
     '';
 
   // author.id из Supabase - это UUID (строка)
