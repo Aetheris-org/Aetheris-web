@@ -35,6 +35,7 @@ import {
   MessageCircle,
   Mail,
   Link2,
+  TrendingUp,
 } from 'lucide-react'
 import { getArticle, reactArticle, deleteArticle } from '@/api/articles'
 import type { Article } from '@/types/article'
@@ -2134,7 +2135,7 @@ export default function ArticlePage() {
                   <AvatarFallback className="text-[10px] sm:text-xs">
                     {authorName
                       .split(' ')
-                      .map((word) => word[0])
+                      .map((word: string) => (word ? word[0] : ''))
                       .join('')
                       .slice(0, 2)
                       .toUpperCase()}
