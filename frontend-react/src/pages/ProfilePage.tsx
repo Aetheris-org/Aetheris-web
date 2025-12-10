@@ -873,7 +873,8 @@ export default function ProfilePage() {
   }
 
   const activeRole = resolveRoleStyle(effectiveRoleValue)
-  const showRoleBadge = Boolean(activeRole)
+  // Hide role badge for owner (per request)
+  const showRoleBadge = Boolean(activeRole && effectiveRoleValue !== 'owner')
 
   useEffect(() => {
     // Лог в любом окружении: видно UUID, роль из БД и override
