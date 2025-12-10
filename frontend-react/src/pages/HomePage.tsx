@@ -61,10 +61,6 @@ export default function HomePage() {
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const { mode: viewMode, setMode: setViewMode } = useViewModeStore()
-  const getAuthorDisplayName = (author?: Article['author']) => {
-    const name = author?.nickname?.trim() || author?.username?.trim()
-    return name || 'User'
-  }
 
   // Map old difficulty values to new ones for backward compatibility
   // const _getDifficultyKey = (difficulty: string | undefined): string => { // Unused, but may be needed in future
@@ -648,7 +644,7 @@ export default function HomePage() {
                                     </p>
                                   )}
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span>{getAuthorDisplayName(article.author)}</span>
+                                    <span>{article.author.username}</span>
                                     {article.tags.length > 0 && (
                                       <>
                                         <span>•</span>
@@ -974,9 +970,7 @@ export default function HomePage() {
                         </span>
                         <div className="flex-1 space-y-1 min-w-0">
                           <p className="text-xs sm:text-sm font-semibold text-foreground break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{article.title}</p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
-                            {getAuthorDisplayName(article.author)}
-                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">{article.author.username}</p>
                         </div>
                       </div>
                       <div className="mt-1.5 sm:mt-2 flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
