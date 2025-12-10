@@ -261,10 +261,11 @@ export default function ArticlePage() {
 
   const authorName = useMemo(
     () =>
-      article?.author?.nickname?.trim() ||
       article?.author?.username?.trim() ||
+      (article as any)?.author_username ||
+      (article as any)?.username ||
       'User',
-    [article?.author?.nickname, article?.author?.username]
+    [article?.author?.username, article?.id]
   )
 
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
@@ -1850,14 +1851,17 @@ export default function ArticlePage() {
 
   const getReadMinutes = () => {
     if (!article) return 1
-    const apiMinutes =
+    const apiMinutesRaw =
       article.readTimeMinutes ??
       (article as any).read_time_minutes ??
       (article as any).read_time ??
+      (article as any).read_minutes ??
+      (article as any).readTime ??
       undefined
+    const apiMinutesNum = Number(apiMinutesRaw)
     const value =
-      typeof apiMinutes === 'number' && apiMinutes > 0
-        ? apiMinutes
+      Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
+        ? apiMinutesNum
         : estimateReadTime(article.content || article.excerpt || (article as any)?.contentJSON || '')
     return Math.max(1, Math.round(value * 2) / 2)
   }
@@ -2148,6 +2152,21 @@ export default function ArticlePage() {
                   {formatReadMinutes(getReadMinutes())} {t('article.readTime')}
                 </span>
               </div>
+              {(() => {
+                const viewsCount =
+                  article.views ??
+                  (article as any).views_count ??
+                  (article as any).view_count ??
+                  (article as any).viewsCount ??
+                  (article as any).stats?.views ??
+                  0
+                return (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="font-medium text-xs sm:text-sm">{viewsCount}</span>
+                  </div>
+                )
+              })()}
               {article.difficulty && (
                 <Badge variant="outline" className="rounded-md font-normal capitalize text-[10px] sm:text-xs px-1.5 py-0.5">
                   {t(`createArticle.difficultyOptions.${getDifficultyKey(article.difficulty)}`)}
