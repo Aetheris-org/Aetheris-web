@@ -52,7 +52,10 @@ export default function OnboardingPage() {
   }, [authUser, navigate])
 
   const isValid = useMemo(() => {
-    return nickname.trim().length >= NICKNAME_MIN && TAG_REGEX.test(tag.trim())
+    const nicknameOk = nickname.trim().length >= NICKNAME_MIN
+    const tagValue = tag.trim()
+    const tagOk = tagValue === '' || TAG_REGEX.test(tagValue)
+    return nicknameOk && tagOk
   }, [nickname, tag])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -328,13 +331,17 @@ export default function OnboardingPage() {
                         <span className="text-xs text-muted-foreground text-center leading-tight px-1">No avatar</span>
                       )}
                     </div>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      disabled
-                      className="opacity-50 cursor-not-allowed"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        disabled
+                        className="opacity-50 cursor-not-allowed pointer-events-none"
+                        aria-disabled="true"
+                      />
+                      <span className="text-xs text-muted-foreground">Uploads disabled. Use URL instead.</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -364,13 +371,17 @@ export default function OnboardingPage() {
                       <span className="text-sm text-muted-foreground">No cover</span>
                     )}
                   </div>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverChange}
-                    disabled
-                    className="opacity-50 cursor-not-allowed"
-                  />
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverChange}
+                      disabled
+                      className="opacity-50 cursor-not-allowed pointer-events-none"
+                      aria-disabled="true"
+                    />
+                    <span className="text-xs text-muted-foreground">Uploads disabled. Use URL instead.</span>
+                  </div>
                 </div>
               </div>
             </div>
