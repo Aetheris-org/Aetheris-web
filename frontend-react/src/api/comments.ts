@@ -332,40 +332,63 @@ export async function reactToComment(
         });
     }
 
-    // Пересчёт лайков/дизлайков и обновление агрегатов в comments
-    const [
-      { count: likesCountRaw, error: likesError },
-      { count: dislikesCountRaw, error: dislikesError },
-    ] = await Promise.all([
-      supabase
-        .from('comment_reactions')
-        .select('id', { count: 'exact' })
-        .eq('comment_id', validatedCommentId)
-        .eq('reaction', 'like')
-        .limit(0),
-      supabase
-        .from('comment_reactions')
-        .select('id', { count: 'exact' })
-        .eq('comment_id', validatedCommentId)
-        .eq('reaction', 'dislike')
-        .limit(0),
-    ]);
+    // Получаем текущие агрегаты, обновляем локально без дополнительных count-запросов
+    const { data: commentRow, error: fetchCommentError } = await supabase
+      .from('comments')
+      .select(
+        `
+          *,
+          author:profiles!comments_author_id_fkey (
+            id,
+            username,
+            avatar
+          )
+        `
+      )
+      .eq('id', validatedCommentId)
+      .maybeSingle()
 
-    const likesCount = likesError ? 0 : likesCountRaw ?? 0;
-    const dislikesCount = dislikesError ? 0 : dislikesCountRaw ?? 0;
-
-    if (likesError) {
-      logger.warn('Error fetching comment likes count (fallback to 0)', likesError);
+    if (fetchCommentError || !commentRow) {
+      logger.warn('Comment not found after reaction, returning fallback', fetchCommentError);
+      return transformComment({
+        id: validatedCommentId,
+        text: '',
+        created_at: new Date().toISOString(),
+        author: { id: user.id, username: user.email || '' },
+        parent_id: null,
+        likes_count: 0,
+        dislikes_count: 0,
+        user_reaction: reaction,
+      }, user.id);
     }
-    if (dislikesError) {
-      logger.warn('Error fetching comment dislikes count (fallback to 0)', dislikesError);
+
+    const currentLikes = commentRow.likes_count || 0;
+    const currentDislikes = commentRow.dislikes_count || 0;
+
+    // Рассчитываем новые агрегаты на основе предыдущей реакции пользователя
+    const prev = existing?.reaction as 'like' | 'dislike' | null;
+    let newLikes = currentLikes;
+    let newDislikes = currentDislikes;
+
+    const nextReaction = reaction;
+
+    if (prev === 'like') {
+      newLikes -= 1;
+    } else if (prev === 'dislike') {
+      newDislikes -= 1;
+    }
+
+    if (prev !== nextReaction && nextReaction === 'like') {
+      newLikes += 1;
+    } else if (prev !== nextReaction && nextReaction === 'dislike') {
+      newDislikes += 1;
     }
 
     const { error: updateAggError } = await supabase
       .from('comments')
       .update({
-        likes_count: likesCount,
-        dislikes_count: dislikesCount,
+        likes_count: newLikes,
+        dislikes_count: newDislikes,
       })
       .eq('id', validatedCommentId);
 
@@ -373,44 +396,24 @@ export async function reactToComment(
       logger.warn('Error updating comment aggregates (continuing with reaction result)', updateAggError);
     }
 
-    // Получаем обновленный комментарий
-    const { data: comment } = await supabase
-      .from('comments')
-      .select(`
-        *,
-        author:profiles!comments_author_id_fkey (
-          id,
-          username,
-          avatar
-        )
-      `)
-      .eq('id', validatedCommentId)
-      .single();
-
-    if (!comment) {
-      logger.warn('Comment not found after reaction, returning fallback');
-      return transformComment({
-        id: validatedCommentId,
-        text: '',
-        created_at: new Date().toISOString(),
-        author: { id: user.id, username: user.email || '' },
-        parent_id: null,
-        likes_count: likesCount,
-        dislikes_count: dislikesCount,
-        user_reaction: reaction,
-      }, user.id);
+    const finalComment = {
+      ...commentRow,
+      likes_count: newLikes,
+      dislikes_count: newDislikes,
+      user_reaction: reaction,
     }
 
     // Текущая реакция пользователя после операции
     const userReaction =
       existing && existing.reaction === reaction ? null : reaction;
 
-    return transformComment({
-      ...comment,
-      likes_count: likesCount,
-      dislikes_count: dislikesCount,
-      user_reaction: userReaction,
-    }, user.id);
+    return transformComment(
+      {
+        ...finalComment,
+        user_reaction: userReaction,
+      },
+      user.id
+    );
   } catch (error: any) {
     logger.error('Error in reactToComment', error);
     throw error;
