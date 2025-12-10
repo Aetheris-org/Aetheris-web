@@ -339,14 +339,16 @@ export async function reactToComment(
     ] = await Promise.all([
       supabase
         .from('comment_reactions')
-        .select('id', { head: true, count: 'exact' })
+        .select('id', { count: 'exact' })
         .eq('comment_id', validatedCommentId)
-        .eq('reaction', 'like'),
+        .eq('reaction', 'like')
+        .limit(0),
       supabase
         .from('comment_reactions')
-        .select('id', { head: true, count: 'exact' })
+        .select('id', { count: 'exact' })
         .eq('comment_id', validatedCommentId)
-        .eq('reaction', 'dislike'),
+        .eq('reaction', 'dislike')
+        .limit(0),
     ]);
 
     if (likesError) {
