@@ -813,53 +813,9 @@ function ProfileSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: t('settings.profile.unsupportedFile'),
-        description: t('settings.profile.unsupportedFileDescription'),
-        variant: 'destructive',
-      })
-      event.target.value = ''
-      return
-    }
-
-    revokeObjectUrl(avatarCropSource)
-    const objectUrl = URL.createObjectURL(file)
-    setAvatarCropSource(objectUrl)
-    setAvatarCrop({ x: 0, y: 0 })
-    setAvatarZoom(1)
-    setAvatarCroppedArea(null)
-    setIsAvatarCropOpen(true)
-    event.target.value = ''
-  }
-
-  const handleCoverChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: t('settings.profile.unsupportedFile'),
-        description: t('settings.profile.unsupportedFileDescription'),
-        variant: 'destructive',
-      })
-      event.target.value = ''
-      return
-    }
-
-    revokeObjectUrl(coverCropSource)
-    const objectUrl = URL.createObjectURL(file)
-    setCoverCropSource(objectUrl)
-    setCoverCrop({ x: 0, y: 0 })
-    setCoverZoom(1)
-    setCoverCroppedArea(null)
-    setIsCoverCropOpen(true)
-    event.target.value = ''
-  }
+  // Загрузка файлов аватар/обложка отключена
+  const handleAvatarChange = () => {}
+  const handleCoverChange = () => {}
 
   const handleAdjustAvatarCrop = () => {
     if (!avatarPreview || !avatarPreview.startsWith('blob:')) return
@@ -1473,73 +1429,17 @@ function ProfileSettings() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 p-2 sm:p-3">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
-                      onClick={() => coverInputRef.current?.click()}
-                      disabled={isSaving || isCoverProcessing}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              {coverPreview?.startsWith('blob:') && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
-                        onClick={handleAdjustCoverCrop}
-                        disabled={isSaving || isCoverProcessing}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('settings.profile.adjustCrop')}</span>
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t('settings.profile.adjustCrop')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {coverPreview && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive hover:text-destructive"
-                        onClick={handleRemoveCover}
-                        disabled={isSaving || isCoverProcessing}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t('settings.profile.remove')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
+                disabled
+              >
+                <span className="flex items-center gap-1.5">
+                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
+                </span>
+              </Button>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
             <Input
@@ -1595,73 +1495,19 @@ function ProfileSettings() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
-                      onClick={() => avatarInputRef.current?.click()}
-                      disabled={isSaving || isAvatarProcessing}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              {avatarPreview?.startsWith('blob:') && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
-                        onClick={handleAdjustAvatarCrop}
-                        disabled={isSaving || isAvatarProcessing}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Crop className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('settings.profile.adjustCrop')}</span>
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t('settings.profile.adjustCrop')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {avatarPreview && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive hover:text-destructive"
-                        onClick={handleRemoveAvatar}
-                        disabled={isSaving || isAvatarProcessing}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t('settings.profile.remove')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
+                disabled
+              >
+                <span className="flex items-center gap-1.5">
+                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
+                </span>
+              </Button>
+              {/* Кроп/удаление через загрузку неактивны */}
+              {/* Remove via upload disabled */}
             </div>
             <div className="w-full sm:max-w-xl flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
               <Input
