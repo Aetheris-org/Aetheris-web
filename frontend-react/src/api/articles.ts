@@ -453,14 +453,12 @@ export async function getArticle(id: string): Promise<Article> {
 /**
  * Отдельно инкрементирует просмотры статьи после порога времени
  */
-export async function incrementArticleView(id: string | number | undefined, userId?: string): Promise<void> {
+export async function incrementArticleView(id: string | undefined, userId?: string): Promise<void> {
   try {
-    if (id === undefined || id === null) return
+    if (!id) return
 
-    const normalizeId = (rawId: string | number): number | null => {
-      if (typeof rawId === 'number') return rawId
+    const normalizeId = (rawId: string): number | null => {
       const numericRegex = /^\d+$/;
-      if (!rawId || typeof rawId !== 'string') return null;
       if (numericRegex.test(rawId)) return Number(rawId);
       return null; // RPC принимает только int4
     };
