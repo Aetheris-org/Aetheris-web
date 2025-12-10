@@ -3252,6 +3252,8 @@
     "comments": "comments",
     "joined": "joined",
     "rank": "rank",
+    "followed": "You are now following",
+    "followedDescription": "Updates from this user will appear in your feed",
     "edit": "Edit",
     "signedInAs": "Signed in as {email}",
     "workspaceHub": "Workspace hub",

@@ -22,7 +22,12 @@ export function ArticleCard({
   const { t } = useTranslation()
   const authorName =
     article.author.nickname?.trim() ||
-    article.author.username
+    article.author.username ||
+    (article as any).author_username ||
+    (article as any).author_full_name ||
+    (article as any).author_fullname ||
+    (article as any).author_display_name ||
+    ''
 
   // Map old difficulty values to new ones for backward compatibility
   const getDifficultyKey = (difficulty: string | undefined): string => {

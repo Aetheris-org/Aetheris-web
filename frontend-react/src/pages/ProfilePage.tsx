@@ -993,9 +993,18 @@ export default function ProfilePage() {
     )
   }
 
+  const normalizeId = (value: unknown) => (value === undefined || value === null ? '' : String(value).toLowerCase())
+  const ownerId = normalizeId(profile?.user?.uuid)
+
   const displayedArticles = (profile.articles || []).filter((article) => {
-    const authorId = (article.author as any)?.uuid || (article.author as any)?.id
-    return !profile?.user?.uuid || !authorId || authorId === profile.user.uuid
+    const authorId =
+      normalizeId((article as any)?.author?.uuid) ||
+      normalizeId((article as any)?.author?.id) ||
+      normalizeId((article as any)?.author_id)
+
+    if (!ownerId) return true // нет id владельца – не фильтруем
+    if (!authorId) return true // нет id автора в статье – показываем, чтобы не потерять данные
+    return authorId === ownerId
   })
 
   return (

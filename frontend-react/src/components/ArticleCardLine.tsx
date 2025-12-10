@@ -18,7 +18,14 @@ export function ArticleCardLine({
   onMouseEnter,
 }: ArticleCardLineProps) {
   const authorName = useMemo(
-    () => article.author.nickname?.trim() || article.author.username || '',
+    () =>
+      article.author.nickname?.trim() ||
+      article.author.username ||
+      (article as any).author_username ||
+      (article as any).author_full_name ||
+      (article as any).author_fullname ||
+      (article as any).author_display_name ||
+      '',
     [article.author.nickname, article.author.username]
   )
   const formatDate = (date: string) => {
