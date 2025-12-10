@@ -453,9 +453,10 @@ export async function getArticle(id: string): Promise<Article> {
 /**
  * Отдельно инкрементирует просмотры статьи после порога времени
  */
-export async function incrementArticleView(id: string, userId?: string): Promise<void> {
+export async function incrementArticleView(id: string | number, userId?: string): Promise<void> {
   try {
-    const normalizeId = (rawId: string): number | null => {
+    const normalizeId = (rawId: string | number): number | null => {
+      if (typeof rawId === 'number') return rawId
       const numericRegex = /^\d+$/;
       if (!rawId || typeof rawId !== 'string') return null;
       if (numericRegex.test(rawId)) return Number(rawId);
