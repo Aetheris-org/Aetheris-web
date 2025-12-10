@@ -117,11 +117,13 @@ export async function getCurrentUser(): Promise<User | null> {
       logger.warn('Profile missing for auth user, attempting to create...', profileError);
       profile = await ensureProfile();
 
-      // если создание не удалось, но это ошибка схемы name, возвращаем фолбек
-      if (!profile && isNameSchemaIssue) {
+      // если не удалось создать или получить профиль, используем фолбек,
+      // чтобы не зависнуть на загрузке/онбординге
+      if (!profile) {
         profile = buildFallbackProfile()
       }
 
+      // если профиль всё ещё пустой, выходим
       if (!profile) {
         return null;
       }
