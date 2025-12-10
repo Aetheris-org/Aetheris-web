@@ -37,7 +37,7 @@ import {
   Link2,
   TrendingUp,
 } from 'lucide-react'
-import { getArticle, reactArticle, deleteArticle } from '@/api/articles'
+import { getArticle, reactArticle, deleteArticle, incrementArticleView } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
@@ -268,6 +268,15 @@ export default function ArticlePage() {
       'User',
     [article?.author?.username, article?.id]
   )
+
+  // Засчитываем просмотр спустя 10 секунд пребывания на странице
+  useEffect(() => {
+    if (!article?.id) return
+    const timer = setTimeout(() => {
+      incrementArticleView(String(article.id), user?.id).catch(() => {})
+    }, 10_000)
+    return () => clearTimeout(timer)
+  }, [article?.id, user?.id])
 
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
   useEffect(() => {

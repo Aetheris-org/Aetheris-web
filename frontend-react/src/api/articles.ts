@@ -401,12 +401,12 @@ export async function getArticle(id: string): Promise<Article> {
 
     const articleId = normalizeId(id);
 
-    // Если id числовой, пытаемся вызвать RPC с инкрементом просмотров
+    // Если id числовой, пытаемся вызвать RPC (без инкремента просмотров)
     if (typeof articleId === 'number') {
       const { data, error } = await supabase.rpc('get_article_with_details', {
         p_article_id: articleId,
         p_user_id: userId,
-        p_increment_views: true,
+        p_increment_views: false,
       })
 
       if (error) {
@@ -447,6 +447,38 @@ export async function getArticle(id: string): Promise<Article> {
   } catch (error: any) {
     logger.error('Error in getArticle', error);
     throw error;
+  }
+}
+
+/**
+ * Отдельно инкрементирует просмотры статьи после порога времени
+ */
+export async function incrementArticleView(id: string, userId?: string): Promise<void> {
+  try {
+    const normalizeId = (rawId: string): number | null => {
+      const numericRegex = /^\d+$/;
+      if (!rawId || typeof rawId !== 'string') return null;
+      if (numericRegex.test(rawId)) return Number(rawId);
+      return null; // RPC принимает только int4
+    };
+
+    const articleId = normalizeId(id);
+    if (articleId === null) {
+      logger.debug('[incrementArticleView] skip: non-numeric id', { id });
+      return;
+    }
+
+    const { error } = await supabase.rpc('get_article_with_details', {
+      p_article_id: articleId,
+      p_user_id: userId,
+      p_increment_views: true,
+    });
+
+    if (error) {
+      logger.warn('[incrementArticleView] RPC failed', error);
+    }
+  } catch (error) {
+    logger.warn('[incrementArticleView] unexpected error', error);
   }
 }
 
