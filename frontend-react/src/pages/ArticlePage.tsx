@@ -271,13 +271,13 @@ export default function ArticlePage() {
 
   // Засчитываем просмотр спустя 10 секунд пребывания на странице
   useEffect(() => {
-    const articleId: string | undefined = article?.id !== undefined ? String(article.id) : undefined
+    const articleId = id
     if (!articleId) return
     const timer = setTimeout(() => {
-      incrementArticleView(articleId as string, user?.id).catch(() => {})
+      incrementArticleView(articleId, user?.id).catch(() => {})
     }, 10_000)
     return () => clearTimeout(timer)
-  }, [article?.id, user?.id])
+  }, [id, user?.id])
 
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
   useEffect(() => {
