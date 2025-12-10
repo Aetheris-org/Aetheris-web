@@ -164,9 +164,20 @@ export function transformArticle(article: any, _userId?: string): Article {
     contentJSON = null;
   }
 
-  // Преобразуем author из JSONB объекта
-  const author = typeof article.author === 'object' && article.author !== null
-    ? article.author
+  // Преобразуем author из JSONB объекта/строки
+  let parsedAuthor: any = null;
+  if (typeof article.author === 'string') {
+    try {
+      parsedAuthor = JSON.parse(article.author);
+    } catch {
+      parsedAuthor = null;
+    }
+  }
+
+  const authorSource = parsedAuthor || article.author;
+
+  const author = typeof authorSource === 'object' && authorSource !== null
+    ? authorSource
     : {
         id: article.author_id,
         username: article.author_username || '',
