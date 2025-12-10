@@ -640,14 +640,20 @@ export default function ProfilePage() {
     (profile?.user as any)?.photo_url ||
     currentUser?.avatar ||
     null
-  const rawCover =
-    profile?.user?.coverImageUrl ||
-    (profile?.user as any)?.coverImage ||
-    (profile?.user as any)?.cover_image ||
-    (profile?.user as any)?.cover_url ||
-    (profile?.user as any)?.banner_url ||
-    currentUser?.coverImage ||
-    null
+  const rawCover = isOwnProfile
+    ? profile?.user?.coverImageUrl ||
+      (profile?.user as any)?.coverImage ||
+      (profile?.user as any)?.cover_image ||
+      (profile?.user as any)?.cover_url ||
+      (profile?.user as any)?.banner_url ||
+      currentUser?.coverImage ||
+      null
+    : profile?.user?.coverImageUrl ||
+      (profile?.user as any)?.coverImage ||
+      (profile?.user as any)?.cover_image ||
+      (profile?.user as any)?.cover_url ||
+      (profile?.user as any)?.banner_url ||
+      null
 
   const avatarSrc = avatarError ? null : rawAvatar
   const coverSrc = coverError ? null : rawCover
