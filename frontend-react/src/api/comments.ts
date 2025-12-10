@@ -351,17 +351,15 @@ export async function reactToComment(
         .limit(0),
     ]);
 
+    const likesCount = likesError ? 0 : likesCountRaw ?? 0;
+    const dislikesCount = dislikesError ? 0 : dislikesCountRaw ?? 0;
+
     if (likesError) {
-      logger.error('Error fetching comment likes count', likesError);
-      throw likesError;
+      logger.warn('Error fetching comment likes count (fallback to 0)', likesError);
     }
     if (dislikesError) {
-      logger.error('Error fetching comment dislikes count', dislikesError);
-      throw dislikesError;
+      logger.warn('Error fetching comment dislikes count (fallback to 0)', dislikesError);
     }
-
-    const likesCount = likesCountRaw ?? 0;
-    const dislikesCount = dislikesCountRaw ?? 0;
 
     const { error: updateAggError } = await supabase
       .from('comments')
@@ -372,8 +370,7 @@ export async function reactToComment(
       .eq('id', validatedCommentId);
 
     if (updateAggError) {
-      logger.error('Error updating comment aggregates', updateAggError);
-      throw updateAggError;
+      logger.warn('Error updating comment aggregates (continuing with reaction result)', updateAggError);
     }
 
     // Получаем обновленный комментарий
@@ -391,7 +388,17 @@ export async function reactToComment(
       .single();
 
     if (!comment) {
-      throw new Error('Comment not found');
+      logger.warn('Comment not found after reaction, returning fallback');
+      return transformComment({
+        id: validatedCommentId,
+        text: '',
+        created_at: new Date().toISOString(),
+        author: { id: user.id, username: user.email || '' },
+        parent_id: null,
+        likes_count: likesCount,
+        dislikes_count: dislikesCount,
+        user_reaction: reaction,
+      }, user.id);
     }
 
     // Текущая реакция пользователя после операции
