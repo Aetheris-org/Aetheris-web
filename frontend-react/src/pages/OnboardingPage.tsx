@@ -52,11 +52,9 @@ export default function OnboardingPage() {
   }, [authUser, navigate])
 
   const isValid = useMemo(() => {
-    const nicknameOk = nickname.trim().length >= NICKNAME_MIN
-    const tagValue = tag.trim()
-    const tagOk = tagValue === '' || TAG_REGEX.test(tagValue)
-    return nicknameOk && tagOk
-  }, [nickname, tag])
+    // Разрешаем сохранить, если заполнен никнейм (тег опционален)
+    return nickname.trim().length >= NICKNAME_MIN
+  }, [nickname])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
