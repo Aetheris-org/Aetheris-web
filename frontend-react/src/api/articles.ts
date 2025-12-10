@@ -401,7 +401,22 @@ export async function getArticle(id: string): Promise<Article> {
 
     const articleId = normalizeId(id);
 
-    // Получаем статью напрямую через select, без RPC (RPC требует поля name)
+    // Если id числовой, пытаемся вызвать RPC с инкрементом просмотров
+    if (typeof articleId === 'number') {
+      const { data, error } = await supabase.rpc('get_article_with_details', {
+        p_article_id: articleId,
+        p_user_id: userId,
+        p_increment_views: true,
+      })
+
+      if (error) {
+        logger.warn('RPC get_article_with_details failed, falling back to direct select', error)
+      } else if (data && data.length > 0) {
+        return transformArticle(data[0], userId)
+      }
+    }
+
+    // Фолбэк: прямой select без инкремента
     const { data, error } = await supabase
       .from('articles')
       .select(
