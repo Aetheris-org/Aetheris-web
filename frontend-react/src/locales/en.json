@@ -3254,6 +3254,8 @@
     "rank": "rank",
     "followed": "You are now following",
     "followedDescription": "Updates from this user will appear in your feed",
+    "unfollowed": "Unfollowed",
+    "unfollowedDescription": "You will no longer see updates from this user",
     "edit": "Edit",
     "signedInAs": "Signed in as {email}",
     "workspaceHub": "Workspace hub",
