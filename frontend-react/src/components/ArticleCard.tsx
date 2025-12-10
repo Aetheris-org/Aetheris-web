@@ -20,7 +20,9 @@ export function ArticleCard({
   hidePreview = false,
 }: ArticleCardProps) {
   const { t } = useTranslation()
-  const authorName = article.author.username
+  const authorName =
+    article.author.nickname?.trim() ||
+    article.author.username
 
   // Map old difficulty values to new ones for backward compatibility
   const getDifficultyKey = (difficulty: string | undefined): string => {

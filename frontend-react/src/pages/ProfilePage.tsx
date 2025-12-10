@@ -993,7 +993,10 @@ export default function ProfilePage() {
     )
   }
 
-  const displayedArticles = profile.articles || []
+  const displayedArticles = (profile.articles || []).filter((article) => {
+    const authorId = (article.author as any)?.uuid || (article.author as any)?.id
+    return !profile?.user?.uuid || !authorId || authorId === profile.user.uuid
+  })
 
   return (
     <div className="min-h-screen app-surface">
