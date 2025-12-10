@@ -175,6 +175,7 @@ export function transformArticle(article: any, _userId?: string): Article {
   }
 
   const authorSource = parsedAuthor || article.author;
+  const authorSourceString = typeof article.author === 'string' && !parsedAuthor ? article.author : '';
 
   const author = typeof authorSource === 'object' && authorSource !== null
     ? authorSource
@@ -191,6 +192,8 @@ export function transformArticle(article: any, _userId?: string): Article {
     if (!source || typeof source !== 'object') return '';
     return (
       source.username ||
+      source.full_name ||
+      source.display_name ||
       source.user_name || // alt casing
       source.profile_username ||
       source.handle ||
@@ -200,8 +203,12 @@ export function transformArticle(article: any, _userId?: string): Article {
   };
 
   const authorUsername =
+    (typeof authorSource === 'string' ? authorSourceString : '') ||
     pickUsername(author) ||
     article.author_username ||
+    article.author_full_name ||
+    article.author_fullname ||
+    article.author_display_name ||
     pickUsername(article.author_profile) ||
     pickUsername(article.profile) ||
     pickUsername(article.profiles) ||
