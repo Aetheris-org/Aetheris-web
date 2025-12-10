@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { KeyboardEvent } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { useQueryClient } from '@tanstack/react-query'
@@ -17,7 +17,6 @@ import {
   Clock,
   CreditCard,
   Crown,
-  Crop,
   Download,
   Eye,
   EyeOff,
@@ -817,23 +816,6 @@ function ProfileSettings() {
   const handleAvatarChange = () => {}
   const handleCoverChange = () => {}
 
-  const handleAdjustAvatarCrop = () => {
-    if (!avatarPreview || !avatarPreview.startsWith('blob:')) return
-    setAvatarCropSource(avatarPreview)
-    setAvatarCrop({ x: 0, y: 0 })
-    setAvatarZoom(1)
-    setAvatarCroppedArea(null)
-    setIsAvatarCropOpen(true)
-  }
-
-  const handleAdjustCoverCrop = () => {
-    if (!coverPreview || !coverPreview.startsWith('blob:')) return
-    setCoverCropSource(coverPreview)
-    setCoverCrop({ x: 0, y: 0 })
-    setCoverZoom(1)
-    setCoverCroppedArea(null)
-    setIsCoverCropOpen(true)
-  }
 
   const handleCancelAvatarCrop = () => {
     setIsAvatarProcessing(false)
@@ -937,29 +919,6 @@ function ProfileSettings() {
     }
   }
 
-  const handleRemoveAvatar = () => {
-    revokeObjectUrl(avatarPreview)
-    revokeObjectUrl(avatarCropSource)
-    setAvatarPreview(null)
-    setAvatarCropSource(null)
-    setAvatarFile(null)
-    setAvatarRemoved(true)
-    setAvatarCroppedArea(null)
-    setAvatarCrop({ x: 0, y: 0 })
-    setAvatarZoom(1)
-  }
-
-  const handleRemoveCover = () => {
-    revokeObjectUrl(coverPreview)
-    revokeObjectUrl(coverCropSource)
-    setCoverPreview(null)
-    setCoverCropSource(null)
-    setCoverFile(null)
-    setCoverRemoved(true)
-    setCoverCroppedArea(null)
-    setCoverCrop({ x: 0, y: 0 })
-    setCoverZoom(1)
-  }
 
   const handleCancel = () => {
     revokeObjectUrl(avatarPreview)
