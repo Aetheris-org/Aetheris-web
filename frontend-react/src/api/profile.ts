@@ -132,6 +132,16 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       logger.error('Error fetching following', followingError);
     }
 
+    // Получаем количество подписчиков (followers)
+    const { count: followersCount, error: followersError } = await supabase
+      .from('follows')
+      .select('id', { count: 'exact', head: true })
+      .eq('following_id', profileUuid)
+
+    if (followersError) {
+      logger.error('Error fetching followers count', followersError)
+    }
+
     const isSoftDeleted = (item: any) => {
       const deletedAt = item?.deleted_at || item?.deletedAt
       return Boolean(deletedAt)
@@ -209,7 +219,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
         avatarUrl: normalizedAvatar ?? undefined,
-        coverImageUrl: normalizedCover ?? undefined,
+      coverImageUrl: normalizedCover ?? undefined,
       },
       stats: {
         publishedArticles: visibleArticles.length,
@@ -219,7 +229,12 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           const articleAuthorId = normalizeId((c.article as any)?.author_id)
           return !ownerId || !articleAuthorId || articleAuthorId === ownerId
         }).length,
-        followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
+        followers:
+          typeof profile.followers_count === 'number'
+            ? profile.followers_count
+            : typeof followersCount === 'number'
+              ? followersCount
+              : 0,
         following: (followingData || []).length,
       },
       highlights: {
