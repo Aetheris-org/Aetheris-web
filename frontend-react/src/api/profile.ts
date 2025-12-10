@@ -22,7 +22,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       .from('profiles')
       .select('id, username, role, bio, tag, avatar, cover_image, created_at, followers_count, avatar_url, cover_url')
       .eq('id', profileUuid)
-      .single();
+      .maybeSingle();
 
     if (profileError || !profile) {
       logger.error('Error fetching user profile', profileError);
@@ -34,7 +34,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       .from('profiles')
       .select('role')
       .eq('id', profileUuid)
-      .single()
+      .maybeSingle()
     if (roleRow?.role) {
       (profile as any).role = roleRow.role
     }
@@ -45,7 +45,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         .from('profiles')
         .select('username')
         .eq('id', profileUuid)
-        .single();
+        .maybeSingle();
       if (usernameRow?.username) {
         (profile as any).username = usernameRow.username;
       }
