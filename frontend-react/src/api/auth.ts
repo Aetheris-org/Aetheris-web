@@ -60,7 +60,6 @@ export async function getCurrentUser(): Promise<User | null> {
             id: authUser.id,
             username: usernameFromMeta,
             nickname: usernameFromMeta,
-            name: (authUser.user_metadata as any)?.name || null,
             avatar: avatarFromMeta,
             avatar_url: avatarFromMeta,
           },
@@ -86,7 +85,7 @@ export async function getCurrentUser(): Promise<User | null> {
       .from('profiles')
       .select('*')
       .eq('id', authUser.id)
-      .single();
+      .maybeSingle();
 
     profile = profileData;
     profileError = fetchError;
