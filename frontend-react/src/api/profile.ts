@@ -81,7 +81,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         created_at,
         article:articles!comments_article_id_fkey (
           id,
-          title
+          title,
+          status,
+          deleted_at,
+          is_deleted
         )
       `)
       .eq('author_id', profileUuid)
@@ -102,7 +105,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           id,
           title,
           excerpt,
-          preview_image
+          preview_image,
+          status,
+          deleted_at,
+          is_deleted
         )
       `)
       .eq('user_id', profileUuid)
@@ -131,13 +137,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       logger.error('Error fetching following', followingError);
     }
 
+    const isSoftDeleted = (item: any) => {
+      const status = (item?.status || item?.article_status || '').toString().toLowerCase()
+      const deletedAt = item?.deleted_at || item?.deletedAt
+      const isDeletedFlag = item?.is_deleted === true || item?.isDeleted === true
+      return Boolean(deletedAt) || isDeletedFlag || status === 'deleted'
+    }
+
     // Фильтруем удаленные статьи (soft delete / статус deleted)
-    const filteredArticlesRaw = (articles || []).filter((a: any) => {
-      const status = a.status || (a as any).article_status
-      const deletedAt = (a as any).deleted_at || (a as any).deletedAt
-      const isDeleted = Boolean(deletedAt) || status === 'deleted'
-      return !isDeleted
-    })
+    const filteredArticlesRaw = (articles || []).filter((a: any) => !isSoftDeleted(a))
 
     // Трансформируем данные
     const publishedArticles = filteredArticlesRaw.filter((a: any) => a.published_at !== null);
@@ -208,7 +216,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       stats: {
         publishedArticles: publishedArticles.length,
         totalLikes,
-        totalComments: (comments || []).length,
+        totalComments: (comments || []).filter((c: any) => c.article && !isSoftDeleted(c.article)).length,
         followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
         following: (followingData || []).length,
       },
@@ -217,25 +225,29 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         recentArticleCount: publishedArticles.length,
       },
       articles: transformedArticles,
-      comments: (comments || []).map((c: any) => ({
-        id: String(c.id),
-        text: c.text,
-        createdAt: c.created_at,
-        article: {
-          id: String(c.article?.id || ''),
-          title: c.article?.title || '',
-        },
-      })),
-      bookmarks: (bookmarks || []).map((b: any) => ({
-        id: String(b.id),
-        createdAt: b.created_at,
-        article: {
-          id: String(b.article?.id || ''),
-          title: b.article?.title || '',
-          excerpt: b.article?.excerpt || null,
-          previewImage: b.article?.preview_image || null,
-        },
-      })),
+      comments: (comments || [])
+        .filter((c: any) => c.article && !isSoftDeleted(c.article))
+        .map((c: any) => ({
+          id: String(c.id),
+          text: c.text,
+          createdAt: c.created_at,
+          article: {
+            id: String(c.article?.id || ''),
+            title: c.article?.title || '',
+          },
+        })),
+      bookmarks: (bookmarks || [])
+        .filter((b: any) => b.article && !isSoftDeleted(b.article))
+        .map((b: any) => ({
+          id: String(b.id),
+          createdAt: b.created_at,
+          article: {
+            id: String(b.article?.id || ''),
+            title: b.article?.title || '',
+            excerpt: b.article?.excerpt || null,
+            previewImage: b.article?.preview_image || null,
+          },
+        })),
     };
 
     return userProfile;
