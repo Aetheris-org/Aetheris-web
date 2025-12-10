@@ -2,6 +2,7 @@ import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
+import { useTranslation } from 'react-i18next'
 
 interface ArticleCardSquareProps {
   article: Article
@@ -16,6 +17,7 @@ export function ArticleCardSquare({
   onArticleClick,
   onMouseEnter,
 }: ArticleCardSquareProps) {
+  const { t } = useTranslation()
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',

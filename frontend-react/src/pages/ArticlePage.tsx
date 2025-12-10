@@ -1849,12 +1849,16 @@ export default function ArticlePage() {
   }
 
   const getReadMinutes = () => {
+    if (!article) return 1
     const apiMinutes =
       article.readTimeMinutes ??
       (article as any).read_time_minutes ??
       (article as any).read_time ??
       undefined
-    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    const value =
+      typeof apiMinutes === 'number' && apiMinutes > 0
+        ? apiMinutes
+        : estimateReadTime(article.content || article.excerpt || (article as any)?.contentJSON || '')
     return Math.max(1, Math.round(value * 2) / 2)
   }
 

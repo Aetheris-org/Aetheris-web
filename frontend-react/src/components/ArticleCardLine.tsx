@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ArticleCardLineProps {
   article: Article
@@ -17,6 +18,7 @@ export function ArticleCardLine({
   onArticleClick,
   onMouseEnter,
 }: ArticleCardLineProps) {
+  const { t } = useTranslation()
   const authorName = useMemo(
     () =>
       article.author.nickname?.trim() ||
