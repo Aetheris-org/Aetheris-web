@@ -47,31 +47,36 @@ export async function getCurrentUser(): Promise<User | null> {
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
 
       if (existing && !existingError) {
         return existing;
       }
 
-      const { data: inserted, error: insertError } = await supabase
+      const { data: upserted, error: upsertError } = await supabase
         .from('profiles')
-        .insert({
-          id: authUser.id,
-          username: existing?.username || usernameFromMeta,
-          nickname: existing?.nickname || usernameFromMeta,
-          name: (authUser.user_metadata as any)?.name || null,
-          avatar: avatarFromMeta,
-          avatar_url: avatarFromMeta,
-        })
+        .upsert(
+          {
+            id: authUser.id,
+            username: usernameFromMeta,
+            nickname: usernameFromMeta,
+            name: (authUser.user_metadata as any)?.name || null,
+            avatar: avatarFromMeta,
+            avatar_url: avatarFromMeta,
+          },
+          {
+            onConflict: 'id',
+          }
+        )
         .select()
-        .single();
+        .maybeSingle();
 
-      if (insertError) {
-        logger.error('Failed to create profile for auth user', insertError);
+      if (upsertError) {
+        logger.error('Failed to create profile for auth user', upsertError);
         return null;
       }
 
-      return inserted;
+      return upserted;
     };
 
     let profile = null;
