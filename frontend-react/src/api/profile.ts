@@ -271,17 +271,21 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
  * Обновить профиль пользователя
  * Возвращает обновленный UserProfile
  */
-export async function updateProfile(input: {
-  username?: string;
-  bio?: string;
-  avatar?: string;
-  coverImage?: string;
-  tag?: string;
-}): Promise<UserProfile> {
+export async function updateProfile(
+  input: {
+    username?: string;
+    bio?: string;
+    avatar?: string;
+    coverImage?: string;
+    tag?: string;
+  },
+  userIdOverride?: string
+): Promise<UserProfile> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    const effectiveUserId = userIdOverride || user?.id;
+    if (!effectiveUserId) {
       throw new Error('Not authenticated');
     }
 
@@ -306,7 +310,7 @@ export async function updateProfile(input: {
         .from('profiles')
         .select('id')
         .eq('tag', trimmedTag)
-        .neq('id', user.id)
+        .neq('id', effectiveUserId)
         .maybeSingle();
 
       if (tagError) {
@@ -323,7 +327,7 @@ export async function updateProfile(input: {
     const { error } = await supabase
       .from('profiles')
       .update(updateData)
-      .eq('id', user.id);
+      .eq('id', effectiveUserId);
 
     if (error) {
       logger.error('Error updating profile', error);
@@ -331,7 +335,7 @@ export async function updateProfile(input: {
     }
 
     // Получаем обновленный профиль
-    return await getUserProfile(user.id);
+    return await getUserProfile(effectiveUserId);
   } catch (error: any) {
     logger.error('Error in updateProfile', error);
     throw error;

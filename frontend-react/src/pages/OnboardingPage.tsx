@@ -134,13 +134,17 @@ export default function OnboardingPage() {
         uploadIfNeeded(coverFile, 'covers'),
       ])
 
-      const profile = await updateProfile({
-        username: nicknameTrimmed,
-        bio: bioValue || undefined,
-        avatar: avatarUrl || undefined,
-        coverImage: coverUrl || undefined,
-        tag: tagTrimmed,
-      })
+      const profile = await updateProfile(
+        {
+          username: nicknameTrimmed,
+          bio: bioValue || undefined,
+          avatar: avatarUrl || undefined,
+          coverImage: coverUrl || undefined,
+          tag: tagTrimmed,
+        },
+        // передаем ID явно, чтобы не зависеть от getUser в supabase
+        authUser?.uuid || (authUser as any)?.id
+      )
 
       // Отмечаем профиль как подтвержденный (profiles.confirmed = true)
       let confirmed = false
