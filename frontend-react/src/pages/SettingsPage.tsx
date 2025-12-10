@@ -1465,8 +1465,17 @@ function ProfileSettings() {
                   <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
                 </span>
               </Button>
-              {/* Кроп/удаление через загрузку неактивны */}
-              {/* Remove via upload disabled */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive opacity-50 cursor-not-allowed pointer-events-none"
+                disabled
+              >
+                <span className="flex items-center gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
+                </span>
+              </Button>
             </div>
             <div className="w-full sm:max-w-xl flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
               <Input
