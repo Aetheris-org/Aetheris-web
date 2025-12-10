@@ -453,8 +453,10 @@ export async function getArticle(id: string): Promise<Article> {
 /**
  * Отдельно инкрементирует просмотры статьи после порога времени
  */
-export async function incrementArticleView(id: string | number, userId?: string): Promise<void> {
+export async function incrementArticleView(id: string | number | undefined, userId?: string): Promise<void> {
   try {
+    if (id === undefined || id === null) return
+
     const normalizeId = (rawId: string | number): number | null => {
       if (typeof rawId === 'number') return rawId
       const numericRegex = /^\d+$/;
