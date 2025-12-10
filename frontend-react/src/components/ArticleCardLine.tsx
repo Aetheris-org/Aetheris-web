@@ -21,14 +21,11 @@ export function ArticleCardLine({
   const { t } = useTranslation()
   const authorName = useMemo(
     () =>
-      article.author.nickname?.trim() ||
-      article.author.username ||
+      article.author.username?.trim() ||
       (article as any).author_username ||
-      (article as any).author_full_name ||
-      (article as any).author_fullname ||
-      (article as any).author_display_name ||
+      (article as any).username ||
       '',
-    [article.author.nickname, article.author.username]
+    [article.author.username]
   )
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -80,12 +77,18 @@ export function ArticleCardLine({
   }
 
   const getReadMinutes = () => {
-    const apiMinutes =
+    const apiMinutesRaw =
       article.readTimeMinutes ??
       (article as any).read_time_minutes ??
       (article as any).read_time ??
+      (article as any).readTime ??
+      (article as any).read_minutes ??
       undefined
-    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    const apiMinutesNum = Number(apiMinutesRaw)
+    const value =
+      Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
+        ? apiMinutesNum
+        : estimateReadTime(article.content || article.excerpt || article.contentJSON || '')
     return Math.max(1, Math.round(value * 2) / 2)
   }
 
@@ -180,6 +183,7 @@ export function ArticleCardLine({
               (article as any).views_count ??
               (article as any).view_count ??
               (article as any).viewsCount ??
+              (article as any).stats?.views ??
               0
             return (
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

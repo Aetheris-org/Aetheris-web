@@ -63,17 +63,23 @@ export function ArticleCardSquare({
     const wordsPerMinute = 200
     const text = extractTextFromSlate(content)
     if (!text) return 1 // Минимум 1 минута
-    const words = text.split(/\s+/).filter(word => word.length > 0).length
+    const words = text.split(/\s+/).filter((word) => word.length > 0).length
     return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
 
   const getReadMinutes = () => {
-    const apiMinutes =
+    const apiMinutesRaw =
       article.readTimeMinutes ??
       (article as any).read_time_minutes ??
       (article as any).read_time ??
+      (article as any).readTime ??
+      (article as any).read_minutes ??
       undefined
-    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    const apiMinutesNum = Number(apiMinutesRaw)
+    const value =
+      Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
+        ? apiMinutesNum
+        : estimateReadTime(article.content || article.excerpt || article.contentJSON || '')
     return Math.max(1, Math.round(value * 2) / 2)
   }
 
@@ -167,6 +173,7 @@ export function ArticleCardSquare({
               (article as any).views_count ??
               (article as any).view_count ??
               (article as any).viewsCount ??
+              (article as any).stats?.views ??
               0
             return (
             <div className="flex items-center gap-1">
