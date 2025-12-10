@@ -2,7 +2,7 @@ import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface ArticleCardSquareProps {
   article: Article
