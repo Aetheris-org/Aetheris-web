@@ -30,6 +30,16 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
+    const usernameFromMeta =
+      (authUser.user_metadata as any)?.username ||
+      (authUser.user_metadata as any)?.name ||
+      authUser.email?.split('@')[0] ||
+      'user';
+    const avatarFromMeta =
+      (authUser.user_metadata as any)?.avatar_url ||
+      (authUser.user_metadata as any)?.picture ||
+      null;
+
     const buildFallbackProfile = () => ({
       id: authUser.id,
       username: usernameFromMeta,
@@ -44,16 +54,6 @@ export async function getCurrentUser(): Promise<User | null> {
 
     // helper: ensure profile row exists for auth user (handles missing profiles for OAuth)
     const ensureProfile = async () => {
-      const usernameFromMeta =
-        (authUser.user_metadata as any)?.username ||
-        (authUser.user_metadata as any)?.name ||
-        authUser.email?.split('@')[0] ||
-        'user';
-      const avatarFromMeta =
-        (authUser.user_metadata as any)?.avatar_url ||
-        (authUser.user_metadata as any)?.picture ||
-        null;
-
       // check again before insert to avoid duplicates
       const { data: existing, error: existingError } = await supabase
         .from('profiles')
