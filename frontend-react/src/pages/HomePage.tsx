@@ -961,13 +961,7 @@ export default function HomePage() {
                     {t('home.trending.nothingYet')}
                   </div>
                 ) : (
-                  sortedTrending.map((article, index) => {
-                    const trendingAuthorName =
-                      article.author.nickname?.trim() ||
-                      article.author.username?.trim() ||
-                      'User'
-
-                    return (
+                  sortedTrending.map((article, index) => (
                     <button
                       key={article.id}
                       type="button"
@@ -981,7 +975,7 @@ export default function HomePage() {
                         <div className="flex-1 space-y-1 min-w-0">
                           <p className="text-xs sm:text-sm font-semibold text-foreground break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{article.title}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
-                            {trendingAuthorName}
+                            {getAuthorDisplayName(article.author)}
                           </p>
                         </div>
                       </div>
@@ -991,8 +985,7 @@ export default function HomePage() {
                         <span>{(article.likes || 0) + (article.dislikes || 0)} {t('home.trending.reactions')}</span>
                     </div>
                     </button>
-                    )
-                  })
+                  ))
                 )}
               </CardContent>
             </Card>
