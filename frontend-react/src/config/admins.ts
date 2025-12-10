@@ -14,7 +14,7 @@ export const ROLE_BY_UUID: Record<string, string> = {
   // '018eeeb8-80d5-40c7-b8da-a99900000003': 'developer',
 
   // moderator
-  // '018eeeb8-80d5-40c7-b8da-a99900000004': 'moderator',
+  'e5462812-787f-41df-bf24-15953a0feb16': 'moderator',
 
   // manager/editor/writer/designer/tester/support
   // '018eeeb8-80d5-40c7-b8da-a99900000005': 'manager',
