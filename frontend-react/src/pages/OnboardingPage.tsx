@@ -328,7 +328,13 @@ export default function OnboardingPage() {
                         <span className="text-xs text-muted-foreground text-center leading-tight px-1">No avatar</span>
                       )}
                     </div>
-                    <Input type="file" accept="image/*" onChange={handleAvatarChange} />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      disabled
+                      className="opacity-50 cursor-not-allowed"
+                    />
                   </div>
                 </div>
               </div>
@@ -358,7 +364,13 @@ export default function OnboardingPage() {
                       <span className="text-sm text-muted-foreground">No cover</span>
                     )}
                   </div>
-                  <Input type="file" accept="image/*" onChange={handleCoverChange} />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverChange}
+                    disabled
+                    className="opacity-50 cursor-not-allowed"
+                  />
                 </div>
               </div>
             </div>
