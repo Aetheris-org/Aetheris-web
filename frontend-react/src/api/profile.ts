@@ -82,7 +82,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         article:articles!comments_article_id_fkey (
           id,
           title,
-          deleted_at,
           author_id
         )
       `)
@@ -105,7 +104,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           title,
           excerpt,
           preview_image,
-          deleted_at,
           author_id
         )
       `)
