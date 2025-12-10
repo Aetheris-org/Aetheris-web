@@ -273,8 +273,9 @@ export default function ArticlePage() {
   useEffect(() => {
     const articleId = article?.id
     if (!articleId) return
+    const articleIdStr = String(articleId)
     const timer = setTimeout(() => {
-      incrementArticleView(articleId, user?.id).catch(() => {})
+      incrementArticleView(articleIdStr, user?.id).catch(() => {})
     }, 10_000)
     return () => clearTimeout(timer)
   }, [article?.id, user?.id])
