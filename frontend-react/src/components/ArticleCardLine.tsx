@@ -18,7 +18,7 @@ export function ArticleCardLine({
   onMouseEnter,
 }: ArticleCardLineProps) {
   const authorName = useMemo(
-    () => article.author.username || '',
+    () => article.author.username,
     [article.author.username]
   )
   const formatDate = (date: string) => {
