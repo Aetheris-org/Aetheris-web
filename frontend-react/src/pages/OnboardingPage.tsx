@@ -14,8 +14,6 @@ import { useThemeStore } from '@/stores/themeStore'
 import { logger } from '@/lib/logger'
 
 const NICKNAME_MIN = 3
-const TAG_REGEX = /^[a-zA-Z0-9_]{3,24}$/
-
 const uuidToNumber = (uuid: string): number => {
   let hash = 0
   for (let i = 0; i < uuid.length; i++) {
