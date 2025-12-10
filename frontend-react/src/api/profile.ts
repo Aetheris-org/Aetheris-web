@@ -144,6 +144,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       return Boolean(deletedAt) || isDeletedFlag || status === 'deleted'
     }
 
+    const isValidArticle = (item: any) => item && item.id
+
     // Фильтруем удаленные статьи (soft delete / статус deleted)
     const filteredArticlesRaw = (articles || []).filter((a: any) => !isSoftDeleted(a))
 
@@ -216,7 +218,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       stats: {
         publishedArticles: visibleArticles.length,
         totalLikes,
-        totalComments: (comments || []).filter((c: any) => c.article && !isSoftDeleted(c.article)).length,
+        totalComments: (comments || []).filter((c: any) => isValidArticle(c.article) && !isSoftDeleted(c.article)).length,
         followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
         following: (followingData || []).length,
       },
@@ -226,7 +228,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       },
       articles: transformedArticles,
       comments: (comments || [])
-        .filter((c: any) => c.article && !isSoftDeleted(c.article))
+        .filter((c: any) => isValidArticle(c.article) && !isSoftDeleted(c.article))
         .map((c: any) => ({
           id: String(c.id),
           text: c.text,
@@ -237,7 +239,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           },
         })),
       bookmarks: (bookmarks || [])
-        .filter((b: any) => b.article && !isSoftDeleted(b.article))
+        .filter((b: any) => isValidArticle(b.article) && !isSoftDeleted(b.article))
         .map((b: any) => ({
           id: String(b.id),
           createdAt: b.created_at,
