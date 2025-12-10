@@ -110,10 +110,6 @@ export async function getCurrentUser(): Promise<User | null> {
     profileError = fetchError;
 
     if (profileError || !profile) {
-      const msg = (profileError as any)?.message || ''
-      const code = (profileError as any)?.code || ''
-      const isNameSchemaIssue = msg.includes('name') || code === 'PGRST204'
-
       logger.warn('Profile missing for auth user, attempting to create...', profileError);
       profile = await ensureProfile();
 
