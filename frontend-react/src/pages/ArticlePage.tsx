@@ -2086,14 +2086,19 @@ export default function ArticlePage() {
             {/* Title */}
             <h1 className="flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight break-words overflow-wrap-anywhere leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               <span className="break-words overflow-wrap-anywhere">{article.title}</span>
-              {article.updatedAt &&
-                article.createdAt &&
-                new Date(article.updatedAt).getTime() - new Date(article.createdAt).getTime() > 1000 && (
+              {(() => {
+                const created = article.createdAt ? new Date(article.createdAt).getTime() : 0
+                const updated = article.updatedAt ? new Date(article.updatedAt).getTime() : 0
+                const isEdited = updated - created > 60_000 // показываем "edited" только если прошло больше минуты
+                const editedLabel = t('article.edited')
+                const editedText = editedLabel && editedLabel !== 'article.edited' ? editedLabel : 'Edited'
+                return isEdited ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                     <Pencil className="h-3.5 w-3.5" />
-                    {t('article.edited') || 'Edited'}
+                    {editedText}
                   </span>
-                )}
+                ) : null
+              })()}
             </h1>
 
             {/* Meta Info */}

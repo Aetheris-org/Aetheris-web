@@ -2749,6 +2749,7 @@
     }
   },
   "article": {
+    "edited": "Edited",
     "readTime": "min",
     "noComments": "No comments yet",
     "beFirst": "Be the first to comment",
