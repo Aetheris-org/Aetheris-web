@@ -66,9 +66,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
-      .is('deleted_at', null)
-      .or('is_deleted.is.false,is_deleted.is.null')
-      .not('status', 'eq', 'deleted')
       .order('created_at', { ascending: false });
 
     if (articlesError) {
@@ -85,9 +82,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         article:articles!comments_article_id_fkey (
           id,
           title,
-          status,
-          deleted_at,
-          is_deleted
+          deleted_at
         )
       `)
       .eq('author_id', profileUuid)
@@ -109,9 +104,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           title,
           excerpt,
           preview_image,
-          status,
-          deleted_at,
-          is_deleted
+          deleted_at
         )
       `)
       .eq('user_id', profileUuid)
@@ -130,8 +123,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         following:profiles!follows_following_id_fkey (
           id,
           username,
-          avatar,
-          name
+          avatar
         )
       `)
       .eq('follower_id', profileUuid);
@@ -141,10 +133,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     }
 
     const isSoftDeleted = (item: any) => {
-      const status = (item?.status || item?.article_status || '').toString().toLowerCase()
       const deletedAt = item?.deleted_at || item?.deletedAt
-      const isDeletedFlag = item?.is_deleted === true || item?.isDeleted === true
-      return Boolean(deletedAt) || isDeletedFlag || status === 'deleted'
+      return Boolean(deletedAt)
     }
 
     const isValidArticle = (item: any) => item && item.id
