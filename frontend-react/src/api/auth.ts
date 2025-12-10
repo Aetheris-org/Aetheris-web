@@ -30,6 +30,18 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
+    const buildFallbackProfile = () => ({
+      id: authUser.id,
+      username: usernameFromMeta,
+      nickname: usernameFromMeta,
+      avatar: avatarFromMeta,
+      avatar_url: avatarFromMeta,
+      tag: null,
+      bio: null,
+      role: 'user',
+      created_at: authUser.created_at || new Date().toISOString(),
+    })
+
     // helper: ensure profile row exists for auth user (handles missing profiles for OAuth)
     const ensureProfile = async () => {
       const usernameFromMeta =
@@ -71,6 +83,13 @@ export async function getCurrentUser(): Promise<User | null> {
         .maybeSingle();
 
       if (upsertError) {
+        const msg = (upsertError as any)?.message || ''
+        const code = (upsertError as any)?.code || ''
+        const isNameSchemaIssue = msg.includes('name') || code === 'PGRST204'
+        if (isNameSchemaIssue) {
+          logger.warn('Profile upsert failed due to missing name column; returning fallback profile', upsertError)
+          return buildFallbackProfile()
+        }
         logger.error('Failed to create profile for auth user', upsertError);
         return null;
       }
@@ -91,8 +110,18 @@ export async function getCurrentUser(): Promise<User | null> {
     profileError = fetchError;
 
     if (profileError || !profile) {
+      const msg = (profileError as any)?.message || ''
+      const code = (profileError as any)?.code || ''
+      const isNameSchemaIssue = msg.includes('name') || code === 'PGRST204'
+
       logger.warn('Profile missing for auth user, attempting to create...', profileError);
       profile = await ensureProfile();
+
+      // если создание не удалось, но это ошибка схемы name, возвращаем фолбек
+      if (!profile && isNameSchemaIssue) {
+        profile = buildFallbackProfile()
+      }
+
       if (!profile) {
         return null;
       }
