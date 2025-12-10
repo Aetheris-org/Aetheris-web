@@ -147,12 +147,12 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
     // Фильтруем удаленные статьи (soft delete / статус deleted)
     const filteredArticlesRaw = (articles || []).filter((a: any) => !isSoftDeleted(a))
 
-    // Трансформируем данные
-    const publishedArticles = filteredArticlesRaw.filter((a: any) => a.published_at !== null);
-    const totalLikes = publishedArticles.reduce((sum: number, article: any) => sum + (article.likes_count || 0), 0);
+    // Видимые статьи (все не удалённые, независимо от published_at)
+    const visibleArticles = filteredArticlesRaw;
+    const totalLikes = visibleArticles.reduce((sum: number, article: any) => sum + (article.likes_count || 0), 0);
 
     // Получаем все уникальные теги
-    const allTags = publishedArticles.flatMap((a: any) => a.tags || []);
+    const allTags = visibleArticles.flatMap((a: any) => a.tags || []);
     const tagCounts = allTags.reduce((acc: Record<string, number>, tag: string) => {
       acc[tag] = (acc[tag] || 0) + 1;
       return acc;
@@ -163,7 +163,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       .slice(0, 10)
       .map(([tag]) => tag);
 
-    const transformedArticles: Article[] = filteredArticlesRaw.map((article: any) => 
+    const transformedArticles: Article[] = visibleArticles.map((article: any) => 
       transformArticle(article, currentUserId ? String(currentUserId) : undefined)
     );
 
@@ -214,7 +214,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         coverImageUrl: normalizedCover ?? undefined,
       },
       stats: {
-        publishedArticles: publishedArticles.length,
+        publishedArticles: visibleArticles.length,
         totalLikes,
         totalComments: (comments || []).filter((c: any) => c.article && !isSoftDeleted(c.article)).length,
         followers: typeof profile.followers_count === 'number' ? profile.followers_count : 0,
@@ -222,7 +222,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       },
       highlights: {
         tags: topTags,
-        recentArticleCount: publishedArticles.length,
+        recentArticleCount: visibleArticles.length,
       },
       articles: transformedArticles,
       comments: (comments || [])
