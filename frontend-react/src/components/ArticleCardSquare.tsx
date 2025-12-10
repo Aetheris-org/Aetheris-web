@@ -65,6 +65,18 @@ export function ArticleCardSquare({
     return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
 
+  const getReadMinutes = () => {
+    const apiMinutes =
+      article.readTimeMinutes ??
+      (article as any).read_time_minutes ??
+      (article as any).read_time ??
+      undefined
+    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    return Math.max(1, Math.round(value * 2) / 2)
+  }
+
+  const formatReadMinutes = (minutes: number) => (Number.isInteger(minutes) ? minutes : minutes.toFixed(1))
+
   return (
     <Card
       className="group overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col"
@@ -140,7 +152,9 @@ export function ArticleCardSquare({
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span>{estimateReadTime(article.content)}m</span>
+              <span>
+                {formatReadMinutes(getReadMinutes())} {t('article.readTime')}
+              </span>
             </div>
           </div>
 
@@ -149,6 +163,8 @@ export function ArticleCardSquare({
               article.views ??
               // fallback in case backend returns alternative field
               (article as any).views_count ??
+              (article as any).view_count ??
+              (article as any).viewsCount ??
               0
             return (
             <div className="flex items-center gap-1">

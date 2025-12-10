@@ -1844,9 +1844,21 @@ export default function ArticlePage() {
     const wordsPerMinute = 200
     const text = extractTextFromSlate(content)
     if (!text) return 1 // Минимум 1 минута
-    const words = text.split(/\s+/).filter(word => word.length > 0).length
-    return Math.ceil(words / wordsPerMinute)
+    const words = text.split(/\s+/).filter((word) => word.length > 0).length
+    return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
+
+  const getReadMinutes = () => {
+    const apiMinutes =
+      article.readTimeMinutes ??
+      (article as any).read_time_minutes ??
+      (article as any).read_time ??
+      undefined
+    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    return Math.max(1, Math.round(value * 2) / 2)
+  }
+
+  const formatReadMinutes = (minutes: number) => (Number.isInteger(minutes) ? minutes : minutes.toFixed(1))
 
   // Map old difficulty values to new ones for backward compatibility
   const getDifficultyKey = (difficulty: string | undefined): string => {
@@ -2128,7 +2140,9 @@ export default function ArticlePage() {
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>{estimateReadTime(article.content)} {t('article.readTime')}</span>
+                <span>
+                  {formatReadMinutes(getReadMinutes())} {t('article.readTime')}
+                </span>
               </div>
               {article.difficulty && (
                 <Badge variant="outline" className="rounded-md font-normal capitalize text-[10px] sm:text-xs px-1.5 py-0.5">

@@ -93,6 +93,25 @@ export function ArticleCard({
     return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
 
+  const getReadMinutes = () => {
+    const apiMinutes =
+      article.readTimeMinutes ??
+      (article as any).read_time_minutes ??
+      (article as any).read_time ??
+      undefined
+    const value = typeof apiMinutes === 'number' && apiMinutes > 0 ? apiMinutes : estimateReadTime(article.content || article.excerpt || article.contentJSON)
+    return Math.max(1, Math.round(value * 2) / 2)
+  }
+
+  const formatReadMinutes = (minutes: number) => (Number.isInteger(minutes) ? minutes : minutes.toFixed(1))
+
+  const viewsCount =
+    article.views ??
+    (article as any).views_count ??
+    (article as any).view_count ??
+    (article as any).viewsCount ??
+    0
+
   return (
     <Card
       className="group relative overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer"
@@ -149,7 +168,9 @@ export function ArticleCard({
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              <span>{estimateReadTime(article.content)} {t('article.readTime')}</span>
+              <span>
+                {formatReadMinutes(getReadMinutes())} {t('article.readTime')}
+              </span>
             </div>
           </div>
         </div>
@@ -195,12 +216,10 @@ export function ArticleCard({
         {/* Footer Stats */}
         <div className="flex items-center justify-between pt-4 border-t border-border/40">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            {article.views !== undefined && (
-              <div className="flex items-center gap-1.5">
-                <TrendingUp className="h-4 w-4" />
-                <span className="font-medium">{article.views}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4" />
+              <span className="font-medium">{viewsCount}</span>
+            </div>
           </div>
 
           {article.difficulty && (

@@ -230,6 +230,12 @@ export function transformArticle(article: any, _userId?: string): Article {
 
   const reactionsCount = (article.likes_count || 0) + (article.dislikes_count || 0);
   const readTimeMinutes = computeReadTimeMinutes(article);
+  const views =
+    article.views ??
+    article.views_count ??
+    (article as any)?.view_count ??
+    (article as any)?.viewsCount ??
+    0;
 
   return {
     id: String(article.id),
@@ -250,7 +256,7 @@ export function transformArticle(article: any, _userId?: string): Article {
     difficulty: (article.difficulty || 'medium') as ArticleDifficulty,
     likes: article.likes_count || 0,
     dislikes: article.dislikes_count || 0,
-    views: article.views || 0,
+    views,
     createdAt: article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString(),
     updatedAt: article.updated_at ? new Date(article.updated_at).toISOString() : new Date().toISOString(),
     publishedAt,
