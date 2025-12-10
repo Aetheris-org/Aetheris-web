@@ -175,6 +175,14 @@ export function transformArticle(article: any, _userId?: string): Article {
         avatar: null,
       };
 
+  // Fallbacks: some RPC responses may provide username under different keys
+  const authorUsername =
+    author.username ||
+    article.author_username ||
+    article.username ||
+    article.user?.username ||
+    '';
+
   // author.id из Supabase - это UUID (строка)
   const authorId = author.id || article.author_id;
 
@@ -197,7 +205,7 @@ export function transformArticle(article: any, _userId?: string): Article {
     author: {
       id: authorId, // UUID из базы данных
       uuid: typeof authorId === 'string' ? authorId : undefined, // Сохраняем UUID для навигации
-      username: author.username || '',
+      username: authorUsername,
       nickname: author.nickname || '',
       tag: author.tag || '',
       avatar: author.avatar || null,
