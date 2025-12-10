@@ -304,34 +304,6 @@ export async function reactToComment(
 
     const validatedCommentId = validateUuid(commentId);
 
-    // Проверяем существующую реакцию
-    const { data: existing } = await supabase
-      .from('comment_reactions')
-      .select('reaction')
-      .eq('comment_id', validatedCommentId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (existing && existing.reaction === reaction) {
-      // Удаляем реакцию (toggle off)
-      await supabase
-        .from('comment_reactions')
-        .delete()
-        .eq('comment_id', validatedCommentId)
-        .eq('user_id', user.id);
-    } else {
-      // Создаем или обновляем реакцию
-      await supabase
-        .from('comment_reactions')
-        .upsert({
-          comment_id: validatedCommentId,
-          user_id: user.id,
-          reaction: reaction,
-        }, {
-          onConflict: 'comment_id,user_id',
-        });
-    }
-
     // Получаем текущие агрегаты, обновляем локально без дополнительных count-запросов
     const { data: commentRow, error: fetchCommentError } = await supabase
       .from('comments')
@@ -362,58 +334,53 @@ export async function reactToComment(
       }, user.id);
     }
 
-    const currentLikes = commentRow.likes_count || 0;
-    const currentDislikes = commentRow.dislikes_count || 0;
+    // Пробуем вызвать серверную функцию для установки реакции и пересчёта
+    const { data: rpcData, error: rpcError } = await supabase.rpc('set_comment_reaction', {
+      p_comment_id: validatedCommentId,
+      p_user_id: user.id,
+      p_reaction: reaction,
+    })
 
-    // Рассчитываем новые агрегаты на основе предыдущей реакции пользователя
-    const prev = existing?.reaction as 'like' | 'dislike' | null;
-    let newLikes = currentLikes;
-    let newDislikes = currentDislikes;
-
-    const nextReaction = reaction;
-
-    if (prev === 'like') {
-      newLikes -= 1;
-    } else if (prev === 'dislike') {
-      newDislikes -= 1;
+    if (!rpcError && rpcData && rpcData.length > 0) {
+      const rpc = rpcData[0]
+      const userReaction = rpc.user_reaction as 'like' | 'dislike' | null
+      return transformComment(
+        {
+          ...commentRow,
+          likes_count: rpc.likes_count ?? commentRow.likes_count ?? 0,
+          dislikes_count: rpc.dislikes_count ?? commentRow.dislikes_count ?? 0,
+          user_reaction: userReaction,
+        },
+        user.id
+      )
     }
 
-    if (prev !== nextReaction && nextReaction === 'like') {
-      newLikes += 1;
-    } else if (prev !== nextReaction && nextReaction === 'dislike') {
-      newDislikes += 1;
+    if (rpcError) {
+      logger.warn('RPC set_comment_reaction failed, falling back to local toggle', rpcError)
     }
 
-    const { error: updateAggError } = await supabase
-      .from('comments')
-      .update({
-        likes_count: newLikes,
-        dislikes_count: newDislikes,
-      })
-      .eq('id', validatedCommentId);
+    // Фолбэк: локально пересчитываем (если RPC недоступен)
+    const prev = commentRow.user_reaction as 'like' | 'dislike' | null
+    let newLikes = commentRow.likes_count || 0
+    let newDislikes = commentRow.dislikes_count || 0
 
-    if (updateAggError) {
-      logger.warn('Error updating comment aggregates (continuing with reaction result)', updateAggError);
+    if (prev === 'like') newLikes -= 1
+    else if (prev === 'dislike') newDislikes -= 1
+
+    if (prev !== reaction) {
+      if (reaction === 'like') newLikes += 1
+      else newDislikes += 1
     }
-
-    const finalComment = {
-      ...commentRow,
-      likes_count: newLikes,
-      dislikes_count: newDislikes,
-      user_reaction: reaction,
-    }
-
-    // Текущая реакция пользователя после операции
-    const userReaction =
-      existing && existing.reaction === reaction ? null : reaction;
 
     return transformComment(
       {
-        ...finalComment,
-        user_reaction: userReaction,
+        ...commentRow,
+        likes_count: newLikes,
+        dislikes_count: newDislikes,
+        user_reaction: prev === reaction ? null : reaction,
       },
       user.id
-    );
+    )
   } catch (error: any) {
     logger.error('Error in reactToComment', error);
     throw error;
