@@ -610,6 +610,10 @@ export default function ProfilePage() {
     queryKey: ['profile', profileId],
     queryFn: () => getUserProfile(profileId!),
     enabled: !!profileId,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    gcTime: 0,
   })
 
   const { level, xpIntoLevel, xpForLevel, streakDays, achievements } = useGamificationStore(

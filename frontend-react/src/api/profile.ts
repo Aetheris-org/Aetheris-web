@@ -66,6 +66,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
+      .is('deleted_at', null)
+      .or('is_deleted.is.false,is_deleted.is.null')
+      .not('status', 'eq', 'deleted')
       .order('created_at', { ascending: false });
 
     if (articlesError) {
