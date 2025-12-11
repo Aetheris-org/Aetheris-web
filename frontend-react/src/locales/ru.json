@@ -37,11 +37,11 @@
   },
   "time": {
     "justNow": "только что",
-    "minutesAgo": "{{count}} мин назад",
-    "hoursAgo": "{{count}} ч назад",
-    "daysAgo": "{{count}} д назад",
-    "monthsAgo": "{{count}} мес назад",
-    "yearsAgo": "{{count}} г назад"
+    "minutesAgo": "{count} мин назад",
+    "hoursAgo": "{count} ч назад",
+    "daysAgo": "{count} д назад",
+    "monthsAgo": "{count} мес назад",
+    "yearsAgo": "{count} г назад"
   },
   "settings": {
     "title": "Настройки",
