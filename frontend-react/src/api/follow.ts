@@ -27,10 +27,10 @@ export async function followUser(followingId: string): Promise<{ id: string }> {
       throw new Error('Not authenticated');
     }
 
-    // Используем Database Function с UUID
+    // Используем Database Function с UUID (параметры в правильном порядке)
     const { data, error } = await supabase.rpc('toggle_follow', {
-      p_following_id: followingId,
       p_follower_id: user.id,
+      p_following_id: followingId,
     });
 
     if (error) {
@@ -65,10 +65,10 @@ export async function unfollowUser(followingId: string): Promise<void> {
     // Валидируем UUID
     const validatedFollowingId = validateUuid(followingId);
 
-    // Используем Database Function с UUID
+    // Используем Database Function с UUID (параметры в правильном порядке)
     const { data, error } = await supabase.rpc('toggle_follow', {
-      p_following_id: validatedFollowingId,
       p_follower_id: user.id,
+      p_following_id: validatedFollowingId,
     });
 
     if (error) {
