@@ -34,47 +34,6 @@ export function ArticleCardLine({
     })
   }
 
-  // Функция для извлечения текста из Slate document
-  const extractTextFromSlate = (content: any): string => {
-    if (typeof content === 'string') {
-      return content
-    }
-    
-    // Если это объект Slate document
-    if (content && typeof content === 'object') {
-      // Проверяем формат Slate: { document: [...] }
-      const document = content.document || content
-      
-      if (Array.isArray(document)) {
-        const extractText = (node: any): string => {
-          if (typeof node === 'string') {
-            return node
-          }
-          if (node?.text) {
-            return node.text
-          }
-          if (node?.children && Array.isArray(node.children)) {
-            return node.children.map(extractText).join(' ')
-          }
-          if (node?.content && Array.isArray(node.content)) {
-            return node.content.map(extractText).join(' ')
-          }
-          return ''
-        }
-        return document.map(extractText).join(' ')
-      }
-    }
-    
-    return ''
-  }
-
-  const estimateReadTime = (content: any) => {
-    const wordsPerMinute = 200
-    const text = extractTextFromSlate(content)
-    if (!text) return 1 // Минимум 1 минута
-    const words = text.split(/\s+/).filter(word => word.length > 0).length
-    return Math.max(1, Math.ceil(words / wordsPerMinute))
-  }
 
   const getReadMinutes = () => {
     const apiMinutesRaw =
@@ -85,11 +44,9 @@ export function ArticleCardLine({
       (article as any).read_minutes ??
       undefined
     const apiMinutesNum = Number(apiMinutesRaw)
-    const value =
-      Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
-        ? apiMinutesNum
-        : estimateReadTime(article.content || article.excerpt || article.contentJSON || '')
-    return Math.max(1, Math.round(value * 2) / 2)
+    return Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
+      ? Math.max(1, Math.round(apiMinutesNum * 2) / 2)
+      : 1 // fallback to 1 minute if API doesn't provide value
   }
 
   const formatReadMinutes = (minutes: number) => (Number.isInteger(minutes) ? minutes : minutes.toFixed(1))

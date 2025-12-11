@@ -30,15 +30,15 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    const usernameFromMeta =
-      (authUser.user_metadata as any)?.username ||
-      (authUser.user_metadata as any)?.name ||
-      authUser.email?.split('@')[0] ||
-      'user';
-    const avatarFromMeta =
-      (authUser.user_metadata as any)?.avatar_url ||
-      (authUser.user_metadata as any)?.picture ||
-      null;
+      const usernameFromMeta =
+        (authUser.user_metadata as any)?.username ||
+        (authUser.user_metadata as any)?.name ||
+        authUser.email?.split('@')[0] ||
+        'user';
+      const avatarFromMeta =
+        (authUser.user_metadata as any)?.avatar_url ||
+        (authUser.user_metadata as any)?.picture ||
+        null;
 
     const buildFallbackProfile = () => ({
       id: authUser.id,
@@ -69,11 +69,11 @@ export async function getCurrentUser(): Promise<User | null> {
         .from('profiles')
         .upsert(
           {
-            id: authUser.id,
+          id: authUser.id,
             username: usernameFromMeta,
             nickname: usernameFromMeta,
-            avatar: avatarFromMeta,
-            avatar_url: avatarFromMeta,
+          avatar: avatarFromMeta,
+          avatar_url: avatarFromMeta,
           },
           {
             onConflict: 'id',

@@ -112,11 +112,40 @@ const extractReadMeta = (raw: any) => {
 
 const computeReadTimeMinutes = (article: any): number | undefined => {
   // prefer explicit field if backend provides
-  if (typeof article.read_time_minutes === 'number') return article.read_time_minutes;
+  if (typeof article.read_time_minutes === 'number' && article.read_time_minutes > 0) {
+    return article.read_time_minutes;
+  }
 
-  const { words, images, codeBlocks, longTokensRatio } = extractReadMeta(article.content || article.excerpt || '');
+  // Extract content from various possible formats
+  let contentToAnalyze = '';
+  if (article.content) {
+    if (typeof article.content === 'string') {
+      contentToAnalyze = article.content;
+    } else if (Array.isArray(article.content)) {
+      // Handle Slate.js content array
+      contentToAnalyze = article.content.map(block =>
+        typeof block === 'object' && block.children
+          ? block.children.map((child: any) => child.text || '').join(' ')
+          : typeof block === 'string' ? block : ''
+      ).join(' ');
+    } else if (typeof article.content === 'object' && article.content.document) {
+      // Handle TipTap/ProseMirror content
+      contentToAnalyze = JSON.stringify(article.content);
+    }
+  }
 
-  if (!words || Number.isNaN(words)) return undefined;
+  // Fallback to excerpt if content is empty
+  if (!contentToAnalyze && article.excerpt) {
+    contentToAnalyze = article.excerpt;
+  }
+
+  const { words, images, codeBlocks, longTokensRatio } = extractReadMeta(contentToAnalyze);
+
+  // Ensure we have at least some words to work with
+  if (!words || Number.isNaN(words) || words < 10) {
+    // For very short content, use a minimum read time
+    return 1;
+  }
 
   const language = article.language || article.locale;
   const wpm = language === 'ru' ? 180 : 200;
@@ -131,9 +160,9 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
 
   const minutes = baseSeconds / 60;
 
-  // round to nearest 0.5, min 1 min
-  const rounded = Math.max(1, Math.round(minutes * 2) / 2);
-  return Number.isFinite(rounded) ? rounded : undefined;
+  // round to nearest 0.5, min 1 min, max reasonable limit
+  const rounded = Math.max(1, Math.min(60, Math.round(minutes * 2) / 2));
+  return Number.isFinite(rounded) ? rounded : 1;
 };
 
 // Трансформация данных из Supabase в формат Article

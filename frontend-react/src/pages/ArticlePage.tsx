@@ -1853,14 +1853,6 @@ export default function ArticlePage() {
     return ''
   }
 
-  const estimateReadTime = (content: any) => {
-    const wordsPerMinute = 200
-    const text = extractTextFromSlate(content)
-    if (!text) return 1 // Минимум 1 минута
-    const words = text.split(/\s+/).filter((word) => word.length > 0).length
-    return Math.max(1, Math.ceil(words / wordsPerMinute))
-  }
-
   const getReadMinutes = () => {
     if (!article) return 1
     const apiMinutesRaw =
@@ -1871,11 +1863,9 @@ export default function ArticlePage() {
       (article as any).readTime ??
       undefined
     const apiMinutesNum = Number(apiMinutesRaw)
-    const value =
-      Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
-        ? apiMinutesNum
-        : estimateReadTime(article.content || article.excerpt || (article as any)?.contentJSON || '')
-    return Math.max(1, Math.round(value * 2) / 2)
+    return Number.isFinite(apiMinutesNum) && apiMinutesNum > 0
+      ? Math.max(1, Math.round(apiMinutesNum * 2) / 2)
+      : 1 // fallback to 1 minute if API doesn't provide value
   }
 
   const formatReadMinutes = (minutes: number) => (Number.isInteger(minutes) ? minutes : minutes.toFixed(1))
