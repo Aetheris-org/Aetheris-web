@@ -38,12 +38,17 @@ export async function followUser(followingId: string): Promise<{ id: string }> {
       throw error;
     }
 
-    if (!data?.[0]?.is_following) {
-      throw new Error('Failed to follow user');
+    // toggle_follow возвращает { is_following: boolean, id: uuid|null }
+    if (!data?.is_following) {
+      throw new Error('Failed to follow user - user was already following or operation failed');
+    }
+
+    if (!data.id) {
+      throw new Error('Failed to create follow record - no ID returned');
     }
 
     return {
-      id: data[0].follow_id || '',
+      id: data.id,
     };
   } catch (error: any) {
     logger.error('Error in followUser', error);
@@ -76,7 +81,9 @@ export async function unfollowUser(followingId: string): Promise<void> {
       throw error;
     }
 
-    if (data?.[0]?.is_following) {
+    // toggle_follow возвращает { is_following: boolean, id: uuid|null }
+    // Для unfollow ожидаем is_following = false
+    if (data?.is_following !== false) {
       throw new Error('Failed to unfollow user');
     }
   } catch (error: any) {
