@@ -279,7 +279,17 @@ export function transformArticle(article: any, _userId?: string): Article {
         : undefined;
 
   const reactionsCount = (article.likes_count || 0) + (article.dislikes_count || 0);
-  const readTimeMinutes = computeReadTimeMinutes(article);
+
+  // Приоритет: поле из базы > расчет
+  const readTimeMinutes = (() => {
+    // Сначала проверяем поле из базы данных
+    const dbMinutes = article.read_time_minutes;
+    if (typeof dbMinutes === 'number' && dbMinutes > 0 && dbMinutes <= 60) {
+      return dbMinutes;
+    }
+    // Если поле пустое или некорректное, рассчитываем
+    return computeReadTimeMinutes(article);
+  })();
   const views =
     article.views ??
     article.views_count ??

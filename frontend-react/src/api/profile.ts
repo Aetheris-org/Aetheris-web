@@ -9,6 +9,35 @@ import type { Article } from '@/types/article';
 import { transformArticle } from './articles';
 
 /**
+ * Получить минимальную информацию о профиле пользователя по UID (для карточек статей)
+ */
+export async function getUserProfileMinimal(userId: string): Promise<{
+  id: string;
+  username: string;
+  nickname: string;
+  tag?: string;
+  avatar?: string;
+} | null> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, nickname, tag, avatar')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      logger.warn('[getUserProfileMinimal] Error fetching profile:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    logger.warn('[getUserProfileMinimal] Unexpected error:', error);
+    return null;
+  }
+}
+
+/**
  * Получить профиль пользователя
  */
 export async function getUserProfile(userId: string): Promise<UserProfile> {

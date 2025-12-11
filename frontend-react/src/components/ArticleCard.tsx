@@ -3,6 +3,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useEffect, useState } from 'react'
+import { getUserProfileMinimal } from '@/api/profile'
 
 interface ArticleCardProps {
   article: Article
@@ -20,7 +22,23 @@ export function ArticleCard({
   hidePreview = false,
 }: ArticleCardProps) {
   const { t } = useTranslation()
+  const [authorProfile, setAuthorProfile] = useState<any>(null)
+
+  // Получаем актуальный профиль автора по UID
+  useEffect(() => {
+    const fetchAuthorProfile = async () => {
+      if (article.author?.id) {
+        const profile = await getUserProfileMinimal(article.author.id)
+        setAuthorProfile(profile)
+      }
+    }
+    fetchAuthorProfile()
+  }, [article.author?.id])
+
+  // Приоритет: nickname > username из профиля > username из article
   const authorName =
+    authorProfile?.nickname?.trim() ||
+    authorProfile?.username?.trim() ||
     article.author.username?.trim() ||
     (article as any).author_username ||
     (article as any).username ||

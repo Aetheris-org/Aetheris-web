@@ -2,8 +2,9 @@ import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { getUserProfileMinimal } from '@/api/profile'
 
 interface ArticleCardLineProps {
   article: Article
@@ -19,13 +20,29 @@ export function ArticleCardLine({
   onMouseEnter,
 }: ArticleCardLineProps) {
   const { t } = useTranslation()
+  const [authorProfile, setAuthorProfile] = useState<any>(null)
+
+  // Получаем актуальный профиль автора по UID
+  useEffect(() => {
+    const fetchAuthorProfile = async () => {
+      if (article.author?.id) {
+        const profile = await getUserProfileMinimal(article.author.id)
+        setAuthorProfile(profile)
+      }
+    }
+    fetchAuthorProfile()
+  }, [article.author?.id])
+
+  // Приоритет: nickname > username из профиля > username из article
   const authorName = useMemo(
     () =>
+      authorProfile?.nickname?.trim() ||
+      authorProfile?.username?.trim() ||
       article.author.username?.trim() ||
       (article as any).author_username ||
       (article as any).username ||
       '',
-    [article.author.username]
+    [authorProfile, article.author.username]
   )
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {

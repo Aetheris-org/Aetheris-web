@@ -271,14 +271,18 @@ export default function ArticlePage() {
 
   // Засчитываем просмотр спустя 10 секунд пребывания на странице
   useEffect(() => {
-    const articleIdStr = String(id ?? article?.id ?? '').trim()
-    if (!articleIdStr) return
+    // incrementArticleView работает только с числовыми ID, проверим что у нас есть числовой ID
+    const articleId = article?.id
+    if (!articleId || typeof articleId !== 'number') return
+
     const viewUserId = user?.id ? String(user.id) : undefined
     const timer = setTimeout(() => {
-      incrementArticleView(articleIdStr, viewUserId).catch(() => {})
+      incrementArticleView(articleId, viewUserId).catch((error) => {
+        console.warn('Failed to increment article view:', error)
+      })
     }, 10_000)
     return () => clearTimeout(timer)
-  }, [article?.id, id, user?.id])
+  }, [article?.id, user?.id])
 
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
   useEffect(() => {
