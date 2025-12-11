@@ -33,22 +33,36 @@ export async function followUser(followingId: string): Promise<{ id: string }> {
       p_following_id: followingId,
     });
 
+    logger.debug('toggle_follow response:', { data, error, dataType: typeof data, isArray: Array.isArray(data) });
+
     if (error) {
       logger.error('Error following user', error);
       throw error;
     }
 
-    // toggle_follow возвращает { is_following: boolean, id: uuid|null }
-    if (!data?.is_following) {
-      throw new Error('Failed to follow user - user was already following or operation failed');
+    if (!data) {
+      throw new Error('No data returned from toggle_follow function');
     }
 
-    if (!data.id) {
+    // Проверяем формат ответа - может прийти как объект или как массив
+    let responseData = data;
+    if (Array.isArray(data) && data.length > 0) {
+      responseData = data[0];
+    }
+
+    logger.debug('Parsed response data:', responseData);
+
+    // toggle_follow возвращает { is_following: boolean, id: uuid|null }
+    if (responseData?.is_following !== true) {
+      throw new Error(`Failed to follow user - operation returned is_following: ${responseData?.is_following}`);
+    }
+
+    if (!responseData?.id) {
       throw new Error('Failed to create follow record - no ID returned');
     }
 
     return {
-      id: data.id,
+      id: responseData.id,
     };
   } catch (error: any) {
     logger.error('Error in followUser', error);
@@ -76,15 +90,29 @@ export async function unfollowUser(followingId: string): Promise<void> {
       p_following_id: validatedFollowingId,
     });
 
+    logger.debug('toggle_follow unfollow response:', { data, error, dataType: typeof data, isArray: Array.isArray(data) });
+
     if (error) {
       logger.error('Error unfollowing user', error);
       throw error;
     }
 
+    if (!data) {
+      throw new Error('No data returned from toggle_follow function');
+    }
+
+    // Проверяем формат ответа - может прийти как объект или как массив
+    let responseData = data;
+    if (Array.isArray(data) && data.length > 0) {
+      responseData = data[0];
+    }
+
+    logger.debug('Parsed unfollow response data:', responseData);
+
     // toggle_follow возвращает { is_following: boolean, id: uuid|null }
     // Для unfollow ожидаем is_following = false
-    if (data?.is_following !== false) {
-      throw new Error('Failed to unfollow user');
+    if (responseData?.is_following !== false) {
+      throw new Error(`Failed to unfollow user - operation returned is_following: ${responseData?.is_following}`);
     }
   } catch (error: any) {
     logger.error('Error in unfollowUser', error);
