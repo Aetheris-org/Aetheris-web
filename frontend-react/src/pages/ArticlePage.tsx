@@ -289,9 +289,11 @@ export default function ArticlePage() {
     console.log('[ArticlePage] Setting up view increment timer for 10 seconds');
 
     const timer = setTimeout(() => {
-      console.log('[ArticlePage] Timer fired, calling incrementArticleView');
-      incrementArticleView(articleId, viewUserId).catch((error) => {
-        console.warn('Failed to increment article view:', error)
+      console.log('[ArticlePage] Timer fired, calling incrementArticleView with:', { articleId, viewUserId });
+      incrementArticleView(articleId, viewUserId).then(() => {
+        console.log('[ArticlePage] View increment completed successfully');
+      }).catch((error) => {
+        console.error('[ArticlePage] Failed to increment article view:', error);
       })
     }, 10_000) // Для тестирования можно уменьшить до 2000 (2 секунды)
     return () => {
