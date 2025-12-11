@@ -35,8 +35,9 @@ export function ArticleCard({
     fetchAuthorProfile()
   }, [article.author?.id])
 
-  // Приоритет: nickname > username из профиля > username из article
+  // Приоритет: nickname из данных статьи > nickname из профиля > username из профиля > username из статьи
   const authorName =
+    article.author.nickname?.trim() ||
     authorProfile?.nickname?.trim() ||
     authorProfile?.username?.trim() ||
     article.author.username?.trim() ||
@@ -58,12 +59,22 @@ export function ArticleCard({
     return difficultyMap[difficulty.toLowerCase()] || difficulty
   }
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+  const formatRelativeTime = (date: string) => {
+    const now = new Date()
+    const past = new Date(date)
+    const diffInMs = now.getTime() - past.getTime()
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+    const diffInMonths = Math.floor(diffInDays / 30)
+    const diffInYears = Math.floor(diffInDays / 365)
+
+    if (diffInMinutes < 1) return 'только что'
+    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`
+    if (diffInHours < 24) return `${diffInHours} ч назад`
+    if (diffInDays < 30) return `${diffInDays} д назад`
+    if (diffInMonths < 12) return `${diffInMonths} мес назад`
+    return `${diffInYears} г назад`
   }
 
 
@@ -143,7 +154,7 @@ export function ArticleCard({
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              <span>{formatDate(article.createdAt)}</span>
+              <span>{formatRelativeTime(article.createdAt)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
@@ -195,10 +206,10 @@ export function ArticleCard({
         {/* Footer Stats */}
         <div className="flex items-center justify-between pt-4 border-t border-border/40">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4" />
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="h-4 w-4" />
               <span className="font-medium">{viewsCount}</span>
-            </div>
+              </div>
           </div>
 
           {article.difficulty && (

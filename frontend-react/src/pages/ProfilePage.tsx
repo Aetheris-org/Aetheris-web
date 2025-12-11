@@ -642,12 +642,12 @@ export default function ProfilePage() {
     null
   const rawCover = isOwnProfile
     ? profile?.user?.coverImageUrl ||
-      (profile?.user as any)?.coverImage ||
-      (profile?.user as any)?.cover_image ||
-      (profile?.user as any)?.cover_url ||
-      (profile?.user as any)?.banner_url ||
-      currentUser?.coverImage ||
-      null
+    (profile?.user as any)?.coverImage ||
+    (profile?.user as any)?.cover_image ||
+    (profile?.user as any)?.cover_url ||
+    (profile?.user as any)?.banner_url ||
+    currentUser?.coverImage ||
+    null
     : profile?.user?.coverImageUrl ||
       (profile?.user as any)?.coverImage ||
       (profile?.user as any)?.cover_image ||

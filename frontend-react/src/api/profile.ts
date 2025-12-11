@@ -115,7 +115,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
         if (createError) {
           logger.error('Failed to create profile:', createError);
-          throw new Error('User not found');
+      throw new Error('User not found');
         }
 
         if (createdProfile) {
@@ -331,7 +331,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         bio: profile.bio || null,
         memberSince: profile.created_at || new Date().toISOString(),
         avatarUrl: normalizedAvatar ?? undefined,
-      coverImageUrl: normalizedCover ?? undefined,
+        coverImageUrl: normalizedCover ?? undefined,
       },
       stats: {
         publishedArticles: visibleArticles.length,
@@ -361,14 +361,14 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           return !ownerId || !articleAuthorId || articleAuthorId === ownerId
         })
         .map((c: any) => ({
-          id: String(c.id),
-          text: c.text,
-          createdAt: c.created_at,
-          article: {
-            id: String(c.article?.id || ''),
-            title: c.article?.title || '',
-          },
-        })),
+        id: String(c.id),
+        text: c.text,
+        createdAt: c.created_at,
+        article: {
+          id: String(c.article?.id || ''),
+          title: c.article?.title || '',
+        },
+      })),
       bookmarks: (bookmarks || [])
         .filter((b: any) => {
           if (!isValidArticle(b.article) || isSoftDeleted(b.article)) return false
@@ -376,15 +376,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           return !ownerId || !articleAuthorId || articleAuthorId === ownerId
         })
         .map((b: any) => ({
-          id: String(b.id),
-          createdAt: b.created_at,
-          article: {
-            id: String(b.article?.id || ''),
-            title: b.article?.title || '',
-            excerpt: b.article?.excerpt || null,
-            previewImage: b.article?.preview_image || null,
-          },
-        })),
+        id: String(b.id),
+        createdAt: b.created_at,
+        article: {
+          id: String(b.article?.id || ''),
+          title: b.article?.title || '',
+          excerpt: b.article?.excerpt || null,
+          previewImage: b.article?.preview_image || null,
+        },
+      })),
     };
 
     return userProfile;
@@ -400,11 +400,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
  */
 export async function updateProfile(
   input: {
-    username?: string;
-    bio?: string;
-    avatar?: string;
-    coverImage?: string;
-    tag?: string;
+  username?: string;
+  bio?: string;
+  avatar?: string;
+  coverImage?: string;
+  tag?: string;
   },
   userIdOverride?: string
 ): Promise<UserProfile> {

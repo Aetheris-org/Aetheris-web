@@ -1388,17 +1388,17 @@ function ProfileSettings() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-1.5 p-2 sm:p-3">
-              <Button
-                variant="outline"
-                size="sm"
+                    <Button
+                      variant="outline"
+                      size="sm"
                 className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
                 disabled
-              >
-                <span className="flex items-center gap-1.5">
-                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
-                </span>
-              </Button>
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
+                      </span>
+                    </Button>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
             <Input
@@ -1454,28 +1454,28 @@ function ProfileSettings() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
+                    <Button
+                      variant="outline"
+                      size="sm"
                 className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
                 disabled
-              >
-                <span className="flex items-center gap-1.5">
-                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">{avatarPreview ? t('settings.profile.changeAvatar') : t('settings.profile.uploadAvatar')}</span>
+                      </span>
+                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                 className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive opacity-50 cursor-not-allowed pointer-events-none"
                 disabled
-              >
-                <span className="flex items-center gap-1.5">
-                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
-                </span>
-              </Button>
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
+                        </span>
+                      </Button>
             </div>
             <div className="w-full sm:max-w-xl flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2">
               <Input

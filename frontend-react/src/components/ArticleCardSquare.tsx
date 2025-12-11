@@ -19,11 +19,22 @@ export function ArticleCardSquare({
 }: ArticleCardSquareProps) {
   const { t } = useTranslation()
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    })
+  const formatRelativeTime = (date: string) => {
+    const now = new Date()
+    const past = new Date(date)
+    const diffInMs = now.getTime() - past.getTime()
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+    const diffInMonths = Math.floor(diffInDays / 30)
+    const diffInYears = Math.floor(diffInDays / 365)
+
+    if (diffInMinutes < 1) return 'только что'
+    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`
+    if (diffInHours < 24) return `${diffInHours} ч назад`
+    if (diffInDays < 30) return `${diffInDays} д назад`
+    if (diffInMonths < 12) return `${diffInMonths} мес назад`
+    return `${diffInYears} г назад`
   }
 
 
@@ -114,7 +125,7 @@ export function ArticleCardSquare({
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>{formatDate(article.createdAt)}</span>
+              <span>{formatRelativeTime(article.createdAt)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

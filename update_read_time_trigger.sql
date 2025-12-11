@@ -21,20 +21,20 @@ BEGIN
     -- Простой подсчет слов (можно улучшить)
     content_text := regexp_replace(NEW.content, '<[^>]*>', '', 'g');
     word_count := array_length(regexp_split_to_array(content_text, '\s+'), 1);
-
+    
     -- Считаем изображения
     image_count := (SELECT count(*) FROM regexp_matches(NEW.content, '<img', 'gi'));
-
+    
     -- Считаем блоки кода
     code_count := (SELECT count(*) FROM regexp_matches(NEW.content, '<(pre|code)', 'gi'));
-
+    
     -- Рассчитываем время чтения (180 слов в минуту для русского, 200 для английского)
     IF word_count > 0 THEN
       read_minutes := GREATEST(1, ROUND((word_count::numeric / 180 + image_count * 10 / 60 + code_count * 25 / 60) * 2) / 2);
       read_minutes := LEAST(read_minutes, 60); -- Максимум 60 минут
     END IF;
   END IF;
-
+  
   NEW.read_time_minutes := read_minutes;
   RETURN NEW;
 END;
