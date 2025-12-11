@@ -586,6 +586,26 @@ function ProfileSettings() {
   const initialFirstName = user?.firstName ?? ''
   const initialLastName = user?.lastName ?? ''
   const initialContactEmail = profileDetails.contactEmail || '' // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не используем user?.email (он хеширован)
+
+  // Функция для генерации цвета аватарки на основе nickname
+  const getAvatarColor = (nickname: string) => {
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-red-500',
+      'bg-yellow-500',
+      'bg-teal-500',
+      'bg-orange-500',
+      'bg-cyan-500'
+    ]
+
+    // Используем сумму кодов символов nickname для выбора цвета
+    const sum = nickname.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    return colors[sum % colors.length]
+  }
   const initialWebsite = profileDetails.website || user?.website || ''
   const initialLocation = profileDetails.location || user?.location || ''
   const initialHeadline = profileDetails.headline
@@ -1444,11 +1464,11 @@ function ProfileSettings() {
             {t('settings.profile.avatar')}
           </Label>
           <div className="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
-            <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 bg-muted/60">
+            <div className={`relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${avatarPreview ? 'bg-muted/60' : getAvatarColor(nickname.trim() || user?.nickname || 'A')}`}>
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
                   {(nickname.trim() || user?.nickname || 'A').charAt(0).toUpperCase()}
                 </div>
               )}
