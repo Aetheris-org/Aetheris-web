@@ -60,7 +60,51 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         profiles: allProfiles?.map(p => ({ id: p.id, username: p.username })) || []
       });
 
-      throw new Error('User not found');
+      // Попробуем создать профиль автоматически, если он не существует
+      logger.info('Attempting to create missing profile for UUID:', profileUuid);
+      try {
+        const usernameFromUuid = `user_${profileUuid.slice(0, 8)}`;
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: profileUuid,
+              username: usernameFromUuid,
+              nickname: usernameFromUuid,
+              role: 'user',
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          )
+          .select()
+          .maybeSingle();
+
+        if (createError) {
+          logger.error('Failed to create profile:', createError);
+          throw new Error('User not found');
+        }
+
+        if (createdProfile) {
+          logger.info('Successfully created profile for UUID:', profileUuid);
+          // Повторяем запрос профиля
+          const { data: newProfile } = await supabase
+            .from('profiles')
+            .select('id, username, role, bio, tag, avatar, cover_image, created_at, followers_count, avatar_url, cover_url')
+            .eq('id', profileUuid)
+            .maybeSingle();
+
+          if (newProfile) {
+            profile = newProfile;
+          } else {
+            throw new Error('User not found');
+          }
+        } else {
+          throw new Error('User not found');
+        }
+      } catch (createError) {
+        logger.error('Error creating profile:', createError);
+        throw new Error('User not found');
+      }
     }
 
     // Всегда явно подтягиваем role, чтобы не потерять колонку из-за кеша/различий типов
