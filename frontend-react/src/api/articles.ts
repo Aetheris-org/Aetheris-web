@@ -123,7 +123,7 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
       contentToAnalyze = article.content;
     } else if (Array.isArray(article.content)) {
       // Handle Slate.js content array
-      contentToAnalyze = article.content.map(block =>
+      contentToAnalyze = article.content.map((block: any) =>
         typeof block === 'object' && block.children
           ? block.children.map((child: any) => child.text || '').join(' ')
           : typeof block === 'string' ? block : ''
