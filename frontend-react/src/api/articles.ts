@@ -551,7 +551,12 @@ export async function incrementArticleView(
   userId?: string | number | undefined
 ): Promise<void> {
   try {
-    if (id === undefined || id === null) return
+    logger.debug('[incrementArticleView] called with:', { id, idType: typeof id, userId, userIdType: typeof userId });
+
+    if (id === undefined || id === null) {
+      logger.debug('[incrementArticleView] skip: id is null/undefined');
+      return;
+    }
 
     const normalizeId = (rawId: string | number): number | null => {
       const raw = typeof rawId === 'number' ? rawId.toString() : rawId
@@ -561,6 +566,8 @@ export async function incrementArticleView(
     };
 
     const articleId = normalizeId(id);
+    logger.debug('[incrementArticleView] normalized articleId:', { articleId, originalId: id });
+
     if (articleId === null) {
       logger.debug('[incrementArticleView] skip: non-numeric id', { id });
       return;

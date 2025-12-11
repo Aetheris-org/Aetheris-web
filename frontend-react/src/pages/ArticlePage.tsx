@@ -271,17 +271,33 @@ export default function ArticlePage() {
 
   // Засчитываем просмотр спустя 10 секунд пребывания на странице
   useEffect(() => {
-    // incrementArticleView работает только с числовыми ID, проверим что у нас есть числовой ID
+    console.log('[ArticlePage] View increment effect triggered:', {
+      articleId: article?.id,
+      articleIdType: typeof article?.id,
+      userId: user?.id,
+      hasArticle: !!article
+    });
+
+    // incrementArticleView теперь работает с любыми ID (строковыми или числовыми)
     const articleId = article?.id
-    if (!articleId || typeof articleId !== 'number') return
+    if (!articleId) {
+      console.log('[ArticlePage] Skipping view increment: no articleId', { articleId });
+      return;
+    }
 
     const viewUserId = user?.id ? String(user.id) : undefined
+    console.log('[ArticlePage] Setting up view increment timer for 10 seconds');
+
     const timer = setTimeout(() => {
+      console.log('[ArticlePage] Timer fired, calling incrementArticleView');
       incrementArticleView(articleId, viewUserId).catch((error) => {
         console.warn('Failed to increment article view:', error)
       })
-    }, 10_000)
-    return () => clearTimeout(timer)
+    }, 10_000) // Для тестирования можно уменьшить до 2000 (2 секунды)
+    return () => {
+      console.log('[ArticlePage] Clearing view increment timer');
+      clearTimeout(timer);
+    }
   }, [article?.id, user?.id])
 
   // Рефетчим статью и комментарии после загрузки пользователя, чтобы получить userReaction
