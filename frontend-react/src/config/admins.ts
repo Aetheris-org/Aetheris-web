@@ -7,6 +7,7 @@ export const ROLE_BY_UUID: Record<string, string> = {
 
   // admin
   'e688502d-3006-49c3-bcf7-2ba7bd0be92c': 'admin',
+  'ab3d05e1-45e0-4191-9aa0-22a24ecf0806' : 'admin',
   // super_admin
   // '018eeeb8-80d5-40c7-b8da-a99900000002': 'super_admin',
 

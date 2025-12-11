@@ -11,7 +11,7 @@ import { transformArticle } from './articles';
 /**
  * Получить минимальную информацию о профиле пользователя по UID (для карточек статей)
  */
-export async function getUserProfileMinimal(userId: string): Promise<{
+export async function getUserProfileMinimal(userId: string | number): Promise<{
   id: string;
   username: string;
   nickname: string;
@@ -19,10 +19,13 @@ export async function getUserProfileMinimal(userId: string): Promise<{
   avatar?: string;
 } | null> {
   try {
+    // Конвертируем userId в string для запроса
+    const userIdStr = typeof userId === 'number' ? userId.toString() : userId;
+
     const { data, error } = await supabase
       .from('profiles')
       .select('id, username, nickname, tag, avatar')
-      .eq('id', userId)
+      .eq('id', userIdStr)
       .maybeSingle();
 
     if (error) {
@@ -53,11 +56,13 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       currentUserId
     });
 
-    const { data: profile, error: profileError } = await supabase
+    let profile = null;
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('id, username, role, bio, tag, avatar, cover_image, created_at, followers_count, avatar_url, cover_url')
       .eq('id', profileUuid)
       .maybeSingle();
+    profile = profileData;
 
     logger.debug('[getUserProfile] Profile query result:', {
       profileUuid,

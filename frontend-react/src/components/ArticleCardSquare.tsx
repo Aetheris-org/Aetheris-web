@@ -33,14 +33,6 @@ export function ArticleCardSquare({
     fetchAuthorProfile()
   }, [article.author?.id])
 
-  // Приоритет: nickname > username из профиля > username из article
-  const authorName =
-    authorProfile?.nickname?.trim() ||
-    authorProfile?.username?.trim() ||
-    article.author.username?.trim() ||
-    (article as any).author_username ||
-    (article as any).username ||
-    ''
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
