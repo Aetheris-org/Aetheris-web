@@ -33,13 +33,13 @@ export function ArticleCardLine({
     fetchAuthorProfile()
   }, [article.author?.id])
 
-  // Приоритет: nickname из данных статьи > nickname из профиля > username из профиля > username из статьи
+  // Приоритет: username из данных статьи > username из профиля > nickname из профиля > nickname из статьи
   const authorName = useMemo(
     () =>
-      article.author.nickname?.trim() ||
-      authorProfile?.nickname?.trim() ||
-      authorProfile?.username?.trim() ||
       article.author.username?.trim() ||
+      authorProfile?.username?.trim() ||
+      authorProfile?.nickname?.trim() ||
+      article.author.nickname?.trim() ||
       (article as any).author_username ||
       (article as any).username ||
       '',
