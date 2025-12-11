@@ -3,8 +3,6 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useEffect, useState } from 'react'
-import { getUserProfileMinimal } from '@/api/profile'
 
 interface ArticleCardSquareProps {
   article: Article
@@ -20,18 +18,6 @@ export function ArticleCardSquare({
   onMouseEnter,
 }: ArticleCardSquareProps) {
   const { t } = useTranslation()
-  const [authorProfile, setAuthorProfile] = useState<any>(null)
-
-  // Получаем актуальный профиль автора по UID
-  useEffect(() => {
-    const fetchAuthorProfile = async () => {
-      if (article.author?.id) {
-        const profile = await getUserProfileMinimal(article.author.id)
-        setAuthorProfile(profile)
-      }
-    }
-    fetchAuthorProfile()
-  }, [article.author?.id])
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
