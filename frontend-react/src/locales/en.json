@@ -35,6 +35,24 @@
     "waitSeconds": "Please wait {seconds} seconds before the next action",
     "waitAMoment": "You are sending requests too frequently. Please wait a moment."
   },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "minutes ago",
+    "minutesAgo_one": "minute ago",
+    "minutesAgo_other": "minutes ago",
+    "hoursAgo": "hours ago",
+    "hoursAgo_one": "hour ago",
+    "hoursAgo_other": "hours ago",
+    "daysAgo": "days ago",
+    "daysAgo_one": "day ago",
+    "daysAgo_other": "days ago",
+    "monthsAgo": "months ago",
+    "monthsAgo_one": "month ago",
+    "monthsAgo_other": "months ago",
+    "yearsAgo": "years ago",
+    "yearsAgo_one": "year ago",
+    "yearsAgo_other": "years ago"
+  },
   "settings": {
     "title": "Settings",
     "inDevelopment": "In Development",

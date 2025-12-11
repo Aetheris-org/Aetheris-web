@@ -29,12 +29,12 @@ export function ArticleCardSquare({
     const diffInMonths = Math.floor(diffInDays / 30)
     const diffInYears = Math.floor(diffInDays / 365)
 
-    if (diffInMinutes < 1) return 'только что'
-    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`
-    if (diffInHours < 24) return `${diffInHours} ч назад`
-    if (diffInDays < 30) return `${diffInDays} д назад`
-    if (diffInMonths < 12) return `${diffInMonths} мес назад`
-    return `${diffInYears} г назад`
+    if (diffInMinutes < 1) return t('time.justNow')
+    if (diffInMinutes < 60) return t('time.minutesAgo', { count: diffInMinutes })
+    if (diffInHours < 24) return t('time.hoursAgo', { count: diffInHours })
+    if (diffInDays < 30) return t('time.daysAgo', { count: diffInDays })
+    if (diffInMonths < 12) return t('time.monthsAgo', { count: diffInMonths })
+    return t('time.yearsAgo', { count: diffInYears })
   }
 
 
