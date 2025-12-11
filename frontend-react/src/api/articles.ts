@@ -141,8 +141,29 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
 
   const { words, images, codeBlocks, longTokensRatio } = extractReadMeta(contentToAnalyze);
 
+  // Debug logging
+  logger.debug('[computeReadTimeMinutes]', {
+    articleId: article.id,
+    hasContent: !!article.content,
+    contentType: typeof article.content,
+    contentLength: contentToAnalyze.length,
+    words,
+    images,
+    codeBlocks,
+    longTokensRatio
+  });
+
   // Ensure we have at least some words to work with
   if (!words || Number.isNaN(words) || words < 10) {
+    // For very short content, use a minimum read time based on content length
+    if (contentToAnalyze.length > 100) {
+      // If there's content but few words (maybe it's code or images), estimate based on length
+      const estimatedWords = Math.max(10, contentToAnalyze.length / 6); // rough estimate
+      const language = article.language || article.locale;
+      const wpm = language === 'ru' ? 180 : 200;
+      const minutes = Math.max(1, Math.round((estimatedWords / wpm) * 2) / 2);
+      return Math.min(minutes, 10); // cap at 10 minutes for safety
+    }
     // For very short content, use a minimum read time
     return 1;
   }
@@ -264,7 +285,19 @@ export function transformArticle(article: any, _userId?: string): Article {
     article.views_count ??
     (article as any)?.view_count ??
     (article as any)?.viewsCount ??
+    (article as any)?.stats?.views ??
     0;
+
+  // Debug logging for views
+  logger.debug('[transformArticle] views calculation:', {
+    articleId: article.id,
+    rawViews: article.views,
+    views_count: article.views_count,
+    view_count: (article as any)?.view_count,
+    viewsCount: (article as any)?.viewsCount,
+    statsViews: (article as any)?.stats?.views,
+    finalViews: views
+  });
 
   return {
     id: String(article.id),
@@ -382,7 +415,18 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
     }
 
     // Трансформируем данные
-    const articles = data.map((item: any) => transformArticle(item, userId));
+    const articles = data.map((item: any) => {
+      logger.debug('[getArticles] Raw article data:', {
+        id: item.id,
+        title: item.title,
+        views: item.views,
+        views_count: item.views_count,
+        read_time_minutes: item.read_time_minutes,
+        content: typeof item.content,
+        excerpt: item.excerpt?.substring(0, 100)
+      });
+      return transformArticle(item, userId);
+    });
 
     const filtered = applyClientFilters(articles, {
       category,
@@ -471,6 +515,16 @@ export async function getArticle(id: string): Promise<Article> {
     if (!data) {
       throw new Error('Article not found')
     }
+
+    logger.debug('[getArticle] Raw article data:', {
+      id: data.id,
+      title: data.title,
+      views: data.views,
+      views_count: data.views_count,
+      read_time_minutes: data.read_time_minutes,
+      content: typeof data.content,
+      excerpt: data.excerpt?.substring(0, 100)
+    });
 
     return transformArticle(data, userId)
   } catch (error: any) {
