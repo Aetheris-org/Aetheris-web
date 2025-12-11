@@ -18,14 +18,48 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
     const profileUuid = userId;
 
+    logger.debug('[getUserProfile] Starting profile fetch:', {
+      requestedUserId: userId,
+      profileUuid,
+      currentUserId
+    });
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, username, role, bio, tag, avatar, cover_image, created_at, followers_count, avatar_url, cover_url')
       .eq('id', profileUuid)
       .maybeSingle();
 
-    if (profileError || !profile) {
-      logger.error('Error fetching user profile', profileError);
+    logger.debug('[getUserProfile] Profile query result:', {
+      profileUuid,
+      profileFound: !!profile,
+      profileError,
+      profileData: profile ? {
+        id: profile.id,
+        username: profile.username,
+        hasRole: !!profile.role
+      } : null
+    });
+
+    if (profileError) {
+      logger.error('Database error fetching user profile:', profileError);
+      throw new Error(`Database error: ${profileError.message}`);
+    }
+
+    if (!profile) {
+      logger.warn('Profile not found for UUID:', profileUuid);
+
+      // Попробуем найти профиль без учета RLS политик
+      const { data: allProfiles, error: allProfilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .limit(5);
+
+      logger.debug('[getUserProfile] Sample profiles in database:', {
+        error: allProfilesError,
+        profiles: allProfiles?.map(p => ({ id: p.id, username: p.username })) || []
+      });
+
       throw new Error('User not found');
     }
 
