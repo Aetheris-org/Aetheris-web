@@ -629,46 +629,6 @@ function ProfileSettings() {
 
     console.log('[Avatar] Generated color for', nickname, ':', selectedColor, '(index:', index, ')')
     return selectedColor
-    const colors = [
-      'bg-blue-500',
-      'bg-emerald-500',
-      'bg-purple-500',
-      'bg-rose-500',
-      'bg-indigo-500',
-      'bg-red-500',
-      'bg-amber-500',
-      'bg-teal-500',
-      'bg-orange-500',
-      'bg-cyan-500',
-      'bg-violet-500',
-      'bg-lime-500',
-      'bg-pink-500',
-      'bg-sky-500',
-      'bg-fuchsia-500'
-    ]
-
-    if (!nickname || nickname.trim() === '') {
-      return colors[0] // Default color
-    }
-
-    // Улучшенный алгоритм генерации цвета
-    // Используем комбинацию длины строки и суммы кодов символов
-    const trimmed = nickname.trim().toLowerCase()
-    let hash = 0
-
-    // Более сложный хеш для лучшего распределения цветов
-    for (let i = 0; i < trimmed.length; i++) {
-      const char = trimmed.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
-    }
-
-    // Добавляем длину строки для дополнительной вариативности
-    hash += trimmed.length * 31
-
-    // Используем Math.abs для положительного индекса
-    const index = Math.abs(hash) % colors.length
-    return colors[index]
   }
   const initialWebsite = profileDetails.website || user?.website || ''
   const initialLocation = profileDetails.location || user?.location || ''
