@@ -1,25 +1,12 @@
--- Проверка и настройка функции update_article_read_time
+-- Настройка функции update_article_read_time
 -- Выполните этот скрипт полностью в Supabase SQL Editor
 
--- 1. Проверим существующие функции
-SELECT
-    proname as function_name,
-    pg_get_function_identity_arguments(oid) as arguments,
-    obj_description(oid, 'pg_proc') as description
-FROM pg_proc
-WHERE proname LIKE '%update_article_read_time%';
-
--- 2. Проверим существующие таблицы
-SELECT tablename
-FROM pg_tables
-WHERE tablename = 'article_read_stats';
-
--- 3. Удалим все старые версии
+-- 1. Удалим все старые версии
 DROP FUNCTION IF EXISTS update_article_read_time(integer, text, integer) CASCADE;
 DROP FUNCTION IF EXISTS update_article_read_time(uuid, text, integer) CASCADE;
 DROP TABLE IF EXISTS article_read_stats CASCADE;
 
--- 4. Создадим таблицу
+-- 2. Создадим таблицу
 CREATE TABLE article_read_stats (
   id SERIAL PRIMARY KEY,
   article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
@@ -31,15 +18,15 @@ CREATE TABLE article_read_stats (
   UNIQUE(article_id, user_id)
 );
 
--- 5. Создадим индексы
+-- 3. Создадим индексы
 CREATE INDEX idx_article_read_stats_article_id ON article_read_stats(article_id);
 CREATE INDEX idx_article_read_stats_user_id ON article_read_stats(user_id);
 CREATE INDEX idx_article_read_stats_updated_at ON article_read_stats(updated_at);
 
--- 6. Включим RLS
+-- 4. Включим RLS
 ALTER TABLE article_read_stats ENABLE ROW LEVEL SECURITY;
 
--- 7. Создадим политики RLS
+-- 5. Создадим политики RLS
 CREATE POLICY "Users can view own read stats" ON article_read_stats
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -49,7 +36,7 @@ CREATE POLICY "Users can manage own read stats" ON article_read_stats
 CREATE POLICY "Anonymous users can insert read stats" ON article_read_stats
   FOR INSERT WITH CHECK (user_id IS NULL);
 
--- 8. Создадим функцию
+-- 6. Создадим функцию
 CREATE OR REPLACE FUNCTION update_article_read_time(
   p_article_id UUID,
   p_user_id TEXT,
@@ -118,17 +105,9 @@ EXCEPTION
 END;
 $$;
 
--- 9. Даем права на выполнение функции
+-- 7. Даем права на выполнение функции
 GRANT EXECUTE ON FUNCTION update_article_read_time(UUID, TEXT, INTEGER) TO authenticated, anon;
 
--- 10. Даем права на таблицу
+-- 8. Даем права на таблицу
 GRANT ALL ON article_read_stats TO authenticated, anon;
 GRANT USAGE ON SEQUENCE article_read_stats_id_seq TO authenticated, anon;
-
--- 11. Тестируем функцию
--- (Раскомментируйте для тестирования с реальными UUID)
--- SELECT update_article_read_time(
---   'your-article-uuid-here'::uuid,
---   'your-user-uuid-here',
---   120
--- );
