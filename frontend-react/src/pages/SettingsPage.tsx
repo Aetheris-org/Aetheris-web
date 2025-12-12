@@ -1493,7 +1493,10 @@ function ProfileSettings() {
               key={`avatar-${nickname}-${avatarPreview ? 'preview' : 'generated'}`}
               className={`relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${avatarPreview ? 'bg-muted/60' : getAvatarColor(nickname.trim() || user?.nickname || 'A')}`}
             >
-              {console.log('[Avatar] Rendering with nickname:', nickname, 'user nickname:', user?.nickname)}
+              {(() => {
+                console.log('[Avatar] Rendering with nickname:', nickname, 'user nickname:', user?.nickname);
+                return null;
+              })()}
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
               ) : (
