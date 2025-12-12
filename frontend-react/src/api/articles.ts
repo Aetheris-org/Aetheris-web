@@ -638,7 +638,7 @@ export async function updateArticleReadTime(
 
     const userIdStr =
       userId === undefined || userId === null
-        ? undefined
+        ? null
         : typeof userId === 'number'
           ? String(userId)
           : userId

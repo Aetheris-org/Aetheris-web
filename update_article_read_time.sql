@@ -3,7 +3,7 @@
 
 CREATE OR REPLACE FUNCTION update_article_read_time(
   p_article_id INTEGER,
-  p_user_id TEXT DEFAULT NULL,
+  p_user_id TEXT,
   p_read_time_seconds INTEGER
 )
 RETURNS JSON
