@@ -595,6 +595,84 @@ export async function incrementArticleView(
 }
 
 /**
+ * Обновление времени прочтения статьи на основе реального времени пребывания пользователя
+ */
+export async function updateArticleReadTime(
+  id: string | number | undefined,
+  userId: string | number | undefined,
+  readTimeSeconds: number
+): Promise<void> {
+  try {
+    logger.debug('[updateArticleReadTime] called with:', {
+      id,
+      idType: typeof id,
+      userId,
+      userIdType: typeof userId,
+      readTimeSeconds
+    });
+
+    if (id === undefined || id === null) {
+      logger.debug('[updateArticleReadTime] skip: id is null/undefined');
+      return;
+    }
+
+    if (readTimeSeconds < 10) {
+      logger.debug('[updateArticleReadTime] skip: read time too short', { readTimeSeconds });
+      return;
+    }
+
+    const normalizeId = (rawId: string | number): number | null => {
+      const raw = typeof rawId === 'number' ? rawId.toString() : rawId
+      const numericRegex = /^\d+$/;
+      if (numericRegex.test(raw)) return Number(raw);
+      return null;
+    };
+
+    const articleId = normalizeId(id);
+    logger.debug('[updateArticleReadTime] normalized articleId:', { articleId, originalId: id });
+
+    if (articleId === null) {
+      logger.debug('[updateArticleReadTime] skip: non-numeric id', { id });
+      return;
+    }
+
+    const userIdStr =
+      userId === undefined || userId === null
+        ? undefined
+        : typeof userId === 'number'
+          ? String(userId)
+          : userId
+
+    // Создаем RPC функцию для обновления времени прочтения
+    // Пока используем существующий get_article_with_details, но можно создать отдельную функцию
+    logger.debug('[updateArticleReadTime] calling RPC with read time:', { articleId, userIdStr, readTimeSeconds });
+
+    // Вызываем RPC функцию для обновления времени прочтения
+    const { error } = await supabase.rpc('update_article_read_time', {
+      p_article_id: articleId,
+      p_user_id: userIdStr,
+      p_read_time_seconds: readTimeSeconds,
+    });
+
+    if (error) {
+      logger.warn('[updateArticleReadTime] RPC failed', error);
+    } else {
+      logger.debug('[updateArticleReadTime] RPC successful');
+    }
+
+    // В будущем здесь можно добавить вызов RPC функции:
+    // const { error } = await supabase.rpc('update_article_read_time', {
+    //   p_article_id: articleId,
+    //   p_user_id: userIdStr,
+    //   p_read_time_seconds: readTimeSeconds,
+    // });
+
+  } catch (error) {
+    logger.warn('[updateArticleReadTime] unexpected error', error);
+  }
+}
+
+/**
  * Создание статьи
  */
 export async function createArticle(input: {

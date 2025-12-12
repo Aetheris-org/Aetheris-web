@@ -37,7 +37,7 @@ import {
   Link2,
   TrendingUp,
 } from 'lucide-react'
-import { getArticle, reactArticle, deleteArticle, incrementArticleView } from '@/api/articles'
+import { getArticle, reactArticle, deleteArticle, incrementArticleView, updateArticleReadTime } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
@@ -221,6 +221,10 @@ export default function ArticlePage() {
   const [readingProgress, setReadingProgress] = useState(0)
   const [smoothedProgress, setSmoothedProgress] = useState(0)
 
+  // Отслеживание времени чтения статьи
+  const [readStartTime, setReadStartTime] = useState<number | null>(null)
+  const [totalReadTime, setTotalReadTime] = useState(0)
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setShareUrl(window.location.href)
@@ -231,6 +235,63 @@ export default function ArticlePage() {
       }
     }
   }, [])
+
+  // Инициализация отслеживания времени чтения при загрузке статьи
+  useEffect(() => {
+    if (article && !readStartTime) {
+      console.log('[ArticlePage] Starting read time tracking for article:', article.id)
+      setReadStartTime(Date.now())
+    }
+  }, [article, readStartTime])
+
+  // Обновление времени чтения каждые 5 секунд
+  useEffect(() => {
+    if (!readStartTime) return
+
+    const interval = setInterval(() => {
+      const currentTime = Date.now()
+      const elapsedSeconds = Math.floor((currentTime - readStartTime) / 1000)
+      setTotalReadTime(elapsedSeconds)
+
+      console.log('[ArticlePage] Read time update:', {
+        articleId: article?.id,
+        elapsedSeconds,
+        formatted: `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`
+      })
+    }, 5000) // Обновление каждые 5 секунд
+
+    return () => clearInterval(interval)
+  }, [readStartTime, article?.id])
+
+  // Отправка времени чтения при уходе со страницы
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (article && readStartTime && totalReadTime >= 10) {
+        console.log('[ArticlePage] Sending read time before unload:', {
+          articleId: article.id,
+          totalReadTime,
+          userId: user?.id
+        })
+        // Отправляем время чтения синхронно перед уходом со страницы
+        updateArticleReadTime(article.id, user?.id, totalReadTime)
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Отправляем финальное время чтения при размонтировании компонента
+      if (article && readStartTime && totalReadTime >= 10) {
+        console.log('[ArticlePage] Sending final read time on unmount:', {
+          articleId: article.id,
+          totalReadTime,
+          userId: user?.id
+        })
+        updateArticleReadTime(article.id, user?.id, totalReadTime)
+      }
+    }
+  }, [article, readStartTime, totalReadTime, user?.id])
 
   // Fetch article с оптимизированными настройками
   // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
