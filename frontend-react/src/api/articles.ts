@@ -621,10 +621,11 @@ export async function updateArticleReadTime(
       return;
     }
 
-    const normalizeId = (rawId: string | number): number | null => {
+    const normalizeId = (rawId: string | number): string | null => {
       const raw = typeof rawId === 'number' ? rawId.toString() : rawId
-      const numericRegex = /^\d+$/;
-      if (numericRegex.test(raw)) return Number(raw);
+      // Проверяем, является ли строка UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(raw)) return raw;
       return null;
     };
 
@@ -632,7 +633,7 @@ export async function updateArticleReadTime(
     logger.debug('[updateArticleReadTime] normalized articleId:', { articleId, originalId: id });
 
     if (articleId === null) {
-      logger.debug('[updateArticleReadTime] skip: non-numeric id', { id });
+      logger.debug('[updateArticleReadTime] skip: invalid UUID id', { id });
       return;
     }
 

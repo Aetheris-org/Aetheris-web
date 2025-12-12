@@ -2,7 +2,7 @@
 -- Обновляет статистику чтения на основе реального времени пребывания пользователя
 
 CREATE OR REPLACE FUNCTION update_article_read_time(
-  p_article_id INTEGER,
+  p_article_id UUID,
   p_user_id TEXT,
   p_read_time_seconds INTEGER
 )
@@ -73,7 +73,7 @@ $$;
 -- Создаем таблицу для хранения статистики чтения статей (если не существует)
 CREATE TABLE IF NOT EXISTS article_read_stats (
   id SERIAL PRIMARY KEY,
-  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   read_time_seconds INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
