@@ -595,29 +595,24 @@ export async function incrementArticleView(
 }
 
 /**
- * Обновление времени прочтения статьи на основе реального времени пребывания пользователя
+ * Инкремент просмотров статьи (+1 к views)
+ * Каждый пользователь может инкрементить только 1 раз в час для каждой статьи
+ * Защита от накрутки просмотров
  */
-export async function updateArticleReadTime(
+export async function incrementArticleViews(
   id: string | number | undefined,
-  userId: string | number | undefined,
-  readTimeSeconds: number
+  userId: string | number | undefined
 ): Promise<void> {
   try {
-    logger.debug('[updateArticleReadTime] called with:', {
+    logger.debug('[incrementArticleViews] called with:', {
       id,
       idType: typeof id,
       userId,
-      userIdType: typeof userId,
-      readTimeSeconds
+      userIdType: typeof userId
     });
 
     if (id === undefined || id === null) {
-      logger.debug('[updateArticleReadTime] skip: id is null/undefined');
-      return;
-    }
-
-    if (readTimeSeconds < 10) {
-      logger.debug('[updateArticleReadTime] skip: read time too short', { readTimeSeconds });
+      logger.debug('[incrementArticleViews] skip: id is null/undefined');
       return;
     }
 
@@ -630,10 +625,10 @@ export async function updateArticleReadTime(
     };
 
     const articleId = normalizeId(id);
-    logger.debug('[updateArticleReadTime] normalized articleId:', { articleId, originalId: id });
+    logger.debug('[incrementArticleViews] normalized articleId:', { articleId, originalId: id });
 
     if (articleId === null) {
-      logger.debug('[updateArticleReadTime] skip: invalid UUID id', { id });
+      logger.debug('[incrementArticleViews] skip: invalid UUID id', { id });
       return;
     }
 
@@ -644,38 +639,25 @@ export async function updateArticleReadTime(
           ? String(userId)
           : userId
 
-    // Создаем RPC функцию для обновления времени прочтения
-    // Пока используем существующий get_article_with_details, но можно создать отдельную функцию
-    logger.debug('[updateArticleReadTime] calling RPC with read time:', { articleId, userIdStr, readTimeSeconds });
-
-    // Вызываем RPC функцию для обновления времени прочтения
+    // Вызываем RPC функцию для инкремента просмотров
     try {
-      const { data, error } = await supabase.rpc('update_article_read_time', {
+      const { data, error } = await supabase.rpc('increment_article_views', {
         p_article_id: articleId,
         p_user_id: userIdStr,
-        p_read_time_seconds: readTimeSeconds,
       });
 
       if (error) {
-        logger.warn('[updateArticleReadTime] RPC failed', error);
+        logger.warn('[incrementArticleViews] RPC failed', error);
       } else if (data && data.success === false) {
-        logger.warn('[updateArticleReadTime] Function returned error', data);
+        logger.debug('[incrementArticleViews] View not incremented (already counted this hour)', data);
       } else {
-        logger.debug('[updateArticleReadTime] RPC successful', data);
+        logger.debug('[incrementArticleViews] Views incremented successfully', data);
       }
     } catch (rpcError) {
-      logger.warn('[updateArticleReadTime] RPC call failed - function may not exist yet', rpcError);
+      logger.warn('[incrementArticleViews] RPC call failed - function may not exist yet', rpcError);
     }
-
-    // В будущем здесь можно добавить вызов RPC функции:
-    // const { error } = await supabase.rpc('update_article_read_time', {
-    //   p_article_id: articleId,
-    //   p_user_id: userIdStr,
-    //   p_read_time_seconds: readTimeSeconds,
-    // });
-
   } catch (error) {
-    logger.warn('[updateArticleReadTime] unexpected error', error);
+    logger.warn('[incrementArticleViews] unexpected error', error);
   }
 }
 

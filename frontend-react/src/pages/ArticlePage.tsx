@@ -37,7 +37,7 @@ import {
   Link2,
   TrendingUp,
 } from 'lucide-react'
-import { getArticle, reactArticle, deleteArticle, incrementArticleView, updateArticleReadTime } from '@/api/articles'
+import { getArticle, reactArticle, deleteArticle, incrementArticleView, incrementArticleViews } from '@/api/articles'
 import type { Article } from '@/types/article'
 import { 
   getArticleComments, 
@@ -221,9 +221,6 @@ export default function ArticlePage() {
   const [readingProgress, setReadingProgress] = useState(0)
   const [smoothedProgress, setSmoothedProgress] = useState(0)
 
-  // Отслеживание времени чтения статьи
-  const [readStartTime, setReadStartTime] = useState<number | null>(null)
-  const [totalReadTime, setTotalReadTime] = useState(0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -264,62 +261,24 @@ export default function ArticlePage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 
-  // Инициализация отслеживания времени чтения при загрузке статьи
+  // Простой инкремент просмотров через 10 секунд
   useEffect(() => {
-    if (article && !readStartTime) {
-      console.log('[ArticlePage] Starting read time tracking for article:', article.id)
-      setReadStartTime(Date.now())
-    }
-  }, [article, readStartTime])
+    if (!article) return
 
-  // Обновление времени чтения каждые 5 секунд
-  useEffect(() => {
-    if (!readStartTime) return
+    console.log('[ArticlePage] Starting view increment timer for article:', article.id)
 
-    const interval = setInterval(() => {
-      const currentTime = Date.now()
-      const elapsedSeconds = Math.floor((currentTime - readStartTime) / 1000)
-      setTotalReadTime(elapsedSeconds)
-
-      console.log('[ArticlePage] Read time update:', {
-        articleId: article?.id,
-        elapsedSeconds,
-        formatted: `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`
+    const timer = setTimeout(() => {
+      console.log('[ArticlePage] 10 seconds passed, incrementing views for article:', article.id)
+      incrementArticleViews(article.id, user?.id).catch((error) => {
+        console.warn('[ArticlePage] Failed to increment views:', error)
       })
-    }, 5000) // Обновление каждые 5 секунд
-
-    return () => clearInterval(interval)
-  }, [readStartTime, article?.id])
-
-  // Отправка времени чтения при уходе со страницы
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (article && readStartTime && totalReadTime >= 10) {
-        console.log('[ArticlePage] Sending read time before unload:', {
-          articleId: article.id,
-          totalReadTime,
-          userId: user?.id
-        })
-        // Отправляем время чтения синхронно перед уходом со страницы
-        updateArticleReadTime(article.id, user?.id, totalReadTime)
-      }
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    }, 10000) // 10 секунд
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      // Отправляем финальное время чтения при размонтировании компонента
-      if (article && readStartTime && totalReadTime >= 10) {
-        console.log('[ArticlePage] Sending final read time on unmount:', {
-          articleId: article.id,
-          totalReadTime,
-          userId: user?.id
-        })
-        updateArticleReadTime(article.id, user?.id, totalReadTime)
-      }
+      console.log('[ArticlePage] Clearing view increment timer')
+      clearTimeout(timer)
     }
-  }, [article, readStartTime, totalReadTime, user?.id])
+  }, [article?.id, user?.id])
 
   const authorName = useMemo(
     () =>
