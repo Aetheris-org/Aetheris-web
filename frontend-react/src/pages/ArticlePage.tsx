@@ -282,6 +282,8 @@ export default function ArticlePage() {
       })
       incrementArticleViews(article.id, user?.id).then(() => {
         console.log('[ArticlePage] View increment completed successfully')
+        // Обновляем данные статьи в кеше, чтобы отобразить новые просмотры
+        queryClient.invalidateQueries({ queryKey: ['article', id, user?.id] })
       }).catch((error) => {
         console.error('[ArticlePage] Failed to increment views:', error)
       })
