@@ -1020,10 +1020,22 @@ export async function reactToArticle(
     // Возвращаем свежую статью, но поверх ставим пересчитанные значения,
     // чтобы UI сразу увидел актуальные лайки/дизлайки.
     const article = await getArticle(articleId);
+
+    // Определяем userReaction для текущего пользователя
+    const { data: userReactionData } = await supabase
+      .from('article_reactions')
+      .select('reaction')
+      .eq('article_id', validatedArticleId)
+      .eq('user_id', user.id)
+      .single();
+
+    const userReaction = userReactionData?.reaction || null;
+
     return {
       ...article,
       likes: likesCount,
       dislikes: dislikesCount,
+      userReaction,
     };
   } catch (error: any) {
     logger.error('Error in reactToArticle', error);

@@ -309,12 +309,12 @@ export async function reactToComment(
       .from('comments')
       .select(
         `
-          *,
-          author:profiles!comments_author_id_fkey (
-            id,
-            username,
-            avatar
-          )
+        *,
+        author:profiles!comments_author_id_fkey (
+          id,
+          username,
+          avatar
+        )
         `
       )
       .eq('id', validatedCommentId)
@@ -349,7 +349,7 @@ export async function reactToComment(
           ...commentRow,
           likes_count: rpc.likes_count ?? commentRow.likes_count ?? 0,
           dislikes_count: rpc.dislikes_count ?? commentRow.dislikes_count ?? 0,
-          user_reaction: userReaction,
+      user_reaction: userReaction,
         },
         user.id
       )
