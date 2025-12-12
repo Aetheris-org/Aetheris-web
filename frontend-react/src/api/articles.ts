@@ -649,16 +649,22 @@ export async function updateArticleReadTime(
     logger.debug('[updateArticleReadTime] calling RPC with read time:', { articleId, userIdStr, readTimeSeconds });
 
     // Вызываем RPC функцию для обновления времени прочтения
-    const { error } = await supabase.rpc('update_article_read_time', {
-      p_article_id: articleId,
-      p_user_id: userIdStr,
-      p_read_time_seconds: readTimeSeconds,
-    });
+    try {
+      const { data, error } = await supabase.rpc('update_article_read_time', {
+        p_article_id: articleId,
+        p_user_id: userIdStr,
+        p_read_time_seconds: readTimeSeconds,
+      });
 
-    if (error) {
-      logger.warn('[updateArticleReadTime] RPC failed', error);
-    } else {
-      logger.debug('[updateArticleReadTime] RPC successful');
+      if (error) {
+        logger.warn('[updateArticleReadTime] RPC failed', error);
+      } else if (data && data.success === false) {
+        logger.warn('[updateArticleReadTime] Function returned error', data);
+      } else {
+        logger.debug('[updateArticleReadTime] RPC successful', data);
+      }
+    } catch (rpcError) {
+      logger.warn('[updateArticleReadTime] RPC call failed - function may not exist yet', rpcError);
     }
 
     // В будущем здесь можно добавить вызов RPC функции:
