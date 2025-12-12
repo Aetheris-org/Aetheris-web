@@ -1651,8 +1651,10 @@ export default function ArticlePage() {
                           size="icon"
                           className={cn(
                             'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
-                            node.userReaction === 'like' &&
-                              'bg-primary text-primary-foreground hover:bg-primary/90'
+                            (() => {
+                              console.log('[Comment UI] Like button for comment', node.id, '- userReaction:', node.userReaction, 'likes:', node.likes, 'dislikes:', node.dislikes)
+                              return node.userReaction === 'like' && 'bg-primary text-primary-foreground hover:bg-primary/90'
+                            })()
                           )}
                           onClick={() => handleCommentReaction(node.id, 'up')}
                           disabled={!user || reactCommentMutation.isPending}

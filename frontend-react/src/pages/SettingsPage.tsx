@@ -1500,14 +1500,14 @@ function ProfileSettings() {
                   key={`avatar-${nickname}-${avatarPreview ? 'preview' : 'generated'}-${Date.now()}`}
                   className={fullClassName}
                 >
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
-                  ) : (
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+              ) : (
                     <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
                       {(nickname.trim() || user?.nickname || 'A').charAt(0).toUpperCase()}
-                    </div>
-                  )}
                 </div>
+              )}
+            </div>
               );
             })()}
             <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">

@@ -341,15 +341,31 @@ export async function reactToComment(
       p_reaction: reaction,
     })
 
-    if (!rpcError && rpcData && rpcData.length > 0) {
-      const rpc = rpcData[0]
+    console.log('[reactToComment] RPC call result:', {
+      rpcData,
+      rpcError,
+      rpcDataType: typeof rpcData,
+      isArray: Array.isArray(rpcData),
+      arrayLength: Array.isArray(rpcData) ? rpcData.length : 'N/A'
+    })
+
+    if (!rpcError && rpcData) {
+      // RPC возвращает JSON объект, а не массив
+      const rpc = rpcData
       const userReaction = rpc.user_reaction as 'like' | 'dislike' | null
+
+      console.log('[reactToComment] Processing RPC response:', {
+        likes_count: rpc.likes_count,
+        dislikes_count: rpc.dislikes_count,
+        user_reaction: userReaction
+      })
+
       return transformComment(
         {
           ...commentRow,
           likes_count: rpc.likes_count ?? commentRow.likes_count ?? 0,
           dislikes_count: rpc.dislikes_count ?? commentRow.dislikes_count ?? 0,
-      user_reaction: userReaction,
+          user_reaction: userReaction,
         },
         user.id
       )
