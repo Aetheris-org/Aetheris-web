@@ -641,20 +641,33 @@ export async function incrementArticleViews(
 
     // Вызываем RPC функцию для инкремента просмотров
     try {
+      console.log('[incrementArticleViews] Calling RPC with:', {
+        p_article_id: articleId,
+        p_user_id: userIdStr,
+        articleIdType: typeof articleId,
+        userIdStrType: typeof userIdStr
+      })
+
       const { data, error } = await supabase.rpc('increment_article_views', {
         p_article_id: articleId,
         p_user_id: userIdStr,
       });
 
+      console.log('[incrementArticleViews] RPC response:', { data, error });
+
       if (error) {
         logger.warn('[incrementArticleViews] RPC failed', error);
+        console.error('[incrementArticleViews] RPC failed:', error);
       } else if (data && data.success === false) {
         logger.debug('[incrementArticleViews] View not incremented (already counted this hour)', data);
+        console.log('[incrementArticleViews] View not incremented:', data);
       } else {
         logger.debug('[incrementArticleViews] Views incremented successfully', data);
+        console.log('[incrementArticleViews] Views incremented successfully:', data);
       }
     } catch (rpcError) {
       logger.warn('[incrementArticleViews] RPC call failed - function may not exist yet', rpcError);
+      console.error('[incrementArticleViews] RPC call failed:', rpcError);
     }
   } catch (error) {
     logger.warn('[incrementArticleViews] unexpected error', error);

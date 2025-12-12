@@ -263,16 +263,29 @@ export default function ArticlePage() {
 
   // Простой инкремент просмотров через 10 секунд
   useEffect(() => {
-    if (!article) return
+    if (!article) {
+      console.log('[ArticlePage] No article, skipping view increment')
+      return
+    }
 
-    console.log('[ArticlePage] Starting view increment timer for article:', article.id)
+    console.log('[ArticlePage] Starting view increment timer for article:', {
+      id: article.id,
+      idType: typeof article.id,
+      userId: user?.id,
+      userIdType: typeof user?.id
+    })
 
     const timer = setTimeout(() => {
-      console.log('[ArticlePage] 10 seconds passed, incrementing views for article:', article.id)
-      incrementArticleViews(article.id, user?.id).catch((error) => {
-        console.warn('[ArticlePage] Failed to increment views:', error)
+      console.log('[ArticlePage] 10 seconds passed, incrementing views for article:', {
+        articleId: article.id,
+        userId: user?.id
       })
-    }, 10000) // 10 секунд
+      incrementArticleViews(article.id, user?.id).then(() => {
+        console.log('[ArticlePage] View increment completed successfully')
+      }).catch((error) => {
+        console.error('[ArticlePage] Failed to increment views:', error)
+      })
+    }, 3000) // Для тестирования уменьшим до 3 секунд
 
     return () => {
       console.log('[ArticlePage] Clearing view increment timer')
