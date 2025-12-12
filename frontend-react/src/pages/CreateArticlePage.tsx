@@ -2238,6 +2238,26 @@ export default function CreateArticlePage() {
 
       const isEditMode = Boolean(editingTargetId)
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          location:'CreateArticlePage.tsx:2233',
+          message:'Determining edit mode parameters',
+          data:{
+            editArticleIdRefCurrent: editArticleIdRef.current,
+            articleToEditId: articleToEdit?.id,
+            editArticleId: editArticleId,
+            editingTargetId: editingTargetId,
+            isEditMode: isEditMode
+          },
+          sessionId:'debug-article-edit',
+          runId:'publish-logic'
+        })
+      }).catch(()=>{})
+      // #endregion
+
       if (isEditMode) {
         if (!editingTargetId) {
           toast({
@@ -2249,12 +2269,42 @@ export default function CreateArticlePage() {
           return
         }
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            location:'CreateArticlePage.tsx:2272',
+            message:'Calling updateArticle for existing article',
+            data:{
+              editingTargetId: editingTargetId,
+              articleDataKeys: Object.keys(articleData),
+              publishedAt: articleToEdit?.publishedAt
+            },
+            sessionId:'debug-article-edit',
+            runId:'publish-logic'
+          })
+        }).catch(()=>{})
+        // #endregion
         publishedArticle = await updateArticle(editingTargetId, {
                 ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
               })
         wasUpdated = true
       } else if (draftId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            location:'CreateArticlePage.tsx:2277',
+            message:'Updating article from draft',
+            data:{draftId: draftId},
+            sessionId:'debug-article-edit',
+            runId:'publish-logic'
+          })
+        }).catch(()=>{})
+        // #endregion
         // Обновляем по draftId (обратная совместимость)
         publishedArticle = await updateArticle(String(draftId), {
                 ...articleData,
@@ -2262,6 +2312,23 @@ export default function CreateArticlePage() {
         })
         wasUpdated = true
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            location:'CreateArticlePage.tsx:2284',
+            message:'Creating new article',
+            data:{
+              articleDataKeys: Object.keys(articleData),
+              hasDraftId: Boolean(draftId),
+              isEditMode: isEditMode
+            },
+            sessionId:'debug-article-edit',
+            runId:'publish-logic'
+          })
+        }).catch(()=>{})
+        // #endregion
         // Создаем новую статью
         publishedArticle = await createArticle({
             ...articleData,

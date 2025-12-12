@@ -687,6 +687,27 @@ export async function createArticle(input: {
   publishedAt?: string | null;
 }): Promise<Article> {
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        location:'api/articles.ts:680',
+        message:'createArticle called',
+        data:{
+          title: input.title?.substring(0, 50) + '...',
+          excerpt: input.excerpt?.substring(0, 50) + '...',
+          tags: input.tags,
+          difficulty: input.difficulty,
+          hasPreviewImage: Boolean(input.previewImage),
+          hasPublishedAt: Boolean(input.publishedAt)
+        },
+        sessionId:'debug-article-edit',
+        runId:'api-functions'
+      })
+    }).catch(()=>{})
+    // #endregion
+
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -702,18 +723,38 @@ export async function createArticle(input: {
     }
 
     // Создаем статью
+    const insertData = {
+      title: input.title,
+      content: input.content,
+      excerpt: input.excerpt,
+      tags: input.tags,
+      difficulty: input.difficulty,
+      preview_image: input.previewImage || null,
+      published_at: input.publishedAt || null,
+      author_id: user.id,
+    };
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        location:'api/articles.ts:704',
+        message:'Executing Supabase INSERT',
+        data:{
+          insertDataKeys: Object.keys(insertData),
+          title: input.title?.substring(0, 50) + '...',
+          author_id: user.id
+        },
+        sessionId:'debug-article-edit',
+        runId:'api-functions'
+      })
+    }).catch(()=>{})
+    // #endregion
+
     const { data, error } = await supabase
       .from('articles')
-      .insert({
-        title: input.title,
-        content: input.content,
-        excerpt: input.excerpt,
-        tags: input.tags,
-        difficulty: input.difficulty,
-        preview_image: input.previewImage || null,
-        published_at: input.publishedAt || null,
-        author_id: user.id,
-      })
+      .insert(insertData)
       .select(`
         *,
         author:profiles!articles_author_id_fkey (
@@ -754,6 +795,24 @@ export async function updateArticle(
   }
 ): Promise<Article> {
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        location:'api/articles.ts:744',
+        message:'updateArticle called',
+        data:{
+          id: id,
+          inputKeys: Object.keys(input),
+          inputValues: Object.values(input).map(v => typeof v === 'string' ? v.substring(0, 50) + '...' : v)
+        },
+        sessionId:'debug-article-edit',
+        runId:'api-functions'
+      })
+    }).catch(()=>{})
+    // #endregion
+
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -808,6 +867,24 @@ export async function updateArticle(
     if (input.difficulty !== undefined) updateData.difficulty = input.difficulty;
     if (input.previewImage !== undefined) updateData.preview_image = input.previewImage;
     if (input.publishedAt !== undefined) updateData.published_at = input.publishedAt;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        location:'api/articles.ts:812',
+        message:'Executing Supabase UPDATE',
+        data:{
+          articleId: articleId,
+          updateDataKeys: Object.keys(updateData),
+          updateDataValues: Object.values(updateData).map(v => typeof v === 'string' ? v.substring(0, 50) + '...' : v)
+        },
+        sessionId:'debug-article-edit',
+        runId:'api-functions'
+      })
+    }).catch(()=>{})
+    // #endregion
 
     const { data, error } = await supabase
       .from('articles')
