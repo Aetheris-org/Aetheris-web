@@ -589,6 +589,7 @@ function ProfileSettings() {
 
   // Функция для генерации цвета аватарки на основе nickname
   const getAvatarColor = (nickname: string) => {
+    console.log('[Avatar] getAvatarColor called with:', nickname)
     const colors = [
       'bg-blue-500',
       'bg-emerald-500',
@@ -1488,7 +1489,11 @@ function ProfileSettings() {
             {t('settings.profile.avatar')}
           </Label>
           <div className="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
-            <div className={`relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${avatarPreview ? 'bg-muted/60' : getAvatarColor(nickname.trim() || user?.nickname || 'A')}`}>
+            <div
+              key={`avatar-${nickname}-${avatarPreview ? 'preview' : 'generated'}`}
+              className={`relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${avatarPreview ? 'bg-muted/60' : getAvatarColor(nickname.trim() || user?.nickname || 'A')}`}
+            >
+              {console.log('[Avatar] Rendering with nickname:', nickname, 'user nickname:', user?.nickname)}
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
               ) : (
