@@ -128,4 +128,3 @@ CREATE POLICY "Users can manage own comment reactions" ON comment_reactions
 
 -- Даем права на таблицу
 GRANT ALL ON comment_reactions TO authenticated, anon;
-GRANT USAGE ON SEQUENCE comment_reactions_id_seq TO authenticated, anon;
