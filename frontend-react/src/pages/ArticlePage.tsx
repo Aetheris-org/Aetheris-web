@@ -285,7 +285,7 @@ export default function ArticlePage() {
       }).catch((error) => {
         console.error('[ArticlePage] Failed to increment views:', error)
       })
-    }, 3000) // Для тестирования уменьшим до 3 секунд
+    }, 10000) // 10 секунд - стандартное время для засчета просмотра
 
     return () => {
       console.log('[ArticlePage] Clearing view increment timer')
