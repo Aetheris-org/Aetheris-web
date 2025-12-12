@@ -98,4 +98,3 @@ $$;
 -- Даем права
 GRANT EXECUTE ON FUNCTION increment_article_views(UUID, TEXT) TO authenticated, anon;
 GRANT ALL ON user_article_views TO authenticated, anon;
-GRANT USAGE ON SEQUENCE user_article_views_id_seq TO authenticated, anon;
