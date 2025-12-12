@@ -1,6 +1,13 @@
 -- Функция для обновления времени прочтения статьи
 -- Обновляет статистику чтения на основе реального времени пребывания пользователя
 
+-- Удаляем старую версию функции если существует
+DROP FUNCTION IF EXISTS update_article_read_time(integer, text, integer);
+DROP FUNCTION IF EXISTS update_article_read_time(uuid, text, integer);
+
+-- Удаляем таблицу если она существует с неправильными типами
+DROP TABLE IF EXISTS article_read_stats CASCADE;
+
 CREATE OR REPLACE FUNCTION update_article_read_time(
   p_article_id UUID,
   p_user_id TEXT,
