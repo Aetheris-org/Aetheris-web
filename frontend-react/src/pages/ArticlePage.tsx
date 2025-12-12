@@ -236,6 +236,34 @@ export default function ArticlePage() {
     }
   }, [])
 
+  // Fetch article с оптимизированными настройками
+  // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
+  const { data: article, isLoading, error } = useQuery({
+    queryKey: ['article', id, user?.id],
+    queryFn: () => getArticle(id as string),
+    enabled: !!id,
+    // Статьи кэшируем на 10 минут (контент меняется редко)
+    staleTime: 10 * 60 * 1000,
+    // Храним в кэше 1 час
+    gcTime: 60 * 60 * 1000,
+    // Используем кеш при повторном входе (рефетч выполнит эффект ниже при необходимости)
+    refetchOnMount: false,
+    // Retry логика
+    retry: (failureCount, error: any) => {
+      // Не ретраить на 404 (статья не найдена)
+      if (error?.response?.status === 404) {
+        return false
+      }
+      // Не ретраить на другие 4xx ошибки
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false
+      }
+      // Максимум 3 попытки для сетевых/серверных ошибок
+      return failureCount < 3
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  })
+
   // Инициализация отслеживания времени чтения при загрузке статьи
   useEffect(() => {
     if (article && !readStartTime) {
@@ -292,34 +320,6 @@ export default function ArticlePage() {
       }
     }
   }, [article, readStartTime, totalReadTime, user?.id])
-
-  // Fetch article с оптимизированными настройками
-  // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
-  const { data: article, isLoading, error } = useQuery({
-    queryKey: ['article', id, user?.id],
-    queryFn: () => getArticle(id as string),
-    enabled: !!id,
-    // Статьи кэшируем на 10 минут (контент меняется редко)
-    staleTime: 10 * 60 * 1000,
-    // Храним в кэше 1 час
-    gcTime: 60 * 60 * 1000,
-    // Используем кеш при повторном входе (рефетч выполнит эффект ниже при необходимости)
-    refetchOnMount: false,
-    // Retry логика
-    retry: (failureCount, error: any) => {
-      // Не ретраить на 404 (статья не найдена)
-      if (error?.response?.status === 404) {
-        return false
-      }
-      // Не ретраить на другие 4xx ошибки
-      if (error?.response?.status >= 400 && error?.response?.status < 500) {
-        return false
-      }
-      // Максимум 3 попытки для сетевых/серверных ошибок
-      return failureCount < 3
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  })
 
   const authorName = useMemo(
     () =>
