@@ -590,6 +590,45 @@ function ProfileSettings() {
   // Функция для генерации цвета аватарки на основе nickname
   const getAvatarColor = (nickname: string) => {
     console.log('[Avatar] getAvatarColor called with:', nickname)
+
+    const colors = [
+      'bg-blue-500',
+      'bg-emerald-500',
+      'bg-purple-500',
+      'bg-rose-500',
+      'bg-indigo-500',
+      'bg-red-500',
+      'bg-amber-500',
+      'bg-teal-500',
+      'bg-orange-500',
+      'bg-cyan-500',
+      'bg-violet-500',
+      'bg-lime-500',
+      'bg-pink-500',
+      'bg-sky-500',
+      'bg-fuchsia-500'
+    ]
+
+    if (!nickname || nickname.trim() === '') {
+      console.log('[Avatar] Empty nickname, returning default color:', colors[0])
+      return colors[0]
+    }
+
+    const trimmed = nickname.trim().toLowerCase()
+    let hash = 0
+
+    for (let i = 0; i < trimmed.length; i++) {
+      const char = trimmed.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash
+    }
+
+    hash += trimmed.length * 31
+    const index = Math.abs(hash) % colors.length
+    const selectedColor = colors[index]
+
+    console.log('[Avatar] Generated color for', nickname, ':', selectedColor, '(index:', index, ')')
+    return selectedColor
     const colors = [
       'bg-blue-500',
       'bg-emerald-500',
@@ -1489,22 +1528,28 @@ function ProfileSettings() {
             {t('settings.profile.avatar')}
           </Label>
           <div className="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center">
-            <div
-              key={`avatar-${nickname}-${avatarPreview ? 'preview' : 'generated'}`}
-              className={`relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${avatarPreview ? 'bg-muted/60' : getAvatarColor(nickname.trim() || user?.nickname || 'A')}`}
-            >
-              {(() => {
-                console.log('[Avatar] Rendering with nickname:', nickname, 'user nickname:', user?.nickname);
-                return null;
-              })()}
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
-                  {(nickname.trim() || user?.nickname || 'A').charAt(0).toUpperCase()}
+            {(() => {
+              const finalNickname = nickname.trim() || user?.nickname || 'A'
+              const colorClass = avatarPreview ? 'bg-muted/60' : getAvatarColor(finalNickname)
+              const fullClassName = `relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-full border border-border/70 ${colorClass}`
+
+              console.log('[Avatar] Final render - nickname:', finalNickname, 'colorClass:', colorClass, 'fullClassName:', fullClassName)
+
+              return (
+                <div
+                  key={`avatar-${nickname}-${avatarPreview ? 'preview' : 'generated'}-${Date.now()}`}
+                  className={fullClassName}
+                >
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
+                      {(nickname.trim() || user?.nickname || 'A').charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
             <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                     <Button
                       variant="outline"
