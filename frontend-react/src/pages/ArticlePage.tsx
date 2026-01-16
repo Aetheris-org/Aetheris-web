@@ -60,6 +60,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
 import { addBookmark, removeBookmark, isBookmarked } from '@/api/bookmarks'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AuthRequiredDialog } from '@/components/AuthRequiredDialog'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -629,11 +630,7 @@ export default function ArticlePage() {
 
   const handleReaction = (reaction: 'like' | 'dislike') => {
     if (!user) {
-      toast({
-        title: t('article.authRequired'),
-        description: t('article.authRequiredToReact'),
-        variant: 'destructive',
-      })
+      setIsAuthRequiredDialogOpen(true)
       return
     }
     if (!article) {
@@ -798,12 +795,7 @@ export default function ArticlePage() {
 
   const ensureCommentAuth = () => {
     if (!user) {
-      toast({
-        title: t('article.authRequired'),
-        description: t('article.authRequiredToComment'),
-        variant: 'destructive',
-      })
-      navigate('/auth')
+      setIsAuthRequiredDialogOpen(true)
       return false
     }
     return true
@@ -1246,12 +1238,7 @@ export default function ArticlePage() {
 
   const handleCommentReaction = (commentId: string, reaction: 'up' | 'down') => {
     if (!user) {
-      toast({
-        title: t('article.authRequired'),
-        description: t('article.authRequiredToReactToComments'),
-        variant: 'destructive',
-      })
-      navigate('/auth')
+      setIsAuthRequiredDialogOpen(true)
       return
     }
 
@@ -2898,6 +2885,10 @@ export default function ArticlePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AuthRequiredDialog
+        open={isAuthRequiredDialogOpen}
+        onOpenChange={setIsAuthRequiredDialogOpen}
+      />
       </div>
     </TooltipProvider>
   )

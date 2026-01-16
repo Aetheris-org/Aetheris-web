@@ -82,8 +82,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         logger.debug('🔐 Setting user:', user.nickname)
         get().setUser(user)
       } else {
-        logger.warn('🔐 No user returned from getCurrentUser')
+        logger.warn('🔐 No user returned from getCurrentUser - session invalid')
+        // Сессия невалидна - очищаем состояние
         get().setUser(null)
+        // Очищаем токен из cookie, если он есть
+        try {
+          deleteTokenCookie()
+        } catch (error) {
+          logger.warn('Failed to clear invalid token:', error)
+        }
       }
     } catch (error) {
       logger.warn('Failed to initialize auth state:', error)
