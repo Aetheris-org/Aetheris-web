@@ -19,47 +19,53 @@ import type { Article } from '@/types/article';
  * - created_at: timestamptz
  * - updated_at: timestamptz
  */
-function transformDraft(draft: any, userId: string): Article {
-  // Преобразуем content из text в массив, если это JSON строка
-  let contentArray: any[] = [];
-  if (typeof draft.content === 'string') {
+function transformDraft(draft: any, _userId?: string): Article {
+  // Преобразуем content из text в строку (HTML) и JSON
+  const rawContent = draft.content ?? '';
+  let content: string = '';
+  let contentJSON: any = null;
+
+  if (typeof rawContent === 'string') {
     try {
-      const parsed = JSON.parse(draft.content);
-      contentArray = Array.isArray(parsed) ? parsed : [parsed];
+      const parsed = JSON.parse(rawContent);
+      contentJSON = parsed;
+      content = rawContent; // сохраняем оригинал для HTML fallback
     } catch {
-      // Если не JSON, создаем простой массив из текста
-      contentArray = [
-        {
-          type: 'paragraph',
-          children: [{ text: draft.content || '' }],
-        },
-      ];
+      content = rawContent; // обычный HTML или текст
+      contentJSON = null;
     }
-  } else if (Array.isArray(draft.content)) {
-    contentArray = draft.content;
+  } else if (Array.isArray(rawContent)) {
+    contentJSON = { document: rawContent };
+    content = JSON.stringify(rawContent);
+  } else if (rawContent && typeof rawContent === 'object') {
+    contentJSON = rawContent;
+    content = JSON.stringify(rawContent);
+  } else {
+    content = '';
+    contentJSON = null;
   }
 
   return {
     id: String(draft.id),
     title: draft.title || '',
-    content: contentArray,
+    content: content, // content должен быть string
+    contentJSON: contentJSON, // JSON структура для редактора
     excerpt: draft.summary || '', // summary -> excerpt
     tags: draft.tags || [],
-    difficulty: draft.difficulty || 'intermediate', // Если нет в БД, используем дефолт
-    previewImage: draft.cover_url || null, // cover_url -> preview_image
+    difficulty: (draft.difficulty || 'intermediate') as 'beginner' | 'intermediate' | 'advanced',
+    previewImage: draft.cover_url || undefined, // cover_url -> preview_image, null -> undefined
     author: draft.author || {
       id: draft.author_id,
       username: draft.author?.username || '',
-      avatar: draft.author?.avatar || null,
+      avatar: draft.author?.avatar || undefined,
     },
-    likesCount: 0, // Черновики не имеют лайков
-    dislikesCount: 0,
+    likes: 0, // Черновики не имеют лайков
+    dislikes: 0,
     views: 0, // Черновики не имеют просмотров
-    createdAt: draft.created_at || new Date().toISOString(),
-    updatedAt: draft.updated_at || draft.created_at || new Date().toISOString(),
-    publishedAt: null, // Черновики не опубликованы
-    isLiked: false,
-    isDisliked: false,
+    createdAt: draft.created_at ? new Date(draft.created_at).toISOString() : new Date().toISOString(),
+    updatedAt: draft.updated_at ? new Date(draft.updated_at).toISOString() : (draft.created_at ? new Date(draft.created_at).toISOString() : new Date().toISOString()),
+    publishedAt: undefined, // Черновики не опубликованы (undefined вместо null)
+    status: 'draft',
     isBookmarked: false,
   };
 }
