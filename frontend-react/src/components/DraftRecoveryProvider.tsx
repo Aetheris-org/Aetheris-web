@@ -20,8 +20,8 @@ export function DraftRecoveryProvider() {
   const location = useLocation()
   const { user } = useAuthStore()
   const [recoveryDraft, setRecoveryDraft] = useState<{ data: DraftData; key: string } | null>(null)
-  const [hasChecked, setHasChecked] = useState(false)
   const recoveryDraftRef = useRef<{ data: DraftData; key: string } | null>(null)
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
   // Синхронизируем ref с state
   useEffect(() => {
@@ -53,134 +53,140 @@ export function DraftRecoveryProvider() {
     }
   }
 
-  useEffect(() => {
+  // Функция проверки localStorage
+  const checkLocalStorage = () => {
     // Если мы на странице создания статьи, не показываем модальное окно
     if (location.pathname === '/create') {
-      setHasChecked(true)
       setRecoveryDraft(null)
       return
     }
 
     // Проверяем только если пользователь авторизован
     if (!user) {
-      setHasChecked(true)
       setRecoveryDraft(null)
       return
     }
 
-    // Сбрасываем состояние при смене страницы (но только если не на /create и пользователь авторизован)
-    setHasChecked(false)
-    setRecoveryDraft(null)
+    // Проверяем localStorage на наличие несохраненных черновиков
+    try {
+      const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
+      
+      logger.debug('[DraftRecoveryProvider] Checking localStorage:', { 
+        keysCount: localStorageKeys.length,
+        pathname: location.pathname 
+      })
+      
+      if (localStorageKeys.length === 0) {
+        setRecoveryDraft(null)
+        return
+      }
 
-    // Функция проверки localStorage
-    const checkLocalStorage = () => {
-      // Проверяем localStorage на наличие несохраненных черновиков
-      try {
-        const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
-        
-        logger.debug('[DraftRecoveryProvider] Checking localStorage:', { 
-          keysCount: localStorageKeys.length,
-          pathname: location.pathname 
-        })
-        
-        if (localStorageKeys.length === 0) {
-          setHasChecked(true)
-          return
-        }
+      // Находим самый свежий черновик
+      let latestDraft: DraftData | null = null
+      let latestKey: string | null = null
+      let latestTime = 0
 
-        // Находим самый свежий черновик
-        let latestDraft: DraftData | null = null
-        let latestKey: string | null = null
-        let latestTime = 0
+      const processedKeys = getProcessedKeys()
 
-        const processedKeys = getProcessedKeys()
+      for (const key of localStorageKeys) {
+        try {
+          // Пропускаем уже обработанные ключи
+          if (processedKeys.has(key)) {
+            logger.debug('[DraftRecoveryProvider] Skipping processed key:', { key })
+            continue
+          }
 
-        for (const key of localStorageKeys) {
-          try {
-            // Пропускаем уже обработанные ключи
-            if (processedKeys.has(key)) {
-              logger.debug('[DraftRecoveryProvider] Skipping processed key:', { key })
-              continue
-            }
+          // Проверяем, что ключ все еще существует в localStorage
+          const data = localStorage.getItem(key)
+          if (!data) continue
 
-            // Проверяем, что ключ все еще существует в localStorage
-            const data = localStorage.getItem(key)
-            if (!data) continue
+          const parsed = JSON.parse(data) as DraftData
+          
+          // Проверяем, что есть хотя бы какой-то контент
+          const hasContent = parsed.title?.trim() || 
+                            parsed.contentHTML?.trim() || 
+                            parsed.contentJSON ||
+                            parsed.excerpt?.trim()
+          
+          if (!hasContent) {
+            logger.debug('[DraftRecoveryProvider] Skipping empty draft:', { key })
+            continue
+          }
 
-            const parsed = JSON.parse(data) as DraftData
-            
-            // Проверяем, что есть хотя бы какой-то контент
-            const hasContent = parsed.title?.trim() || 
-                              parsed.contentHTML?.trim() || 
-                              parsed.contentJSON ||
-                              parsed.excerpt?.trim()
-            
-            if (!hasContent) {
-              logger.debug('[DraftRecoveryProvider] Skipping empty draft:', { key })
-              continue
-            }
-
-            if (parsed.savedAt) {
-              const savedTime = new Date(parsed.savedAt).getTime()
-              if (savedTime > latestTime) {
-                latestTime = savedTime
-                latestDraft = parsed
-                latestKey = key
-              }
-            } else if (!latestDraft) {
-              // Если нет savedAt, но есть контент, используем его как резервный вариант
+          if (parsed.savedAt) {
+            const savedTime = new Date(parsed.savedAt).getTime()
+            if (savedTime > latestTime) {
+              latestTime = savedTime
               latestDraft = parsed
               latestKey = key
             }
-          } catch (error) {
-            logger.warn('[DraftRecoveryProvider] Failed to parse localStorage draft:', { key, error })
+          } else if (!latestDraft) {
+            // Если нет savedAt, но есть контент, используем его как резервный вариант
+            latestDraft = parsed
+            latestKey = key
           }
+        } catch (error) {
+          logger.warn('[DraftRecoveryProvider] Failed to parse localStorage draft:', { key, error })
         }
-
-        if (latestDraft && latestKey) {
-          logger.debug('[DraftRecoveryProvider] Found unsaved draft:', { 
-            key: latestKey,
-            title: latestDraft.title,
-            pathname: location.pathname,
-            savedAt: latestDraft.savedAt
-          })
-          // Устанавливаем recoveryDraft только если его еще нет (чтобы не перезаписывать)
-          setRecoveryDraft(prev => {
-            if (!prev) {
-              return { data: latestDraft, key: latestKey }
-            }
-            return prev
-          })
-        } else {
-          logger.debug('[DraftRecoveryProvider] No unsaved drafts found', {
-            keysCount: localStorageKeys.length,
-            processedCount: processedKeys.size,
-            pathname: location.pathname
-          })
-        }
-      } catch (error) {
-        logger.warn('[DraftRecoveryProvider] Failed to check localStorage:', error)
-      } finally {
-        setHasChecked(true)
       }
+
+      if (latestDraft && latestKey) {
+        logger.debug('[DraftRecoveryProvider] Found unsaved draft:', { 
+          key: latestKey,
+          title: latestDraft.title,
+          pathname: location.pathname,
+          savedAt: latestDraft.savedAt
+        })
+        // Устанавливаем recoveryDraft (обновляем если изменился)
+        setRecoveryDraft(prev => {
+          // Если уже есть черновик с таким же ключом, не обновляем (чтобы не сбрасывать состояние диалога)
+          if (prev && prev.key === latestKey) {
+            return prev
+          }
+          return { data: latestDraft!, key: latestKey! }
+        })
+      } else {
+        logger.debug('[DraftRecoveryProvider] No unsaved drafts found', {
+          keysCount: localStorageKeys.length,
+          processedCount: processedKeys.size,
+          pathname: location.pathname
+        })
+        // Если не нашли черновик, сбрасываем состояние
+        setRecoveryDraft(null)
+      }
+    } catch (error) {
+      logger.warn('[DraftRecoveryProvider] Failed to check localStorage:', error)
+    }
+  }
+
+  // Основной эффект для постоянной проверки
+  useEffect(() => {
+    // Сбрасываем черновик при смене страницы на /create
+    if (location.pathname === '/create') {
+      setRecoveryDraft(null)
+      return
     }
 
-    // Проверяем с несколькими задержками для надежности
-    // Это нужно, потому что при переходе со страницы /create данные могут сохраняться
-    // в localStorage в момент размонтирования, и нужно дать время на сохранение
-    logger.debug('[DraftRecoveryProvider] Starting checks for pathname:', location.pathname)
-    
-    // Небольшая задержка перед первой проверкой, чтобы дать время localStorage обновиться
-    const checkTimeout0 = setTimeout(checkLocalStorage, 100) // Первая проверка через 100ms
-    const checkTimeout1 = setTimeout(checkLocalStorage, 500) // Вторая проверка через 500ms
-    const checkTimeout2 = setTimeout(checkLocalStorage, 1000) // Третья проверка через 1 секунду
-    const checkTimeout3 = setTimeout(checkLocalStorage, 2000) // Четвертая проверка через 2 секунды (на случай медленного сохранения)
+    // Проверяем только если пользователь авторизован
+    if (!user) {
+      setRecoveryDraft(null)
+      return
+    }
 
-    // Также слушаем изменения в localStorage
-    // ВАЖНО: Событие storage срабатывает только между разными вкладками,
-    // но для той же вкладки нужно проверять вручную
+    logger.debug('[DraftRecoveryProvider] Setting up checks for pathname:', location.pathname)
+
+    // Первая проверка сразу
+    checkLocalStorage()
+    
+    // Проверки с задержками для надежности (на случай асинхронного сохранения)
+    const checkTimeout0 = setTimeout(checkLocalStorage, 100)
+    const checkTimeout1 = setTimeout(checkLocalStorage, 500)
+    const checkTimeout2 = setTimeout(checkLocalStorage, 1000)
+    const checkTimeout3 = setTimeout(checkLocalStorage, 2000)
+
+    // Слушаем изменения в localStorage (для кросс-таб)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.startsWith('draft_') && e.newValue) {
+      if (e.key && e.key.startsWith('draft_')) {
         logger.debug('[DraftRecoveryProvider] Storage changed (cross-tab), rechecking:', { key: e.key })
         setTimeout(checkLocalStorage, 100)
       }
@@ -188,30 +194,26 @@ export function DraftRecoveryProvider() {
 
     window.addEventListener('storage', handleStorageChange)
 
-    // Периодическая проверка для отслеживания изменений в той же вкладке
-    // Это нужно, потому что событие storage не срабатывает в той же вкладке
-    const intervalId = setInterval(() => {
-      // Проверяем только если мы не на /create, пользователь авторизован и еще не нашли черновик
+    // Постоянная периодическая проверка каждые 2 секунды
+    // Это обеспечивает обнаружение черновиков на любой странице
+    checkIntervalRef.current = setInterval(() => {
       if (location.pathname !== '/create' && user) {
-        // Проверяем, не было ли показано модальное окно уже (используем ref для актуального состояния)
-        if (!recoveryDraftRef.current) {
-          checkLocalStorage()
-        } else {
-          // Если уже нашли черновик, останавливаем проверку
-          clearInterval(intervalId)
-        }
+        checkLocalStorage()
       }
-    }, 2000) // Проверяем каждые 2 секунды, если модальное окно еще не показано
+    }, 2000)
 
     return () => {
       clearTimeout(checkTimeout0)
       clearTimeout(checkTimeout1)
       clearTimeout(checkTimeout2)
       clearTimeout(checkTimeout3)
-      clearInterval(intervalId)
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current)
+        checkIntervalRef.current = null
+      }
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [user, location.pathname]) // Убрали recoveryDraft из зависимостей, чтобы не вызывать лишние проверки
+  }, [user, location.pathname])
 
   const handleClose = () => {
     // При закрытии модального окна сбрасываем состояние
@@ -225,8 +227,8 @@ export function DraftRecoveryProvider() {
     setRecoveryDraft(null)
   }
 
-  // Не показываем диалог, если мы на странице создания статьи или еще не проверили
-  if (!hasChecked || !recoveryDraft || location.pathname === '/create') {
+  // Не показываем диалог, если мы на странице создания статьи или нет черновика
+  if (!recoveryDraft || location.pathname === '/create' || !user) {
     return null
   }
 
