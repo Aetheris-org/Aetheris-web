@@ -1490,9 +1490,21 @@ export default function EditArticlePage() {
     let cancelled = false
 
     const loadDraft = async () => {
+      // На странице редактирования draftIdFromQuery всегда null, поэтому этот код не выполнится
+      if (!draftIdFromQuery) {
+        setIsLoadingDraft(false)
+        return
+      }
+      
       setIsLoadingDraft(true)
       try {
+        // Дополнительная проверка для TypeScript
+        if (!draftIdFromQuery) {
+          setIsLoadingDraft(false)
+          return
+        }
         logger.debug('[CreateArticlePage] Loading draft from database:', { draftId: draftIdFromQuery })
+        // TypeScript теперь знает, что draftIdFromQuery не null после проверки выше
         const draft = await getDraft(draftIdFromQuery)
         if (cancelled || !draft) {
           logger.warn('[CreateArticlePage] Draft not found or cancelled:', { draftId: draftIdFromQuery, draft })
@@ -1634,8 +1646,8 @@ export default function EditArticlePage() {
           const data = localStorage.getItem(key)
           if (!data) continue
 
-          const parsed = JSON.parse(data)
-          if (parsed.savedAt) {
+          const parsed = JSON.parse(data) as DraftData
+          if (parsed.savedAt && typeof parsed.savedAt === 'string') {
             const savedTime = new Date(parsed.savedAt).getTime()
             if (savedTime > latestTime) {
               latestTime = savedTime
