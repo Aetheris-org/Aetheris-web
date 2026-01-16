@@ -2995,7 +2995,6 @@
     "addContentFirst": "Add content first",
     "addContentFirstDescription": "Start by adding a title or some content before saving.",
     "untitledDraft": "Untitled draft",
-    "unsavedChangesWarning": "You have unsaved changes. What would you like to do?",
     "draftSaved": "Draft saved",
     "draftSavedDescription": "Your latest changes are safe.",
     "unableToSaveDraft": "Unable to save draft",
