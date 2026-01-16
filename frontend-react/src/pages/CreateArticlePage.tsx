@@ -159,7 +159,7 @@ export default function CreateArticlePage() {
   // ============================================================================
   
   const [showExitDialog, setShowExitDialog] = useState(false)
-  const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | null>(null)
+  const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | number | null>(null)
   const userHasEditedRef = useRef(false)
   
   // Проверяем, есть ли несохранённые изменения
@@ -169,6 +169,20 @@ export default function CreateArticlePage() {
       croppedImageUrl || selectedImageUrl || originalImageUrl
     )
   }, [title, content, excerpt, tags, croppedImageUrl, selectedImageUrl, originalImageUrl])
+  
+  // Безопасная навигация — проверяет наличие несохранённых изменений
+  const safeNavigate = useCallback((to: string | number) => {
+    if (hasUnsavedChanges()) {
+      setPendingNavigationUrl(to)
+      setShowExitDialog(true)
+    } else {
+      if (typeof to === 'number') {
+        navigate(to)
+      } else {
+        navigate(to)
+      }
+    }
+  }, [hasUnsavedChanges, navigate])
   
   // Перехватываем клики на ссылки
   useEffect(() => {
@@ -215,6 +229,27 @@ export default function CreateArticlePage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
   
+  // Перехват кнопки "Назад" браузера
+  useEffect(() => {
+    // Добавляем запись в историю, чтобы перехватить нажатие "Назад"
+    if (hasUnsavedChanges()) {
+      window.history.pushState({ preventBack: true }, '')
+    }
+    
+    const handlePopState = (e: PopStateEvent) => {
+      if (hasUnsavedChanges()) {
+        // Возвращаем пользователя обратно на страницу
+        window.history.pushState({ preventBack: true }, '')
+        // Показываем модальное окно
+        setPendingNavigationUrl(-1)
+        setShowExitDialog(true)
+      }
+    }
+    
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [hasUnsavedChanges])
+  
   // Обработчик: Удалить и выйти
   const handleExitDelete = useCallback(() => {
     // Очищаем localStorage
@@ -229,8 +264,12 @@ export default function CreateArticlePage() {
     setShowExitDialog(false)
     userHasEditedRef.current = false
     
-    if (pendingNavigationUrl) {
-      navigate(pendingNavigationUrl)
+    if (pendingNavigationUrl !== null) {
+      if (typeof pendingNavigationUrl === 'number') {
+        navigate(pendingNavigationUrl)
+      } else {
+        navigate(pendingNavigationUrl)
+      }
     }
   }, [navigate, pendingNavigationUrl])
   
@@ -317,8 +356,12 @@ export default function CreateArticlePage() {
       setShowExitDialog(false)
       userHasEditedRef.current = false
       
-      if (pendingNavigationUrl) {
-        navigate(pendingNavigationUrl)
+      if (pendingNavigationUrl !== null) {
+        if (typeof pendingNavigationUrl === 'number') {
+          navigate(pendingNavigationUrl)
+        } else {
+          navigate(pendingNavigationUrl)
+        }
       }
     } catch (error: any) {
       logger.error('[CreateArticlePage] Failed to save draft:', error)
@@ -3498,7 +3541,7 @@ export default function CreateArticlePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => safeNavigate(-1)}
               className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
