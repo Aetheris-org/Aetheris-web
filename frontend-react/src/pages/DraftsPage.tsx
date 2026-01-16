@@ -92,8 +92,10 @@ export default function DraftsPage() {
       return getDrafts(0, 100)
     },
     enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 минуты
+    staleTime: 30 * 1000, // 30 секунд (уменьшено для более частого обновления)
     gcTime: 30 * 60 * 1000, // 30 минут
+    refetchInterval: 10 * 1000, // Обновляем каждые 10 секунд для проверки существования новых черновиков
+    refetchIntervalInBackground: false, // Обновляем только когда страница активна
   })
 
   // Delete draft mutation

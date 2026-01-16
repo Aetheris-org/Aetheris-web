@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { FileText, Trash2, Edit, Save, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -201,6 +203,9 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
           savedDraft = await createDraft(draftPayload)
         }
       }
+      
+      // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
       
       // Помечаем как обработанный ПЕРЕД удалением
       onProcessed?.(localStorageKey)

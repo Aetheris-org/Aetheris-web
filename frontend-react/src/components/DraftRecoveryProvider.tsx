@@ -53,13 +53,19 @@ export function DraftRecoveryProvider() {
     setRecoveryDraft(null)
 
     // Проверяем только если пользователь авторизован и мы не на странице создания статьи
-    if (!user || location.pathname === '/create') {
+    if (!user) {
+      setHasChecked(true)
+      return
+    }
+    
+    // Если мы на странице создания статьи, не показываем модальное окно
+    if (location.pathname === '/create') {
       setHasChecked(true)
       return
     }
 
-    // Небольшая задержка, чтобы дать время странице загрузиться
-    const checkTimeout = setTimeout(() => {
+    // Функция проверки localStorage
+    const checkLocalStorage = () => {
       // Проверяем localStorage на наличие несохраненных черновиков
       try {
         const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
@@ -138,10 +144,26 @@ export function DraftRecoveryProvider() {
       } finally {
         setHasChecked(true)
       }
-    }, 500) // Задержка 500ms для проверки
+    }
+
+    // Проверяем сразу и через небольшую задержку для надежности
+    checkLocalStorage()
+    const checkTimeout = setTimeout(checkLocalStorage, 300) // Дополнительная проверка через 300ms
+
+    // Также слушаем изменения в localStorage (на случай, если сохранение происходит асинхронно)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('draft_') && e.newValue) {
+        logger.debug('[DraftRecoveryProvider] Storage changed, rechecking:', { key: e.key })
+        // Небольшая задержка перед проверкой, чтобы дать время на сохранение
+        setTimeout(checkLocalStorage, 100)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
 
     return () => {
       clearTimeout(checkTimeout)
+      window.removeEventListener('storage', handleStorageChange)
     }
   }, [user, location.pathname]) // Убрали recoveryDraft из зависимостей
 

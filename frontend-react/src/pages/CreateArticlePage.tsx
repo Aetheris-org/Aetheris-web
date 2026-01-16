@@ -856,6 +856,7 @@ export default function CreateArticlePage() {
           }
         }
 
+        setDraftId(saved.id)
         setLastDraftSaveTime(Date.now())
         
         // Обновляем localStorage с актуальным ID
@@ -882,6 +883,9 @@ export default function CreateArticlePage() {
         nextParams.set('draft', saved.id)
         setSearchParams(nextParams, { replace: true })
         loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
+
+        // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
+        queryClient.invalidateQueries({ queryKey: ['drafts'] })
 
         logger.debug('[CreateArticlePage] Auto-saved draft:', { id: saved.id })
       } catch (error: any) {
@@ -1313,6 +1317,9 @@ export default function CreateArticlePage() {
       setSearchParams(nextParams, { replace: true })
       loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
 
+      // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+
       toast({
         title: t('createArticle.draftSaved'),
         description: t('createArticle.draftSavedDescription'),
@@ -1698,26 +1705,88 @@ export default function CreateArticlePage() {
     }
   }, [title, content, excerpt, tags, difficulty, draftId, contentJSON, resolvePreviewUrl])
 
-  // Автосохранение перед закрытием страницы
+  // Автосохранение перед закрытием страницы и при потере фокуса
   useEffect(() => {
     const handleBeforeUnload = () => {
+      // Синхронное сохранение перед закрытием
+      saveToLocalStorage()
+    }
+
+    const handleVisibilityChange = () => {
+      // Сохраняем при скрытии страницы (переключение вкладок, минимизация и т.д.)
+      if (document.hidden) {
+        saveToLocalStorage()
+      }
+    }
+
+    const handlePageHide = () => {
+      // Сохраняем при скрытии страницы (навигация, закрытие вкладки)
       saveToLocalStorage()
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pagehide', handlePageHide)
+    
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pagehide', handlePageHide)
     }
   }, [saveToLocalStorage])
 
   // Сохранение при размонтировании компонента (выход со страницы)
+  // ВАЖНО: Этот useEffect должен быть последним, чтобы сохранить все актуальные данные
   useEffect(() => {
     return () => {
       // Устанавливаем флаг размонтирования, чтобы предотвратить создание новых черновиков
       isUnmountingRef.current = true
       
-      // Сохраняем в localStorage при выходе со страницы (синхронно)
-      saveToLocalStorage()
+      // Получаем актуальные значения напрямую из refs и state для надежного сохранения
+      try {
+        const currentTitle = title
+        const currentContent = content
+        const currentExcerpt = excerpt
+        const currentTags = tags
+        const currentDifficulty = difficulty
+        const currentDraftId = draftId
+        
+        // Получаем JSON из редактора
+        let currentContentJSON = contentJSON
+        if (editorRef.current) {
+          try {
+            currentContentJSON = editorRef.current.getJSON()
+          } catch (e) {
+            // Игнорируем ошибки при размонтировании
+          }
+        }
+        
+        const hasContent = currentTitle.trim() || currentContent.trim() || currentExcerpt.trim()
+        if (hasContent) {
+          const previewImage = resolvePreviewUrl()
+          const localStorageKey = `draft_${currentDraftId || 'new'}`
+          const draftData = {
+            title: currentTitle,
+            excerpt: currentExcerpt,
+            tags: currentTags,
+            difficulty: currentDifficulty,
+            previewImage: previewImage || undefined,
+            contentHTML: currentContent,
+            contentJSON: currentContentJSON,
+            draftId: currentDraftId,
+            savedAt: new Date().toISOString(),
+          }
+          // Синхронное сохранение в localStorage для надежности
+          localStorage.setItem(localStorageKey, JSON.stringify(draftData))
+          logger.debug('[CreateArticlePage] Saved draft to localStorage on unmount:', { 
+            key: localStorageKey, 
+            hasContent: true,
+            pathname: window.location.pathname
+          })
+        }
+      } catch (error) {
+        logger.warn('[CreateArticlePage] Failed to save draft to localStorage on unmount:', error)
+      }
       
       // Также пытаемся сохранить на бэкенд асинхронно (не блокируем размонтирование)
       // ВАЖНО: Используем ТОЛЬКО updateDraft, НЕ createDraft, чтобы не создавать дубликаты
