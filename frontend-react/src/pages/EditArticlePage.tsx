@@ -36,6 +36,19 @@ import { useTranslation } from '@/hooks/useTranslation'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
+// Интерфейс для данных черновика из localStorage
+interface DraftData {
+  title?: string
+  excerpt?: string
+  tags?: string[]
+  difficulty?: 'beginner' | 'intermediate' | 'advanced'
+  previewImage?: string
+  contentHTML?: string
+  contentJSON?: any
+  draftId?: string
+  savedAt?: string
+}
+
 // TODO: Add the same character limit validation on the backend
 const EXCERPT_MAX_LENGTH = 500
 const TITLE_MAX_LENGTH = 200
@@ -1505,7 +1518,7 @@ export default function EditArticlePage() {
         }
         logger.debug('[CreateArticlePage] Loading draft from database:', { draftId: draftIdFromQuery })
         // TypeScript теперь знает, что draftIdFromQuery не null после проверки выше
-        const draft = await getDraft(draftIdFromQuery)
+        const draft = await getDraft(draftIdFromQuery as string)
         if (cancelled || !draft) {
           logger.warn('[CreateArticlePage] Draft not found or cancelled:', { draftId: draftIdFromQuery, draft })
           return
