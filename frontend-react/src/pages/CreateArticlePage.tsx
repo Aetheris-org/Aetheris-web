@@ -236,7 +236,7 @@ export default function CreateArticlePage() {
       window.history.pushState({ preventBack: true }, '')
     }
     
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = (_e: PopStateEvent) => {
       if (hasUnsavedChanges()) {
         // Возвращаем пользователя обратно на страницу
         window.history.pushState({ preventBack: true }, '')
