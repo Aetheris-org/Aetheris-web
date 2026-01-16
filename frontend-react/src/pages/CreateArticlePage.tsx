@@ -184,10 +184,52 @@ export default function CreateArticlePage() {
     }
   }, [hasUnsavedChanges, navigate])
   
-  // Перехватываем клики на ссылки
+  // Перехватываем навигацию через pushState/replaceState
+  useEffect(() => {
+    if (!hasUnsavedChanges()) return
+    
+    const originalPushState = window.history.pushState.bind(window.history)
+    const originalReplaceState = window.history.replaceState.bind(window.history)
+    
+    const interceptNavigation = (url: string | URL | null | undefined) => {
+      if (!url) return false
+      const urlStr = url.toString()
+      // Игнорируем переходы на ту же страницу
+      if (urlStr === window.location.pathname || urlStr === window.location.href) return false
+      // Игнорируем внешние ссылки
+      if (urlStr.startsWith('http') && !urlStr.includes(window.location.host)) return false
+      return true
+    }
+    
+    window.history.pushState = function(state, unused, url) {
+      if (interceptNavigation(url) && hasUnsavedChanges()) {
+        const targetUrl = url?.toString() || '/'
+        setPendingNavigationUrl(targetUrl)
+        setShowExitDialog(true)
+        return // Не выполняем навигацию
+      }
+      return originalPushState(state, unused, url)
+    }
+    
+    window.history.replaceState = function(state, unused, url) {
+      if (interceptNavigation(url) && hasUnsavedChanges()) {
+        const targetUrl = url?.toString() || '/'
+        setPendingNavigationUrl(targetUrl)
+        setShowExitDialog(true)
+        return
+      }
+      return originalReplaceState(state, unused, url)
+    }
+    
+    return () => {
+      window.history.pushState = originalPushState
+      window.history.replaceState = originalReplaceState
+    }
+  }, [hasUnsavedChanges])
+  
+  // Перехватываем клики на ссылки (для <a href>)
   useEffect(() => {
     const handleLinkClick = (e: MouseEvent) => {
-      // Ищем ближайшую ссылку
       const link = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null
       if (!link) return
       
@@ -207,12 +249,8 @@ export default function CreateArticlePage() {
       setShowExitDialog(true)
     }
     
-    // Используем capture phase для перехвата ДО обработки react-router
     document.addEventListener('click', handleLinkClick, { capture: true })
-    
-    return () => {
-      document.removeEventListener('click', handleLinkClick, { capture: true })
-    }
+    return () => document.removeEventListener('click', handleLinkClick, { capture: true })
   }, [hasUnsavedChanges])
   
   // Предупреждение при закрытии вкладки
@@ -249,6 +287,90 @@ export default function CreateArticlePage() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [hasUnsavedChanges])
+  
+  // Ctrl+S для сохранения в черновики
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        
+        // Получаем JSON из редактора
+        let currentContentJSON = contentJSON
+        if (editorRef.current) {
+          try {
+            currentContentJSON = editorRef.current.getJSON()
+          } catch (err) {
+            logger.warn('[CreateArticlePage] Failed to get JSON from editor:', err)
+          }
+        }
+        
+        // Формируем контент
+        let contentDoc: any[] = []
+        if (currentContentJSON?.type === 'doc' && Array.isArray(currentContentJSON.content)) {
+          contentDoc = currentContentJSON.content
+        } else if (Array.isArray(currentContentJSON)) {
+          contentDoc = currentContentJSON
+        } else if (content) {
+          const text = content.replace(/<[^>]*>/g, '').trim()
+          contentDoc = [{ type: 'paragraph', children: [{ text: text || '' }] }]
+        } else {
+          contentDoc = [{ type: 'paragraph', children: [{ text: '' }] }]
+        }
+        
+        const draftTitle = (title || t('createArticle.untitledDraft')).trim()
+        const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle
+        
+        const difficultyMap: Record<string, 'easy' | 'medium' | 'hard'> = {
+          beginner: 'easy',
+          intermediate: 'medium',
+          advanced: 'hard',
+        }
+        
+        const draftPayload: any = {
+          title: finalDraftTitle,
+          content: contentDoc,
+          excerpt: (excerpt || ' ').trim(),
+          tags: tags,
+          difficulty: difficultyMap[difficulty] || 'medium',
+        }
+        
+        const previewImage = resolvePreviewUrl()
+        if (previewImage) {
+          draftPayload.previewImage = previewImage
+          draftPayload.preview_image = previewImage
+          draftPayload.cover_url = previewImage
+        }
+        
+        try {
+          if (draftId) {
+            await updateDraft(draftId, draftPayload)
+            logger.debug('[CreateArticlePage] Updated draft via Ctrl+S:', { draftId })
+          } else {
+            const newDraft = await createDraft(draftPayload)
+            setDraftId(newDraft.id)
+            logger.debug('[CreateArticlePage] Created draft via Ctrl+S:', { draftId: newDraft.id })
+          }
+          
+          queryClient.invalidateQueries({ queryKey: ['drafts'] })
+          
+          toast({
+            title: t('draftRecovery.saved'),
+            description: t('draftRecovery.savedDescription'),
+          })
+        } catch (error: any) {
+          logger.error('[CreateArticlePage] Failed to save draft via Ctrl+S:', error)
+          toast({
+            title: t('draftRecovery.saveError'),
+            description: error?.message || t('draftRecovery.saveErrorDescription'),
+            variant: 'destructive',
+          })
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [content, contentJSON, difficulty, draftId, excerpt, queryClient, resolvePreviewUrl, t, tags, title, toast])
   
   // Обработчик: Удалить и выйти
   const handleExitDelete = useCallback(() => {
