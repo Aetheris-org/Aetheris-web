@@ -161,6 +161,7 @@ export default function CreateArticlePage() {
   const [showExitDialog, setShowExitDialog] = useState(false)
   const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | number | null>(null)
   const userHasEditedRef = useRef(false)
+  const allowNavigationRef = useRef(false) // Флаг для разрешения навигации после подтверждения
   
   // Проверяем, есть ли несохранённые изменения
   const hasUnsavedChanges = useCallback(() => {
@@ -176,6 +177,7 @@ export default function CreateArticlePage() {
       setPendingNavigationUrl(to)
       setShowExitDialog(true)
     } else {
+      allowNavigationRef.current = true // Разрешаем навигацию
       if (typeof to === 'number') {
         navigate(to)
       } else {
@@ -186,12 +188,15 @@ export default function CreateArticlePage() {
   
   // Перехватываем навигацию через pushState/replaceState
   useEffect(() => {
-    if (!hasUnsavedChanges()) return
-    
     const originalPushState = window.history.pushState.bind(window.history)
     const originalReplaceState = window.history.replaceState.bind(window.history)
     
     const interceptNavigation = (url: string | URL | null | undefined) => {
+      // Если навигация разрешена — пропускаем
+      if (allowNavigationRef.current) {
+        allowNavigationRef.current = false
+        return false
+      }
       if (!url) return false
       const urlStr = url.toString()
       // Игнорируем переходы на ту же страницу
@@ -390,6 +395,7 @@ export default function CreateArticlePage() {
     userHasEditedRef.current = false
     
     if (pendingNavigationUrl !== null) {
+      allowNavigationRef.current = true // Разрешаем навигацию
       if (typeof pendingNavigationUrl === 'number') {
         navigate(pendingNavigationUrl)
       } else {
@@ -482,6 +488,7 @@ export default function CreateArticlePage() {
       userHasEditedRef.current = false
       
       if (pendingNavigationUrl !== null) {
+        allowNavigationRef.current = true // Разрешаем навигацию
         if (typeof pendingNavigationUrl === 'number') {
           navigate(pendingNavigationUrl)
         } else {
