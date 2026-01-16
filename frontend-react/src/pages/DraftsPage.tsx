@@ -125,25 +125,65 @@ export default function DraftsPage() {
   })
 
   const formattedDrafts = useMemo(
-    () =>
-      drafts
-        .filter((draft) => {
-          // Фильтруем только существующие черновики с валидными данными
-          if (!draft || !draft.id) {
-            logger.warn('[DraftsPage] Found invalid draft:', draft)
-            return false
+    () => {
+      // Фильтруем только существующие черновики с валидными данными
+      const validDrafts = drafts.filter((draft) => {
+        if (!draft || !draft.id) {
+          logger.warn('[DraftsPage] Found invalid draft:', draft)
+          return false
+        }
+        // Проверяем, что черновик не удален (если есть поле deleted_at)
+        if ((draft as any).deleted_at) {
+          logger.debug('[DraftsPage] Filtering out deleted draft:', draft.id)
+          return false
+        }
+        return true
+      })
+
+      // Убираем дубликаты - оставляем только самый свежий черновик для каждого уникального заголовка
+      const uniqueDrafts = new Map<string, typeof validDrafts[0]>()
+      
+      for (const draft of validDrafts) {
+        const titleKey = draft.title.trim().toLowerCase()
+        const existing = uniqueDrafts.get(titleKey)
+        
+        if (!existing) {
+          // Если нет черновика с таким заголовком, добавляем
+          uniqueDrafts.set(titleKey, draft)
+        } else {
+          // Если есть, сравниваем время обновления и оставляем более свежий
+          const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
+          const currentTime = new Date(draft.updatedAt || draft.createdAt).getTime()
+          
+          if (currentTime > existingTime) {
+            // Текущий черновик свежее, заменяем
+            uniqueDrafts.set(titleKey, draft)
+            logger.debug('[DraftsPage] Replaced duplicate draft with newer one:', { 
+              oldId: existing.id, 
+              newId: draft.id, 
+              title: titleKey 
+            })
+          } else {
+            logger.debug('[DraftsPage] Skipped duplicate draft (older):', { 
+              id: draft.id, 
+              title: titleKey 
+            })
           }
-          // Проверяем, что черновик не удален (если есть поле deleted_at)
-          if ((draft as any).deleted_at) {
-            logger.debug('[DraftsPage] Filtering out deleted draft:', draft.id)
-            return false
-          }
-          return true
-        })
+        }
+      }
+
+      return Array.from(uniqueDrafts.values())
         .map((draft) => ({
           ...draft,
           updatedAt: draft.updatedAt || draft.createdAt,
-        })),
+        }))
+        .sort((a, b) => {
+          // Сортируем по времени обновления (новые первыми)
+          const timeA = new Date(a.updatedAt || a.createdAt).getTime()
+          const timeB = new Date(b.updatedAt || b.createdAt).getTime()
+          return timeB - timeA
+        })
+    },
     [drafts]
   )
 

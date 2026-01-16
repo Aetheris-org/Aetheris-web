@@ -160,7 +160,47 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
         draftPayload.cover_url = draftData.previewImage
       }
 
-      await createDraft(draftPayload)
+      // Проверяем, есть ли уже черновик с таким ID
+      let savedDraft
+      if (draftData.draftId) {
+        try {
+          // Пытаемся обновить существующий черновик
+          const { updateDraft } = await import('@/api/drafts')
+          savedDraft = await updateDraft(draftData.draftId, draftPayload)
+          logger.debug('[DraftRecoveryDialog] Updated existing draft:', { id: savedDraft.id })
+        } catch (error: any) {
+          // Если черновик не найден, создаем новый
+          if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+            logger.warn('[DraftRecoveryDialog] Draft not found, creating new one:', { draftId: draftData.draftId })
+            savedDraft = await createDraft(draftPayload)
+          } else {
+            throw error
+          }
+        }
+      } else {
+        // Если нет draftId, проверяем существование похожего черновика
+        try {
+          const { getDrafts } = await import('@/api/drafts')
+          const existingDrafts = await getDrafts(0, 10)
+          
+          // Ищем черновик с таким же заголовком
+          const similarDraft = existingDrafts.find(d => 
+            d.title.trim() === finalDraftTitle.trim()
+          )
+          
+          if (similarDraft) {
+            logger.debug('[DraftRecoveryDialog] Found similar draft, updating it:', { id: similarDraft.id })
+            const { updateDraft } = await import('@/api/drafts')
+            savedDraft = await updateDraft(similarDraft.id, draftPayload)
+          } else {
+            savedDraft = await createDraft(draftPayload)
+          }
+        } catch (checkError) {
+          // Если проверка не удалась, создаем новый
+          logger.warn('[DraftRecoveryDialog] Failed to check existing drafts, creating new one:', checkError)
+          savedDraft = await createDraft(draftPayload)
+        }
+      }
       
       // Помечаем как обработанный ПЕРЕД удалением
       onProcessed?.(localStorageKey)

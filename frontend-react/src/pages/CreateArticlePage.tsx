@@ -770,12 +770,42 @@ export default function CreateArticlePage() {
         let saved: Article
         if (currentDraftId) {
           try {
+            // Пытаемся обновить существующий черновик
             saved = await updateDraft(currentDraftId, draftData)
+            logger.debug('[CreateArticlePage] Updated existing draft:', { id: saved.id })
           } catch (error: any) {
-            // Если черновик не найден, создаем новый ТОЛЬКО если не идет размонтирование
-            if ((error?.message?.includes('Draft not found') || error?.message?.includes('not found')) && !isUnmountingRef.current) {
-              logger.warn('[CreateArticlePage] Draft not found, creating new one:', { currentDraftId })
-              saved = await createDraft(draftData)
+            // Если черновик не найден, проверяем существование перед созданием нового
+            if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+              logger.warn('[CreateArticlePage] Draft not found, checking for existing drafts before creating new one:', { currentDraftId })
+              
+              // Проверяем, нет ли уже черновика с таким же содержимым
+              try {
+                const { getDrafts } = await import('@/api/drafts')
+                const existingDrafts = await getDrafts(0, 10)
+                
+                // Ищем черновик с таким же заголовком и автором
+                const similarDraft = existingDrafts.find(d => 
+                  d.title.trim() === finalDraftTitle.trim() && 
+                  d.author.id === user.id
+                )
+                
+                if (similarDraft) {
+                  logger.debug('[CreateArticlePage] Found similar draft, updating it instead:', { id: similarDraft.id })
+                  saved = await updateDraft(similarDraft.id, draftData)
+                  setDraftId(saved.id)
+                } else {
+                  // Создаем новый только если нет похожего
+                  logger.warn('[CreateArticlePage] Creating new draft after not found:', { currentDraftId })
+                  saved = await createDraft(draftData)
+                  setDraftId(saved.id)
+                }
+              } catch (checkError) {
+                // Если проверка не удалась, создаем новый
+                logger.warn('[CreateArticlePage] Failed to check existing drafts, creating new one:', checkError)
+                saved = await createDraft(draftData)
+                setDraftId(saved.id)
+              }
+              
               // Обновляем localStorage с новым ID
               try {
                 const newLocalStorageKey = `draft_${saved.id}`
@@ -795,22 +825,52 @@ export default function CreateArticlePage() {
             }
           }
         } else {
-          saved = await createDraft(draftData)
+          // Если нет draftId, проверяем существование похожего черновика перед созданием
+          try {
+            const { getDrafts } = await import('@/api/drafts')
+            const existingDrafts = await getDrafts(0, 10)
+            
+            // Ищем черновик с таким же заголовком и автором
+            const similarDraft = existingDrafts.find(d => 
+              d.title.trim() === finalDraftTitle.trim() && 
+              d.author.id === user.id &&
+              // Проверяем, что это действительно похожий черновик (недавно обновленный)
+              (d.updatedAt ? new Date(d.updatedAt).getTime() > Date.now() - 60000 : false) // В течение последней минуты
+            )
+            
+            if (similarDraft) {
+              logger.debug('[CreateArticlePage] Found similar draft, updating it instead of creating new:', { id: similarDraft.id })
+              saved = await updateDraft(similarDraft.id, draftData)
+              setDraftId(saved.id)
+            } else {
+              // Создаем новый только если нет похожего
+              logger.debug('[CreateArticlePage] Creating new draft (no similar found)')
+              saved = await createDraft(draftData)
+              setDraftId(saved.id)
+            }
+          } catch (checkError) {
+            // Если проверка не удалась, создаем новый
+            logger.warn('[CreateArticlePage] Failed to check existing drafts, creating new one:', checkError)
+            saved = await createDraft(draftData)
+            setDraftId(saved.id)
+          }
         }
 
-        setDraftId(saved.id)
         setLastDraftSaveTime(Date.now())
         
-        // Обновляем localStorage с новым ID после создания
-        if (!currentDraftId && saved.id) {
+        // Обновляем localStorage с актуальным ID
+        if (saved.id) {
           try {
             const newLocalStorageKey = `draft_${saved.id}`
-            const oldData = localStorage.getItem(localStorageKey)
+            const oldKey = currentDraftId ? `draft_${currentDraftId}` : localStorageKey
+            const oldData = localStorage.getItem(oldKey)
             if (oldData) {
               const parsedData = JSON.parse(oldData)
               parsedData.draftId = saved.id
               localStorage.setItem(newLocalStorageKey, JSON.stringify(parsedData))
-              localStorage.removeItem(localStorageKey) // Удаляем старый ключ
+              if (oldKey !== newLocalStorageKey) {
+                localStorage.removeItem(oldKey) // Удаляем старый ключ
+              }
             }
           } catch (error) {
             logger.warn('[CreateArticlePage] Failed to update localStorage key:', error)
@@ -1171,19 +1231,72 @@ export default function CreateArticlePage() {
       let saved: Article
       if (draftId) {
         try {
+          // Пытаемся обновить существующий черновик
           saved = await updateDraft(draftId, draftData)
+          logger.debug('[CreateArticlePage] Updated existing draft (manual save):', { id: saved.id })
         } catch (error: any) {
-          // Если черновик не найден, создаем новый
+          // Если черновик не найден, проверяем существование похожего перед созданием
           if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
-            logger.warn('[CreateArticlePage] Draft not found, creating new one:', { draftId })
-            saved = await createDraft(draftData)
-            setDraftId(saved.id) // Обновляем ID на новый
+            logger.warn('[CreateArticlePage] Draft not found, checking for existing drafts before creating:', { draftId })
+            
+            try {
+              const { getDrafts } = await import('@/api/drafts')
+              const existingDrafts = await getDrafts(0, 10)
+              
+              // Ищем черновик с таким же заголовком и автором
+              const similarDraft = existingDrafts.find(d => 
+                d.title.trim() === finalDraftTitle.trim() && 
+                d.author.id === currentUser.id
+              )
+              
+              if (similarDraft) {
+                logger.debug('[CreateArticlePage] Found similar draft, updating it instead:', { id: similarDraft.id })
+                saved = await updateDraft(similarDraft.id, draftData)
+                setDraftId(saved.id)
+              } else {
+                // Создаем новый только если нет похожего
+                logger.warn('[CreateArticlePage] Creating new draft after not found:', { draftId })
+                saved = await createDraft(draftData)
+                setDraftId(saved.id)
+              }
+            } catch (checkError) {
+              // Если проверка не удалась, создаем новый
+              logger.warn('[CreateArticlePage] Failed to check existing drafts, creating new one:', checkError)
+              saved = await createDraft(draftData)
+              setDraftId(saved.id)
+            }
           } else {
             throw error
           }
         }
       } else {
-        saved = await createDraft(draftData)
+        // Если нет draftId, проверяем существование похожего черновика перед созданием
+        try {
+          const { getDrafts } = await import('@/api/drafts')
+          const existingDrafts = await getDrafts(0, 10)
+          
+          // Ищем черновик с таким же заголовком и автором
+          const similarDraft = existingDrafts.find(d => 
+            d.title.trim() === finalDraftTitle.trim() && 
+            d.author.id === currentUser.id
+          )
+          
+          if (similarDraft) {
+            logger.debug('[CreateArticlePage] Found similar draft, updating it instead of creating new (manual save):', { id: similarDraft.id })
+            saved = await updateDraft(similarDraft.id, draftData)
+            setDraftId(saved.id)
+          } else {
+            // Создаем новый только если нет похожего
+            logger.debug('[CreateArticlePage] Creating new draft (no similar found, manual save)')
+            saved = await createDraft(draftData)
+            setDraftId(saved.id)
+          }
+        } catch (checkError) {
+          // Если проверка не удалась, создаем новый
+          logger.warn('[CreateArticlePage] Failed to check existing drafts, creating new one (manual save):', checkError)
+          saved = await createDraft(draftData)
+          setDraftId(saved.id)
+        }
       }
 
       setDraftId(saved.id)
