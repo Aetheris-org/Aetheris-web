@@ -2,7 +2,8 @@
  * Cloudflare R2 Upload Utility
  * Загрузка изображений в Cloudflare R2 через AWS SDK
  */
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { logger } from './logger';
 
 export interface R2UploadResult {
@@ -91,18 +92,22 @@ export async function uploadToR2(
     // Формируем публичный URL
     let publicUrl: string;
     if (r2PublicUrl) {
-      // Используем кастомный публичный URL
+      // Используем кастомный публичный URL (если настроен публичный домен)
       publicUrl = `${r2PublicUrl.replace(/\/$/, '')}/${fileName}`;
     } else {
-      // Формируем URL из S3 endpoint и bucket name
-      // Если есть Account ID в endpoint, используем его
-      const accountId = extractAccountIdFromEndpoint(r2S3Endpoint);
-      if (accountId) {
-        publicUrl = `https://${accountId}.r2.cloudflarestorage.com/${r2BucketName}/${fileName}`;
-      } else {
-        // Fallback: используем S3 endpoint + bucket
-        publicUrl = `${r2S3Endpoint.replace(/\/$/, '')}/${r2BucketName}/${fileName}`;
-      }
+      // Генерируем presigned URL для публичного доступа
+      // Presigned URL действителен 1 год (максимум для R2)
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: r2BucketName,
+        Key: fileName,
+      });
+      
+      // Генерируем presigned URL с длительным сроком действия (1 год)
+      publicUrl = await getSignedUrl(r2Client, getObjectCommand, { expiresIn: 31536000 }); // 1 год в секундах
+      
+      logger.debug('[uploadToR2] Generated presigned URL:', {
+        url: publicUrl.substring(0, 100) + '...',
+      });
     }
 
     logger.debug('[uploadToR2] Upload successful:', {
