@@ -1369,6 +1369,22 @@ export default function CreateArticlePage() {
     }
   }, [draftIdFromQuery, toast])
 
+  // Сброс draftId при создании новой статьи (без параметров draft/edit)
+  useEffect(() => {
+    const hasDraftParam = Boolean(draftIdFromQuery)
+    const hasEditParam = Boolean(editArticleIdRef.current || articleToEdit?.id)
+    const hasRecoverParam = searchParams.get('recover') === 'true'
+    
+    // Если нет параметров draft/edit и нет параметра recover, сбрасываем draftId для новой статьи
+    if (!hasDraftParam && !hasEditParam && !hasRecoverParam) {
+      // Сбрасываем draftId только если он был установлен (не null)
+      if (draftId !== null) {
+        logger.debug('[CreateArticlePage] Resetting draftId for new article')
+        setDraftId(null)
+      }
+    }
+  }, [draftIdFromQuery, searchParams, draftId])
+
   // Восстановление данных из localStorage при загрузке страницы
   useEffect(() => {
     // Не восстанавливаем, если уже загружается черновик из БД
@@ -1439,10 +1455,9 @@ export default function CreateArticlePage() {
           setContentJSON(latestDraft.contentJSON)
         }
         
-        // Восстанавливаем draftId если есть
-        if (latestDraft.draftId) {
-          setDraftId(latestDraft.draftId)
-        }
+        // НЕ восстанавливаем draftId при восстановлении из localStorage для новой статьи
+        // draftId должен быть null для новой статьи, чтобы использовался ключ draft_new
+        // setDraftId(latestDraft.draftId) - убрано, чтобы всегда использовался draft_new
       }
     } catch (error) {
       logger.warn('[CreateArticlePage] Failed to restore from localStorage:', error)
