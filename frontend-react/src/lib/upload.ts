@@ -203,7 +203,7 @@ export async function uploadImage(
       // Загрузка в Cloudflare R2
       // Для avatars и covers: удаляем все старые файлы пользователя
       // Для articles: удаляем только если передан articleId (редактирование конкретной статьи)
-      const deleteOld = folder === 'avatars' || folder === 'covers' || (folder === 'articles' && articleId);
+      const deleteOld = folder === 'avatars' || folder === 'covers' || (folder === 'articles' && !!articleId);
       const r2Result = await uploadToR2(file, folder, user.id, deleteOld, articleId);
       result = {
         url: r2Result.url,
