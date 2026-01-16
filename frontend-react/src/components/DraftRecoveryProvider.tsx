@@ -51,6 +51,12 @@ export function DraftRecoveryProvider() {
     // Проверяем только если пользователь авторизован и мы не на странице создания статьи
     if (!user || location.pathname === '/create') {
       setHasChecked(true)
+      setRecoveryDraft(null) // Сбрасываем при переходе на страницу создания
+      return
+    }
+
+    // Если плашка уже показывается, не проверяем снова
+    if (recoveryDraft) {
       return
     }
 
