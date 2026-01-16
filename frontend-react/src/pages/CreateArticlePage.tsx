@@ -29,6 +29,7 @@ import {
 import { Slider } from '@/components/ui/slider'
 import { createDraft, updateDraft, getDraft } from '@/api/drafts'
 import { createArticle, updateArticle, getArticle } from '@/api/articles'
+import type { Article } from '@/types/article'
 import { uploadImage } from '@/lib/upload'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -769,13 +770,99 @@ export default function CreateArticlePage() {
         if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
           try {
             logger.warn('[CreateArticlePage] Draft not found in auto-save, creating new one')
-            const newDraft = await createDraft(draftData)
+            // Пересоздаем данные для сохранения из текущего state
+            const retryTitle = title
+            const retryContent = content
+            const retryExcerpt = excerpt
+            const retryTags = tags
+            const retryDifficulty = difficulty
+            const retryPreviewImage = resolvePreviewUrl()
+            const retryDraftId = draftId
+            
+            // Получаем JSON из редактора
+            let retryEditorJSON: any = null
+            if (editorRef.current) {
+              try {
+                retryEditorJSON = editorRef.current.getJSON()
+              } catch (e) {
+                logger.warn('[CreateArticlePage] Failed to get JSON for retry:', e)
+              }
+            }
+            
+            const retryFinalContentJSON = retryEditorJSON || contentJSON
+            
+            // Создаем contentDocument
+            let retryContentDocument: any[] = []
+            if (retryFinalContentJSON && retryFinalContentJSON.type === 'doc' && Array.isArray(retryFinalContentJSON.content)) {
+              retryContentDocument = retryFinalContentJSON.content.map((node: any) => {
+                if (node.type === 'paragraph' && Array.isArray(node.content)) {
+                  const children = node.content
+                    .filter((child: any) => child.type === 'text')
+                    .map((child: any) => ({ text: child.text || '' }))
+                  return {
+                    type: 'paragraph',
+                    children: children.length > 0 ? children : [{ text: '' }],
+                  }
+                }
+                return {
+                  type: 'paragraph',
+                  children: [{ text: '' }],
+                }
+              }).filter((block: any) => block !== null)
+            } else if (Array.isArray(retryFinalContentJSON)) {
+              retryContentDocument = retryFinalContentJSON
+            } else {
+              const plainText = getPlainTextFromHtml(retryContent)
+              retryContentDocument = [
+                {
+                  type: 'paragraph',
+                  children: [{ text: plainText || '' }],
+                },
+              ]
+            }
+            
+            if (!Array.isArray(retryContentDocument) || retryContentDocument.length === 0) {
+              retryContentDocument = [
+                {
+                  type: 'paragraph',
+                  children: [{ text: '' }],
+                },
+              ]
+            }
+            
+            const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+              const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+                beginner: 'easy',
+                intermediate: 'medium',
+                advanced: 'hard',
+              };
+              return mapping[diff] || 'medium';
+            };
+            
+            const retryDraftTitle = retryTitle.trim() || t('createArticle.untitledDraft');
+            const retryFinalDraftTitle = retryDraftTitle.length < 10 ? retryDraftTitle.padEnd(10, ' ') : retryDraftTitle;
+            
+            const retryDraftData: any = {
+              title: retryFinalDraftTitle,
+              content: retryContentDocument,
+              excerpt: retryExcerpt.trim() || ' ',
+              tags: retryTags,
+              difficulty: mapDifficultyToBackend(retryDifficulty),
+            }
+            
+            if (retryPreviewImage) {
+              retryDraftData.previewImage = retryPreviewImage
+              retryDraftData.preview_image = retryPreviewImage
+              retryDraftData.cover_url = retryPreviewImage
+            }
+            
+            const newDraft = await createDraft(retryDraftData)
             setDraftId(newDraft.id)
             setLastDraftSaveTime(Date.now())
             // Обновляем localStorage с новым ID
             try {
               const newLocalStorageKey = `draft_${newDraft.id}`
-              const oldKey = `draft_${currentDraftId || 'new'}`
+              const oldKey = `draft_${retryDraftId || 'new'}`
               const oldData = localStorage.getItem(oldKey)
               if (oldData) {
                 const parsedData = JSON.parse(oldData)
@@ -1370,7 +1457,7 @@ export default function CreateArticlePage() {
 
   // Автосохранение перед закрытием страницы
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = () => {
       // Сохраняем в localStorage перед закрытием
       try {
         const hasContent = title.trim() || content.trim() || excerpt.trim()
