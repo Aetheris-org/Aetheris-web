@@ -1411,11 +1411,15 @@ export default function CreateArticlePage() {
         return
       }
 
-      // Восстанавливаем данные только если они есть и страница не редактирует существующую статью
-      // Или если есть параметр recover (принудительное восстановление)
-      const shouldRecover = searchParams.get('recover') === 'true'
+      // Восстанавливаем данные только если:
+      // 1. Страница не редактирует существующую статью
+      // 2. НЕТ параметра recover (если recover=true, значит мы пришли из панели восстановления и localStorage уже очищен)
+      // 3. Есть данные для восстановления
+      const hasRecoverParam = searchParams.get('recover') === 'true'
       const isCurrentlyEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
-      if ((!isCurrentlyEditing || shouldRecover) && latestDraft) {
+      
+      // НЕ восстанавливаем если есть параметр recover - это значит localStorage уже очищен
+      if (!isCurrentlyEditing && !hasRecoverParam && latestDraft) {
         logger.debug('[CreateArticlePage] Restoring draft from localStorage:', { draftId: latestDraft.draftId })
         
         if (latestDraft.title) setTitle(latestDraft.title)

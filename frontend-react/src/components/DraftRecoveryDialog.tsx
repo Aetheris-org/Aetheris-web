@@ -37,8 +37,19 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
   const handleDelete = () => {
     setIsDeleting(true)
     try {
+      // Удаляем из localStorage
       localStorage.removeItem(localStorageKey)
       logger.debug('[DraftRecoveryDialog] Deleted draft from localStorage:', { key: localStorageKey })
+      
+      // Также удаляем все связанные черновики (на случай, если есть другие ключи)
+      try {
+        Object.keys(localStorage).filter(key => key.startsWith('draft_')).forEach(key => {
+          localStorage.removeItem(key)
+        })
+        logger.debug('[DraftRecoveryDialog] Cleared all draft keys from localStorage')
+      } catch (e) {
+        logger.warn('[DraftRecoveryDialog] Failed to clear all draft keys:', e)
+      }
       
       // Помечаем как обработанный ПЕРЕД закрытием
       onProcessed?.(localStorageKey)
@@ -68,20 +79,25 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
     // Помечаем как обработанный ПЕРЕД удалением и переходом
     onProcessed?.(localStorageKey)
     
-    // Удаляем старый ключ из localStorage, так как данные будут восстановлены на странице создания
+    // Очищаем ВСЕ черновики из localStorage, чтобы при заходе на страницу создания поля были чистыми
     try {
       localStorage.removeItem(localStorageKey)
-      logger.debug('[DraftRecoveryDialog] Removed draft from localStorage on continue:', { key: localStorageKey })
+      // Также удаляем все связанные черновики
+      Object.keys(localStorage).filter(key => key.startsWith('draft_')).forEach(key => {
+        localStorage.removeItem(key)
+      })
+      logger.debug('[DraftRecoveryDialog] Cleared all drafts from localStorage on continue:', { key: localStorageKey })
     } catch (error) {
-      logger.warn('[DraftRecoveryDialog] Failed to remove localStorage on continue:', error)
+      logger.warn('[DraftRecoveryDialog] Failed to clear localStorage on continue:', error)
     }
     
-    // Переходим на страницу создания статьи с параметром для восстановления
+    // Переходим на страницу создания статьи
+    // Если есть draftId, переходим к редактированию этого черновика из базы
     const params = new URLSearchParams()
     if (draftData.draftId) {
       params.set('draft', draftData.draftId)
     }
-    params.set('recover', 'true')
+    // НЕ добавляем recover=true, чтобы не восстанавливать из localStorage
     
     // Небольшая задержка перед переходом, чтобы состояние успело обновиться
     setTimeout(() => {
@@ -149,13 +165,17 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
       // Помечаем как обработанный ПЕРЕД удалением
       onProcessed?.(localStorageKey)
       
-      // Удаляем старый ключ из localStorage, так как черновик сохранен в базу
-      // Новый ключ будет создан автоматически при следующем автосохранении на странице создания
+      // Очищаем ВСЕ черновики из localStorage, чтобы при заходе на страницу создания поля были чистыми
+      // Черновик уже сохранен в базу, поэтому localStorage не нужен
       try {
         localStorage.removeItem(localStorageKey)
-        logger.debug('[DraftRecoveryDialog] Removed old draft from localStorage after saving:', { key: localStorageKey })
+        // Также удаляем все связанные черновики
+        Object.keys(localStorage).filter(key => key.startsWith('draft_')).forEach(key => {
+          localStorage.removeItem(key)
+        })
+        logger.debug('[DraftRecoveryDialog] Cleared all drafts from localStorage after saving:', { key: localStorageKey })
       } catch (localStorageError) {
-        logger.warn('[DraftRecoveryDialog] Failed to remove localStorage after saving:', localStorageError)
+        logger.warn('[DraftRecoveryDialog] Failed to clear localStorage after saving:', localStorageError)
       }
 
       toast({
