@@ -43,15 +43,6 @@ function checkR2Config(): void {
 }
 
 /**
- * Извлечь Account ID из S3 endpoint для формирования публичного URL
- */
-function extractAccountIdFromEndpoint(endpoint: string): string | null {
-  // Формат: https://{account-id}.r2.cloudflarestorage.com
-  const match = endpoint.match(/https?:\/\/([^.]+)\.r2\.cloudflarestorage\.com/);
-  return match ? match[1] : null;
-}
-
-/**
  * Загрузить изображение в Cloudflare R2
  */
 export async function uploadToR2(
