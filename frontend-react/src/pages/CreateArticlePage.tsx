@@ -1853,6 +1853,18 @@ export default function CreateArticlePage() {
             hasContent: true,
             pathname: window.location.pathname
           })
+          
+          // Отправляем событие draft-saved для DraftRecoveryProvider
+          // Используем queueMicrotask для гарантированной отправки после сохранения
+          queueMicrotask(() => {
+            window.dispatchEvent(new CustomEvent('draft-saved'))
+            logger.debug('[CreateArticlePage] Dispatched draft-saved event on unmount')
+          })
+          
+          // Дублируем через setTimeout для надежности (на случай если queueMicrotask не сработает)
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('draft-saved'))
+          }, 10)
         }
       } catch (error) {
         logger.warn('[CreateArticlePage] Failed to save draft to localStorage on unmount:', error)

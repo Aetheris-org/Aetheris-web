@@ -55,8 +55,8 @@ export function DraftRecoveryProvider() {
 
   // Функция проверки localStorage
   const checkLocalStorage = () => {
-    // Если мы на странице создания статьи, не показываем модальное окно
-    if (location.pathname === '/create') {
+    // Если мы на странице создания или редактирования статьи, не показываем модальное окно
+    if (location.pathname === '/create' || location.pathname.startsWith('/edit/')) {
       setRecoveryDraft(null)
       return
     }
@@ -161,8 +161,8 @@ export function DraftRecoveryProvider() {
 
   // Основной эффект для постоянной проверки
   useEffect(() => {
-    // Сбрасываем черновик при смене страницы на /create
-    if (location.pathname === '/create') {
+    // Сбрасываем черновик при смене страницы на /create или /edit/*
+    if (location.pathname === '/create' || location.pathname.startsWith('/edit/')) {
       setRecoveryDraft(null)
       return
     }
@@ -191,27 +191,33 @@ export function DraftRecoveryProvider() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key && e.key.startsWith('draft_')) {
         logger.debug('[DraftRecoveryProvider] Storage changed, rechecking:', { key: e.key })
-        // Проверяем сразу и с небольшой задержкой
+        // Проверяем сразу и с несколькими задержками
         checkLocalStorage()
         setTimeout(checkLocalStorage, 50)
+        setTimeout(checkLocalStorage, 150)
       }
     }
 
     // Также слушаем кастомные события для отслеживания изменений в той же вкладке
     const handleCustomStorage = () => {
-      logger.debug('[DraftRecoveryProvider] Custom storage event, rechecking')
+      logger.debug('[DraftRecoveryProvider] Custom draft-saved event received, rechecking')
+      // Проверяем с несколькими задержками для надёжности
+      // (localStorage может ещё не обновиться к моменту получения события)
       checkLocalStorage()
+      setTimeout(checkLocalStorage, 10)
       setTimeout(checkLocalStorage, 50)
+      setTimeout(checkLocalStorage, 100)
+      setTimeout(checkLocalStorage, 200)
     }
 
     window.addEventListener('storage', handleStorageChange)
-    // Слушаем кастомное событие, которое может быть отправлено из CreateArticlePage
+    // Слушаем кастомное событие, которое отправляется из CreateArticlePage при размонтировании
     window.addEventListener('draft-saved', handleCustomStorage)
 
     // Постоянная периодическая проверка каждые 2 секунды
     // Это обеспечивает обнаружение черновиков на любой странице
     checkIntervalRef.current = setInterval(() => {
-      if (location.pathname !== '/create' && user) {
+      if (location.pathname !== '/create' && !location.pathname.startsWith('/edit/') && user) {
         checkLocalStorage()
       }
     }, 2000)
@@ -244,8 +250,8 @@ export function DraftRecoveryProvider() {
     setRecoveryDraft(null)
   }
 
-  // Не показываем диалог, если мы на странице создания статьи или нет черновика
-  if (!recoveryDraft || location.pathname === '/create' || !user) {
+  // Не показываем диалог, если мы на странице создания/редактирования статьи или нет черновика
+  if (!recoveryDraft || location.pathname === '/create' || location.pathname.startsWith('/edit/') || !user) {
     return null
   }
 
