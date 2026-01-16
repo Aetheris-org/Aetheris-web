@@ -56,6 +56,14 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
   }
 
   const handleContinue = () => {
+    // Удаляем старый ключ из localStorage, так как данные будут восстановлены на странице создания
+    try {
+      localStorage.removeItem(localStorageKey)
+      logger.debug('[DraftRecoveryDialog] Removed draft from localStorage on continue:', { key: localStorageKey })
+    } catch (error) {
+      logger.warn('[DraftRecoveryDialog] Failed to remove localStorage on continue:', error)
+    }
+    
     // Переходим на страницу создания статьи с параметром для восстановления
     const params = new URLSearchParams()
     if (draftData.draftId) {
@@ -122,20 +130,13 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
 
       const savedDraft = await createDraft(draftPayload)
       
-      // Обновляем localStorage с новым ID
+      // Удаляем старый ключ из localStorage, так как черновик сохранен в базу
+      // Новый ключ будет создан автоматически при следующем автосохранении на странице создания
       try {
-        const newLocalStorageKey = `draft_${savedDraft.id}`
-        const updatedData = {
-          ...draftData,
-          draftId: savedDraft.id,
-          savedAt: new Date().toISOString(),
-        }
-        localStorage.setItem(newLocalStorageKey, JSON.stringify(updatedData))
-        if (localStorageKey !== newLocalStorageKey) {
-          localStorage.removeItem(localStorageKey)
-        }
+        localStorage.removeItem(localStorageKey)
+        logger.debug('[DraftRecoveryDialog] Removed old draft from localStorage after saving:', { key: localStorageKey })
       } catch (localStorageError) {
-        logger.warn('[DraftRecoveryDialog] Failed to update localStorage:', localStorageError)
+        logger.warn('[DraftRecoveryDialog] Failed to remove localStorage after saving:', localStorageError)
       }
 
       toast({

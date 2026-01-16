@@ -87,6 +87,8 @@ export function DraftRecoveryProvider() {
   }, [user, location.pathname])
 
   const handleClose = () => {
+    // При закрытии модального окна сбрасываем состояние
+    // Если пользователь закроет окно без действия, плашка появится снова при следующей проверке
     setRecoveryDraft(null)
   }
 
