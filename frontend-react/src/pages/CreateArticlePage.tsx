@@ -1457,38 +1457,163 @@ export default function CreateArticlePage() {
     croppedImageUrlRef.current = croppedImageUrl
   }, [croppedImageUrl])
 
+  // Функция для сохранения в localStorage (используется в beforeunload и при размонтировании)
+  const saveToLocalStorage = useCallback(() => {
+    try {
+      // Получаем актуальные значения из state
+      const currentTitle = title
+      const currentContent = content
+      const currentExcerpt = excerpt
+      const currentTags = tags
+      const currentDifficulty = difficulty
+      const currentDraftId = draftId
+      
+      // Получаем JSON из редактора, если он доступен
+      let currentContentJSON = contentJSON
+      if (editorRef.current) {
+        try {
+          currentContentJSON = editorRef.current.getJSON()
+        } catch (e) {
+          logger.warn('[CreateArticlePage] Failed to get JSON from editor:', e)
+        }
+      }
+      
+      const hasContent = currentTitle.trim() || currentContent.trim() || currentExcerpt.trim()
+      if (!hasContent) {
+        return
+      }
+
+      const previewImage = resolvePreviewUrl()
+      
+      const draftData = {
+        title: currentTitle,
+        excerpt: currentExcerpt,
+        tags: currentTags,
+        difficulty: currentDifficulty,
+        previewImage: previewImage || undefined,
+        contentHTML: currentContent,
+        contentJSON: currentContentJSON,
+        draftId: currentDraftId,
+        savedAt: new Date().toISOString(),
+      }
+      
+      const localStorageKey = `draft_${currentDraftId || 'new'}`
+      localStorage.setItem(localStorageKey, JSON.stringify(draftData))
+      logger.debug('[CreateArticlePage] Saved draft to localStorage:', { key: localStorageKey, hasContent: true })
+    } catch (error) {
+      logger.warn('[CreateArticlePage] Failed to save draft to localStorage:', error)
+    }
+  }, [title, content, excerpt, tags, difficulty, draftId, contentJSON, resolvePreviewUrl])
+
   // Автосохранение перед закрытием страницы
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Сохраняем в localStorage перед закрытием
-      try {
-        const hasContent = title.trim() || content.trim() || excerpt.trim()
-        if (hasContent) {
-          const draftData = {
-            title,
-            excerpt,
-            tags,
-            difficulty,
-            previewImage: resolvePreviewUrl(),
-            contentHTML: content,
-            contentJSON: contentJSON,
-            draftId: draftId,
-            savedAt: new Date().toISOString(),
-          }
-          const localStorageKey = `draft_${draftId || 'new'}`
-          localStorage.setItem(localStorageKey, JSON.stringify(draftData))
-          logger.debug('[CreateArticlePage] Saved draft to localStorage before unload')
-        }
-      } catch (error) {
-        logger.warn('[CreateArticlePage] Failed to save draft before unload:', error)
-      }
+      saveToLocalStorage()
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [title, content, excerpt, tags, difficulty, draftId, contentJSON, resolvePreviewUrl])
+  }, [saveToLocalStorage])
+
+  // Сохранение при размонтировании компонента (выход со страницы)
+  useEffect(() => {
+    return () => {
+      // Сохраняем в localStorage при выходе со страницы (синхронно)
+      saveToLocalStorage()
+      
+      // Также пытаемся сохранить на бэкенд асинхронно (не блокируем размонтирование)
+      if (user && draftId) {
+        // Используем navigator.sendBeacon или fetch с keepalive для надежного сохранения
+        try {
+          // Получаем актуальные значения из refs (они могут быть более актуальными)
+          const currentTitle = title
+          const currentContent = content
+          const currentExcerpt = excerpt
+          const currentTags = tags
+          const currentDifficulty = difficulty
+          
+          // Получаем JSON из редактора
+          let currentContentJSON = contentJSON
+          if (editorRef.current) {
+            try {
+              currentContentJSON = editorRef.current.getJSON()
+            } catch (e) {
+              // Игнорируем ошибки при размонтировании
+            }
+          }
+          
+          const hasContent = currentTitle.trim() || currentContent.trim() || currentExcerpt.trim()
+          if (!hasContent) {
+            return
+          }
+
+          // Создаем contentDocument
+          let contentDocument: any[] = []
+          if (currentContentJSON && currentContentJSON.type === 'doc' && Array.isArray(currentContentJSON.content)) {
+            contentDocument = currentContentJSON.content
+          } else if (Array.isArray(currentContentJSON)) {
+            contentDocument = currentContentJSON
+          } else if (currentContent) {
+            const plainText = getPlainTextFromHtml(currentContent)
+            contentDocument = [
+              {
+                type: 'paragraph',
+                children: [{ text: plainText || '' }],
+              },
+            ]
+          }
+
+          if (!Array.isArray(contentDocument) || contentDocument.length === 0) {
+            contentDocument = [
+              {
+                type: 'paragraph',
+                children: [{ text: '' }],
+              },
+            ]
+          }
+
+          const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+            const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+              beginner: 'easy',
+              intermediate: 'medium',
+              advanced: 'hard',
+            };
+            return mapping[diff] || 'medium';
+          };
+
+          const draftTitle = currentTitle.trim() || t('createArticle.untitledDraft');
+          const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle;
+
+          const draftData: any = {
+            title: finalDraftTitle,
+            content: contentDocument,
+            excerpt: currentExcerpt.trim() || ' ',
+            tags: currentTags,
+            difficulty: mapDifficultyToBackend(currentDifficulty),
+          }
+
+          const previewImage = resolvePreviewUrl()
+          if (previewImage) {
+            draftData.previewImage = previewImage
+            draftData.preview_image = previewImage
+            draftData.cover_url = previewImage
+          }
+
+          // Пытаемся сохранить на бэкенд (не блокируем размонтирование)
+          // Используем setTimeout чтобы не блокировать размонтирование
+          setTimeout(() => {
+            updateDraft(draftId, draftData).catch((error) => {
+              logger.warn('[CreateArticlePage] Failed to save draft on unmount:', error)
+            })
+          }, 0)
+        } catch (error) {
+          logger.warn('[CreateArticlePage] Error preparing draft save on unmount:', error)
+        }
+      }
+    }
+  }, [user, draftId, title, content, excerpt, tags, difficulty, contentJSON, saveToLocalStorage, resolvePreviewUrl, t])
 
   useEffect(() => {
     return () => {
