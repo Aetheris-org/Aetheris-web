@@ -706,9 +706,36 @@ export default function CreateArticlePage() {
         }
 
         // Затем сохраняем черновик на бэкенд
-        const saved = currentDraftId
-          ? await updateDraft(currentDraftId, draftData)
-          : await createDraft(draftData)
+        let saved: Article
+        if (currentDraftId) {
+          try {
+            saved = await updateDraft(currentDraftId, draftData)
+          } catch (error: any) {
+            // Если черновик не найден, создаем новый
+            if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+              logger.warn('[CreateArticlePage] Draft not found, creating new one:', { currentDraftId })
+              saved = await createDraft(draftData)
+              // Обновляем localStorage с новым ID
+              try {
+                const newLocalStorageKey = `draft_${saved.id}`
+                const oldKey = `draft_${currentDraftId}`
+                const oldData = localStorage.getItem(oldKey)
+                if (oldData) {
+                  const parsedData = JSON.parse(oldData)
+                  parsedData.draftId = saved.id
+                  localStorage.setItem(newLocalStorageKey, JSON.stringify(parsedData))
+                  localStorage.removeItem(oldKey)
+                }
+              } catch (localStorageError) {
+                logger.warn('[CreateArticlePage] Failed to update localStorage after draft recreation:', localStorageError)
+              }
+            } else {
+              throw error
+            }
+          }
+        } else {
+          saved = await createDraft(draftData)
+        }
 
         setDraftId(saved.id)
         setLastDraftSaveTime(Date.now())
@@ -736,8 +763,36 @@ export default function CreateArticlePage() {
         loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
 
         logger.debug('[CreateArticlePage] Auto-saved draft:', { id: saved.id })
-      } catch (error) {
+      } catch (error: any) {
         logger.error('[CreateArticlePage] Failed to auto-save draft:', error)
+        // Если черновик не найден, пытаемся создать новый (только для автосохранения)
+        if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+          try {
+            logger.warn('[CreateArticlePage] Draft not found in auto-save, creating new one')
+            const newDraft = await createDraft(draftData)
+            setDraftId(newDraft.id)
+            setLastDraftSaveTime(Date.now())
+            // Обновляем localStorage с новым ID
+            try {
+              const newLocalStorageKey = `draft_${newDraft.id}`
+              const oldKey = `draft_${currentDraftId || 'new'}`
+              const oldData = localStorage.getItem(oldKey)
+              if (oldData) {
+                const parsedData = JSON.parse(oldData)
+                parsedData.draftId = newDraft.id
+                localStorage.setItem(newLocalStorageKey, JSON.stringify(parsedData))
+                if (oldKey !== newLocalStorageKey) {
+                  localStorage.removeItem(oldKey)
+                }
+              }
+            } catch (localStorageError) {
+              logger.warn('[CreateArticlePage] Failed to update localStorage after auto-save draft recreation:', localStorageError)
+            }
+            logger.debug('[CreateArticlePage] Auto-saved new draft after recreation:', { id: newDraft.id })
+          } catch (createError) {
+            logger.error('[CreateArticlePage] Failed to create new draft in auto-save:', createError)
+          }
+        }
         // Не показываем toast при ошибке автосохранения, чтобы не раздражать пользователя
       }
     }, 3000) // 3 секунды задержка
@@ -965,9 +1020,23 @@ export default function CreateArticlePage() {
         draftData.cover_url = previewImageUrl // явное поле в таблице
       }
 
-      const saved = draftId
-        ? await updateDraft(draftId, draftData)
-        : await createDraft(draftData)
+      let saved: Article
+      if (draftId) {
+        try {
+          saved = await updateDraft(draftId, draftData)
+        } catch (error: any) {
+          // Если черновик не найден, создаем новый
+          if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+            logger.warn('[CreateArticlePage] Draft not found, creating new one:', { draftId })
+            saved = await createDraft(draftData)
+            setDraftId(saved.id) // Обновляем ID на новый
+          } else {
+            throw error
+          }
+        }
+      } else {
+        saved = await createDraft(draftData)
+      }
 
       setDraftId(saved.id)
       setLastDraftSaveTime(Date.now())
@@ -1213,6 +1282,80 @@ export default function CreateArticlePage() {
     }
   }, [draftIdFromQuery, toast])
 
+  // Восстановление данных из localStorage при загрузке страницы
+  useEffect(() => {
+    // Не восстанавливаем, если уже загружается черновик из БД
+    if (isLoadingDraft || draftIdFromQuery) {
+      return
+    }
+
+    // Пытаемся восстановить из localStorage
+    try {
+      // Проверяем все возможные ключи черновиков
+      const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
+      
+      if (localStorageKeys.length === 0) {
+        return
+      }
+
+      // Берем самый свежий черновик
+      let latestDraft: any = null
+      let latestTime = 0
+
+      for (const key of localStorageKeys) {
+        try {
+          const data = localStorage.getItem(key)
+          if (!data) continue
+
+          const parsed = JSON.parse(data)
+          if (parsed.savedAt) {
+            const savedTime = new Date(parsed.savedAt).getTime()
+            if (savedTime > latestTime) {
+              latestTime = savedTime
+              latestDraft = parsed
+            }
+          }
+        } catch (error) {
+          logger.warn('[CreateArticlePage] Failed to parse localStorage draft:', { key, error })
+        }
+      }
+
+      if (!latestDraft) {
+        return
+      }
+
+      // Восстанавливаем данные только если они есть и страница не редактирует существующую статью
+      const isCurrentlyEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
+      if (!isCurrentlyEditing && latestDraft) {
+        logger.debug('[CreateArticlePage] Restoring draft from localStorage:', { draftId: latestDraft.draftId })
+        
+        if (latestDraft.title) setTitle(latestDraft.title)
+        if (latestDraft.excerpt) setExcerpt(latestDraft.excerpt)
+        if (latestDraft.tags && Array.isArray(latestDraft.tags)) setTags(latestDraft.tags)
+        if (latestDraft.difficulty) setDifficulty(latestDraft.difficulty)
+        if (latestDraft.previewImage) {
+          setExistingPreviewImageId(latestDraft.previewImage)
+          setCroppedImageUrl(latestDraft.previewImage)
+        }
+        
+        // Восстанавливаем контент
+        if (latestDraft.contentHTML) {
+          setContent(latestDraft.contentHTML)
+        }
+        if (latestDraft.contentJSON) {
+          setContentJSON(latestDraft.contentJSON)
+        }
+        
+        // Восстанавливаем draftId если есть
+        if (latestDraft.draftId) {
+          setDraftId(latestDraft.draftId)
+        }
+      }
+    } catch (error) {
+      logger.warn('[CreateArticlePage] Failed to restore from localStorage:', error)
+    }
+  }, []) // Запускаем только при монтировании
+
   useEffect(() => {
     originalImageUrlRef.current = originalImageUrl
   }, [originalImageUrl])
@@ -1224,6 +1367,39 @@ export default function CreateArticlePage() {
   useEffect(() => {
     croppedImageUrlRef.current = croppedImageUrl
   }, [croppedImageUrl])
+
+  // Автосохранение перед закрытием страницы
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Сохраняем в localStorage перед закрытием
+      try {
+        const hasContent = title.trim() || content.trim() || excerpt.trim()
+        if (hasContent) {
+          const draftData = {
+            title,
+            excerpt,
+            tags,
+            difficulty,
+            previewImage: resolvePreviewUrl(),
+            contentHTML: content,
+            contentJSON: contentJSON,
+            draftId: draftId,
+            savedAt: new Date().toISOString(),
+          }
+          const localStorageKey = `draft_${draftId || 'new'}`
+          localStorage.setItem(localStorageKey, JSON.stringify(draftData))
+          logger.debug('[CreateArticlePage] Saved draft to localStorage before unload')
+        }
+      } catch (error) {
+        logger.warn('[CreateArticlePage] Failed to save draft before unload:', error)
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [title, content, excerpt, tags, difficulty, draftId, contentJSON, resolvePreviewUrl])
 
   useEffect(() => {
     return () => {
