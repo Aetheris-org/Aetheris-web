@@ -1552,16 +1552,8 @@ export default function CreateArticlePage() {
           logger.debug('[CreateArticlePage] Converting content to normalized format')
           const normalized = normalizeRichText(draft.content)
           setContent(normalized)
-          // Пытаемся также создать contentJSON из HTML, если возможно
-          try {
-            const { htmlToSlate } = await import('@/lib/html-to-slate')
-            const slateContent = htmlToSlate(normalized)
-            if (slateContent) {
-              setContentJSON(slateContent)
-            }
-          } catch (e) {
-            logger.warn('[CreateArticlePage] Failed to convert HTML to Slate format:', e)
-          }
+          // Устанавливаем contentJSON как null, редактор будет использовать HTML напрямую
+          setContentJSON(null)
         } else {
           logger.debug('[CreateArticlePage] No content found, clearing fields')
           setContent('')
