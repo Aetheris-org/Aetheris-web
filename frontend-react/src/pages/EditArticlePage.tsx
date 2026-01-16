@@ -36,19 +36,6 @@ import { useTranslation } from '@/hooks/useTranslation'
 
 const HTML_DETECTION_REGEX = /<\/?[a-z][\s\S]*>/i
 
-// Интерфейс для данных черновика из localStorage
-interface DraftData {
-  title?: string
-  excerpt?: string
-  tags?: string[]
-  difficulty?: 'beginner' | 'intermediate' | 'advanced'
-  previewImage?: string
-  contentHTML?: string
-  contentJSON?: any
-  draftId?: string
-  savedAt?: string
-}
-
 // TODO: Add the same character limit validation on the backend
 const EXCERPT_MAX_LENGTH = 500
 const TITLE_MAX_LENGTH = 200
@@ -1636,84 +1623,7 @@ export default function EditArticlePage() {
   }, [draftIdFromQuery, searchParams, draftId])
 
   // На странице редактирования не восстанавливаем из localStorage (загружаем статью из БД)
-  useEffect(() => {
-    // Не восстанавливаем из localStorage на странице редактирования
-    return
-
-    // Пытаемся восстановить из localStorage
-    try {
-      // Проверяем все возможные ключи черновиков
-      const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
-      
-      if (localStorageKeys.length === 0) {
-        return
-      }
-
-      // Берем самый свежий черновик
-      let latestDraft: any = null
-      let latestTime = 0
-
-      for (const key of localStorageKeys) {
-        try {
-          const data = localStorage.getItem(key)
-          // Строгая проверка типа для TypeScript
-          if (data === null || typeof data !== 'string') continue
-
-          const parsed = JSON.parse(data) as DraftData
-          const savedAtValue = parsed.savedAt
-          // Строгая проверка типа и значения
-          if (typeof savedAtValue === 'string' && savedAtValue.trim().length > 0) {
-            const savedTime = new Date(savedAtValue).getTime()
-            if (!isNaN(savedTime) && savedTime > latestTime) {
-              latestTime = savedTime
-              latestDraft = parsed
-            }
-          }
-        } catch (error) {
-          logger.warn('[CreateArticlePage] Failed to parse localStorage draft:', { key, error })
-        }
-      }
-
-      if (!latestDraft) {
-        return
-      }
-
-      // Восстанавливаем данные только если:
-      // 1. Страница не редактирует существующую статью
-      // 2. НЕТ параметра recover (если recover=true, значит мы пришли из панели восстановления и localStorage уже очищен)
-      // 3. Есть данные для восстановления
-      const hasRecoverParam = searchParams.get('recover') === 'true'
-      const isCurrentlyEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
-      
-      // НЕ восстанавливаем если есть параметр recover - это значит localStorage уже очищен
-      if (!isCurrentlyEditing && !hasRecoverParam && latestDraft) {
-        logger.debug('[CreateArticlePage] Restoring draft from localStorage:', { draftId: latestDraft.draftId })
-        
-        if (latestDraft.title) setTitle(latestDraft.title)
-        if (latestDraft.excerpt) setExcerpt(latestDraft.excerpt)
-        if (latestDraft.tags && Array.isArray(latestDraft.tags)) setTags(latestDraft.tags)
-        if (latestDraft.difficulty) setDifficulty(latestDraft.difficulty)
-        if (latestDraft.previewImage) {
-          setExistingPreviewImageId(latestDraft.previewImage)
-          setCroppedImageUrl(latestDraft.previewImage)
-        }
-        
-        // Восстанавливаем контент
-        if (latestDraft.contentHTML) {
-          setContent(latestDraft.contentHTML)
-        }
-        if (latestDraft.contentJSON) {
-          setContentJSON(latestDraft.contentJSON)
-        }
-        
-        // НЕ восстанавливаем draftId при восстановлении из localStorage для новой статьи
-        // draftId должен быть null для новой статьи, чтобы использовался ключ draft_new
-        // setDraftId(latestDraft.draftId) - убрано, чтобы всегда использовался draft_new
-      }
-    } catch (error) {
-      logger.warn('[CreateArticlePage] Failed to restore from localStorage:', error)
-    }
-  }, [searchParams]) // Запускаем при монтировании и при изменении searchParams (для параметра recover)
+  // Этот useEffect намеренно пустой для EditArticlePage
 
   useEffect(() => {
     originalImageUrlRef.current = originalImageUrl
