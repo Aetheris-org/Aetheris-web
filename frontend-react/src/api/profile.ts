@@ -163,7 +163,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       }
     }
 
-    // Получаем статьи пользователя
+    // Получаем статьи пользователя (только не удаленные)
     const { data: articles, error: articlesError } = await supabase
       .from('articles')
       .select(`
@@ -178,26 +178,30 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
+      .is('deleted_at', null) // Исключаем удаленные статьи
       .order('created_at', { ascending: false });
 
     if (articlesError) {
       logger.error('Error fetching user articles', articlesError);
     }
 
-    // Получаем комментарии пользователя
+    // Получаем комментарии пользователя (только не удаленные)
     const { data: comments, error: commentsError } = await supabase
       .from('comments')
       .select(`
         id,
         text,
         created_at,
+        deleted_at,
         article:articles!comments_article_id_fkey (
           id,
           title,
-          author_id
+          author_id,
+          deleted_at
         )
       `)
       .eq('author_id', profileUuid)
+      .is('deleted_at', null) // Исключаем удаленные комментарии
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -205,7 +209,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       logger.error('Error fetching user comments', commentsError);
     }
 
-    // Получаем закладки пользователя
+    // Получаем закладки пользователя (только для не удаленных статей)
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarks')
       .select(`
@@ -216,7 +220,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           title,
           excerpt,
           preview_image,
-          author_id
+          author_id,
+          deleted_at
         )
       `)
       .eq('user_id', profileUuid)
@@ -337,6 +342,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         publishedArticles: visibleArticles.length,
         totalLikes,
         totalComments: (comments || []).filter((c: any) => {
+          // Исключаем удаленные комментарии
+          if (isSoftDeleted(c)) return false
+          // Исключаем комментарии к удаленным статьям
           if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
           const articleAuthorId = normalizeId((c.article as any)?.author_id)
           return !ownerId || !articleAuthorId || articleAuthorId === ownerId
@@ -356,6 +364,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       articles: transformedArticles,
       comments: (comments || [])
         .filter((c: any) => {
+          // Исключаем удаленные комментарии
+          if (isSoftDeleted(c)) return false
+          // Исключаем комментарии к удаленным статьям
           if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
           const articleAuthorId = normalizeId((c.article as any)?.author_id)
           return !ownerId || !articleAuthorId || articleAuthorId === ownerId

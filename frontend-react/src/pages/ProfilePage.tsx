@@ -1174,9 +1174,11 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground truncate">@{displayTag}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
-                      {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
-                    </Badge>
+                    {!showRoleBadge && (
+                      <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 w-fit">
+                        {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
+                      </Badge>
+                    )}
                     {showRoleBadge && activeRole && (
                       <TooltipProvider delayDuration={0}>
                         <Tooltip>
@@ -1358,9 +1360,11 @@ export default function ProfilePage() {
                     <p className="text-xs sm:text-sm text-muted-foreground truncate">@{displayTag}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
-                      {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
-                    </Badge>
+                    {!showRoleBadge && (
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
+                        {t('profile.memberSince', { date: formatDate(profile.user.memberSince) })}
+                      </Badge>
+                    )}
                     {showRoleBadge && activeRole && (
                       <TooltipProvider delayDuration={0}>
                         <Tooltip>
