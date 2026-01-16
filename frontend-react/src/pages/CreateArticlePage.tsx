@@ -564,7 +564,49 @@ export default function CreateArticlePage() {
       return
     }
 
-    // Устанавливаем новый таймаут для автоматического сохранения (через 3 секунды после последнего изменения)
+    // Сначала сохраняем в localStorage сразу (для быстрого восстановления)
+    // Это делается независимо от сохранения на бэкенд
+    try {
+      const currentTitle = title
+      const currentContent = content
+      const currentExcerpt = excerpt
+      const currentTags = tags
+      const currentDifficulty = difficulty
+      const currentDraftId = draftId
+      
+      // Получаем JSON из редактора
+      let currentContentJSON = contentJSON
+      if (editorRef.current) {
+        try {
+          currentContentJSON = editorRef.current.getJSON()
+        } catch (e) {
+          // Игнорируем ошибки
+        }
+      }
+      
+      const hasContent = currentTitle.trim() || currentContent.trim() || currentExcerpt.trim()
+      if (hasContent) {
+        const previewImage = resolvePreviewUrl()
+        const localStorageKey = `draft_${currentDraftId || 'new'}`
+        const localStorageData = {
+          title: currentTitle,
+          excerpt: currentExcerpt,
+          tags: currentTags,
+          difficulty: currentDifficulty,
+          previewImage: previewImage || undefined,
+          contentHTML: currentContent,
+          contentJSON: currentContentJSON,
+          draftId: currentDraftId,
+          savedAt: new Date().toISOString(),
+        }
+        localStorage.setItem(localStorageKey, JSON.stringify(localStorageData))
+        logger.debug('[CreateArticlePage] Auto-saved to localStorage:', { key: localStorageKey })
+      }
+    } catch (localStorageError) {
+      logger.warn('[CreateArticlePage] Failed to auto-save to localStorage:', localStorageError)
+    }
+
+    // Устанавливаем новый таймаут для автоматического сохранения на бэкенд (через 3 секунды после последнего изменения)
     const timeout = setTimeout(async () => {
       // Проверяем cooldown для предотвращения спама
       const now = Date.now()
@@ -697,24 +739,34 @@ export default function CreateArticlePage() {
         }
 
         // ВАЖНО: Сначала сохраняем в localStorage для быстрого восстановления при потере соединения
+        // Это делается ВСЕГДА, даже если не будет сохранения на бэкенд
         const localStorageKey = `draft_${currentDraftId || 'new'}`
         try {
           const localStorageData = {
-            ...draftData,
-            draftId: currentDraftId,
-            savedAt: new Date().toISOString(),
+            title: currentTitle,
+            excerpt: currentExcerpt,
+            tags: currentTags,
+            difficulty: currentDifficulty,
+            previewImage: currentPreviewImage || undefined,
             contentHTML: currentContent, // Сохраняем HTML для быстрого восстановления
             contentJSON: finalContentJSON, // Сохраняем JSON для точного восстановления
+            draftId: currentDraftId,
+            savedAt: new Date().toISOString(),
           }
           localStorage.setItem(localStorageKey, JSON.stringify(localStorageData))
-          logger.debug('[CreateArticlePage] Saved draft to localStorage:', { key: localStorageKey })
+          logger.debug('[CreateArticlePage] Saved draft to localStorage (auto-save):', { key: localStorageKey })
         } catch (localStorageError) {
           logger.warn('[CreateArticlePage] Failed to save draft to localStorage:', localStorageError)
           // Продолжаем сохранение на бэкенд даже если localStorage не работает
         }
 
-        // Затем сохраняем черновик на бэкенд
-        // НЕ создаем новый черновик, если уже идет сохранение или размонтирование
+        // Затем сохраняем черновик на бэкенд (если не идет размонтирование)
+        // НЕ создаем новый черновик, если уже идет размонтирование
+        if (isUnmountingRef.current) {
+          logger.debug('[CreateArticlePage] Skipping backend save on unmount during auto-save')
+          return
+        }
+        
         let saved: Article
         if (currentDraftId) {
           try {
@@ -743,12 +795,6 @@ export default function CreateArticlePage() {
             }
           }
         } else {
-          // НЕ создаем новый черновик при автосохранении, если уже идет размонтирование
-          // В этом случае просто сохраняем в localStorage
-          if (isUnmountingRef.current) {
-            logger.debug('[CreateArticlePage] Skipping draft creation on unmount during auto-save')
-            return
-          }
           saved = await createDraft(draftData)
         }
 
@@ -898,11 +944,6 @@ export default function CreateArticlePage() {
         // Не показываем toast при ошибке автосохранения, чтобы не раздражать пользователя
       }
     }, 3000) // 3 секунды задержка
-    
-    // Не создаем новый черновик при автосохранении, если уже идет размонтирование
-    if (isUnmountingRef.current) {
-      return
-    }
 
     setAutoSaveTimeout(timeout)
 

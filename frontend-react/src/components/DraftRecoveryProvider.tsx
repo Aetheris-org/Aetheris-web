@@ -60,6 +60,9 @@ export function DraftRecoveryProvider() {
       return
     }
 
+    // Небольшая задержка, чтобы дать время странице загрузиться
+    const checkTimeout = setTimeout(() => {
+
     // Проверяем localStorage на наличие несохраненных черновиков
     try {
       const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
@@ -123,7 +126,12 @@ export function DraftRecoveryProvider() {
     } finally {
       setHasChecked(true)
     }
-  }, [user, location.pathname])
+    }, 500) // Задержка 500ms для проверки
+
+    return () => {
+      clearTimeout(checkTimeout)
+    }
+  }, [user, location.pathname, recoveryDraft])
 
   const handleClose = () => {
     // При закрытии модального окна сбрасываем состояние

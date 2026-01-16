@@ -228,7 +228,7 @@ export async function uploadImage(
       );
     } else {
       // Загрузка в Supabase Storage (старый способ)
-      const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop();
       // Для статей с articleId используем структуру: articles/{userId}/{articleId}/preview.jpg
       let fileName: string;
       if (folder === 'articles' && articleId) {
@@ -237,13 +237,13 @@ export async function uploadImage(
         fileName = `${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       }
 
-      logger.debug('[uploadImage] Uploading to Supabase Storage:', {
-        fileName,
-        folder,
-        size: file.size,
-        type: file.type,
+    logger.debug('[uploadImage] Uploading to Supabase Storage:', {
+      fileName,
+      folder,
+      size: file.size,
+      type: file.type,
         articleId,
-      });
+    });
 
       // Удаляем старые файлы перед загрузкой нового (для оптимизации)
       // Для avatars и covers: удаляем все старые
@@ -252,24 +252,24 @@ export async function uploadImage(
         await deleteOldSupabaseFiles(folder, user.id, fileName, articleId);
       }
 
-      const { data, error } = await supabase.storage
+    const { data, error } = await supabase.storage
         .from('images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
 
-      if (error) {
-        logger.error('[uploadImage] Upload failed:', error);
-        throw new Error(`Failed to upload image: ${error.message}`);
-      }
+    if (error) {
+      logger.error('[uploadImage] Upload failed:', error);
+      throw new Error(`Failed to upload image: ${error.message}`);
+    }
 
-      const { data: urlData } = supabase.storage
-        .from('images')
-        .getPublicUrl(data.path);
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(data.path);
 
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get public URL for uploaded image');
+    if (!urlData?.publicUrl) {
+      throw new Error('Failed to get public URL for uploaded image');
       }
 
       result = {
@@ -352,14 +352,14 @@ export async function deleteImage(path: string, provider?: StorageProvider): Pro
       deleteSuccess = await deleteFromR2(path);
     } else {
       // Удаление из Supabase Storage
-      const { error } = await supabase.storage
-        .from('images')
-        .remove([path]);
+    const { error } = await supabase.storage
+      .from('images')
+      .remove([path]);
 
-      if (error) {
-        logger.error('[deleteImage] Delete failed:', error);
-        return false;
-      }
+    if (error) {
+      logger.error('[deleteImage] Delete failed:', error);
+      return false;
+    }
       deleteSuccess = true;
     }
 
