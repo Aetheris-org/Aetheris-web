@@ -177,9 +177,10 @@ export default function CreateArticlePage() {
       setPendingNavigationUrl(to)
       setShowExitDialog(true)
     } else {
-      allowNavigationRef.current = true // Разрешаем навигацию
+      allowNavigationRef.current = true
       if (typeof to === 'number') {
-        navigate(to)
+        // Для числовой навигации используем history.go() напрямую
+        window.history.go(to)
       } else {
         navigate(to)
       }
@@ -395,9 +396,9 @@ export default function CreateArticlePage() {
     userHasEditedRef.current = false
     
     if (pendingNavigationUrl !== null) {
-      allowNavigationRef.current = true // Разрешаем навигацию
+      allowNavigationRef.current = true
       if (typeof pendingNavigationUrl === 'number') {
-        navigate(pendingNavigationUrl)
+        window.history.go(pendingNavigationUrl)
       } else {
         navigate(pendingNavigationUrl)
       }
@@ -488,9 +489,9 @@ export default function CreateArticlePage() {
       userHasEditedRef.current = false
       
       if (pendingNavigationUrl !== null) {
-        allowNavigationRef.current = true // Разрешаем навигацию
+        allowNavigationRef.current = true
         if (typeof pendingNavigationUrl === 'number') {
-          navigate(pendingNavigationUrl)
+          window.history.go(pendingNavigationUrl)
         } else {
           navigate(pendingNavigationUrl)
         }
