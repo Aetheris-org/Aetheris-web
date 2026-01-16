@@ -719,28 +719,40 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   useEffect(() => {
     if (!editor) return
     
-    // Восстанавливаем контент только при первой инициализации
-    // После этого редактор управляет своим состоянием сам
-    if (!contentRestoredRef.current) {
-      // Приоритет: используем JSON, если он доступен (сохраняет атрибуты узлов, например language для code blocks)
-      if (jsonValue && jsonValue.type === 'doc') {
+    // Приоритет: используем JSON, если он доступен (сохраняет атрибуты узлов, например language для code blocks)
+    if (jsonValue && jsonValue.type === 'doc') {
+      // Проверяем, изменился ли jsonValue (для обновления после загрузки черновика)
+      const jsonValueChanged = JSON.stringify(lastJsonValueRef.current) !== JSON.stringify(jsonValue)
+      
+      if (!contentRestoredRef.current || jsonValueChanged) {
         if (import.meta.env.DEV) {
-          logger.debug('[RichTextEditor] Initial restore from JSON, code blocks count:', 
-            jsonValue.content?.filter((node: any) => node.type === 'codeBlock').length || 0)
+          logger.debug('[RichTextEditor] Restore/update from JSON:', { 
+            isInitial: !contentRestoredRef.current,
+            isUpdate: jsonValueChanged,
+            codeBlocksCount: jsonValue.content?.filter((node: any) => node.type === 'codeBlock').length || 0
+          })
         }
-        // Восстанавливаем контент из JSON только при первой инициализации
+        // Восстанавливаем/обновляем контент из JSON
         editor.commands.setContent(jsonValue, { emitUpdate: false })
         contentRestoredRef.current = true
         lastJsonValueRef.current = jsonValue
         return
       }
+    }
+    
+    // Fallback: используем HTML, если JSON недоступен
+    if (value && value.trim()) {
+      // Проверяем, изменился ли value (для обновления после загрузки черновика)
+      const valueChanged = lastValueRef.current !== value
       
-      // Fallback: используем HTML, если JSON недоступен
-      if (value && value.trim()) {
+      if (!contentRestoredRef.current || valueChanged) {
         if (import.meta.env.DEV) {
-          logger.debug('[RichTextEditor] Initial restore from HTML')
+          logger.debug('[RichTextEditor] Restore/update from HTML:', { 
+            isInitial: !contentRestoredRef.current,
+            isUpdate: valueChanged
+          })
         }
-        // Восстанавливаем контент из HTML только при первой инициализации
+        // Восстанавливаем/обновляем контент из HTML
         editor.commands.setContent(value, { emitUpdate: false })
         contentRestoredRef.current = true
         lastValueRef.current = value

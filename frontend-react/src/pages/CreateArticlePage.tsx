@@ -119,7 +119,7 @@ export default function CreateArticlePage() {
   const originalImageUrlRef = useRef<string | null>(null)
   const selectedImageUrlRef = useRef<string | null>(null)
   const croppedImageUrlRef = useRef<string | null>(null)
-  const loadedDraftIdRef = useRef<number | null>(null)
+  const loadedDraftIdRef = useRef<string | null>(null)
 
   const effectiveImageUrl = selectedImageUrl ?? originalImageUrl
   const resolvePreviewUrl = useCallback(
@@ -128,7 +128,8 @@ export default function CreateArticlePage() {
   )
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
-  const draftIdFromQuery = draftParam ? Number.parseInt(draftParam, 10) || null : null
+  // Теперь draft ID - это UUID (строка), а не число
+  const draftIdFromQuery = draftParam && draftParam.trim() ? draftParam.trim() : null
   // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
   const initialEditId =
     (searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id') || '').trim() ||
@@ -882,7 +883,7 @@ export default function CreateArticlePage() {
         const nextParams = new URLSearchParams(searchParams)
         nextParams.set('draft', saved.id)
         setSearchParams(nextParams, { replace: true })
-        loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
+        loadedDraftIdRef.current = String(saved.id)
 
         // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
         queryClient.invalidateQueries({ queryKey: ['drafts'] })
@@ -1315,7 +1316,7 @@ export default function CreateArticlePage() {
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('draft', saved.id)
       setSearchParams(nextParams, { replace: true })
-      loadedDraftIdRef.current = Number.parseInt(saved.id, 10)
+      loadedDraftIdRef.current = String(saved.id)
 
       // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
       queryClient.invalidateQueries({ queryKey: ['drafts'] })
@@ -1486,8 +1487,9 @@ export default function CreateArticlePage() {
       return
     }
 
-    const draftIdStr = String(draftIdFromQuery)
+    // Если этот черновик уже загружен, не загружаем снова
     if (loadedDraftIdRef.current === draftIdFromQuery) {
+      logger.debug('[CreateArticlePage] Draft already loaded, skipping:', { draftId: draftIdFromQuery })
       return
     }
 
@@ -1496,21 +1498,76 @@ export default function CreateArticlePage() {
     const loadDraft = async () => {
       setIsLoadingDraft(true)
       try {
-        const draft = await getDraft(draftIdStr)
-        if (cancelled || !draft) return
+        logger.debug('[CreateArticlePage] Loading draft from database:', { draftId: draftIdFromQuery })
+        const draft = await getDraft(draftIdFromQuery)
+        if (cancelled || !draft) {
+          logger.warn('[CreateArticlePage] Draft not found or cancelled:', { draftId: draftIdFromQuery, draft })
+          return
+        }
+
+        logger.debug('[CreateArticlePage] Draft loaded successfully, populating fields:', { 
+          draftId: draft.id,
+          hasTitle: !!draft.title,
+          hasContent: !!draft.content,
+          hasContentJSON: !!draft.contentJSON
+        })
 
         loadedDraftIdRef.current = draftIdFromQuery
         setDraftId(draft.id)
         setTitle(draft.title ?? '')
+        
         // Используем contentJSON если есть, иначе конвертируем HTML
         if (draft.contentJSON) {
-          setContentJSON(draft.contentJSON)
+          logger.debug('[CreateArticlePage] Using contentJSON for editor initialization', {
+            hasType: !!draft.contentJSON.type,
+            type: draft.contentJSON.type,
+            isArray: Array.isArray(draft.contentJSON),
+            hasDocument: !!(draft.contentJSON.document || draft.contentJSON.document)
+          })
+          
+          // Преобразуем contentJSON в формат TipTap (type: 'doc'), если он не в правильном формате
+          let tipTapContentJSON = draft.contentJSON
+          
+          // Если это уже формат TipTap (type: 'doc'), используем как есть
+          if (tipTapContentJSON.type === 'doc' && Array.isArray(tipTapContentJSON.content)) {
+            // Уже правильный формат
+          } else {
+            // Нужно преобразовать в формат TipTap
+            try {
+              const { slateToProseMirror } = await import('@/lib/slate-to-prosemirror')
+              tipTapContentJSON = slateToProseMirror(draft.contentJSON)
+              logger.debug('[CreateArticlePage] Converted contentJSON to TipTap format')
+            } catch (e) {
+              logger.warn('[CreateArticlePage] Failed to convert contentJSON to TipTap format:', e)
+              // Если не удалось преобразовать, пробуем использовать как есть
+            }
+          }
+          
+          setContentJSON(tipTapContentJSON)
           // Конвертируем в HTML для отображения
           const { slateToHtml } = await import('@/lib/slate-to-html')
-          setContent(slateToHtml(draft.contentJSON))
+          const html = slateToHtml(draft.contentJSON)
+          setContent(html)
+        } else if (draft.content) {
+          logger.debug('[CreateArticlePage] Converting content to normalized format')
+          const normalized = normalizeRichText(draft.content)
+          setContent(normalized)
+          // Пытаемся также создать contentJSON из HTML, если возможно
+          try {
+            const { htmlToSlate } = await import('@/lib/html-to-slate')
+            const slateContent = htmlToSlate(normalized)
+            if (slateContent) {
+              setContentJSON(slateContent)
+            }
+          } catch (e) {
+            logger.warn('[CreateArticlePage] Failed to convert HTML to Slate format:', e)
+          }
         } else {
-          setContent(normalizeRichText(draft.content))
+          logger.debug('[CreateArticlePage] No content found, clearing fields')
+          setContent('')
+          setContentJSON(null)
         }
+        
         setExcerpt(draft.excerpt ?? '')
         setTags(draft.tags ?? [])
         const nextDifficulty =
@@ -1527,8 +1584,10 @@ export default function CreateArticlePage() {
           setCroppedImageUrl(draft.previewImage)
           croppedImageUrlRef.current = draft.previewImage
         }
+        
+        logger.debug('[CreateArticlePage] Draft fields populated successfully')
       } catch (error) {
-        logger.error('Failed to load draft', error)
+        logger.error('[CreateArticlePage] Failed to load draft:', error)
         if (!cancelled) {
           toast({
             title: t('createArticle.unableToLoadDraft'),
@@ -1548,7 +1607,7 @@ export default function CreateArticlePage() {
     return () => {
       cancelled = true
     }
-  }, [draftIdFromQuery, toast])
+  }, [draftIdFromQuery, toast, t])
 
   // Сброс draftId при создании новой статьи (без параметров draft/edit)
   useEffect(() => {
