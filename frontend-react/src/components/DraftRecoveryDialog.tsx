@@ -24,9 +24,10 @@ interface DraftRecoveryDialogProps {
   draftData: DraftData
   localStorageKey: string
   onClose: () => void
+  onProcessed?: (key: string) => void
 }
 
-export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: DraftRecoveryDialogProps) {
+export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onProcessed }: DraftRecoveryDialogProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -42,6 +43,7 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
         title: t('draftRecovery.deleted'),
         description: t('draftRecovery.deletedDescription'),
       })
+      onProcessed?.(localStorageKey)
       onClose()
     } catch (error) {
       logger.error('[DraftRecoveryDialog] Failed to delete draft:', error)
@@ -63,6 +65,9 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
     } catch (error) {
       logger.warn('[DraftRecoveryDialog] Failed to remove localStorage on continue:', error)
     }
+    
+    // Помечаем как обработанный
+    onProcessed?.(localStorageKey)
     
     // Переходим на страницу создания статьи с параметром для восстановления
     const params = new URLSearchParams()
@@ -138,6 +143,9 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
       } catch (localStorageError) {
         logger.warn('[DraftRecoveryDialog] Failed to remove localStorage after saving:', localStorageError)
       }
+
+      // Помечаем как обработанный
+      onProcessed?.(localStorageKey)
 
       toast({
         title: t('draftRecovery.saved'),

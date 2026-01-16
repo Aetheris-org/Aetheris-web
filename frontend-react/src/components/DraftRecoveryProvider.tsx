@@ -21,6 +21,7 @@ export function DraftRecoveryProvider() {
   const { user } = useAuthStore()
   const [recoveryDraft, setRecoveryDraft] = useState<{ data: DraftData; key: string } | null>(null)
   const [hasChecked, setHasChecked] = useState(false)
+  const [processedKeys, setProcessedKeys] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     // Проверяем только если пользователь авторизован и мы не на странице создания статьи
@@ -45,6 +46,11 @@ export function DraftRecoveryProvider() {
 
       for (const key of localStorageKeys) {
         try {
+          // Пропускаем уже обработанные ключи
+          if (processedKeys.has(key)) {
+            continue
+          }
+
           const data = localStorage.getItem(key)
           if (!data) continue
 
@@ -92,6 +98,13 @@ export function DraftRecoveryProvider() {
     setRecoveryDraft(null)
   }
 
+  const handleDraftProcessed = (key: string) => {
+    // Помечаем ключ как обработанный, чтобы не показывать его снова
+    setProcessedKeys(prev => new Set([...prev, key]))
+    setRecoveryDraft(null)
+    logger.debug('[DraftRecoveryProvider] Marked draft as processed:', { key })
+  }
+
   // Не показываем диалог, если мы на странице создания статьи или еще не проверили
   if (!hasChecked || !recoveryDraft || location.pathname === '/create') {
     return null
@@ -102,6 +115,7 @@ export function DraftRecoveryProvider() {
       draftData={recoveryDraft.data}
       localStorageKey={recoveryDraft.key}
       onClose={handleClose}
+      onProcessed={handleDraftProcessed}
     />
   )
 }
