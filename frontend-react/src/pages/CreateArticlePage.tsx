@@ -160,51 +160,38 @@ export default function CreateArticlePage() {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false)
   const [isSavingBeforeExit, setIsSavingBeforeExit] = useState(false)
   
-  // Ref для хранения актуальных данных (чтобы useBlocker видел свежие значения)
-  const formDataRef = useRef({
-    title: '',
-    content: '',
-    excerpt: '',
-    tags: [] as string[],
-    difficulty: 'intermediate' as 'beginner' | 'intermediate' | 'advanced',
-    contentJSON: null as any,
-    draftId: null as string | null,
-    hasImage: false,
-  })
+  // Флаг, что пользователь уже взаимодействовал со страницей
+  const hasInteractedRef = useRef(false)
   
-  // Обновляем ref при изменении данных
+  // Проверяем, есть ли несохранённые изменения
+  const hasUnsavedChanges = Boolean(
+    title.trim() || 
+    content.trim() || 
+    excerpt.trim() || 
+    tags.length > 0 || 
+    croppedImageUrl || 
+    selectedImageUrl || 
+    originalImageUrl
+  )
+  
+  // Отмечаем взаимодействие при изменении данных
   useEffect(() => {
-    formDataRef.current = {
-      title,
-      content,
-      excerpt,
-      tags,
-      difficulty,
-      contentJSON,
-      draftId,
-      hasImage: Boolean(croppedImageUrl || selectedImageUrl || originalImageUrl),
+    if (hasUnsavedChanges) {
+      hasInteractedRef.current = true
     }
-  }, [title, content, excerpt, tags, difficulty, contentJSON, draftId, croppedImageUrl, selectedImageUrl, originalImageUrl])
+  }, [hasUnsavedChanges])
   
-  // Функция проверки наличия несохранённых изменений
-  const checkHasUnsavedChanges = useCallback(() => {
-    const data = formDataRef.current
-    return Boolean(
-      data.title.trim() || 
-      data.content.trim() || 
-      data.excerpt.trim() || 
-      data.tags.length > 0 || 
-      data.hasImage
-    )
-  }, [])
-  
-  // Блокируем навигацию
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    // Не блокируем если переход на ту же страницу
-    if (currentLocation.pathname === nextLocation.pathname) return false
-    // Блокируем если есть несохранённые изменения
-    return checkHasUnsavedChanges()
-  })
+  // Блокируем навигацию только если есть несохранённые изменения И пользователь взаимодействовал
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // Не блокируем если переход на ту же страницу
+      if (currentLocation.pathname === nextLocation.pathname) return false
+      // Не блокируем если пользователь ещё не взаимодействовал
+      if (!hasInteractedRef.current) return false
+      // Блокируем только если есть несохранённые изменения
+      return hasUnsavedChanges
+    }
+  )
   
   // Показываем диалог при блокировке
   useEffect(() => {
@@ -239,10 +226,8 @@ export default function CreateArticlePage() {
     setIsSavingBeforeExit(true)
     
     try {
-      const data = formDataRef.current
-      
       // Получаем JSON из редактора
-      let editorJSON = data.contentJSON
+      let editorJSON = contentJSON
       if (editorRef.current) {
         try {
           editorJSON = editorRef.current.getJSON()
@@ -264,24 +249,24 @@ export default function CreateArticlePage() {
         contentDoc = editorJSON.content
       } else if (Array.isArray(editorJSON)) {
         contentDoc = editorJSON
-      } else if (data.content) {
-        const text = data.content.replace(/<[^>]*>/g, '').trim()
+      } else if (content) {
+        const text = content.replace(/<[^>]*>/g, '').trim()
         contentDoc = [{ type: 'paragraph', children: [{ text: text || '' }] }]
       } else {
         contentDoc = [{ type: 'paragraph', children: [{ text: '' }] }]
       }
       
       // Формируем заголовок (минимум 10 символов)
-      const rawTitle = (data.title || t('createArticle.untitledDraft')).trim()
+      const rawTitle = (title || t('createArticle.untitledDraft')).trim()
       const finalTitle = rawTitle.length < 10 ? rawTitle.padEnd(10, ' ') : rawTitle
       
       // Формируем payload
       const payload: any = {
         title: finalTitle,
         content: contentDoc,
-        excerpt: (data.excerpt || ' ').trim(),
-        tags: data.tags,
-        difficulty: difficultyMap[data.difficulty] || 'medium',
+        excerpt: (excerpt || ' ').trim(),
+        tags: tags,
+        difficulty: difficultyMap[difficulty] || 'medium',
       }
       
       // Добавляем превью если есть
@@ -293,9 +278,9 @@ export default function CreateArticlePage() {
       }
       
       // Сохраняем в БД
-      if (data.draftId) {
-        await updateDraft(data.draftId, payload)
-        logger.debug('[CreateArticlePage] Updated draft:', data.draftId)
+      if (draftId) {
+        await updateDraft(draftId, payload)
+        logger.debug('[CreateArticlePage] Updated draft:', draftId)
       } else {
         const newDraft = await createDraft(payload)
         logger.debug('[CreateArticlePage] Created draft:', newDraft.id)
@@ -329,7 +314,7 @@ export default function CreateArticlePage() {
     } finally {
       setIsSavingBeforeExit(false)
     }
-  }, [blocker, queryClient, resolvePreviewUrl, t, toast])
+  }, [blocker, content, contentJSON, difficulty, draftId, excerpt, queryClient, resolvePreviewUrl, t, tags, title, toast])
   
   // ============================================================================
 
