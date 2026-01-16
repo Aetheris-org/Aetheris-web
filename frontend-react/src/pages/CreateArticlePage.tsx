@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation, useBlocker } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
@@ -153,6 +153,150 @@ export default function CreateArticlePage() {
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
   const isEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
+  
+  // Состояние для модального окна блокировки навигации
+  const [showNavigationBlocker, setShowNavigationBlocker] = useState(false)
+  
+  // Проверяем, есть ли несохранённые изменения
+  const hasUnsavedChanges = Boolean(
+    title.trim() || content.trim() || excerpt.trim() || tags.length > 0 || 
+    croppedImageUrl || selectedImageUrl || originalImageUrl
+  )
+  
+  // Блокируем навигацию, если есть несохранённые изменения
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
+  )
+  
+  // Показываем модальное окно при блокировке навигации
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setShowNavigationBlocker(true)
+    }
+  }, [blocker.state])
+  
+  // Обработчики для модального окна блокировки
+  const handleNavigationDelete = useCallback(() => {
+    // Удаляем все данные из localStorage
+    try {
+      Object.keys(localStorage).filter(key => key.startsWith('draft_')).forEach(key => {
+        localStorage.removeItem(key)
+      })
+      logger.debug('[CreateArticlePage] Deleted all draft data from localStorage')
+    } catch (error) {
+      logger.warn('[CreateArticlePage] Failed to delete draft data:', error)
+    }
+    
+    setShowNavigationBlocker(false)
+    // Продолжаем навигацию
+    if (blocker.state === 'blocked') {
+      blocker.proceed()
+    }
+  }, [blocker])
+  
+  const handleNavigationContinue = useCallback(() => {
+    // Остаёмся на странице
+    setShowNavigationBlocker(false)
+    if (blocker.state === 'blocked') {
+      blocker.reset()
+    }
+  }, [blocker])
+  
+  const handleNavigationSaveDraft = useCallback(async () => {
+    // Сохраняем в черновик и переходим
+    try {
+      // Получаем JSON из редактора
+      let currentContentJSON = contentJSON
+      if (editorRef.current) {
+        try {
+          currentContentJSON = editorRef.current.getJSON()
+        } catch (e) {
+          logger.warn('[CreateArticlePage] Failed to get JSON from editor:', e)
+        }
+      }
+      
+      // Преобразуем difficulty
+      const mapDifficultyToBackend = (diff: 'beginner' | 'intermediate' | 'advanced'): 'easy' | 'medium' | 'hard' => {
+        const mapping: Record<'beginner' | 'intermediate' | 'advanced', 'easy' | 'medium' | 'hard'> = {
+          beginner: 'easy',
+          intermediate: 'medium',
+          advanced: 'hard',
+        }
+        return mapping[diff] || 'medium'
+      }
+      
+      // Создаем contentDocument из contentJSON
+      let contentDocument: any[] = []
+      if (currentContentJSON && currentContentJSON.type === 'doc' && Array.isArray(currentContentJSON.content)) {
+        contentDocument = currentContentJSON.content
+      } else if (Array.isArray(currentContentJSON)) {
+        contentDocument = currentContentJSON
+      } else if (content) {
+        const plainText = content.replace(/<[^>]*>/g, '').trim()
+        contentDocument = [{ type: 'paragraph', children: [{ text: plainText || '' }] }]
+      } else {
+        contentDocument = [{ type: 'paragraph', children: [{ text: '' }] }]
+      }
+      
+      const draftTitle = (title || t('createArticle.untitledDraft')).trim()
+      const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle
+      
+      const draftPayload: any = {
+        title: finalDraftTitle,
+        content: contentDocument,
+        excerpt: (excerpt || ' ').trim(),
+        tags: tags,
+        difficulty: mapDifficultyToBackend(difficulty),
+      }
+      
+      const previewImage = resolvePreviewUrl()
+      if (previewImage) {
+        draftPayload.previewImage = previewImage
+        draftPayload.preview_image = previewImage
+        draftPayload.cover_url = previewImage
+      }
+      
+      // Сохраняем черновик
+      if (draftId) {
+        await updateDraft(draftId, draftPayload)
+        logger.debug('[CreateArticlePage] Updated draft on navigation:', { draftId })
+      } else {
+        const newDraft = await createDraft(draftPayload)
+        logger.debug('[CreateArticlePage] Created draft on navigation:', { draftId: newDraft.id })
+      }
+      
+      // Инвалидируем кэш
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+      
+      // Очищаем localStorage
+      try {
+        Object.keys(localStorage).filter(key => key.startsWith('draft_')).forEach(key => {
+          localStorage.removeItem(key)
+        })
+      } catch (error) {
+        logger.warn('[CreateArticlePage] Failed to clear localStorage:', error)
+      }
+      
+      toast({
+        title: t('draftRecovery.saved'),
+        description: t('draftRecovery.savedDescription'),
+      })
+      
+      setShowNavigationBlocker(false)
+      // Продолжаем навигацию
+      if (blocker.state === 'blocked') {
+        blocker.proceed()
+      }
+    } catch (error: any) {
+      logger.error('[CreateArticlePage] Failed to save draft on navigation:', error)
+      toast({
+        title: t('draftRecovery.saveError'),
+        description: error?.message || t('draftRecovery.saveErrorDescription'),
+        variant: 'destructive',
+      })
+    }
+  }, [blocker, content, contentJSON, difficulty, draftId, excerpt, queryClient, resolvePreviewUrl, t, tags, title, toast])
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     // Временно отключаем загрузку в наше хранилище
@@ -1805,6 +1949,57 @@ export default function CreateArticlePage() {
     }
   }, [saveToLocalStorage])
 
+  // Автосохранение в localStorage при изменении контента (debounced)
+  // Это гарантирует, что данные будут сохранены ДО перехода на другую страницу
+  useEffect(() => {
+    // Не сохраняем, если нет контента
+    const hasContent = title.trim() || content.trim() || excerpt.trim()
+    if (!hasContent) return
+
+    // Debounce: сохраняем через 300ms после последнего изменения (быстрее для надёжности)
+    const timeoutId = setTimeout(() => {
+      saveToLocalStorage()
+      logger.debug('[CreateArticlePage] Auto-saved to localStorage on content change')
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [title, content, excerpt, tags, difficulty, contentJSON, saveToLocalStorage])
+
+  // Сохранение при любом клике на странице (перед навигацией)
+  // Это гарантирует, что данные сохранятся ДО перехода на другую страницу
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // Проверяем, что клик был на ссылке или кнопке навигации
+      const isNavigationClick = target.closest('a[href]') || 
+                                 target.closest('button[type="button"]') ||
+                                 target.closest('[role="link"]')
+      if (isNavigationClick) {
+        // Немедленно сохраняем в localStorage
+        const hasContent = title.trim() || content.trim() || excerpt.trim()
+        if (hasContent) {
+          saveToLocalStorage()
+          // Устанавливаем флаг pending recovery
+          const localStorageKey = `draft_${draftId || 'new'}`
+          localStorage.setItem('draft_pending_recovery', JSON.stringify({
+            key: localStorageKey,
+            timestamp: Date.now()
+          }))
+          // Отправляем событие для DraftRecoveryProvider
+          window.dispatchEvent(new CustomEvent('draft-saved'))
+          logger.debug('[CreateArticlePage] Saved to localStorage on navigation click')
+        }
+      }
+    }
+
+    // Используем capture phase чтобы обработать событие ДО навигации
+    document.addEventListener('click', handleClick, { capture: true })
+    
+    return () => {
+      document.removeEventListener('click', handleClick, { capture: true })
+    }
+  }, [title, content, excerpt, saveToLocalStorage])
+
   // Сохранение при размонтировании компонента (выход со страницы)
   // ВАЖНО: Этот useEffect должен быть последним, чтобы сохранить все актуальные данные
   useEffect(() => {
@@ -1848,23 +2043,31 @@ export default function CreateArticlePage() {
           }
           // Синхронное сохранение в localStorage для надежности
           localStorage.setItem(localStorageKey, JSON.stringify(draftData))
+          
+          // Также устанавливаем флаг, что есть несохранённый черновик
+          // DraftRecoveryProvider будет проверять этот флаг
+          localStorage.setItem('draft_pending_recovery', JSON.stringify({
+            key: localStorageKey,
+            timestamp: Date.now()
+          }))
+          
           logger.debug('[CreateArticlePage] Saved draft to localStorage on unmount:', { 
             key: localStorageKey, 
             hasContent: true,
             pathname: window.location.pathname
           })
           
-          // Отправляем событие draft-saved для DraftRecoveryProvider
-          // Используем queueMicrotask для гарантированной отправки после сохранения
-          queueMicrotask(() => {
-            window.dispatchEvent(new CustomEvent('draft-saved'))
-            logger.debug('[CreateArticlePage] Dispatched draft-saved event on unmount')
-          })
+          // Отправляем событие draft-saved СИНХРОННО для DraftRecoveryProvider
+          window.dispatchEvent(new CustomEvent('draft-saved'))
+          logger.debug('[CreateArticlePage] Dispatched draft-saved event on unmount (sync)')
           
-          // Дублируем через setTimeout для надежности (на случай если queueMicrotask не сработает)
+          // Дублируем через setTimeout для надежности
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('draft-saved'))
-          }, 10)
+          }, 50)
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('draft-saved'))
+          }, 150)
         }
       } catch (error) {
         logger.warn('[CreateArticlePage] Failed to save draft to localStorage on unmount:', error)
@@ -4189,6 +4392,56 @@ export default function CreateArticlePage() {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно блокировки навигации */}
+      <Dialog open={showNavigationBlocker} onOpenChange={(open) => {
+        if (!open) {
+          handleNavigationContinue()
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px] p-6">
+          <DialogHeader className="flex flex-row items-center justify-center sm:justify-start gap-3 pb-4 border-b border-border/60">
+            <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
+            <DialogTitle className="text-lg sm:text-xl text-center sm:text-left">
+              {t('draftRecovery.title')}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="text-sm sm:text-base text-center sm:text-left pt-2 space-y-2">
+            <p>{t('createArticle.unsavedChangesWarning') || 'У вас есть несохранённые изменения. Что вы хотите сделать?'}</p>
+            {title && (
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2 rounded-md">
+                <FileText className="h-4 w-4 shrink-0" />
+                <p className="font-medium truncate">{title || t('createArticle.untitledDraft')}</p>
+              </div>
+            )}
+          </DialogDescription>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleNavigationDelete}
+              className="w-full sm:w-auto text-destructive hover:text-destructive"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              {t('draftRecovery.delete')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNavigationContinue}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t('draftRecovery.continue')}
+            </Button>
+            <Button
+              onClick={handleNavigationSaveDraft}
+              className="w-full sm:w-auto"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {t('draftRecovery.saveToDraft')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] sm:w-full p-4 sm:p-6">

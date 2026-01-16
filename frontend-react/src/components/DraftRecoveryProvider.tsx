@@ -69,11 +69,33 @@ export function DraftRecoveryProvider() {
 
     // Проверяем localStorage на наличие несохраненных черновиков
     try {
-      const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
+      // Проверяем флаг pending recovery (устанавливается при выходе со страницы создания)
+      const pendingRecovery = localStorage.getItem('draft_pending_recovery')
+      if (pendingRecovery) {
+        try {
+          const pending = JSON.parse(pendingRecovery)
+          // Если флаг свежий (менее 5 секунд), это значит пользователь только что вышел со страницы
+          if (pending.timestamp && Date.now() - pending.timestamp < 5000) {
+            logger.debug('[DraftRecoveryProvider] Found pending recovery flag:', pending)
+          }
+        } catch (e) {
+          // Игнорируем ошибки парсинга
+        }
+        // Удаляем флаг после проверки
+        localStorage.removeItem('draft_pending_recovery')
+      }
+      
+      // Фильтруем только реальные черновики (исключаем служебные ключи)
+      const localStorageKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('draft_') && 
+        key !== 'draft_pending_recovery' &&
+        !key.includes('processed')
+      )
       
       logger.debug('[DraftRecoveryProvider] Checking localStorage:', { 
         keysCount: localStorageKeys.length,
-        pathname: location.pathname 
+        pathname: location.pathname,
+        hasPendingRecovery: !!pendingRecovery
       })
       
       if (localStorageKeys.length === 0) {
@@ -178,14 +200,22 @@ export function DraftRecoveryProvider() {
     // Первая проверка сразу
     checkLocalStorage()
     
+    // Используем requestAnimationFrame для проверки в следующем кадре
+    // Это гарантирует, что cleanup предыдущего компонента уже выполнился
+    const rafId = requestAnimationFrame(() => {
+      checkLocalStorage()
+    })
+    
     // Проверки с задержками для надежности (на случай асинхронного сохранения)
-    // Особенно важно при выходе с /create
-    const checkTimeout0 = setTimeout(checkLocalStorage, 50) // Очень быстрая проверка
-    const checkTimeout1 = setTimeout(checkLocalStorage, 100)
-    const checkTimeout2 = setTimeout(checkLocalStorage, 300)
-    const checkTimeout3 = setTimeout(checkLocalStorage, 500)
-    const checkTimeout4 = setTimeout(checkLocalStorage, 1000)
-    const checkTimeout5 = setTimeout(checkLocalStorage, 2000)
+    // Особенно важно при выходе с /create - cleanup может выполниться не сразу
+    const checkTimeout0 = setTimeout(checkLocalStorage, 10)
+    const checkTimeout1 = setTimeout(checkLocalStorage, 30)
+    const checkTimeout2 = setTimeout(checkLocalStorage, 50)
+    const checkTimeout3 = setTimeout(checkLocalStorage, 100)
+    const checkTimeout4 = setTimeout(checkLocalStorage, 200)
+    const checkTimeout5 = setTimeout(checkLocalStorage, 500)
+    const checkTimeout6 = setTimeout(checkLocalStorage, 1000)
+    const checkTimeout7 = setTimeout(checkLocalStorage, 2000)
 
     // Слушаем изменения в localStorage (для кросс-таб и программных изменений)
     const handleStorageChange = (e: StorageEvent) => {
@@ -223,12 +253,15 @@ export function DraftRecoveryProvider() {
     }, 2000)
 
     return () => {
+      cancelAnimationFrame(rafId)
       clearTimeout(checkTimeout0)
       clearTimeout(checkTimeout1)
       clearTimeout(checkTimeout2)
       clearTimeout(checkTimeout3)
       clearTimeout(checkTimeout4)
       clearTimeout(checkTimeout5)
+      clearTimeout(checkTimeout6)
+      clearTimeout(checkTimeout7)
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current)
         checkIntervalRef.current = null
