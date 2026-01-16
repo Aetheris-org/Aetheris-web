@@ -1511,15 +1511,13 @@ export default function EditArticlePage() {
       
       setIsLoadingDraft(true)
       try {
-        // Дополнительная проверка для TypeScript
-        if (!draftIdFromQuery || typeof draftIdFromQuery !== 'string') {
+        // Строгая проверка типа для TypeScript
+        if (draftIdFromQuery === null || draftIdFromQuery === undefined || typeof draftIdFromQuery !== 'string') {
           setIsLoadingDraft(false)
           return
         }
-        // Явно указываем TypeScript, что это строка
-        const draftIdString: string = draftIdFromQuery
-        logger.debug('[CreateArticlePage] Loading draft from database:', { draftId: draftIdString })
-        const draft = await getDraft(draftIdString)
+        logger.debug('[CreateArticlePage] Loading draft from database:', { draftId: draftIdFromQuery })
+        const draft = await getDraft(draftIdFromQuery)
         if (cancelled || !draft) {
           logger.warn('[CreateArticlePage] Draft not found or cancelled:', { draftId: draftIdFromQuery, draft })
           return
@@ -1658,14 +1656,14 @@ export default function EditArticlePage() {
       for (const key of localStorageKeys) {
         try {
           const data = localStorage.getItem(key)
-          if (!data || typeof data !== 'string') continue
+          // Строгая проверка типа для TypeScript
+          if (data === null || typeof data !== 'string') continue
 
           const parsed = JSON.parse(data) as DraftData
           const savedAtValue = parsed.savedAt
-          if (savedAtValue && typeof savedAtValue === 'string' && savedAtValue.trim() !== '') {
-            // Явно указываем TypeScript, что это строка
-            const dateString: string = savedAtValue
-            const savedTime = new Date(dateString).getTime()
+          // Строгая проверка типа и значения
+          if (typeof savedAtValue === 'string' && savedAtValue.trim().length > 0) {
+            const savedTime = new Date(savedAtValue).getTime()
             if (!isNaN(savedTime) && savedTime > latestTime) {
               latestTime = savedTime
               latestDraft = parsed
