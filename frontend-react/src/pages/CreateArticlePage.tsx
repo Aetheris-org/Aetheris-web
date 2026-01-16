@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams, useLocation, useBlocker } from 'react-router-dom'
+import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
@@ -75,7 +75,6 @@ function getPlainTextFromHtml(html: string): string {
 
 export default function CreateArticlePage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { toast } = useToast()
   const { user } = useAuthStore()
   const { t } = useTranslation()
