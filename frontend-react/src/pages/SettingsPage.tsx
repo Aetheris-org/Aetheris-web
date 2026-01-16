@@ -513,6 +513,7 @@ export default function SettingsPage() {
 }
 
 const BIO_LIMIT = 280
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 МБ
 
 function ProfileSettings() {
   const { toast } = useToast()
@@ -856,9 +857,79 @@ function ProfileSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Загрузка файлов аватар/обложка отключена
-  const handleAvatarChange = () => {}
-  const handleCoverChange = () => {}
+  // Обработчик загрузки аватара
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('settings.profile.unsupportedFile') || 'Unsupported file type',
+        description: t('settings.profile.unsupportedFileDescription') || 'Please select an image file.',
+        variant: 'destructive',
+      })
+      event.target.value = ''
+      return
+    }
+
+    // Валидация размера файла (2 МБ)
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast({
+        title: t('settings.profile.fileTooLarge') || 'File too large',
+        description: t('settings.profile.fileTooLargeDescription') || `Maximum file size is 2 MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)} MB.`,
+        variant: 'destructive',
+      })
+      event.target.value = ''
+      return
+    }
+
+    // Создаем preview URL и открываем диалог обрезки
+    const url = URL.createObjectURL(file)
+    setAvatarCropSource(url)
+    setAvatarCrop({ x: 0, y: 0 })
+    setAvatarZoom(1)
+    setAvatarCroppedArea(null)
+    setIsAvatarCropOpen(true)
+    event.target.value = ''
+  }
+
+  // Обработчик загрузки обложки
+  const handleCoverChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('settings.profile.unsupportedFile') || 'Unsupported file type',
+        description: t('settings.profile.unsupportedFileDescription') || 'Please select an image file.',
+        variant: 'destructive',
+      })
+      event.target.value = ''
+      return
+    }
+
+    // Валидация размера файла (2 МБ)
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast({
+        title: t('settings.profile.fileTooLarge') || 'File too large',
+        description: t('settings.profile.fileTooLargeDescription') || `Maximum file size is 2 MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)} MB.`,
+        variant: 'destructive',
+      })
+      event.target.value = ''
+      return
+    }
+
+    // Создаем preview URL и открываем диалог обрезки
+    const url = URL.createObjectURL(file)
+    setCoverCropSource(url)
+    setCoverCrop({ x: 0, y: 0 })
+    setCoverZoom(1)
+    setCoverCroppedArea(null)
+    setIsCoverCropOpen(true)
+    event.target.value = ''
+  }
 
 
   const handleCancelAvatarCrop = () => {
@@ -1193,7 +1264,7 @@ function ProfileSettings() {
     })
   }
 
-  // Функция для загрузки изображения в Supabase Storage
+  // Функция для загрузки изображения в выбранное хранилище (Supabase Storage или Cloudflare R2)
   const uploadImageToImgBB = async (file: File, folder: 'avatars' | 'covers' = 'avatars'): Promise<string> => {
     // Retry логика для отказоустойчивости
     let lastError: any = null
@@ -1201,7 +1272,7 @@ function ProfileSettings() {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        logger.debug('[SettingsPage] Uploading image to Supabase Storage, attempt:', attempt)
+        logger.debug('[SettingsPage] Uploading image, attempt:', attempt)
         
         const result = await uploadImage(file, folder)
         
@@ -1435,14 +1506,37 @@ function ProfileSettings() {
                     <Button
                       variant="outline"
                       size="sm"
-                className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
-                disabled
+                      className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                      disabled={isSaving || isCoverProcessing}
+                      onClick={() => coverInputRef.current?.click()}
                     >
                       <span className="flex items-center gap-1.5">
                         <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">{coverPreview ? t('settings.profile.changeCover') : t('settings.profile.uploadCover')}</span>
                       </span>
                     </Button>
+                    {coverPreview && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive"
+                        disabled={isSaving || isCoverProcessing}
+                        onClick={() => {
+                          setCoverPreview(null)
+                          setCoverFile(null)
+                          setCoverRemoved(true)
+                          setCoverCropSource(null)
+                          setCoverCrop({ x: 0, y: 0 })
+                          setCoverZoom(1)
+                          setCoverCroppedArea(null)
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('settings.profile.remove')}</span>
+                        </span>
+                      </Button>
+                    )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-3 pb-2 sm:pb-3">
             <Input
@@ -1514,8 +1608,9 @@ function ProfileSettings() {
                     <Button
                       variant="outline"
                       size="sm"
-                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 opacity-50 cursor-not-allowed pointer-events-none"
-                disabled
+                      className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0"
+                      disabled={isSaving || isAvatarProcessing}
+                      onClick={() => avatarInputRef.current?.click()}
                     >
                       <span className="flex items-center gap-1.5">
                         <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -1525,8 +1620,17 @@ function ProfileSettings() {
                       <Button
                         variant="ghost"
                         size="sm"
-                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive opacity-50 cursor-not-allowed pointer-events-none"
-                disabled
+                        className="h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5 p-0 text-destructive"
+                        disabled={isSaving || isAvatarProcessing || !avatarPreview}
+                        onClick={() => {
+                          setAvatarPreview(null)
+                          setAvatarFile(null)
+                          setAvatarRemoved(true)
+                          setAvatarCropSource(null)
+                          setAvatarCrop({ x: 0, y: 0 })
+                          setAvatarZoom(1)
+                          setAvatarCroppedArea(null)
+                        }}
                       >
                         <span className="flex items-center gap-1.5">
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />

@@ -151,6 +151,22 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
       };
+      image_uploads: {
+        Row: {
+          id: string;
+          user_id: string;
+          storage_provider: 'supabase' | 'r2';
+          file_path: string;
+          file_url: string;
+          file_size: number | null;
+          mime_type: string | null;
+          folder: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['image_uploads']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['image_uploads']['Insert']>;
+      };
     };
     Functions: {
       search_articles: {

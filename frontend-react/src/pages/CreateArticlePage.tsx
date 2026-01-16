@@ -42,7 +42,8 @@ const CONTENT_MAX_LENGTH = 20000
 const TAG_MAX_LENGTH = 20
 const MAX_TAGS = 20
 const DRAFT_SAVE_COOLDOWN = 2000 // 2 секунды между сохранениями
-const UPLOAD_PREVIEW_ENABLED = false // временно отключаем загрузку в наше хранилище
+const UPLOAD_PREVIEW_ENABLED = true // включена локальная загрузка превью
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 МБ
 
 function normalizeRichText(value: string | null | undefined): string {
   if (!value) return ''
@@ -159,14 +160,14 @@ export default function CreateArticlePage() {
       return existingPreviewImageId ? String(existingPreviewImageId) : null
     }
 
-    // Используем Supabase Storage для загрузки изображений
+    // Загружаем изображение в выбранное хранилище (Supabase Storage или Cloudflare R2)
     // Retry логика для отказоустойчивости
     let lastError: any = null
     const maxRetries = 3
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        logger.debug('[CreateArticlePage] Uploading preview image to Supabase Storage, attempt:', attempt)
+        logger.debug('[CreateArticlePage] Uploading preview image, attempt:', attempt)
         
         // Создаем File из Blob
         const file = new File([croppedImageBlob], `article-preview-${Date.now()}.jpg`, {
@@ -1041,6 +1042,17 @@ export default function CreateArticlePage() {
         description: t('createArticle.unsupportedFileDescription'),
         variant: 'destructive',
       })
+      return
+    }
+
+    // Валидация размера файла (2 МБ)
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast({
+        title: t('createArticle.fileTooLarge') || 'File too large',
+        description: t('createArticle.fileTooLargeDescription') || `Maximum file size is 2 MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)} MB.`,
+        variant: 'destructive',
+      })
+      event.target.value = ''
       return
     }
 
