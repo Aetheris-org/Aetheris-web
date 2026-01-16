@@ -21,7 +21,31 @@ export function DraftRecoveryProvider() {
   const { user } = useAuthStore()
   const [recoveryDraft, setRecoveryDraft] = useState<{ data: DraftData; key: string } | null>(null)
   const [hasChecked, setHasChecked] = useState(false)
-  const [processedKeys, setProcessedKeys] = useState<Set<string>>(new Set())
+
+  // Получаем список обработанных ключей из sessionStorage
+  const getProcessedKeys = (): Set<string> => {
+    try {
+      const stored = sessionStorage.getItem('draftRecovery_processed')
+      if (stored) {
+        return new Set(JSON.parse(stored))
+      }
+    } catch (error) {
+      logger.warn('[DraftRecoveryProvider] Failed to get processed keys:', error)
+    }
+    return new Set()
+  }
+
+  // Сохраняем обработанный ключ в sessionStorage
+  const markAsProcessed = (key: string) => {
+    try {
+      const processed = getProcessedKeys()
+      processed.add(key)
+      sessionStorage.setItem('draftRecovery_processed', JSON.stringify([...processed]))
+      logger.debug('[DraftRecoveryProvider] Marked draft as processed:', { key })
+    } catch (error) {
+      logger.warn('[DraftRecoveryProvider] Failed to mark draft as processed:', error)
+    }
+  }
 
   useEffect(() => {
     // Проверяем только если пользователь авторизован и мы не на странице создания статьи
@@ -44,6 +68,8 @@ export function DraftRecoveryProvider() {
       let latestKey: string | null = null
       let latestTime = 0
 
+      const processedKeys = getProcessedKeys()
+
       for (const key of localStorageKeys) {
         try {
           // Пропускаем уже обработанные ключи
@@ -51,6 +77,7 @@ export function DraftRecoveryProvider() {
             continue
           }
 
+          // Проверяем, что ключ все еще существует в localStorage
           const data = localStorage.getItem(key)
           if (!data) continue
 
@@ -99,10 +126,9 @@ export function DraftRecoveryProvider() {
   }
 
   const handleDraftProcessed = (key: string) => {
-    // Помечаем ключ как обработанный, чтобы не показывать его снова
-    setProcessedKeys(prev => new Set([...prev, key]))
+    // Помечаем ключ как обработанный в sessionStorage
+    markAsProcessed(key)
     setRecoveryDraft(null)
-    logger.debug('[DraftRecoveryProvider] Marked draft as processed:', { key })
   }
 
   // Не показываем диалог, если мы на странице создания статьи или еще не проверили

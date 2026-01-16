@@ -39,12 +39,19 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
     try {
       localStorage.removeItem(localStorageKey)
       logger.debug('[DraftRecoveryDialog] Deleted draft from localStorage:', { key: localStorageKey })
+      
+      // Помечаем как обработанный ПЕРЕД закрытием
+      onProcessed?.(localStorageKey)
+      
       toast({
         title: t('draftRecovery.deleted'),
         description: t('draftRecovery.deletedDescription'),
       })
-      onProcessed?.(localStorageKey)
-      onClose()
+      
+      // Небольшая задержка перед закрытием, чтобы состояние успело обновиться
+      setTimeout(() => {
+        onClose()
+      }, 100)
     } catch (error) {
       logger.error('[DraftRecoveryDialog] Failed to delete draft:', error)
       toast({
@@ -58,6 +65,9 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
   }
 
   const handleContinue = () => {
+    // Помечаем как обработанный ПЕРЕД удалением и переходом
+    onProcessed?.(localStorageKey)
+    
     // Удаляем старый ключ из localStorage, так как данные будут восстановлены на странице создания
     try {
       localStorage.removeItem(localStorageKey)
@@ -66,17 +76,18 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
       logger.warn('[DraftRecoveryDialog] Failed to remove localStorage on continue:', error)
     }
     
-    // Помечаем как обработанный
-    onProcessed?.(localStorageKey)
-    
     // Переходим на страницу создания статьи с параметром для восстановления
     const params = new URLSearchParams()
     if (draftData.draftId) {
       params.set('draft', draftData.draftId)
     }
     params.set('recover', 'true')
-    navigate(`/create?${params.toString()}`)
-    onClose()
+    
+    // Небольшая задержка перед переходом, чтобы состояние успело обновиться
+    setTimeout(() => {
+      navigate(`/create?${params.toString()}`)
+      onClose()
+    }, 100)
   }
 
   const handleSaveToDraft = async () => {
@@ -135,6 +146,9 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
 
       await createDraft(draftPayload)
       
+      // Помечаем как обработанный ПЕРЕД удалением
+      onProcessed?.(localStorageKey)
+      
       // Удаляем старый ключ из localStorage, так как черновик сохранен в базу
       // Новый ключ будет создан автоматически при следующем автосохранении на странице создания
       try {
@@ -144,15 +158,15 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
         logger.warn('[DraftRecoveryDialog] Failed to remove localStorage after saving:', localStorageError)
       }
 
-      // Помечаем как обработанный
-      onProcessed?.(localStorageKey)
-
       toast({
         title: t('draftRecovery.saved'),
         description: t('draftRecovery.savedDescription'),
       })
       
-      onClose()
+      // Небольшая задержка перед закрытием, чтобы состояние успело обновиться
+      setTimeout(() => {
+        onClose()
+      }, 100)
     } catch (error: any) {
       logger.error('[DraftRecoveryDialog] Failed to save draft:', error)
       toast({
