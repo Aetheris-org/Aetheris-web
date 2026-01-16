@@ -353,6 +353,9 @@ export default function CreateArticlePage() {
           
           queryClient.invalidateQueries({ queryKey: ['drafts'] })
           
+          // Сбрасываем флаг — изменения сохранены
+          userHasEditedRef.current = false
+          
           toast({
             title: t('draftRecovery.saved'),
             description: t('draftRecovery.savedDescription'),
