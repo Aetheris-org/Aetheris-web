@@ -179,20 +179,34 @@ export function DraftRecoveryProvider() {
     checkLocalStorage()
     
     // Проверки с задержками для надежности (на случай асинхронного сохранения)
-    const checkTimeout0 = setTimeout(checkLocalStorage, 100)
-    const checkTimeout1 = setTimeout(checkLocalStorage, 500)
-    const checkTimeout2 = setTimeout(checkLocalStorage, 1000)
-    const checkTimeout3 = setTimeout(checkLocalStorage, 2000)
+    // Особенно важно при выходе с /create
+    const checkTimeout0 = setTimeout(checkLocalStorage, 50) // Очень быстрая проверка
+    const checkTimeout1 = setTimeout(checkLocalStorage, 100)
+    const checkTimeout2 = setTimeout(checkLocalStorage, 300)
+    const checkTimeout3 = setTimeout(checkLocalStorage, 500)
+    const checkTimeout4 = setTimeout(checkLocalStorage, 1000)
+    const checkTimeout5 = setTimeout(checkLocalStorage, 2000)
 
-    // Слушаем изменения в localStorage (для кросс-таб)
+    // Слушаем изменения в localStorage (для кросс-таб и программных изменений)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key && e.key.startsWith('draft_')) {
-        logger.debug('[DraftRecoveryProvider] Storage changed (cross-tab), rechecking:', { key: e.key })
-        setTimeout(checkLocalStorage, 100)
+        logger.debug('[DraftRecoveryProvider] Storage changed, rechecking:', { key: e.key })
+        // Проверяем сразу и с небольшой задержкой
+        checkLocalStorage()
+        setTimeout(checkLocalStorage, 50)
       }
     }
 
+    // Также слушаем кастомные события для отслеживания изменений в той же вкладке
+    const handleCustomStorage = () => {
+      logger.debug('[DraftRecoveryProvider] Custom storage event, rechecking')
+      checkLocalStorage()
+      setTimeout(checkLocalStorage, 50)
+    }
+
     window.addEventListener('storage', handleStorageChange)
+    // Слушаем кастомное событие, которое может быть отправлено из CreateArticlePage
+    window.addEventListener('draft-saved', handleCustomStorage)
 
     // Постоянная периодическая проверка каждые 2 секунды
     // Это обеспечивает обнаружение черновиков на любой странице
@@ -207,11 +221,14 @@ export function DraftRecoveryProvider() {
       clearTimeout(checkTimeout1)
       clearTimeout(checkTimeout2)
       clearTimeout(checkTimeout3)
+      clearTimeout(checkTimeout4)
+      clearTimeout(checkTimeout5)
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current)
         checkIntervalRef.current = null
       }
       window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('draft-saved', handleCustomStorage)
     }
   }, [user, location.pathname])
 

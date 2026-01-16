@@ -13,6 +13,7 @@ import ArticlePage from '@/pages/ArticlePage'
 import ProfilePage from '@/pages/ProfilePage'
 import AuthPage from '@/pages/AuthPage'
 import CreateArticlePage from '@/pages/CreateArticlePage'
+import EditArticlePage from '@/pages/EditArticlePage'
 import SettingsPage from '@/pages/SettingsPage'
 import ReadingListPage from '@/pages/ReadingListPage'
 import HelpCenterPage from '@/pages/HelpCenterPage'
@@ -131,6 +132,7 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/create" element={<CreateArticlePage />} />
+          <Route path="/edit/:id" element={<EditArticlePage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/reading-list" element={<ReadingListPage />} />
           <Route path="/help" element={<HelpCenterPage />} />

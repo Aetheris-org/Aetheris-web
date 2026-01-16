@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
@@ -73,7 +73,7 @@ function getPlainTextFromHtml(html: string): string {
     .trim()
 }
 
-export default function CreateArticlePage() {
+export default function EditArticlePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { user } = useAuthStore()
@@ -126,31 +126,25 @@ export default function CreateArticlePage() {
     () => existingPreviewImageId || selectedImageUrl || originalImageUrl || null,
     [existingPreviewImageId, selectedImageUrl, originalImageUrl]
   )
+  const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const draftParam = searchParams.get('draft')
-  // Теперь draft ID - это UUID (строка), а не число
-  const draftIdFromQuery = draftParam && draftParam.trim() ? draftParam.trim() : null
-  // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
-  const initialEditId =
-    (searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id') || '').trim() ||
-    null
-  const [editArticleId, setEditArticleId] = useState<string | null>(initialEditId)
-  const editArticleIdRef = useRef<string | null>(initialEditId)
+  // Для страницы редактирования используем ID из URL параметра
+  const editArticleId = id || null
+  const editArticleIdRef = useRef<string | null>(id || null)
+  
   useEffect(() => {
-    const raw =
-      searchParams.get('edit') ||
-      searchParams.get('articleId') ||
-      searchParams.get('id') ||
-      null
-    const normalized = raw && raw.trim() ? raw.trim() : null
-    if (normalized && normalized !== editArticleIdRef.current) {
-      editArticleIdRef.current = normalized
-      setEditArticleId(normalized)
+    if (id && id !== editArticleIdRef.current) {
+      editArticleIdRef.current = id
     }
-  }, [searchParams])
+  }, [id])
+  
+  // На странице редактирования не используем draft параметры
+  const draftParam = null
+  const draftIdFromQuery = null
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
-  const isEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
+  // На странице редактирования всегда isEditing = true
+  const isEditing = true
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     // Временно отключаем загрузку в наше хранилище
@@ -283,9 +277,9 @@ export default function CreateArticlePage() {
     adjustTextareaHeight()
   }, [excerpt, adjustTextareaHeight])
 
-  // Загрузка статьи для редактирования
+  // Загрузка статьи для редактирования (обязательно для EditArticlePage)
   useEffect(() => {
-    const targetEditId = editArticleIdRef.current
+    const targetEditId = editArticleIdRef.current || id
     if (targetEditId && user && !isLoadingArticle && !articleToEdit) {
       setIsLoadingArticle(true)
       getArticle(targetEditId)
@@ -1617,12 +1611,10 @@ export default function CreateArticlePage() {
     }
   }, [draftIdFromQuery, searchParams, draftId])
 
-  // Восстановление данных из localStorage при загрузке страницы
+  // На странице редактирования не восстанавливаем из localStorage (загружаем статью из БД)
   useEffect(() => {
-    // Не восстанавливаем, если уже загружается черновик из БД
-    if (isLoadingDraft || draftIdFromQuery) {
-      return
-    }
+    // Не восстанавливаем из localStorage на странице редактирования
+    return
 
     // Пытаемся восстановить из localStorage
     try {
@@ -3252,9 +3244,7 @@ export default function CreateArticlePage() {
             </Button>
             <Separator orientation="vertical" className="h-4 sm:h-6 hidden sm:block" />
             <h1 className="text-base sm:text-lg font-semibold truncate">
-              {isEditing
-                ? t('createArticle.editingTitle') || t('article.edit') || 'Editing article'
-                : t('createArticle.title')}
+              {t('createArticle.editingTitle') || t('article.edit') || 'Editing article'}
             </h1>
           </div>
 
