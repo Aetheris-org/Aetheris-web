@@ -84,6 +84,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { RateLimitError } from '@/lib/errors'
 import { useTranslation } from '@/hooks/useTranslation'
 import { getRoleByUuid, ROLE_BY_UUID } from '@/config/admins'
+import { normalizeR2Url } from '@/lib/r2-url-helper'
 import {
   mockAudienceInsights,
   mockContentMix,
@@ -655,8 +656,9 @@ export default function ProfilePage() {
       (profile?.user as any)?.banner_url ||
       null
 
-  const avatarSrc = avatarError ? null : rawAvatar
-  const coverSrc = coverError ? null : rawCover
+  // Нормализуем R2 URLs для правильного отображения
+  const avatarSrc = avatarError ? null : normalizeR2Url(rawAvatar)
+  const coverSrc = coverError ? null : normalizeR2Url(rawCover)
   const displayTag = profile?.user?.tag ?? (currentUser as any)?.tag ?? null
   const displayUsername = isOwnProfile
     ? currentUser?.nickname || (currentUser as any)?.username || currentUser?.email?.split('@')[0] || 'User'

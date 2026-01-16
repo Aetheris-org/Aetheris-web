@@ -35,6 +35,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '@/api/notifications'
 import { getBookmarksCount } from '@/api/bookmarks'
+import { normalizeR2Url } from '@/lib/r2-url-helper'
 
 export function AccountSheet() {
   const { t } = useTranslation()
@@ -123,7 +124,7 @@ export function AccountSheet() {
         >
           {user.avatar ? (
             <img
-              src={user.avatar}
+              src={normalizeR2Url(user.avatar) || user.avatar}
               alt={user.nickname}
               className="h-full w-full object-cover"
             />
@@ -139,7 +140,7 @@ export function AccountSheet() {
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-sm font-semibold text-primary">
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
+                  <img src={normalizeR2Url(user.avatar) || user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
                 ) : (
                   initials || 'AU'
                 )}
