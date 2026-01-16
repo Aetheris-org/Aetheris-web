@@ -157,16 +157,23 @@ export default function CreateArticlePage() {
   // Состояние для модального окна блокировки навигации
   const [showNavigationBlocker, setShowNavigationBlocker] = useState(false)
   
+  // Флаг: пользователь сам ввёл данные (не восстановлено автоматически)
+  const userHasEditedRef = useRef(false)
+  
   // Проверяем, есть ли несохранённые изменения
   const hasUnsavedChanges = Boolean(
     title.trim() || content.trim() || excerpt.trim() || tags.length > 0 || 
     croppedImageUrl || selectedImageUrl || originalImageUrl
   )
   
-  // Блокируем навигацию, если есть несохранённые изменения
+  // Блокируем навигацию, если есть несохранённые изменения И пользователь редактировал
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
+    ({ currentLocation, nextLocation }) => {
+      // Не блокируем переход на ту же страницу
+      if (currentLocation.pathname === nextLocation.pathname) return false
+      // Блокируем только если пользователь что-то редактировал
+      return userHasEditedRef.current && hasUnsavedChanges
+    }
   )
   
   // Показываем модальное окно при блокировке навигации
@@ -381,6 +388,7 @@ export default function CreateArticlePage() {
     setCroppedImageBlob(null)
     setExistingPreviewImageId(url)
     setIsExternalImageDialogOpen(false)
+    userHasEditedRef.current = true
   }, [externalImageUrl, toast, t])
 
   const handleAddTag = () => {
@@ -409,11 +417,13 @@ export default function CreateArticlePage() {
       }
       setTags([...tags, limitedTag])
       setTagInput('')
+      userHasEditedRef.current = true
     }
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove))
+    userHasEditedRef.current = true
   }
 
   // Auto-resize textarea for excerpt
@@ -1554,6 +1564,7 @@ export default function CreateArticlePage() {
     setCroppedAreaPixels(null)
     setIsCropDialogOpen(true)
     event.target.value = ''
+    userHasEditedRef.current = true
   }
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
@@ -3600,6 +3611,7 @@ export default function CreateArticlePage() {
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, TITLE_MAX_LENGTH)
                   setTitle(newValue)
+                  userHasEditedRef.current = true
                 }}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => setIsTitleFocused(false)}
@@ -3633,6 +3645,7 @@ export default function CreateArticlePage() {
                   const newValue = e.target.value.slice(0, EXCERPT_MAX_LENGTH)
                   setExcerpt(newValue)
                   adjustTextareaHeight()
+                  userHasEditedRef.current = true
                 }}
                 onFocus={() => setIsExcerptFocused(true)}
                 onBlur={() => setIsExcerptFocused(false)}
@@ -3661,6 +3674,7 @@ export default function CreateArticlePage() {
                   jsonValue={contentJSON}
                   onChange={(html) => {
                     setContent(html)
+                    userHasEditedRef.current = true
                     // Сохраняем JSON контент при каждом изменении, чтобы он был доступен при публикации
                     // даже если редактор размонтирован на других шагах
                     // Используем requestAnimationFrame для более плавного обновления
