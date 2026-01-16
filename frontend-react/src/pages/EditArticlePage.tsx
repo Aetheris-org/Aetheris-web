@@ -1660,8 +1660,9 @@ export default function EditArticlePage() {
           if (!data) continue
 
           const parsed = JSON.parse(data) as DraftData
-          if (parsed.savedAt && typeof parsed.savedAt === 'string') {
-            const savedTime = new Date(parsed.savedAt).getTime()
+          const savedAtValue = parsed.savedAt
+          if (savedAtValue && typeof savedAtValue === 'string') {
+            const savedTime = new Date(savedAtValue).getTime()
             if (savedTime > latestTime) {
               latestTime = savedTime
               latestDraft = parsed
