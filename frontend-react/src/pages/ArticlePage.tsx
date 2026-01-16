@@ -214,6 +214,7 @@ export default function ArticlePage() {
   const [editingText, setEditingText] = useState('')
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const [isDeleteArticleDialogOpen, setIsDeleteArticleDialogOpen] = useState(false)
+  const [isAuthRequiredDialogOpen, setIsAuthRequiredDialogOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
   const replyInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())
   const editInputRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map())

@@ -44,10 +44,10 @@ export function AuthRequiredDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">
-            {title || t('authRequired.title', 'Требуется авторизация')}
+            {title || t('authRequired.title')}
           </DialogTitle>
           <DialogDescription className="text-sm sm:text-base">
-            {description || t('authRequired.description', 'Для выполнения этого действия необходимо войти в аккаунт')}
+            {description || t('authRequired.description')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
@@ -57,7 +57,7 @@ export function AuthRequiredDialog({
             className="w-full sm:w-auto"
           >
             <X className="mr-2 h-4 w-4" />
-            {t('common.cancel', 'Отмена')}
+            {t('common.cancel')}
           </Button>
           <Button
             variant="outline"
@@ -65,14 +65,14 @@ export function AuthRequiredDialog({
             className="w-full sm:w-auto"
           >
             <LogIn className="mr-2 h-4 w-4" />
-            {t('authRequired.signIn', 'Войти')}
+            {t('authRequired.signIn')}
           </Button>
           <Button
             onClick={handleSignUp}
             className="w-full sm:w-auto"
           >
             <UserPlus className="mr-2 h-4 w-4" />
-            {t('authRequired.signUp', 'Зарегистрироваться')}
+            {t('authRequired.signUp')}
           </Button>
         </DialogFooter>
       </DialogContent>
