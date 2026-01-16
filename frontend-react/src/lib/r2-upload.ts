@@ -2,7 +2,7 @@
  * Cloudflare R2 Upload Utility
  * Загрузка изображений в Cloudflare R2 через AWS SDK
  */
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { logger } from './logger';
 
@@ -48,14 +48,23 @@ function checkR2Config(): void {
 export async function uploadToR2(
   file: File,
   folder: 'avatars' | 'covers' | 'articles' = 'articles',
-  userId: string
+  userId: string,
+  deleteOldFiles: boolean = true, // Удалять ли старые файлы перед загрузкой
+  articleId?: string | number // ID статьи (только для folder === 'articles')
 ): Promise<R2UploadResult> {
   try {
     checkR2Config();
 
     // Генерируем уникальное имя файла
     const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // Для статей с articleId используем структуру: articles/{userId}/{articleId}/preview.jpg
+    // Это позволяет удалять только превью конкретной статьи
+    let fileName: string;
+    if (folder === 'articles' && articleId) {
+      fileName = `${folder}/${userId}/${articleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    } else {
+      fileName = `${folder}/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    }
 
     logger.debug('[uploadToR2] Uploading to R2:', {
       fileName,
@@ -63,7 +72,25 @@ export async function uploadToR2(
       size: file.size,
       type: file.type,
       bucket: r2BucketName,
+      deleteOldFiles,
+      articleId,
     });
+
+    // Удаляем старые файлы перед загрузкой нового (для оптимизации хранилища)
+    // Для аватаров и баннеров: удаляем все старые файлы пользователя
+    // Для статей: удаляем только если передан articleId (редактирование конкретной статьи)
+    // При создании новой статьи (без articleId) старые превью не удаляются
+    if (deleteOldFiles) {
+      if (folder === 'avatars' || folder === 'covers') {
+        // Для аватаров и баннеров удаляем все старые файлы
+        const deletedCount = await deleteOldFilesFromR2(folder, userId, fileName);
+        logger.debug('[uploadToR2] Deleted old files before upload:', { deletedCount, folder });
+      } else if (folder === 'articles' && articleId) {
+        // Для статей удаляем только превью конкретной редактируемой статьи
+        const deletedCount = await deleteOldFilesFromR2(folder, userId, fileName, articleId);
+        logger.debug('[uploadToR2] Deleted old preview for article:', { deletedCount, articleId });
+      }
+    }
 
     // Конвертируем File в ArrayBuffer (браузерная среда)
     const arrayBuffer = await file.arrayBuffer();
@@ -140,6 +167,86 @@ export async function deleteFromR2(path: string): Promise<boolean> {
   } catch (error: any) {
     logger.error('[deleteFromR2] Delete failed:', error);
     return false;
+  }
+}
+
+/**
+ * Удалить все старые файлы пользователя из указанной папки
+ * Используется для оптимизации - оставляем только последний загруженный файл
+ * 
+ * Для статей: если передан articleId, удаляет только превью этой статьи
+ * Для аватаров и баннеров: удаляет все старые файлы пользователя
+ */
+export async function deleteOldFilesFromR2(
+  folder: 'avatars' | 'covers' | 'articles',
+  userId: string,
+  excludePath?: string, // Путь к файлу, который нужно сохранить (новый файл)
+  articleId?: string | number // ID статьи (только для folder === 'articles')
+): Promise<number> {
+  try {
+    checkR2Config();
+
+    // Для статей с articleId используем более специфичный префикс
+    // Формат: articles/{userId}/{articleId}/preview.jpg
+    // Если articleId не передан, удаляем все превью пользователя
+    let prefix: string;
+    if (folder === 'articles' && articleId) {
+      prefix = `${folder}/${userId}/${articleId}/`;
+    } else {
+      prefix = `${folder}/${userId}/`;
+    }
+    
+    logger.debug('[deleteOldFilesFromR2] Finding old files:', {
+      prefix,
+      excludePath,
+      articleId,
+      bucket: r2BucketName,
+    });
+
+    // Получаем список всех файлов в папке пользователя
+    const listCommand = new ListObjectsV2Command({
+      Bucket: r2BucketName,
+      Prefix: prefix,
+    });
+
+    const listResponse = await r2Client.send(listCommand);
+    const filesToDelete = (listResponse.Contents || [])
+      .filter((file) => file.Key && file.Key !== excludePath)
+      .map((file) => file.Key!)
+      .filter(Boolean);
+
+    if (filesToDelete.length === 0) {
+      logger.debug('[deleteOldFilesFromR2] No old files to delete');
+      return 0;
+    }
+
+    logger.debug('[deleteOldFilesFromR2] Deleting old files:', {
+      count: filesToDelete.length,
+      files: filesToDelete,
+    });
+
+    // Удаляем все старые файлы
+    // R2 поддерживает удаление до 1000 объектов за раз
+    const deletePromises = filesToDelete.map((key) =>
+      deleteFromR2(key).catch((error) => {
+        logger.warn('[deleteOldFilesFromR2] Failed to delete file:', { key, error });
+        return false;
+      })
+    );
+
+    const results = await Promise.all(deletePromises);
+    const deletedCount = results.filter((result) => result === true).length;
+
+    logger.debug('[deleteOldFilesFromR2] Deleted old files:', {
+      deleted: deletedCount,
+      total: filesToDelete.length,
+    });
+
+    return deletedCount;
+  } catch (error: any) {
+    logger.error('[deleteOldFilesFromR2] Error deleting old files:', error);
+    // Не выбрасываем ошибку, чтобы не блокировать загрузку нового файла
+    return 0;
   }
 }
 

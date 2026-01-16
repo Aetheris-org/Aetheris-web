@@ -29,6 +29,113 @@ function getStorageProvider(): StorageProvider {
 }
 
 /**
+ * Удалить старые метаданные изображений из базы данных
+ */
+async function deleteOldImageMetadata(
+  userId: string,
+  folder: string,
+  excludePath: string,
+  articleId?: string | number
+): Promise<void> {
+  try {
+    let query = supabase
+      .from('image_uploads')
+      .delete()
+      .eq('user_id', userId)
+      .eq('folder', folder)
+      .neq('file_path', excludePath);
+
+    // Для статей с articleId удаляем только метаданные превью этой статьи
+    if (folder === 'articles' && articleId) {
+      // Фильтруем по пути, который содержит articleId
+      query = query.like('file_path', `%/${articleId}/%`);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      logger.warn('[deleteOldImageMetadata] Failed to delete old metadata:', error);
+    } else {
+      logger.debug('[deleteOldImageMetadata] Old metadata deleted successfully', { articleId });
+    }
+  } catch (error: any) {
+    logger.warn('[deleteOldImageMetadata] Error deleting old metadata:', error);
+  }
+}
+
+/**
+ * Удалить старые файлы из Supabase Storage
+ */
+async function deleteOldSupabaseFiles(
+  folder: 'avatars' | 'covers' | 'articles',
+  userId: string,
+  excludePath: string,
+  articleId?: string | number
+): Promise<void> {
+  try {
+    // Для статей с articleId используем более специфичный префикс
+    let prefix: string;
+    if (folder === 'articles' && articleId) {
+      prefix = `${folder}/${userId}/${articleId}/`;
+    } else {
+      prefix = `${folder}/${userId}/`;
+    }
+    
+    // Получаем список всех файлов в папке пользователя
+    const { data: files, error: listError } = await supabase.storage
+      .from('images')
+      .list(prefix, {
+        limit: 1000,
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
+
+    if (listError) {
+      logger.warn('[deleteOldSupabaseFiles] Failed to list files:', listError);
+      return;
+    }
+
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    // Фильтруем файлы, исключая новый файл
+    const filesToDelete = files
+      .filter((file) => {
+        const fullPath = `${prefix}${file.name}`;
+        return fullPath !== excludePath;
+      })
+      .map((file) => `${prefix}${file.name}`);
+
+    if (filesToDelete.length === 0) {
+      return;
+    }
+
+    logger.debug('[deleteOldSupabaseFiles] Deleting old files:', {
+      count: filesToDelete.length,
+      folder,
+      userId,
+      articleId,
+    });
+
+    // Удаляем старые файлы
+    const { error: deleteError } = await supabase.storage
+      .from('images')
+      .remove(filesToDelete);
+
+    if (deleteError) {
+      logger.warn('[deleteOldSupabaseFiles] Failed to delete old files:', deleteError);
+    } else {
+      logger.debug('[deleteOldSupabaseFiles] Deleted old files:', {
+        deleted: filesToDelete.length,
+      });
+    }
+  } catch (error: any) {
+    logger.warn('[deleteOldSupabaseFiles] Error deleting old files:', error);
+    // Не выбрасываем ошибку, чтобы не блокировать загрузку нового файла
+  }
+}
+
+/**
  * Сохранить метаданные загруженного изображения в базу данных
  */
 async function saveImageMetadata(
@@ -71,7 +178,8 @@ async function saveImageMetadata(
 export async function uploadImage(
   file: File,
   folder: 'avatars' | 'covers' | 'articles' = 'articles',
-  provider?: StorageProvider
+  provider?: StorageProvider,
+  articleId?: string | number // ID статьи (только для folder === 'articles')
 ): Promise<UploadResult> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,12 +201,20 @@ export async function uploadImage(
 
     if (storageProvider === 'r2') {
       // Загрузка в Cloudflare R2
-      const r2Result = await uploadToR2(file, folder, user.id);
+      // Для avatars и covers: удаляем все старые файлы пользователя
+      // Для articles: удаляем только если передан articleId (редактирование конкретной статьи)
+      const deleteOld = folder === 'avatars' || folder === 'covers' || (folder === 'articles' && articleId);
+      const r2Result = await uploadToR2(file, folder, user.id, deleteOld, articleId);
       result = {
         url: r2Result.url,
         path: r2Result.path,
         provider: 'r2',
       };
+
+      // Удаляем старые метаданные из базы данных
+      if (deleteOld) {
+        await deleteOldImageMetadata(user.id, folder, r2Result.path, articleId);
+      }
 
       // Сохраняем метаданные в базу данных
       await saveImageMetadata(
@@ -113,14 +229,28 @@ export async function uploadImage(
     } else {
       // Загрузка в Supabase Storage (старый способ)
       const fileExt = file.name.split('.').pop();
-      const fileName = `${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // Для статей с articleId используем структуру: articles/{userId}/{articleId}/preview.jpg
+      let fileName: string;
+      if (folder === 'articles' && articleId) {
+        fileName = `${folder}/${user.id}/${articleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      } else {
+        fileName = `${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      }
 
       logger.debug('[uploadImage] Uploading to Supabase Storage:', {
         fileName,
         folder,
         size: file.size,
         type: file.type,
+        articleId,
       });
+
+      // Удаляем старые файлы перед загрузкой нового (для оптимизации)
+      // Для avatars и covers: удаляем все старые
+      // Для articles: удаляем только если передан articleId (редактирование конкретной статьи)
+      if (folder === 'avatars' || folder === 'covers' || (folder === 'articles' && articleId)) {
+        await deleteOldSupabaseFiles(folder, user.id, fileName, articleId);
+      }
 
       const { data, error } = await supabase.storage
         .from('images')
@@ -147,6 +277,13 @@ export async function uploadImage(
         path: data.path,
         provider: 'supabase',
       };
+
+      // Удаляем старые метаданные из базы данных
+      // Для avatars и covers: удаляем все старые
+      // Для articles: удаляем только если передан articleId (редактирование конкретной статьи)
+      if (folder === 'avatars' || folder === 'covers' || (folder === 'articles' && articleId)) {
+        await deleteOldImageMetadata(user.id, folder, data.path, articleId);
+      }
 
       // Сохраняем метаданные в базу данных
       await saveImageMetadata(

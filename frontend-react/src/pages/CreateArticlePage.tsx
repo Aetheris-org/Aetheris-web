@@ -174,7 +174,11 @@ export default function CreateArticlePage() {
           type: croppedImageBlob.type || 'image/jpeg',
         })
 
-        const result = await uploadImage(file, 'articles')
+        // Получаем ID статьи для удаления только превью этой статьи
+        // Если редактируем существующую статью, используем её ID
+        // Если создаём новую, используем draftId (если есть)
+        const currentArticleId = editArticleIdRef.current || articleToEdit?.id || (draftId ? Number(draftId) : undefined);
+        const result = await uploadImage(file, 'articles', undefined, currentArticleId)
         
         logger.debug('[CreateArticlePage] Preview image uploaded successfully:', { url: result.url })
         setExistingPreviewImageId(result.url)
@@ -210,7 +214,7 @@ export default function CreateArticlePage() {
 
     // Если все попытки не удались, выбрасываем последнюю ошибку
     throw lastError || new Error('Failed to upload image after multiple attempts')
-  }, [croppedImageBlob, existingPreviewImageId, resolvePreviewUrl])
+  }, [croppedImageBlob, existingPreviewImageId, resolvePreviewUrl, editArticleIdRef, articleToEdit, draftId])
 
   const applyExternalImageUrl = useCallback(() => {
     const url = externalImageUrl.trim()
