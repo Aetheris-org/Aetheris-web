@@ -66,7 +66,7 @@ export async function getDraft(id: string): Promise<Article> {
           avatar
         )
       `)
-      .eq('id', parseInt(id))
+      .eq('id', id)
       .eq('author_id', user.id)
       .is('published_at', null)
       .single();
@@ -228,7 +228,7 @@ export async function deleteDraft(id: string): Promise<boolean> {
     const { data: existingDraft } = await supabase
       .from('articles')
       .select('author_id, published_at')
-      .eq('id', parseInt(id))
+      .eq('id', id)
       .single();
 
     if (!existingDraft) {
@@ -246,7 +246,7 @@ export async function deleteDraft(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('articles')
       .delete()
-      .eq('id', parseInt(id));
+      .eq('id', id);
 
     if (error) {
       logger.error('Error deleting draft', error);

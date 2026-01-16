@@ -35,6 +35,7 @@ import OnboardingPage from '@/pages/OnboardingPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
+import { DraftRecoveryProvider } from '@/components/DraftRecoveryProvider'
 
 /**
  * QueryClient с оптимизированными настройками для высокой нагрузки
@@ -142,6 +143,7 @@ function App() {
           <Route path="/legal/terms" element={<TermsOfServicePage />} />
           <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
         </Routes>
+        <DraftRecoveryProvider />
         <SiteFooter />
         <Toaster />
       </BrowserRouter>

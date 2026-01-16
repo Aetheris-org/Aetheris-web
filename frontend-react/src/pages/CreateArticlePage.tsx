@@ -1412,8 +1412,10 @@ export default function CreateArticlePage() {
       }
 
       // Восстанавливаем данные только если они есть и страница не редактирует существующую статью
+      // Или если есть параметр recover (принудительное восстановление)
+      const shouldRecover = searchParams.get('recover') === 'true'
       const isCurrentlyEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
-      if (!isCurrentlyEditing && latestDraft) {
+      if ((!isCurrentlyEditing || shouldRecover) && latestDraft) {
         logger.debug('[CreateArticlePage] Restoring draft from localStorage:', { draftId: latestDraft.draftId })
         
         if (latestDraft.title) setTitle(latestDraft.title)
@@ -1441,7 +1443,7 @@ export default function CreateArticlePage() {
     } catch (error) {
       logger.warn('[CreateArticlePage] Failed to restore from localStorage:', error)
     }
-  }, []) // Запускаем только при монтировании
+  }, [searchParams]) // Запускаем при монтировании и при изменении searchParams (для параметра recover)
 
   useEffect(() => {
     originalImageUrlRef.current = originalImageUrl

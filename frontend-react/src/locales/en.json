@@ -3178,6 +3178,21 @@
     "emptyDraft": "Empty draft",
     "continueWriting": "Continue writing"
   },
+  "draftRecovery": {
+    "title": "Unfinished article detected",
+    "description": "An unsaved article was found. Choose an action:",
+    "delete": "Delete",
+    "continue": "Continue editing",
+    "saveToDraft": "Save to draft",
+    "deleted": "Draft deleted",
+    "deletedDescription": "The unsaved article has been deleted",
+    "deleteError": "Delete error",
+    "deleteErrorDescription": "Failed to delete draft",
+    "saved": "Draft saved",
+    "savedDescription": "Article successfully saved to drafts",
+    "saveError": "Save error",
+    "saveErrorDescription": "Failed to save draft"
+  },
   "auth": {
     "title": "Sign In",
     "pageTitle": "Authorization",

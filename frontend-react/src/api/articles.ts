@@ -526,6 +526,14 @@ export async function getArticle(id: string): Promise<Article> {
       throw new Error('Article not found')
     }
 
+    // Проверяем, что черновики видны только автору
+    if (!data.published_at) {
+      // Если статья - черновик, проверяем, что текущий пользователь - автор
+      if (!userId || data.author_id !== userId) {
+        throw new Error('Article not found')
+      }
+    }
+
     logger.debug('[getArticle] Raw article data:', {
       id: data.id,
       title: data.title,

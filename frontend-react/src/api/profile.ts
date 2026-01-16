@@ -91,7 +91,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
       logger.debug('[getUserProfile] Sample profiles in database:', {
         error: allProfilesError,
-        profiles: allProfiles?.map(p => ({ id: p.id, username: p.username })) || []
+        profiles: allProfiles?.map((p: any) => ({ id: p.id, username: p.username })) || []
       });
 
       // Попробуем создать профиль автоматически, если он не существует
@@ -163,7 +163,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       }
     }
 
-    // Получаем статьи пользователя
+    // Получаем статьи пользователя (только опубликованные, не черновики)
     const { data: articles, error: articlesError } = await supabase
       .from('articles')
       .select(`
@@ -178,13 +178,14 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
+      .not('published_at', 'is', null) // Исключаем черновики
       .order('created_at', { ascending: false });
 
     if (articlesError) {
       logger.error('Error fetching user articles', articlesError);
     }
 
-    // Получаем комментарии пользователя
+    // Получаем комментарии пользователя (только к опубликованным статьям, не черновикам)
     const { data: comments, error: commentsError } = await supabase
       .from('comments')
       .select(`
@@ -196,7 +197,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           id,
           title,
           author_id,
-          deleted_at
+          deleted_at,
+          published_at
         )
       `)
       .eq('author_id', profileUuid)
@@ -207,7 +209,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       logger.error('Error fetching user comments', commentsError);
     }
 
-    // Получаем закладки пользователя (только для не удаленных статей)
+    // Получаем закладки пользователя (только для опубликованных, не удаленных статей)
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarks')
       .select(`
@@ -219,7 +221,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           excerpt,
           preview_image,
           author_id,
-          deleted_at
+          deleted_at,
+          published_at
         )
       `)
       .eq('user_id', profileUuid)
@@ -264,10 +267,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
 
     const isValidArticle = (item: any) => item && item.id
 
-    // Фильтруем удаленные статьи (soft delete / статус deleted)
-    const filteredArticlesRaw = (articles || []).filter((a: any) => !isSoftDeleted(a))
+    // Фильтруем удаленные статьи (soft delete / статус deleted) и черновики
+    const filteredArticlesRaw = (articles || []).filter((a: any) => {
+      if (isSoftDeleted(a)) return false
+      // Исключаем черновики (статьи без published_at)
+      if (!a.published_at) return false
+      return true
+    })
 
-    // Видимые статьи (все не удалённые, независимо от published_at)
+    // Видимые статьи (только опубликованные, не удалённые)
     const visibleArticles = filteredArticlesRaw;
     const totalLikes = visibleArticles.reduce((sum: number, article: any) => sum + (article.likes_count || 0), 0);
 
@@ -342,6 +350,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           // Исключаем комментарии к удаленным статьям (если поле deleted_at существует и не null)
           if (!isValidArticle(c.article)) return false
           if (c.article?.deleted_at) return false
+          // Исключаем комментарии к черновикам (статьи без published_at)
+          if (!c.article?.published_at) return false
           return true
         }).length,
         followers:
@@ -364,6 +374,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           // Исключаем комментарии к удаленным статьям (если поле deleted_at существует и не null)
           if (!isValidArticle(c.article)) return false
           if (c.article?.deleted_at) return false
+          // Исключаем комментарии к черновикам (статьи без published_at)
+          if (!c.article?.published_at) return false
           return true
         })
         .map((c: any) => ({
@@ -380,6 +392,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
           // Исключаем закладки к удаленным статьям (если поле deleted_at существует и не null)
           if (!isValidArticle(b.article)) return false
           if (b.article?.deleted_at) return false
+          // Исключаем закладки к черновикам (статьи без published_at)
+          if (!b.article?.published_at) return false
           return true
         })
         .map((b: any) => ({
