@@ -128,7 +128,7 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose }: Dra
         draftPayload.cover_url = draftData.previewImage
       }
 
-      const savedDraft = await createDraft(draftPayload)
+      await createDraft(draftPayload)
       
       // Удаляем старый ключ из localStorage, так как черновик сохранен в базу
       // Новый ключ будет создан автоматически при следующем автосохранении на странице создания
