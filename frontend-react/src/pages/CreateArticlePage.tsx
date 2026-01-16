@@ -154,6 +154,183 @@ export default function CreateArticlePage() {
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
   const isEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
   
+  // ============================================================================
+  // МОДАЛЬНОЕ ОКНО ПРИ ВЫХОДЕ С НЕСОХРАНЁННЫМИ ИЗМЕНЕНИЯМИ
+  // ============================================================================
+  
+  const [showExitDialog, setShowExitDialog] = useState(false)
+  const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | null>(null)
+  const userHasEditedRef = useRef(false)
+  
+  // Проверяем, есть ли несохранённые изменения
+  const hasUnsavedChanges = useCallback(() => {
+    return userHasEditedRef.current && Boolean(
+      title.trim() || content.trim() || excerpt.trim() || tags.length > 0 || 
+      croppedImageUrl || selectedImageUrl || originalImageUrl
+    )
+  }, [title, content, excerpt, tags, croppedImageUrl, selectedImageUrl, originalImageUrl])
+  
+  // Перехватываем клики на ссылки
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      // Ищем ближайшую ссылку
+      const link = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null
+      if (!link) return
+      
+      const href = link.getAttribute('href')
+      if (!href) return
+      
+      // Игнорируем внешние ссылки и якоря
+      if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) return
+      
+      // Игнорируем если нет несохранённых изменений
+      if (!hasUnsavedChanges()) return
+      
+      // Предотвращаем переход и показываем модалку
+      e.preventDefault()
+      e.stopPropagation()
+      setPendingNavigationUrl(href)
+      setShowExitDialog(true)
+    }
+    
+    // Используем capture phase для перехвата ДО обработки react-router
+    document.addEventListener('click', handleLinkClick, { capture: true })
+    
+    return () => {
+      document.removeEventListener('click', handleLinkClick, { capture: true })
+    }
+  }, [hasUnsavedChanges])
+  
+  // Предупреждение при закрытии вкладки
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault()
+        e.returnValue = ''
+        return ''
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
+  
+  // Обработчик: Удалить и выйти
+  const handleExitDelete = useCallback(() => {
+    // Очищаем localStorage
+    try {
+      Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+        localStorage.removeItem(k)
+      })
+    } catch (e) {
+      logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
+    }
+    
+    setShowExitDialog(false)
+    userHasEditedRef.current = false
+    
+    if (pendingNavigationUrl) {
+      navigate(pendingNavigationUrl)
+    }
+  }, [navigate, pendingNavigationUrl])
+  
+  // Обработчик: Продолжить редактирование
+  const handleExitContinue = useCallback(() => {
+    setShowExitDialog(false)
+    setPendingNavigationUrl(null)
+  }, [])
+  
+  // Обработчик: Сохранить в черновик и выйти
+  const handleExitSaveDraft = useCallback(async () => {
+    try {
+      // Получаем JSON из редактора
+      let currentContentJSON = contentJSON
+      if (editorRef.current) {
+        try {
+          currentContentJSON = editorRef.current.getJSON()
+        } catch (e) {
+          logger.warn('[CreateArticlePage] Failed to get JSON from editor:', e)
+        }
+      }
+      
+      // Преобразуем difficulty
+      const difficultyMap: Record<string, 'easy' | 'medium' | 'hard'> = {
+        beginner: 'easy',
+        intermediate: 'medium',
+        advanced: 'hard',
+      }
+      
+      // Формируем контент
+      let contentDoc: any[] = []
+      if (currentContentJSON?.type === 'doc' && Array.isArray(currentContentJSON.content)) {
+        contentDoc = currentContentJSON.content
+      } else if (Array.isArray(currentContentJSON)) {
+        contentDoc = currentContentJSON
+      } else if (content) {
+        const text = content.replace(/<[^>]*>/g, '').trim()
+        contentDoc = [{ type: 'paragraph', children: [{ text: text || '' }] }]
+      } else {
+        contentDoc = [{ type: 'paragraph', children: [{ text: '' }] }]
+      }
+      
+      const draftTitle = (title || t('createArticle.untitledDraft')).trim()
+      const finalDraftTitle = draftTitle.length < 10 ? draftTitle.padEnd(10, ' ') : draftTitle
+      
+      const draftPayload: any = {
+        title: finalDraftTitle,
+        content: contentDoc,
+        excerpt: (excerpt || ' ').trim(),
+        tags: tags,
+        difficulty: difficultyMap[difficulty] || 'medium',
+      }
+      
+      const previewImage = resolvePreviewUrl()
+      if (previewImage) {
+        draftPayload.previewImage = previewImage
+        draftPayload.preview_image = previewImage
+        draftPayload.cover_url = previewImage
+      }
+      
+      // Сохраняем черновик
+      if (draftId) {
+        await updateDraft(draftId, draftPayload)
+      } else {
+        await createDraft(draftPayload)
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+      
+      // Очищаем localStorage
+      try {
+        Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+          localStorage.removeItem(k)
+        })
+      } catch (e) {
+        logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
+      }
+      
+      toast({
+        title: t('draftRecovery.saved'),
+        description: t('draftRecovery.savedDescription'),
+      })
+      
+      setShowExitDialog(false)
+      userHasEditedRef.current = false
+      
+      if (pendingNavigationUrl) {
+        navigate(pendingNavigationUrl)
+      }
+    } catch (error: any) {
+      logger.error('[CreateArticlePage] Failed to save draft:', error)
+      toast({
+        title: t('draftRecovery.saveError'),
+        description: error?.message || t('draftRecovery.saveErrorDescription'),
+        variant: 'destructive',
+      })
+    }
+  }, [content, contentJSON, difficulty, draftId, excerpt, navigate, pendingNavigationUrl, queryClient, resolvePreviewUrl, t, tags, title, toast])
+  
+  // ============================================================================
 
   const uploadPreviewImageAsset = useCallback(async (): Promise<string | null> => {
     // Временно отключаем загрузку в наше хранилище
@@ -266,11 +443,13 @@ export default function CreateArticlePage() {
       }
       setTags([...tags, limitedTag])
       setTagInput('')
+      userHasEditedRef.current = true
     }
   }
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove))
+    userHasEditedRef.current = true
   }
 
   // Auto-resize textarea for excerpt
@@ -1410,6 +1589,7 @@ export default function CreateArticlePage() {
     setZoom(1)
     setCroppedAreaPixels(null)
     setIsCropDialogOpen(true)
+    userHasEditedRef.current = true
     event.target.value = ''
   }
 
@@ -3457,6 +3637,7 @@ export default function CreateArticlePage() {
                 onChange={(e) => {
                   const newValue = e.target.value.slice(0, TITLE_MAX_LENGTH)
                   setTitle(newValue)
+                  userHasEditedRef.current = true
                 }}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => setIsTitleFocused(false)}
@@ -3490,6 +3671,7 @@ export default function CreateArticlePage() {
                   const newValue = e.target.value.slice(0, EXCERPT_MAX_LENGTH)
                   setExcerpt(newValue)
                   adjustTextareaHeight()
+                  userHasEditedRef.current = true
                 }}
                 onFocus={() => setIsExcerptFocused(true)}
                 onBlur={() => setIsExcerptFocused(false)}
@@ -3518,6 +3700,7 @@ export default function CreateArticlePage() {
                   jsonValue={contentJSON}
                   onChange={(html) => {
                     setContent(html)
+                    userHasEditedRef.current = true
                     // Сохраняем JSON контент при каждом изменении, чтобы он был доступен при публикации
                     // даже если редактор размонтирован на других шагах
                     // Используем requestAnimationFrame для более плавного обновления
@@ -4249,6 +4432,54 @@ export default function CreateArticlePage() {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно при выходе с несохранёнными изменениями */}
+      <Dialog open={showExitDialog} onOpenChange={(open) => {
+        if (!open) handleExitContinue()
+      }}>
+        <DialogContent className="sm:max-w-[500px] p-6">
+          <DialogHeader className="flex flex-row items-center justify-center sm:justify-start gap-3 pb-4 border-b border-border/60">
+            <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
+            <DialogTitle className="text-lg sm:text-xl text-center sm:text-left">
+              {t('draftRecovery.title')}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="text-sm sm:text-base text-center sm:text-left pt-2 space-y-2">
+            <p>{t('createArticle.unsavedChangesWarning') || 'У вас есть несохранённые изменения. Что вы хотите сделать?'}</p>
+            {title && (
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2 rounded-md">
+                <FileText className="h-4 w-4 shrink-0" />
+                <p className="font-medium truncate">{title || t('createArticle.untitledDraft')}</p>
+              </div>
+            )}
+          </DialogDescription>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleExitDelete}
+              className="w-full sm:w-auto text-destructive hover:text-destructive"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              {t('draftRecovery.delete')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExitContinue}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t('draftRecovery.continue')}
+            </Button>
+            <Button
+              onClick={handleExitSaveDraft}
+              className="w-full sm:w-auto"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {t('draftRecovery.saveToDraft')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] sm:w-full p-4 sm:p-6">
