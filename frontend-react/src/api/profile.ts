@@ -163,7 +163,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       }
     }
 
-    // Получаем статьи пользователя (только не удаленные)
+    // Получаем статьи пользователя
     const { data: articles, error: articlesError } = await supabase
       .from('articles')
       .select(`
@@ -178,14 +178,13 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
-      .is('deleted_at', null) // Исключаем удаленные статьи
       .order('created_at', { ascending: false });
 
     if (articlesError) {
       logger.error('Error fetching user articles', articlesError);
     }
 
-    // Получаем комментарии пользователя (только не удаленные)
+    // Получаем комментарии пользователя
     const { data: comments, error: commentsError } = await supabase
       .from('comments')
       .select(`
@@ -201,7 +200,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         )
       `)
       .eq('author_id', profileUuid)
-      .is('deleted_at', null) // Исключаем удаленные комментарии
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -323,9 +321,6 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       normalizeStr((profile as any).banner_url) ||
       null
 
-    const normalizeId = (value: any) => (value === undefined || value === null ? '' : String(value).toLowerCase())
-    const ownerId = normalizeId(profile.id)
-
     const userProfile: UserProfile = {
       user: {
         id: profile.id ? uuidToNumber(profile.id) : 0,
@@ -342,12 +337,12 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
         publishedArticles: visibleArticles.length,
         totalLikes,
         totalComments: (comments || []).filter((c: any) => {
-          // Исключаем удаленные комментарии
-          if (isSoftDeleted(c)) return false
-          // Исключаем комментарии к удаленным статьям
-          if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
-          const articleAuthorId = normalizeId((c.article as any)?.author_id)
-          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+          // Исключаем удаленные комментарии (если поле deleted_at существует и не null)
+          if (c?.deleted_at) return false
+          // Исключаем комментарии к удаленным статьям (если поле deleted_at существует и не null)
+          if (!isValidArticle(c.article)) return false
+          if (c.article?.deleted_at) return false
+          return true
         }).length,
         followers:
           typeof profile.followers_count === 'number'
@@ -364,12 +359,12 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       articles: transformedArticles,
       comments: (comments || [])
         .filter((c: any) => {
-          // Исключаем удаленные комментарии
-          if (isSoftDeleted(c)) return false
-          // Исключаем комментарии к удаленным статьям
-          if (!isValidArticle(c.article) || isSoftDeleted(c.article)) return false
-          const articleAuthorId = normalizeId((c.article as any)?.author_id)
-          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+          // Исключаем удаленные комментарии (если поле deleted_at существует и не null)
+          if (c?.deleted_at) return false
+          // Исключаем комментарии к удаленным статьям (если поле deleted_at существует и не null)
+          if (!isValidArticle(c.article)) return false
+          if (c.article?.deleted_at) return false
+          return true
         })
         .map((c: any) => ({
         id: String(c.id),
@@ -382,9 +377,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
       })),
       bookmarks: (bookmarks || [])
         .filter((b: any) => {
-          if (!isValidArticle(b.article) || isSoftDeleted(b.article)) return false
-          const articleAuthorId = normalizeId((b.article as any)?.author_id)
-          return !ownerId || !articleAuthorId || articleAuthorId === ownerId
+          // Исключаем закладки к удаленным статьям (если поле deleted_at существует и не null)
+          if (!isValidArticle(b.article)) return false
+          if (b.article?.deleted_at) return false
+          return true
         })
         .map((b: any) => ({
         id: String(b.id),
