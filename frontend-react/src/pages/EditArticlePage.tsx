@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
@@ -139,7 +139,6 @@ export default function EditArticlePage() {
   }, [id])
   
   // На странице редактирования не используем draft параметры
-  const draftParam = null
   const draftIdFromQuery = null
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
@@ -1476,6 +1475,7 @@ export default function EditArticlePage() {
   }, [originalImageUrl])
 
   useEffect(() => {
+    // На странице редактирования не загружаем черновики (draftIdFromQuery всегда null)
     if (!draftIdFromQuery) {
       loadedDraftIdRef.current = null
       return
@@ -1748,22 +1748,7 @@ export default function EditArticlePage() {
     }
   }, [title, content, excerpt, tags, difficulty, draftId, contentJSON, resolvePreviewUrl])
 
-  // Отслеживание навигации и сохранение перед выходом со страницы
-  useEffect(() => {
-    // Если мы покидаем страницу /create, сохраняем данные
-    if (prevLocationRef.current === '/create' && location.pathname !== '/create') {
-      logger.debug('[CreateArticlePage] Navigating away from /create, saving draft')
-      saveToLocalStorage()
-      // Небольшая задержка для гарантии сохранения
-      setTimeout(() => {
-        // Триггерим кастомное событие для DraftRecoveryProvider
-        // (StorageEvent не срабатывает в той же вкладке)
-        window.dispatchEvent(new CustomEvent('draft-saved'))
-        logger.debug('[CreateArticlePage] Dispatched draft-saved event')
-      }, 50)
-    }
-    prevLocationRef.current = location.pathname
-  }, [location.pathname, saveToLocalStorage, draftId])
+  // На странице редактирования не отслеживаем навигацию (это только для /create)
 
   // Автосохранение перед закрытием страницы и при потере фокуса
   useEffect(() => {

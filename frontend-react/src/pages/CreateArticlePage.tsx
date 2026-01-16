@@ -75,10 +75,12 @@ function getPlainTextFromHtml(html: string): string {
 
 export default function CreateArticlePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { toast } = useToast()
   const { user } = useAuthStore()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const prevLocationRef = useRef(location.pathname)
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
