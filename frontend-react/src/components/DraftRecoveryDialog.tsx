@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Trash2, Edit, Save, X, AlertCircle } from 'lucide-react'
+import { FileText, Trash2, Edit, Save, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/hooks/useTranslation'
 import { logger } from '@/lib/logger'
 import { createDraft } from '@/api/drafts'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/lib/utils'
 
 interface DraftData {
   title?: string
