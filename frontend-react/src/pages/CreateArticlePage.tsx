@@ -179,8 +179,12 @@ export default function CreateArticlePage() {
     } else {
       allowNavigationRef.current = true
       if (typeof to === 'number') {
-        // Для числовой навигации используем history.go() напрямую
-        window.history.go(to)
+        // Если есть куда вернуться — используем history, иначе переходим на /forum
+        if (window.history.length > 1) {
+          window.history.go(to)
+        } else {
+          navigate('/forum')
+        }
       } else {
         navigate(to)
       }
@@ -273,26 +277,6 @@ export default function CreateArticlePage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
   
-  // Перехват кнопки "Назад" браузера
-  useEffect(() => {
-    // Добавляем запись в историю, чтобы перехватить нажатие "Назад"
-    if (hasUnsavedChanges()) {
-      window.history.pushState({ preventBack: true }, '')
-    }
-    
-    const handlePopState = (_e: PopStateEvent) => {
-      if (hasUnsavedChanges()) {
-        // Возвращаем пользователя обратно на страницу
-        window.history.pushState({ preventBack: true }, '')
-        // Показываем модальное окно
-        setPendingNavigationUrl(-1)
-        setShowExitDialog(true)
-      }
-    }
-    
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [hasUnsavedChanges])
   
   // Ctrl+S для сохранения в черновики
   useEffect(() => {
@@ -362,6 +346,15 @@ export default function CreateArticlePage() {
           // Сбрасываем флаг — изменения сохранены
           userHasEditedRef.current = false
           
+          // Очищаем localStorage чтобы DraftRecoveryProvider не показывал модальное окно
+          try {
+            Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+              localStorage.removeItem(k)
+            })
+          } catch (err) {
+            logger.warn('[CreateArticlePage] Failed to clear localStorage:', err)
+          }
+          
           toast({
             title: t('draftRecovery.saved'),
             description: t('draftRecovery.savedDescription'),
@@ -398,7 +391,11 @@ export default function CreateArticlePage() {
     if (pendingNavigationUrl !== null) {
       allowNavigationRef.current = true
       if (typeof pendingNavigationUrl === 'number') {
-        window.history.go(pendingNavigationUrl)
+        if (window.history.length > 1) {
+          window.history.go(pendingNavigationUrl)
+        } else {
+          navigate('/forum')
+        }
       } else {
         navigate(pendingNavigationUrl)
       }
@@ -491,7 +488,11 @@ export default function CreateArticlePage() {
       if (pendingNavigationUrl !== null) {
         allowNavigationRef.current = true
         if (typeof pendingNavigationUrl === 'number') {
-          window.history.go(pendingNavigationUrl)
+          if (window.history.length > 1) {
+            window.history.go(pendingNavigationUrl)
+          } else {
+            navigate('/forum')
+          }
         } else {
           navigate(pendingNavigationUrl)
         }

@@ -55,8 +55,8 @@ export function DraftRecoveryProvider() {
 
   // Функция проверки localStorage
   const checkLocalStorage = () => {
-    // Если мы на странице создания или редактирования статьи, не показываем модальное окно
-    if (location.pathname === '/create' || location.pathname.startsWith('/edit/')) {
+    // Если мы на странице создания, редактирования или черновиков, не показываем модальное окно
+    if (location.pathname === '/create' || location.pathname.startsWith('/edit/') || location.pathname === '/drafts') {
       setRecoveryDraft(null)
       return
     }
@@ -161,8 +161,8 @@ export function DraftRecoveryProvider() {
 
   // Основной эффект для постоянной проверки
   useEffect(() => {
-    // Сбрасываем черновик при смене страницы на /create или /edit/*
-    if (location.pathname === '/create' || location.pathname.startsWith('/edit/')) {
+    // Сбрасываем черновик при смене страницы на /create, /edit/* или /drafts
+    if (location.pathname === '/create' || location.pathname.startsWith('/edit/') || location.pathname === '/drafts') {
       setRecoveryDraft(null)
       return
     }
@@ -217,7 +217,7 @@ export function DraftRecoveryProvider() {
     // Постоянная периодическая проверка каждые 2 секунды
     // Это обеспечивает обнаружение черновиков на любой странице
     checkIntervalRef.current = setInterval(() => {
-      if (location.pathname !== '/create' && !location.pathname.startsWith('/edit/') && user) {
+      if (location.pathname !== '/create' && !location.pathname.startsWith('/edit/') && location.pathname !== '/drafts' && user) {
         checkLocalStorage()
       }
     }, 2000)
@@ -250,8 +250,8 @@ export function DraftRecoveryProvider() {
     setRecoveryDraft(null)
   }
 
-  // Не показываем диалог, если мы на странице создания/редактирования статьи или нет черновика
-  if (!recoveryDraft || location.pathname === '/create' || location.pathname.startsWith('/edit/') || !user) {
+  // Не показываем диалог, если мы на странице создания/редактирования статьи, черновиков или нет черновика
+  if (!recoveryDraft || location.pathname === '/create' || location.pathname.startsWith('/edit/') || location.pathname === '/drafts' || !user) {
     return null
   }
 
