@@ -126,10 +126,24 @@ export default function DraftsPage() {
 
   const formattedDrafts = useMemo(
     () =>
-      drafts.map((draft) => ({
-        ...draft,
-        updatedAt: draft.updatedAt || draft.createdAt,
-      })),
+      drafts
+        .filter((draft) => {
+          // Фильтруем только существующие черновики с валидными данными
+          if (!draft || !draft.id) {
+            logger.warn('[DraftsPage] Found invalid draft:', draft)
+            return false
+          }
+          // Проверяем, что черновик не удален (если есть поле deleted_at)
+          if ((draft as any).deleted_at) {
+            logger.debug('[DraftsPage] Filtering out deleted draft:', draft.id)
+            return false
+          }
+          return true
+        })
+        .map((draft) => ({
+          ...draft,
+          updatedAt: draft.updatedAt || draft.createdAt,
+        })),
     [drafts]
   )
 
@@ -137,8 +151,34 @@ export default function DraftsPage() {
     navigate('/create')
   }
 
-  const handleContinueDraft = (draftId: string | number) => {
-    navigate(`/create?draft=${draftId}`)
+  const handleContinueDraft = async (draftId: string | number) => {
+    try {
+      // Проверяем существование черновика перед переходом
+      const { getDraft } = await import('@/api/drafts')
+      const draft = await getDraft(String(draftId))
+      
+      if (!draft) {
+        toast({
+          title: t('drafts.draftNotFound'),
+          description: t('drafts.draftNotFoundDescription'),
+          variant: 'destructive',
+        })
+        // Обновляем список черновиков, чтобы убрать несуществующий
+        queryClient.invalidateQueries({ queryKey: ['drafts'] })
+        return
+      }
+      
+      navigate(`/create?draft=${draftId}`)
+    } catch (error: any) {
+      logger.error('[DraftsPage] Failed to verify draft before continuing:', error)
+      toast({
+        title: t('drafts.draftNotFound'),
+        description: error?.message || t('drafts.draftNotFoundDescription'),
+        variant: 'destructive',
+      })
+      // Обновляем список черновиков, чтобы убрать несуществующий
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+    }
   }
 
   const handleDeleteDraft = async (draftId: string | number) => {

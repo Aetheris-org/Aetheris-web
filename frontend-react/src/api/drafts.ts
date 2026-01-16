@@ -1,11 +1,68 @@
 /**
  * Drafts API using Supabase REST API
- * Замена для drafts-graphql.ts
+ * Работает с отдельной таблицей drafts
  */
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import type { Article } from '@/types/article';
-import { transformArticle } from './articles';
+
+/**
+ * Преобразование черновика из базы данных в формат Article
+ * Структура таблицы drafts:
+ * - id: uuid
+ * - author_id: uuid
+ * - title: text
+ * - content: text
+ * - summary: text (соответствует excerpt)
+ * - cover_url: text (соответствует preview_image)
+ * - tags: _text (массив текста)
+ * - created_at: timestamptz
+ * - updated_at: timestamptz
+ */
+function transformDraft(draft: any, userId: string): Article {
+  // Преобразуем content из text в массив, если это JSON строка
+  let contentArray: any[] = [];
+  if (typeof draft.content === 'string') {
+    try {
+      const parsed = JSON.parse(draft.content);
+      contentArray = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      // Если не JSON, создаем простой массив из текста
+      contentArray = [
+        {
+          type: 'paragraph',
+          children: [{ text: draft.content || '' }],
+        },
+      ];
+    }
+  } else if (Array.isArray(draft.content)) {
+    contentArray = draft.content;
+  }
+
+  return {
+    id: String(draft.id),
+    title: draft.title || '',
+    content: contentArray,
+    excerpt: draft.summary || '', // summary -> excerpt
+    tags: draft.tags || [],
+    difficulty: draft.difficulty || 'intermediate', // Если нет в БД, используем дефолт
+    previewImage: draft.cover_url || null, // cover_url -> preview_image
+    author: draft.author || {
+      id: draft.author_id,
+      username: draft.author?.username || '',
+      avatar: draft.author?.avatar || null,
+    },
+    likesCount: 0, // Черновики не имеют лайков
+    dislikesCount: 0,
+    views: 0, // Черновики не имеют просмотров
+    createdAt: draft.created_at || new Date().toISOString(),
+    updatedAt: draft.updated_at || draft.created_at || new Date().toISOString(),
+    publishedAt: null, // Черновики не опубликованы
+    isLiked: false,
+    isDisliked: false,
+    isBookmarked: false,
+  };
+}
 
 /**
  * Получить все черновики пользователя
@@ -19,17 +76,16 @@ export async function getDrafts(skip: number = 0, take: number = 100): Promise<A
     }
 
     const { data, error } = await supabase
-      .from('articles')
+      .from('drafts')
       .select(`
         *,
-        author:profiles!articles_author_id_fkey (
+        author:profiles (
           id,
           username,
           avatar
         )
       `)
       .eq('author_id', user.id)
-      .is('published_at', null)
       .order('updated_at', { ascending: false })
       .range(skip, skip + take - 1);
 
@@ -38,7 +94,7 @@ export async function getDrafts(skip: number = 0, take: number = 100): Promise<A
       throw error;
     }
 
-    return (data || []).map((article: any) => transformArticle(article, user.id));
+    return (data || []).map((draft: any) => transformDraft(draft, user.id));
   } catch (error: any) {
     logger.error('Error in getDrafts', error);
     throw error;
@@ -57,10 +113,10 @@ export async function getDraft(id: string): Promise<Article> {
     }
 
     const { data, error } = await supabase
-      .from('articles')
+      .from('drafts')
       .select(`
         *,
-        author:profiles!articles_author_id_fkey (
+        author:profiles (
           id,
           username,
           avatar
@@ -68,7 +124,6 @@ export async function getDraft(id: string): Promise<Article> {
       `)
       .eq('id', id)
       .eq('author_id', user.id)
-      .is('published_at', null)
       .single();
 
     if (error) {
@@ -80,7 +135,7 @@ export async function getDraft(id: string): Promise<Article> {
       throw new Error('Draft not found');
     }
 
-    return transformArticle(data, user.id);
+    return transformDraft(data, user.id);
   } catch (error: any) {
     logger.error('Error in getDraft', error);
     throw error;
@@ -105,21 +160,24 @@ export async function createDraft(data: {
       throw new Error('Not authenticated');
     }
 
-    const { data: article, error } = await supabase
-      .from('articles')
+    // Преобразуем content в JSON строку, если это массив
+    const contentString = Array.isArray(data.content) 
+      ? JSON.stringify(data.content) 
+      : (typeof data.content === 'string' ? data.content : JSON.stringify(data.content || []));
+
+    const { data: draft, error } = await supabase
+      .from('drafts')
       .insert({
         title: data.title,
-        content: data.content,
-        excerpt: data.excerpt,
+        content: contentString, // content как text (JSON строка)
+        summary: data.excerpt, // excerpt -> summary
         tags: data.tags,
-        difficulty: data.difficulty,
-        preview_image: data.previewImage || null,
+        cover_url: data.previewImage || null, // preview_image -> cover_url
         author_id: user.id,
-        published_at: null, // Черновик
       })
       .select(`
         *,
-        author:profiles!articles_author_id_fkey (
+        author:profiles (
           id,
           username,
           avatar
@@ -132,7 +190,7 @@ export async function createDraft(data: {
       throw error;
     }
 
-    return transformArticle(article, user.id);
+    return transformDraft(draft, user.id);
   } catch (error: any) {
     logger.error('Error in createDraft', error);
     throw error;
@@ -162,9 +220,9 @@ export async function updateDraft(
 
     // Проверяем права доступа
     const { data: existingDraft } = await supabase
-      .from('articles')
-      .select('author_id, published_at')
-      .eq('id', parseInt(id))
+      .from('drafts')
+      .select('author_id')
+      .eq('id', id)
       .single();
 
     if (!existingDraft) {
@@ -175,25 +233,25 @@ export async function updateDraft(
       throw new Error('You can only edit your own drafts');
     }
 
-    if (existingDraft.published_at !== null) {
-      throw new Error('Cannot update published article as draft');
-    }
-
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.content !== undefined) updateData.content = data.content;
-    if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
+    if (data.content !== undefined) {
+      // Преобразуем content в JSON строку, если это массив
+      updateData.content = Array.isArray(data.content) 
+        ? JSON.stringify(data.content) 
+        : (typeof data.content === 'string' ? data.content : JSON.stringify(data.content || []));
+    }
+    if (data.excerpt !== undefined) updateData.summary = data.excerpt; // excerpt -> summary
     if (data.tags !== undefined) updateData.tags = data.tags;
-    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
-    if (data.previewImage !== undefined) updateData.preview_image = data.previewImage;
+    if (data.previewImage !== undefined) updateData.cover_url = data.previewImage; // preview_image -> cover_url
 
-    const { data: article, error } = await supabase
-      .from('articles')
+    const { data: draft, error } = await supabase
+      .from('drafts')
       .update(updateData)
-      .eq('id', parseInt(id))
+      .eq('id', id)
       .select(`
         *,
-        author:profiles!articles_author_id_fkey (
+        author:profiles (
           id,
           username,
           avatar
@@ -206,7 +264,7 @@ export async function updateDraft(
       throw error;
     }
 
-    return transformArticle(article, user.id);
+    return transformDraft(draft, user.id);
   } catch (error: any) {
     logger.error('Error in updateDraft', error);
     throw error;
@@ -226,8 +284,8 @@ export async function deleteDraft(id: string): Promise<boolean> {
 
     // Проверяем права доступа
     const { data: existingDraft } = await supabase
-      .from('articles')
-      .select('author_id, published_at')
+      .from('drafts')
+      .select('author_id')
       .eq('id', id)
       .single();
 
@@ -239,12 +297,8 @@ export async function deleteDraft(id: string): Promise<boolean> {
       throw new Error('You can only delete your own drafts');
     }
 
-    if (existingDraft.published_at !== null) {
-      throw new Error('Cannot delete published article');
-    }
-
     const { error } = await supabase
-      .from('articles')
+      .from('drafts')
       .delete()
       .eq('id', id);
 

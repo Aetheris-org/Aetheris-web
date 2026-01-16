@@ -103,6 +103,7 @@ export default function CreateArticlePage() {
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<string | null>(null)
   const [lastDraftSaveTime, setLastDraftSaveTime] = useState<number>(0)
+  const isUnmountingRef = useRef(false) // Флаг для предотвращения создания новых черновиков при размонтировании
   const [currentStep, setCurrentStep] = useState(0)
   const [isTitleFocused, setIsTitleFocused] = useState(false)
   const [isExcerptFocused, setIsExcerptFocused] = useState(false)
@@ -553,7 +554,13 @@ export default function CreateArticlePage() {
     // - Нет контента (ни заголовка, ни текста)
     // - Идет загрузка черновика
     // - Идет сохранение черновика
-    if (!user || (title.trim().length === 0 && getPlainTextFromHtml(content).trim().length === 0) || isLoadingDraft || isSavingDraft) {
+    // Не сохраняем, если:
+    // 1. Пользователь не авторизован
+    // 2. Нет контента
+    // 3. Идет загрузка черновика
+    // 4. Уже идет сохранение (чтобы избежать дубликатов)
+    // 5. Идет размонтирование компонента
+    if (!user || (title.trim().length === 0 && getPlainTextFromHtml(content).trim().length === 0) || isLoadingDraft || isSavingDraft || isUnmountingRef.current) {
       return
     }
 
@@ -707,13 +714,14 @@ export default function CreateArticlePage() {
         }
 
         // Затем сохраняем черновик на бэкенд
+        // НЕ создаем новый черновик, если уже идет сохранение или размонтирование
         let saved: Article
         if (currentDraftId) {
           try {
             saved = await updateDraft(currentDraftId, draftData)
           } catch (error: any) {
-            // Если черновик не найден, создаем новый
-            if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+            // Если черновик не найден, создаем новый ТОЛЬКО если не идет размонтирование
+            if ((error?.message?.includes('Draft not found') || error?.message?.includes('not found')) && !isUnmountingRef.current) {
               logger.warn('[CreateArticlePage] Draft not found, creating new one:', { currentDraftId })
               saved = await createDraft(draftData)
               // Обновляем localStorage с новым ID
@@ -735,6 +743,12 @@ export default function CreateArticlePage() {
             }
           }
         } else {
+          // НЕ создаем новый черновик при автосохранении, если уже идет размонтирование
+          // В этом случае просто сохраняем в localStorage
+          if (isUnmountingRef.current) {
+            logger.debug('[CreateArticlePage] Skipping draft creation on unmount during auto-save')
+            return
+          }
           saved = await createDraft(draftData)
         }
 
@@ -767,7 +781,8 @@ export default function CreateArticlePage() {
       } catch (error: any) {
         logger.error('[CreateArticlePage] Failed to auto-save draft:', error)
         // Если черновик не найден, пытаемся создать новый (только для автосохранения)
-        if (error?.message?.includes('Draft not found') || error?.message?.includes('not found')) {
+        // НЕ создаем новый черновик, если уже идет размонтирование
+        if ((error?.message?.includes('Draft not found') || error?.message?.includes('not found')) && !isUnmountingRef.current) {
           try {
             logger.warn('[CreateArticlePage] Draft not found in auto-save, creating new one')
             // Пересоздаем данные для сохранения из текущего state
@@ -883,6 +898,11 @@ export default function CreateArticlePage() {
         // Не показываем toast при ошибке автосохранения, чтобы не раздражать пользователя
       }
     }, 3000) // 3 секунды задержка
+    
+    // Не создаем новый черновик при автосохранении, если уже идет размонтирование
+    if (isUnmountingRef.current) {
+      return
+    }
 
     setAutoSaveTimeout(timeout)
 
@@ -1539,10 +1559,14 @@ export default function CreateArticlePage() {
   // Сохранение при размонтировании компонента (выход со страницы)
   useEffect(() => {
     return () => {
+      // Устанавливаем флаг размонтирования, чтобы предотвратить создание новых черновиков
+      isUnmountingRef.current = true
+      
       // Сохраняем в localStorage при выходе со страницы (синхронно)
       saveToLocalStorage()
       
       // Также пытаемся сохранить на бэкенд асинхронно (не блокируем размонтирование)
+      // ВАЖНО: Используем ТОЛЬКО updateDraft, НЕ createDraft, чтобы не создавать дубликаты
       if (user && draftId) {
         // Используем navigator.sendBeacon или fetch с keepalive для надежного сохранения
         try {
@@ -1621,9 +1645,12 @@ export default function CreateArticlePage() {
           }
 
           // Пытаемся сохранить на бэкенд (не блокируем размонтирование)
+          // ВАЖНО: Используем ТОЛЬКО updateDraft, НЕ createDraft, чтобы не создавать дубликаты
           // Используем setTimeout чтобы не блокировать размонтирование
           setTimeout(() => {
             updateDraft(draftId, draftData).catch((error) => {
+              // НЕ создаем новый черновик при ошибке - просто логируем
+              // Это предотвращает создание множественных копий
               logger.warn('[CreateArticlePage] Failed to save draft on unmount:', error)
             })
           }, 0)
