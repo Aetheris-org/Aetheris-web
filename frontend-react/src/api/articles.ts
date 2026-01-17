@@ -197,17 +197,40 @@ export function transformArticle(article: any, _userId?: string): Article {
   if (typeof rawContent === 'string') {
     try {
       const parsed = JSON.parse(rawContent);
-      contentJSON = parsed;
+      // Проверяем формат - если это уже ProseMirror формат (type: 'doc'), используем как есть
+      if (parsed && typeof parsed === 'object' && parsed.type === 'doc') {
+        contentJSON = parsed;
+      } else {
+        contentJSON = parsed;
+      }
       content = rawContent; // сохраняем оригинал для HTML fallback
     } catch {
       content = rawContent; // обычный HTML
       contentJSON = null;
     }
   } else if (Array.isArray(rawContent)) {
-    contentJSON = { document: rawContent };
+    // Массив может быть либо Slate форматом, либо нужно обернуть в ProseMirror doc
+    // Проверяем, есть ли уже тип 'doc' в первом элементе (не должно быть)
+    // Если это массив блоков, оборачиваем в ProseMirror формат
+    if (rawContent.length > 0 && rawContent[0] && rawContent[0].type === 'doc') {
+      // Уже ProseMirror формат, но в массиве
+      contentJSON = rawContent[0];
+    } else {
+      // Старый формат или неизвестный - оставляем как есть, но стараемся нормализовать
+      contentJSON = { type: 'doc', content: rawContent };
+    }
     content = rawContent;
   } else if (rawContent && typeof rawContent === 'object') {
-    contentJSON = rawContent;
+    // Если это уже ProseMirror формат (type: 'doc'), используем как есть
+    if (rawContent.type === 'doc') {
+      contentJSON = rawContent;
+    } else if (rawContent.document && Array.isArray(rawContent.document)) {
+      // Старый формат KeystoneJS { document: [...] }
+      contentJSON = { type: 'doc', content: rawContent.document };
+    } else {
+      // Другой объект - возможно уже правильный формат
+      contentJSON = rawContent;
+    }
     content = rawContent;
   } else {
     content = '';

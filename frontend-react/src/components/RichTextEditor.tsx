@@ -1017,6 +1017,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       // Вставляем медиа в редактор
       if (mediaType === 'image') {
         editor.chain().focus().setImage({ src: url }).run()
+        
+        // Проверяем, что изображение добавлено в JSON
+        if (import.meta.env.DEV) {
+          setTimeout(() => {
+            const json = editor.getJSON()
+            const hasImage = JSON.stringify(json).includes(url)
+            if (hasImage) {
+              logger.debug('[RichTextEditor] Image added to editor JSON:', { url: url.substring(0, 100) })
+            } else {
+              logger.warn('[RichTextEditor] Image URL not found in editor JSON after insertion!', { url: url.substring(0, 100) })
+            }
+          }, 100)
+        }
       } else if (mediaType === 'video') {
         // Для видео вставляем через HTML
         const videoHTML = `<div class="editor-video-wrapper"><video controls src="${url}" class="max-w-full h-auto rounded-lg"></video></div>`

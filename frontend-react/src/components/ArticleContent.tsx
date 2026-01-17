@@ -193,7 +193,34 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         // Если в JSON есть изображения, но в DOM их нет - это проблема
         const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
         if (hasImages) {
-          logger.warn('[ArticleContent] Images in JSON but not in DOM!')
+          logger.warn('[ArticleContent] Images in JSON but not in DOM!', {
+            proseMirrorContent: JSON.stringify(proseMirrorContent).substring(0, 500),
+          })
+          
+          // Попробуем найти изображения в редакторе через JSON
+          const json = editor.getJSON()
+          const findImagesInJSON = (content: any[]): any[] => {
+            const images: any[] = []
+            for (const node of content || []) {
+              if (node.type === 'image') {
+                images.push(node)
+              }
+              if (node.content && Array.isArray(node.content)) {
+                images.push(...findImagesInJSON(node.content))
+              }
+            }
+            return images
+          }
+          const imagesInJSON = findImagesInJSON(json.content || [])
+          
+          if (imagesInJSON.length > 0) {
+            logger.warn('[ArticleContent] Images found in editor JSON but not rendered in DOM:', {
+              count: imagesInJSON.length,
+              images: imagesInJSON.map(img => ({
+                src: img.attrs?.src?.substring(0, 100),
+              })),
+            })
+          }
         }
       }
 

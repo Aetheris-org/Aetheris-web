@@ -2569,6 +2569,26 @@ export default function CreateArticlePage() {
       // Используем сохраненный JSON из состояния, если редактор размонтирован
       const finalContentJSON = editorJSON || contentJSON
       
+      // Проверяем наличие изображений в JSON
+      const findImagesInJSON = (json: any): any[] => {
+        const images: any[] = []
+        if (!json || typeof json !== 'object') return images
+        
+        if (json.type === 'image') {
+          images.push(json)
+        }
+        
+        if (Array.isArray(json.content)) {
+          json.content.forEach((node: any) => {
+            images.push(...findImagesInJSON(node))
+          })
+        }
+        
+        return images
+      }
+      
+      const imagesInJSON = findImagesInJSON(finalContentJSON)
+      
       logger.debug('[CreateArticlePage] Editor JSON check:', {
         hasRef: !!editorRef.current,
         hasEditorJSON: !!editorJSON,
@@ -2577,6 +2597,11 @@ export default function CreateArticlePage() {
         type: finalContentJSON?.type,
         hasContentArray: Array.isArray(finalContentJSON?.content),
         contentLength: Array.isArray(finalContentJSON?.content) ? finalContentJSON.content.length : 'not array',
+        imagesCount: imagesInJSON.length,
+        images: imagesInJSON.map(img => ({
+          src: img.attrs?.src?.substring(0, 80),
+          alt: img.attrs?.alt,
+        })),
       })
       
       if (!finalContentJSON) {
