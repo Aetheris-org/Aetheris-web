@@ -937,7 +937,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const hasSelection = !selection.empty && selection.from !== selection.to
 
     // Определяем, есть ли текст под курсором
-    const { $from } = editor.state.doc.resolve(pos)
+    const $from = editor.state.doc.resolve(pos)
     const node = $from.node()
     const hasText = node && node.textContent && node.textContent.trim().length > 0
 

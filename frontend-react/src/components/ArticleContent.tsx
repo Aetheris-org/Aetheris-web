@@ -105,7 +105,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     const newContentStr = JSON.stringify(proseMirrorContent)
     
     if (currentContentStr !== newContentStr) {
-      editor.commands.setContent(proseMirrorContent, false)
+      editor.commands.setContent(proseMirrorContent, { emitUpdate: false })
       
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
