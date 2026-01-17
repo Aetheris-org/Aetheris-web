@@ -379,9 +379,32 @@ export default function CreateArticlePage() {
         localStorage.removeItem(k)
       })
       logger.debug('[CreateArticlePage] Cleared localStorage drafts:', { count: draftKeys.length })
+      
+      // Устанавливаем флаг в sessionStorage, чтобы предотвратить восстановление данных при следующем заходе
+      sessionStorage.setItem('draft_deleted', 'true')
     } catch (e) {
       logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
     }
+    
+    // Очищаем состояние формы
+    setTitle('')
+    setContent('')
+    setContentJSON(null)
+    setExcerpt('')
+    setTags([])
+    setTagInput('')
+    setDifficulty('intermediate')
+    setOriginalImageUrl(null)
+    setSelectedImageUrl(null)
+    setCroppedImageUrl(null)
+    setCroppedImageBlob(null)
+    setExistingPreviewImageId(null)
+    setDraftId(null)
+    
+    // Очищаем refs для изображений
+    originalImageUrlRef.current = null
+    selectedImageUrlRef.current = null
+    croppedImageUrlRef.current = null
     
     setShowExitDialog(false)
     userHasEditedRef.current = false
@@ -1973,6 +1996,22 @@ export default function CreateArticlePage() {
   useEffect(() => {
     // Не восстанавливаем, если уже загружается черновик из БД
     if (isLoadingDraft || draftIdFromQuery) {
+      return
+    }
+
+    // Проверяем, не были ли данные удалены пользователем
+    const wasDeleted = sessionStorage.getItem('draft_deleted') === 'true'
+    if (wasDeleted) {
+      // Удаляем флаг, чтобы он не влиял на будущие заходы
+      sessionStorage.removeItem('draft_deleted')
+      // Очищаем localStorage на всякий случай
+      try {
+        const draftKeys = Object.keys(localStorage).filter(key => key.startsWith('draft_'))
+        draftKeys.forEach(key => localStorage.removeItem(key))
+        logger.debug('[CreateArticlePage] Skipping restoration - draft was deleted by user')
+      } catch (e) {
+        logger.warn('[CreateArticlePage] Failed to clear localStorage after deletion flag:', e)
+      }
       return
     }
 
