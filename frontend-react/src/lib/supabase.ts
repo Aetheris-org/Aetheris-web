@@ -72,6 +72,7 @@ export type Database = {
           dislikes_count: number;
           views: number;
           published_at: string | null;
+          category: string | null;
           created_at: string;
           updated_at: string;
         };
