@@ -2346,10 +2346,52 @@ export default function ArticlePage() {
 
           {/* Article Content */}
           <div ref={articleContentRef}>
-            {article.contentJSON ? (
-              // Используем TipTap для отображения (сохраняет все атрибуты узлов)
-              <ArticleContent content={article.contentJSON} />
-            ) : (
+            {(() => {
+              // Диагностическое логирование
+              if (import.meta.env.DEV) {
+                logger.debug('[ArticlePage] Rendering article content:', {
+                  hasContentJSON: !!article.contentJSON,
+                  contentJSONType: typeof article.contentJSON,
+                  contentJSONPreview: article.contentJSON ? JSON.stringify(article.contentJSON).substring(0, 200) : 'null',
+                  hasContent: !!article.content,
+                  contentType: typeof article.content,
+                  articleId: article.id,
+                })
+                
+                // Проверяем наличие изображений в contentJSON
+                if (article.contentJSON) {
+                  const hasImages = JSON.stringify(article.contentJSON).includes('"type":"image"')
+                  if (hasImages) {
+                    const findImages = (content: any[]): any[] => {
+                      const images: any[] = []
+                      for (const node of content || []) {
+                        if (node.type === 'image') images.push(node)
+                        if (node.content && Array.isArray(node.content)) {
+                          images.push(...findImages(node.content))
+                        }
+                      }
+                      return images
+                    }
+                    const images = findImages(article.contentJSON.content || [])
+                    logger.debug('[ArticlePage] Found images in contentJSON:', {
+                      count: images.length,
+                      images: images.map(img => ({
+                        src: img.attrs?.src?.substring(0, 80),
+                        alt: img.attrs?.alt,
+                      })),
+                    })
+                  } else {
+                    logger.warn('[ArticlePage] No images found in contentJSON')
+                  }
+                } else {
+                  logger.warn('[ArticlePage] contentJSON is null/undefined - using fallback HTML renderer')
+                }
+              }
+              
+              return article.contentJSON ? (
+                // Используем TipTap для отображения (сохраняет все атрибуты узлов)
+                <ArticleContent content={article.contentJSON} />
+              ) : (
               // Fallback на HTML для обратной совместимости
           <div className="prose prose-neutral dark:prose-invert max-w-none">
                 {import.meta.env.DEV && (
@@ -2397,7 +2439,8 @@ export default function ArticlePage() {
               </div>
             )}
               </div>
-            )}
+              )
+            })()}
           </div>
 
           <Separator className="my-8" />
