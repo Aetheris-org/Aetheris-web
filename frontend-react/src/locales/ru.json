@@ -2603,7 +2603,11 @@
     "community": "Сообщество",
     "communityLinks": "Ссылки сообщества",
     "discord": "Discord",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "socialNetworks": "Социальные сети",
+    "socialNetworksDescription": "Присоединяйтесь к нашему сообществу в соц.сетях",
+    "news": "Новости",
+    "changes": "Изменения"
   },
   "explore": {
     "title": "Исследовать",

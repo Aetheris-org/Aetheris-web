@@ -825,6 +825,7 @@ export async function createArticle(input: {
   difficulty: ArticleDifficulty;
   previewImage?: string | null;
   publishedAt?: string | null;
+  category?: string | null;
 }): Promise<Article> {
   try {
     // #region agent log
@@ -871,6 +872,7 @@ export async function createArticle(input: {
       difficulty: input.difficulty,
       preview_image: input.previewImage || null,
       published_at: input.publishedAt || null,
+      category: input.category || null,
       author_id: user.id,
     };
 

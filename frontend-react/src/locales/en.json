@@ -2615,7 +2615,11 @@
     "community": "Community",
     "communityLinks": "Community links",
     "discord": "Discord",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "socialNetworks": "Social Networks",
+    "socialNetworksDescription": "Join our community on social media",
+    "news": "News",
+    "changes": "Changes"
   },
   "explore": {
     "title": "Explore",

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2, Newspaper, GitBranch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -13,6 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 // destinations будут динамическими через useTranslation
 const destinationKeys = [
@@ -37,6 +45,7 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const { t } = useTranslation()
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false)
 
   // На лендинге (/) не показываем навигацию
   const isLandingPage = location.pathname === '/'
@@ -142,22 +151,19 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                   {t('header.communityLinks')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {communityLinks.map((link) => {
-                  const Icon = link.icon
-                  return (
-                    <DropdownMenuItem key={link.key} asChild>
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{t(`header.${link.key}`)}</span>
-                      </a>
-                    </DropdownMenuItem>
-                  )
-                })}
+                <DropdownMenuItem onClick={() => setIsSocialModalOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                  <Share2 className="h-4 w-4" />
+                  <span>{t('header.socialNetworks')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/news')} className="flex items-center gap-2 cursor-pointer">
+                  <Newspaper className="h-4 w-4" />
+                  <span>{t('header.news')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/changes')} className="flex items-center gap-2 cursor-pointer">
+                  <GitBranch className="h-4 w-4" />
+                  <span>{t('header.changes')}</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -186,6 +192,35 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
           <AccountSheet />
         </div>
       </div>
+
+      {/* Модальное окно с соц.сетями */}
+      <Dialog open={isSocialModalOpen} onOpenChange={setIsSocialModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('header.socialNetworks')}</DialogTitle>
+            <DialogDescription>
+              {t('header.socialNetworksDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-4 py-4">
+            {communityLinks.map((link) => {
+              const Icon = link.icon
+              return (
+                <a
+                  key={link.key}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors"
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="text-sm font-medium">{t(`header.${link.key}`)}</span>
+                </a>
+              )
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }
