@@ -587,7 +587,7 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
     logger.debug('[getArticles] Applying filters:', {
       filterCategory: category,
       articlesCount: articles.length,
-      articlesWithCategories: articles.filter(a => a.category).map(a => ({ id: a.id, title: a.title, category: a.category }))
+      articlesWithCategories: articles.filter((a: Article) => a.category).map((a: Article) => ({ id: a.id, title: a.title, category: a.category }))
     });
 
     const filtered = applyClientFilters(articles, {
@@ -603,7 +603,7 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
 
     logger.debug('[getArticles] After filtering:', {
       filteredCount: filtered.length,
-      filteredArticles: filtered.map(a => ({ id: a.id, title: a.title, category: a.category }))
+      filteredArticles: filtered.map((a: Article) => ({ id: a.id, title: a.title, category: a.category }))
     });
 
     const sorted = sortClientArticles(filtered, sort);
