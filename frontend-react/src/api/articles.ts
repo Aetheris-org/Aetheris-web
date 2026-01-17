@@ -570,6 +570,19 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
 
     // Трансформируем данные
     const articles = data.map((item: any) => {
+      console.log('[getArticles] Raw article data from DB:', {
+        id: item.id,
+        title: item.title,
+        category: item.category,
+        hasCategory: !!item.category,
+        categoryType: typeof item.category,
+        allKeys: Object.keys(item),
+        views: item.views,
+        views_count: item.views_count,
+        read_time_minutes: item.read_time_minutes,
+        content: typeof item.content,
+        excerpt: item.excerpt?.substring(0, 100)
+      });
       logger.debug('[getArticles] Raw article data:', {
         id: item.id,
         title: item.title,

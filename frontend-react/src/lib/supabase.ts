@@ -189,6 +189,7 @@ export type Database = {
           tags: string[];
           difficulty: string;
           preview_image: string | null;
+          category: string | null;
           likes_count: number;
           dislikes_count: number;
           views: number;
