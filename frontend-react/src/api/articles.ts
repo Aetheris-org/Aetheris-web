@@ -4,6 +4,7 @@
  */
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { slateToProseMirror } from '@/lib/slate-to-prosemirror';
 import type { Article, ArticleDifficulty, ArticleSortOption } from '@/types/article';
 
 // Re-export types
@@ -211,13 +212,33 @@ export function transformArticle(article: any, _userId?: string): Article {
   } else if (Array.isArray(rawContent)) {
     // Массив может быть либо Slate форматом, либо нужно обернуть в ProseMirror doc
     // Проверяем, есть ли уже тип 'doc' в первом элементе (не должно быть)
-    // Если это массив блоков, оборачиваем в ProseMirror формат
     if (rawContent.length > 0 && rawContent[0] && rawContent[0].type === 'doc') {
       // Уже ProseMirror формат, но в массиве
       contentJSON = rawContent[0];
     } else {
-      // Старый формат или неизвестный - оставляем как есть, но стараемся нормализовать
-      contentJSON = { type: 'doc', content: rawContent };
+      // Это Slate формат - нужно конвертировать в ProseMirror
+      // Проверяем, является ли это Slate форматом (есть type и children вместо content)
+      const isSlateFormat = rawContent.length > 0 && rawContent.some((block: any) => 
+        block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
+      );
+      
+      if (isSlateFormat) {
+        try {
+          contentJSON = slateToProseMirror(rawContent);
+          console.log('[transformArticle] Converted Slate array to ProseMirror:', {
+            slateBlocksCount: rawContent.length,
+            proseMirrorHasType: contentJSON.type === 'doc',
+            proseMirrorContentLength: contentJSON.content?.length || 0,
+          });
+        } catch (e) {
+          console.warn('[transformArticle] Failed to convert Slate to ProseMirror, using wrapper:', e);
+          // Fallback: оборачиваем в ProseMirror doc без конвертации
+          contentJSON = { type: 'doc', content: rawContent };
+        }
+      } else {
+        // Не Slate формат - оборачиваем как есть
+        contentJSON = { type: 'doc', content: rawContent };
+      }
     }
     content = rawContent;
   } else if (rawContent && typeof rawContent === 'object') {

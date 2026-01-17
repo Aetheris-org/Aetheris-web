@@ -2768,6 +2768,29 @@ export default function CreateArticlePage() {
           return result;
         }
 
+        // Обработка изображений: { type: "image", attrs: { src: "...", alt: "..." } } → Slate формат
+        if (node.type === 'image' && node.attrs) {
+          const result: any = {
+            type: 'image',
+            url: node.attrs.src || '',
+            alt: node.attrs.alt || '',
+          }
+          
+          // Сохраняем blockId если есть
+          if (node.attrs.blockId) {
+            result.blockId = node.attrs.blockId
+          }
+          
+          if (import.meta.env.DEV) {
+            logger.debug('[convertProseMirrorToSlate] Converting image:', {
+              src: node.attrs.src?.substring(0, 100),
+              alt: node.attrs.alt,
+            })
+          }
+          
+          return result
+        }
+
         // Обработка callout - конвертируем в blockquote с сохранением variant
         // KeystoneJS не поддерживает кастомный тип 'callout', поэтому используем blockquote
         // Сохраняем variant в первом дочернем элементе для надежности
