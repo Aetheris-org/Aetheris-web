@@ -36,11 +36,12 @@ const applyClientFilters = (articles: Article[], filters: Partial<ArticleQueryPa
   const filtered = articles.filter((article) => {
     // Если фильтр категории явно указан и не 'all', фильтруем по категории
     if (filters.category && filters.category !== 'all') {
-      if (!article.category || article.category !== filters.category) return false;
-    }
-    // Если фильтр категории не указан (undefined) или равен 'all', показываем только статьи БЕЗ категории (обычные статьи)
-    // Это нужно, чтобы статьи с категорией 'news' или 'changes' не попадали на главную страницу
-    if (filters.category === undefined || filters.category === 'all') {
+      if (!article.category || article.category !== filters.category) {
+        return false;
+      }
+    } else {
+      // Если фильтр категории не указан (undefined, null, '') или равен 'all', показываем только статьи БЕЗ категории (обычные статьи)
+      // Это нужно, чтобы статьи с категорией 'news' или 'changes' не попадали на главную страницу
       if (article.category) {
         // Исключаем статьи с категорией (news, changes и т.д.)
         return false;
@@ -572,6 +573,8 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       logger.debug('[getArticles] Raw article data:', {
         id: item.id,
         title: item.title,
+        category: item.category,
+        hasCategory: !!item.category,
         views: item.views,
         views_count: item.views_count,
         read_time_minutes: item.read_time_minutes,
@@ -579,6 +582,12 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
         excerpt: item.excerpt?.substring(0, 100)
       });
       return transformArticle(item, userId);
+    });
+
+    logger.debug('[getArticles] Applying filters:', {
+      filterCategory: category,
+      articlesCount: articles.length,
+      articlesWithCategories: articles.filter(a => a.category).map(a => ({ id: a.id, title: a.title, category: a.category }))
     });
 
     const filtered = applyClientFilters(articles, {
@@ -590,6 +599,11 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       minReadMinutes,
       minReactions,
       minViews,
+    });
+
+    logger.debug('[getArticles] After filtering:', {
+      filteredCount: filtered.length,
+      filteredArticles: filtered.map(a => ({ id: a.id, title: a.title, category: a.category }))
     });
 
     const sorted = sortClientArticles(filtered, sort);
