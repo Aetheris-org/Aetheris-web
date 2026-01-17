@@ -179,12 +179,8 @@ export default function CreateArticlePage() {
     } else {
       allowNavigationRef.current = true
       if (typeof to === 'number') {
-        // Если есть куда вернуться — используем history, иначе переходим на /forum
-        if (window.history.length > 1) {
-          window.history.go(to)
-        } else {
-          navigate('/forum')
-        }
+        // Для кнопки Back всегда переходим на /forum (страницу статей)
+        navigate('/forum')
       } else {
         navigate(to)
       }
@@ -376,11 +372,13 @@ export default function CreateArticlePage() {
   
   // Обработчик: Удалить и выйти
   const handleExitDelete = useCallback(() => {
-    // Очищаем localStorage
+    // Очищаем localStorage - удаляем все ключи, начинающиеся с 'draft_'
     try {
-      Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+      const draftKeys = Object.keys(localStorage).filter(k => k.startsWith('draft_'))
+      draftKeys.forEach(k => {
         localStorage.removeItem(k)
       })
+      logger.debug('[CreateArticlePage] Cleared localStorage drafts:', { count: draftKeys.length })
     } catch (e) {
       logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
     }
@@ -391,11 +389,8 @@ export default function CreateArticlePage() {
     if (pendingNavigationUrl !== null) {
       allowNavigationRef.current = true
       if (typeof pendingNavigationUrl === 'number') {
-        if (window.history.length > 1) {
-          window.history.go(pendingNavigationUrl)
-        } else {
-          navigate('/forum')
-        }
+        // Для кнопки Back всегда переходим на /forum (страницу статей)
+        navigate('/forum')
       } else {
         navigate(pendingNavigationUrl)
       }
@@ -488,11 +483,8 @@ export default function CreateArticlePage() {
       if (pendingNavigationUrl !== null) {
         allowNavigationRef.current = true
         if (typeof pendingNavigationUrl === 'number') {
-          if (window.history.length > 1) {
-            window.history.go(pendingNavigationUrl)
-          } else {
-            navigate('/forum')
-          }
+          // Для кнопки Back всегда переходим на /forum (страницу статей)
+          navigate('/forum')
         } else {
           navigate(pendingNavigationUrl)
         }
