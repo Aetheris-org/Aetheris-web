@@ -129,18 +129,6 @@ export default function CreateArticlePage() {
     [existingPreviewImageId, selectedImageUrl, originalImageUrl]
   )
 
-  // Функция для загрузки медиа в редактор через R2
-  const handleUploadMedia = useCallback(async (file: File, type: 'image' | 'video' | 'audio'): Promise<string> => {
-    if (!user) {
-      throw new Error('Пользователь не авторизован')
-    }
-
-    // Для медиа используем папку 'articles', но не удаляем старые файлы при добавлении в контент
-    // Старые файлы удаляются только при замене превью статьи
-    const currentArticleId = editArticleIdRef.current || articleToEdit?.id || (draftId ? Number(draftId) : undefined)
-    const result = await uploadImage(file, 'articles', undefined, currentArticleId)
-    return result.url
-  }, [user, draftId, articleToEdit])
   const [searchParams, setSearchParams] = useSearchParams()
   const draftParam = searchParams.get('draft')
   // Теперь draft ID - это UUID (строка), а не число
@@ -166,6 +154,19 @@ export default function CreateArticlePage() {
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
   const isEditing = Boolean(editArticleIdRef.current || articleToEdit?.id)
+
+  // Функция для загрузки медиа в редактор через R2
+  const handleUploadMedia = useCallback(async (file: File, _type: 'image' | 'video' | 'audio'): Promise<string> => {
+    if (!user) {
+      throw new Error('Пользователь не авторизован')
+    }
+
+    // Для медиа используем папку 'articles', но не удаляем старые файлы при добавлении в контент
+    // Старые файлы удаляются только при замене превью статьи
+    const currentArticleId = editArticleIdRef.current || articleToEdit?.id || (draftId ? Number(draftId) : undefined)
+    const result = await uploadImage(file, 'articles', undefined, currentArticleId)
+    return result.url
+  }, [user, draftId, articleToEdit])
   
   // ============================================================================
   // МОДАЛЬНОЕ ОКНО ПРИ ВЫХОДЕ С НЕСОХРАНЁННЫМИ ИЗМЕНЕНИЯМИ
