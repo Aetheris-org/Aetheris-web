@@ -135,7 +135,7 @@ export default function CreateArticlePage() {
   const draftIdFromQuery = draftParam && draftParam.trim() ? draftParam.trim() : null
   // Получаем category из URL параметра (news или changes)
   const categoryFromUrl = searchParams.get('category') || null
-  const [category, setCategory] = useState<string | null>(categoryFromUrl)
+  const [category] = useState<string | null>(categoryFromUrl)
   // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
   const initialEditId =
     (searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id') || '').trim() ||

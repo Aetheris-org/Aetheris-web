@@ -92,7 +92,7 @@ export default function ChangesPage() {
     navigate(`/article/${articleId}`)
   }, [navigate])
 
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = (_tag: string) => {
     // В будущем можно добавить фильтрацию по тегам
   }
 

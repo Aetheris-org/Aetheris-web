@@ -1,16 +1,14 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PenSquare } from 'lucide-react'
 import { getArticles, type ArticleSortOption } from '@/api/articles'
-import type { Article } from '@/types/article'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArticleCard } from '@/components/ArticleCard'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 import { getRoleByUuid } from '@/config/admins'
 import {
@@ -96,7 +94,7 @@ export default function NewsPage() {
     navigate(`/article/${articleId}`)
   }, [navigate])
 
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = (_tag: string) => {
     // В будущем можно добавить фильтрацию по тегам
   }
 
