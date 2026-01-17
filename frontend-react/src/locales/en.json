@@ -2666,6 +2666,18 @@
     "noEventsFound": "No events found",
     "noEventsFoundDescription": "Try adjusting your filters or check back later!"
   },
+  "news": {
+    "description": "Community news and announcements from administrators",
+    "createArticle": "Create Article",
+    "noArticles": "No news articles yet",
+    "noArticlesDescription": "Check back later for community news and announcements"
+  },
+  "changes": {
+    "description": "Recent changes and updates from administrators",
+    "createArticle": "Create Article",
+    "noArticles": "No changes yet",
+    "noArticlesDescription": "Check back later for updates and changes"
+  },
   "home": {
     "spotlight": {
       "title": "Forum spotlight",

@@ -876,6 +876,12 @@ export async function createArticle(input: {
       author_id: user.id,
     };
 
+    logger.debug('[createArticle] Insert data with category:', {
+      hasCategory: !!input.category,
+      category: input.category,
+      insertDataKeys: Object.keys(insertData),
+    });
+
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
       method:'POST',
@@ -934,6 +940,7 @@ export async function updateArticle(
     difficulty?: ArticleDifficulty;
     previewImage?: string | null;
     publishedAt?: string | null;
+    category?: string | null;
   }
 ): Promise<Article> {
   try {
@@ -1009,6 +1016,7 @@ export async function updateArticle(
     if (input.difficulty !== undefined) updateData.difficulty = input.difficulty;
     if (input.previewImage !== undefined) updateData.preview_image = input.previewImage;
     if (input.publishedAt !== undefined) updateData.published_at = input.publishedAt;
+    if (input.category !== undefined) updateData.category = input.category;
 
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{

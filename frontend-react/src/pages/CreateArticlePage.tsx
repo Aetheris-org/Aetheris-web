@@ -135,7 +135,16 @@ export default function CreateArticlePage() {
   const draftIdFromQuery = draftParam && draftParam.trim() ? draftParam.trim() : null
   // Получаем category из URL параметра (news или changes)
   const categoryFromUrl = searchParams.get('category') || null
-  const [category] = useState<string | null>(categoryFromUrl)
+  const [category, setCategory] = useState<string | null>(categoryFromUrl)
+  
+  // Обновляем category при изменении URL параметра
+  useEffect(() => {
+    const newCategory = searchParams.get('category') || null
+    if (newCategory !== category) {
+      setCategory(newCategory)
+      logger.debug('[CreateArticlePage] Category updated from URL:', { newCategory, oldCategory: category })
+    }
+  }, [searchParams, category])
   // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
   const initialEditId =
     (searchParams.get('edit') || searchParams.get('articleId') || searchParams.get('id') || '').trim() ||
@@ -3492,6 +3501,8 @@ export default function CreateArticlePage() {
         excerptLength: articleData.excerpt.length,
         tags: articleData.tags,
         difficulty: articleData.difficulty,
+        category: articleData.category,
+        hasCategory: !!articleData.category,
         previewImage: articleData.previewImage,
         hasPreviewImage: !!articleData.previewImage,
         previewImageUrl: previewImageUrl,
@@ -3602,6 +3613,11 @@ export default function CreateArticlePage() {
         }).catch(()=>{})
         // #endregion
         // Создаем новую статью
+        console.log('[CreateArticlePage] Creating article with category:', {
+          category: articleData.category,
+          categoryFromUrl,
+          articleDataKeys: Object.keys(articleData),
+        })
         publishedArticle = await createArticle({
             ...articleData,
             publishedAt: new Date().toISOString(),
