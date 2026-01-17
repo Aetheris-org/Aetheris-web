@@ -24,14 +24,12 @@ interface ArticleContentProps {
 export function ArticleContent({ content, className }: ArticleContentProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   
-  // Диагностическое логирование при монтировании компонента
-  if (import.meta.env.DEV) {
-    logger.debug('[ArticleContent] Component mounted/updated:', {
-      hasContent: !!content,
-      contentType: typeof content,
-      contentPreview: content ? JSON.stringify(content).substring(0, 200) : 'null',
-    })
-  }
+  // Диагностическое логирование при монтировании компонента (работает везде)
+  console.log('[ArticleContent] Component mounted/updated:', {
+    hasContent: !!content,
+    contentType: typeof content,
+    contentPreview: content ? JSON.stringify(content).substring(0, 200) : 'null',
+  })
   
   // Конвертируем Slate в ProseMirror, если нужно
   const proseMirrorContent = useMemo(() => {

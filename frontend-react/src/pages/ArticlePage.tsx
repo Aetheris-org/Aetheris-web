@@ -2347,9 +2347,8 @@ export default function ArticlePage() {
           {/* Article Content */}
           <div ref={articleContentRef}>
             {(() => {
-              // Диагностическое логирование
-              if (import.meta.env.DEV) {
-                logger.debug('[ArticlePage] Rendering article content:', {
+              // Диагностическое логирование (работает везде, не только в DEV)
+              console.log('[ArticlePage] Rendering article content:', {
                   hasContentJSON: !!article.contentJSON,
                   contentJSONType: typeof article.contentJSON,
                   contentJSONPreview: article.contentJSON ? JSON.stringify(article.contentJSON).substring(0, 200) : 'null',
@@ -2373,7 +2372,7 @@ export default function ArticlePage() {
                       return images
                     }
                     const images = findImages(article.contentJSON.content || [])
-                    logger.debug('[ArticlePage] Found images in contentJSON:', {
+                    console.log('[ArticlePage] Found images in contentJSON:', {
                       count: images.length,
                       images: images.map(img => ({
                         src: img.attrs?.src?.substring(0, 80),
@@ -2381,12 +2380,11 @@ export default function ArticlePage() {
                       })),
                     })
                   } else {
-                    logger.warn('[ArticlePage] No images found in contentJSON')
+                    console.warn('[ArticlePage] No images found in contentJSON')
                   }
                 } else {
-                  logger.warn('[ArticlePage] contentJSON is null/undefined - using fallback HTML renderer')
+                  console.warn('[ArticlePage] contentJSON is null/undefined - using fallback HTML renderer')
                 }
-              }
               
               return article.contentJSON ? (
                 // Используем TipTap для отображения (сохраняет все атрибуты узлов)

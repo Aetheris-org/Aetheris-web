@@ -332,6 +332,47 @@ export function transformArticle(article: any, _userId?: string): Article {
     finalViews: views
   });
 
+  // Логирование contentJSON для диагностики изображений (работает везде)
+  if (contentJSON) {
+    const hasImages = JSON.stringify(contentJSON).includes('"type":"image"')
+    console.log('[transformArticle] contentJSON created:', {
+      articleId: article.id,
+      hasContentJSON: !!contentJSON,
+      contentJSONType: typeof contentJSON,
+      hasType: contentJSON.type === 'doc',
+      hasContent: Array.isArray(contentJSON.content),
+      contentLength: Array.isArray(contentJSON.content) ? contentJSON.content.length : 0,
+      hasImages,
+      contentJSONPreview: JSON.stringify(contentJSON).substring(0, 300),
+    })
+    
+    if (hasImages) {
+      const findImages = (nodes: any[]): any[] => {
+        const images: any[] = []
+        for (const node of nodes || []) {
+          if (node.type === 'image') images.push(node)
+          if (node.content && Array.isArray(node.content)) {
+            images.push(...findImages(node.content))
+          }
+        }
+        return images
+      }
+      const images = findImages(contentJSON.content || [])
+      console.log('[transformArticle] Images found in contentJSON:', {
+        count: images.length,
+        images: images.map(img => ({
+          src: img.attrs?.src?.substring(0, 100),
+          alt: img.attrs?.alt,
+        })),
+      })
+    }
+  } else {
+    console.warn('[transformArticle] contentJSON is null for article:', article.id, {
+      rawContentType: typeof rawContent,
+      rawContentPreview: typeof rawContent === 'string' ? rawContent.substring(0, 200) : JSON.stringify(rawContent).substring(0, 200),
+    })
+  }
+
   return {
     id: String(article.id),
     title: article.title || '',
