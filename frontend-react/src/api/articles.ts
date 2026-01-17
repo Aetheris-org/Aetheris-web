@@ -76,6 +76,8 @@ const applyClientFilters = (articles: Article[], filters: Partial<ArticleQueryPa
     }
     return true;
   });
+  
+  return filtered;
 };
 
 const sortClientArticles = (articles: Article[], sort: ArticleSortOption): Article[] => {
