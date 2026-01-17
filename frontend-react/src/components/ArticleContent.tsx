@@ -89,9 +89,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           className
         ),
       },
-      parseOptions: {
-        preserveWhitespace: 'full',
-      },
     },
   })
 
