@@ -126,6 +126,18 @@ export default function EditArticlePage() {
     () => existingPreviewImageId || selectedImageUrl || originalImageUrl || null,
     [existingPreviewImageId, selectedImageUrl, originalImageUrl]
   )
+
+  // Функция для загрузки медиа в редактор через R2
+  const handleUploadMedia = useCallback(async (file: File, type: 'image' | 'video' | 'audio'): Promise<string> => {
+    if (!user) {
+      throw new Error('Пользователь не авторизован')
+    }
+
+    // Для медиа используем папку 'articles', передаем articleId для правильной структуры папок
+    const currentArticleId = editArticleIdRef.current || articleToEdit?.id
+    const result = await uploadImage(file, 'articles', undefined, currentArticleId ? Number(currentArticleId) : undefined)
+    return result.url
+  }, [user, articleToEdit])
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   // Для страницы редактирования используем ID из URL параметра
@@ -3383,6 +3395,8 @@ export default function EditArticlePage() {
                   }}
                   placeholder={t('createArticle.contentPlaceholder')}
                   characterLimit={20000}
+                  onUploadMedia={handleUploadMedia}
+                  articleId={editArticleIdRef.current || articleToEdit?.id}
             />
           </div>
             )}

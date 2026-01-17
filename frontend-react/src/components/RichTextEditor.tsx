@@ -53,6 +53,8 @@ import {
   Link2,
   Hash,
   Type,
+  Video,
+  Music,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -65,7 +67,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -511,6 +513,8 @@ type RichTextEditorProps = {
   ariaLabelledBy?: string
   ariaDescribedBy?: string
   jsonValue?: any // JSON для восстановления состояния (приоритетнее чем value)
+  onUploadMedia?: (file: File, type: 'image' | 'video' | 'audio') => Promise<string> // Функция для загрузки медиа в R2
+  articleId?: string | number // ID статьи для загрузки медиа
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({
@@ -525,6 +529,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   ariaLabelledBy,
   ariaDescribedBy,
   jsonValue,
+  onUploadMedia,
+  articleId,
 }, ref) => {
   const { t } = useTranslation()
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
@@ -538,6 +544,21 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const [anchorId, setAnchorId] = useState('')
   const [anchorText, setAnchorText] = useState('')
   const [anchorOptions, setAnchorOptions] = useState<AnchorData[]>([])
+
+  // Состояние для контекстного меню
+  const [contextMenu, setContextMenu] = useState<{
+    open: boolean
+    x: number
+    y: number
+    type: 'empty' | 'text'
+  }>({
+    open: false,
+    x: 0,
+    y: 0,
+    type: 'empty',
+  })
+  const contextMenuRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const extensions = useMemo(
     () => [
@@ -870,6 +891,131 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       .run()
     setIsAnchorDialogOpen(false)
   }, [anchorId, anchorMode, anchorText, editor])
+
+  // Обработчик контекстного меню
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    if (!editor || disabled) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    // Определяем, есть ли выделенный текст
+    const { selection } = editor.state
+    const hasSelection = !selection.empty && selection.from !== selection.to
+
+    // Определяем, есть ли текст под курсором
+    const { $from } = selection
+    const node = $from.node()
+    const hasText = node && node.textContent && node.textContent.trim().length > 0
+
+    // Если есть выделение или текст под курсором - показываем меню форматирования
+    // Иначе - меню добавления медиа
+    const menuType: 'empty' | 'text' = (hasSelection || hasText) ? 'text' : 'empty'
+
+    // Позиционируем меню с учетом границ экрана
+    const menuWidth = 180
+    const menuHeight = menuType === 'empty' ? 120 : 200
+    const x = event.clientX + menuWidth > window.innerWidth 
+      ? window.innerWidth - menuWidth - 10 
+      : event.clientX
+    const y = event.clientY + menuHeight > window.innerHeight 
+      ? window.innerHeight - menuHeight - 10 
+      : event.clientY
+
+    setContextMenu({
+      open: true,
+      x,
+      y,
+      type: menuType,
+    })
+  }, [editor, disabled])
+
+  // Закрытие контекстного меню при клике вне его или нажатии Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        setContextMenu(prev => ({ ...prev, open: false }))
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setContextMenu(prev => ({ ...prev, open: false }))
+      }
+    }
+
+    if (contextMenu.open) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [contextMenu.open])
+
+  // Обработка загрузки файлов
+  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !editor || !onUploadMedia) return
+
+    // Определяем тип файла
+    const fileType = file.type
+    let mediaType: 'image' | 'video' | 'audio' = 'image'
+    
+    if (fileType.startsWith('video/')) {
+      mediaType = 'video'
+    } else if (fileType.startsWith('audio/')) {
+      mediaType = 'audio'
+    } else if (fileType.startsWith('image/')) {
+      mediaType = 'image'
+    } else {
+      logger.warn('[RichTextEditor] Unsupported file type:', fileType)
+      return
+    }
+
+    try {
+      // Загружаем файл через onUploadMedia
+      const url = await onUploadMedia(file, mediaType)
+      
+      // Вставляем медиа в редактор
+      if (mediaType === 'image') {
+        editor.chain().focus().setImage({ src: url }).run()
+      } else if (mediaType === 'video') {
+        // Для видео вставляем через HTML
+        const videoHTML = `<div class="editor-video-wrapper"><video controls src="${url}" class="max-w-full h-auto rounded-lg"></video></div>`
+        editor.chain().focus().insertContent(videoHTML).run()
+      } else if (mediaType === 'audio') {
+        // Для аудио вставляем через HTML
+        const audioHTML = `<div class="editor-audio-wrapper"><audio controls src="${url}" class="w-full"></audio></div>`
+        editor.chain().focus().insertContent(audioHTML).run()
+      }
+      
+      setContextMenu(prev => ({ ...prev, open: false }))
+    } catch (error) {
+      logger.error('[RichTextEditor] Failed to upload media:', error)
+    } finally {
+      // Сбрасываем input для возможности загрузки того же файла снова
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }, [editor, onUploadMedia])
+
+  // Функция для открытия диалога выбора файла
+  const handleInsertMedia = useCallback((type: 'image' | 'video' | 'audio') => {
+    if (!fileInputRef.current) return
+    
+    // Устанавливаем accept атрибут в зависимости от типа
+    const acceptMap = {
+      image: 'image/*',
+      video: 'video/*',
+      audio: 'audio/*',
+    }
+    
+    fileInputRef.current.accept = acceptMap[type]
+    fileInputRef.current.click()
+  }, [])
 
   useEffect(() => {
     if (!editor) return
@@ -1389,6 +1535,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 aria-labelledby={ariaLabelledBy}
                 aria-describedby={ariaDescribedBy}
                 className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none"
+                onContextMenu={handleContextMenu}
+              />
+              {/* Скрытый input для загрузки файлов */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileSelect}
               />
             </div>
             <EditorOutline editor={editor} />
@@ -1543,6 +1697,129 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Контекстное меню */}
+      {contextMenu.open && (
+        <div
+          ref={contextMenuRef}
+          className="fixed z-50 min-w-[180px] rounded-lg border border-border/60 bg-popover p-1 shadow-lg"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {contextMenu.type === 'empty' ? (
+            // Меню для пустого поля - добавление медиа
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  handleInsertMedia('image')
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <ImageIcon className="h-4 w-4" />
+                <span>Добавить изображение</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleInsertMedia('video')
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Video className="h-4 w-4" />
+                <span>Добавить видео</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleInsertMedia('audio')
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Music className="h-4 w-4" />
+                <span>Добавить аудио</span>
+              </button>
+            </>
+          ) : (
+            // Меню для текста - форматирование
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  editor?.chain().focus().toggleBold().run()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Bold className="h-4 w-4" />
+                <span>Жирный</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  editor?.chain().focus().toggleItalic().run()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Italic className="h-4 w-4" />
+                <span>Курсив</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  editor?.chain().focus().toggleStrike().run()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Strikethrough className="h-4 w-4" />
+                <span>Зачеркнутый</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  editor?.chain().focus().toggleCode().run()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <Code className="h-4 w-4" />
+                <span>Моноширинный</span>
+              </button>
+              <div className="my-1 h-px bg-muted" />
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenLinkDialog()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <LinkIcon className="h-4 w-4" />
+                <span>Вставить ссылку</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleRemoveFormatting()
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <RemoveFormatting className="h-4 w-4" />
+                <span>Убрать форматирование</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </>
   )
 })
