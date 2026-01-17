@@ -3015,7 +3015,8 @@ export default function CreateArticlePage() {
       // Фильтруем неподдерживаемые типы блоков (например, columns)
       // KeystoneJS document field поддерживает: 'paragraph', 'heading', 'blockquote', 'code', 'divider', 'list-item', 'ordered-list', 'unordered-list', 'layout', 'layout-area'
       // callout конвертируется в blockquote с сохранением variant
-      const supportedTypes = ['paragraph', 'heading', 'blockquote', 'code', 'unordered-list', 'ordered-list', 'list-item', 'divider', 'layout', 'layout-area']
+      // image поддерживается и должен быть сохранен
+      const supportedTypes = ['paragraph', 'heading', 'blockquote', 'code', 'unordered-list', 'ordered-list', 'list-item', 'divider', 'layout', 'layout-area', 'image']
       
       // Рекурсивная функция для нормализации типов блоков в children
       const normalizeBlockTypes = (block: any): any => {
