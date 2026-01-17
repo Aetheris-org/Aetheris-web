@@ -912,15 +912,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     // Иначе - меню добавления медиа
     const menuType: 'empty' | 'text' = (hasSelection || hasText) ? 'text' : 'empty'
 
+    // Получаем координаты курсора из редактора TipTap
+    const view = editor.view
+    const coords = view.coordsAtPos($from.pos)
+    
     // Позиционируем меню с учетом границ экрана
     const menuWidth = 180
     const menuHeight = menuType === 'empty' ? 120 : 200
-    const x = event.clientX + menuWidth > window.innerWidth 
+    const x = coords.left + menuWidth > window.innerWidth 
       ? window.innerWidth - menuWidth - 10 
-      : event.clientX
-    const y = event.clientY + menuHeight > window.innerHeight 
+      : coords.left
+    const y = coords.top + menuHeight > window.innerHeight 
       ? window.innerHeight - menuHeight - 10 
-      : event.clientY
+      : coords.top
 
     setContextMenu({
       open: true,
@@ -1721,7 +1725,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <ImageIcon className="h-4 w-4" />
-                <span>Добавить изображение</span>
+                <span>Add image</span>
               </button>
               <button
                 type="button"
@@ -1732,7 +1736,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Video className="h-4 w-4" />
-                <span>Добавить видео</span>
+                <span>Add video</span>
               </button>
               <button
                 type="button"
@@ -1743,7 +1747,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Music className="h-4 w-4" />
-                <span>Добавить аудио</span>
+                <span>Add audio</span>
               </button>
             </>
           ) : (
@@ -1758,7 +1762,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Bold className="h-4 w-4" />
-                <span>Жирный</span>
+                <span>Bold</span>
               </button>
               <button
                 type="button"
@@ -1769,7 +1773,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Italic className="h-4 w-4" />
-                <span>Курсив</span>
+                <span>Italic</span>
               </button>
               <button
                 type="button"
@@ -1780,7 +1784,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Strikethrough className="h-4 w-4" />
-                <span>Зачеркнутый</span>
+                <span>Strikethrough</span>
               </button>
               <button
                 type="button"
@@ -1791,7 +1795,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Code className="h-4 w-4" />
-                <span>Моноширинный</span>
+                <span>Code</span>
               </button>
               <div className="my-1 h-px bg-muted" />
               <button
@@ -1803,7 +1807,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <LinkIcon className="h-4 w-4" />
-                <span>Вставить ссылку</span>
+                <span>Insert link</span>
               </button>
               <button
                 type="button"
@@ -1814,7 +1818,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <RemoveFormatting className="h-4 w-4" />
-                <span>Убрать форматирование</span>
+                <span>Clear formatting</span>
               </button>
             </>
           )}

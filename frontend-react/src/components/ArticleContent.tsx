@@ -89,8 +89,41 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           className
         ),
       },
+      parseOptions: {
+        preserveWhitespace: 'full',
+      },
     },
   })
+
+  // Обработка HTML-элементов видео и аудио после рендеринга
+  useEffect(() => {
+    if (!editor || !editorRef.current) return
+
+    const handleVideoAudio = () => {
+      // Находим все элементы video и audio внутри редактора
+      const videoWrappers = editorRef.current?.querySelectorAll('.editor-video-wrapper')
+      const audioWrappers = editorRef.current?.querySelectorAll('.editor-audio-wrapper')
+      
+      // Убеждаемся, что video и audio элементы правильно отображаются
+      videoWrappers?.forEach(wrapper => {
+        const video = wrapper.querySelector('video')
+        if (video && !video.hasAttribute('controls')) {
+          video.setAttribute('controls', '')
+        }
+      })
+      
+      audioWrappers?.forEach(wrapper => {
+        const audio = wrapper.querySelector('audio')
+        if (audio && !audio.hasAttribute('controls')) {
+          audio.setAttribute('controls', '')
+        }
+      })
+    }
+
+    // Запускаем после небольшой задержки, чтобы дать TipTap время отрендерить
+    const timeoutId = setTimeout(handleVideoAudio, 100)
+    return () => clearTimeout(timeoutId)
+  }, [editor, proseMirrorContent])
 
   // В опубликованных статьях добавляем только кратковременную подсветку при клике на якорную ссылку
   // Постоянные индикаторы не нужны - только эффект при навигации
