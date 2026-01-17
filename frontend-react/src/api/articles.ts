@@ -33,9 +33,18 @@ export interface ArticleQueryParams {
 }
 
 const applyClientFilters = (articles: Article[], filters: Partial<ArticleQueryParams>): Article[] => {
-  return articles.filter((article) => {
+  const filtered = articles.filter((article) => {
+    // Если фильтр категории явно указан и не 'all', фильтруем по категории
     if (filters.category && filters.category !== 'all') {
       if (!article.category || article.category !== filters.category) return false;
+    }
+    // Если фильтр категории не указан (undefined) или равен 'all', показываем только статьи БЕЗ категории (обычные статьи)
+    // Это нужно, чтобы статьи с категорией 'news' или 'changes' не попадали на главную страницу
+    if (filters.category === undefined || filters.category === 'all') {
+      if (article.category) {
+        // Исключаем статьи с категорией (news, changes и т.д.)
+        return false;
+      }
     }
     if (filters.language && filters.language !== 'all') {
       if (!article.language || article.language !== filters.language) return false;
