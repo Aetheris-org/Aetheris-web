@@ -55,7 +55,19 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           class: 'text-primary underline hover:text-primary/80 cursor-pointer',
         },
       }),
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            src: {
+              default: null,
+            },
+            alt: {
+              default: null,
+            },
+          }
+        },
+      }).configure({
         inline: false,
         allowBase64: false,
         HTMLAttributes: {
@@ -137,11 +149,54 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
   }, [editor, proseMirrorContent])
 
-  // Обработка HTML-элементов видео и аудио после рендеринга
+  // Проверка и обработка изображений, видео и аудио после рендеринга
   useEffect(() => {
     if (!editor || !editorRef.current) return
 
-    const handleVideoAudio = () => {
+    const handleMediaElements = () => {
+      // Проверяем изображения
+      const images = editorRef.current?.querySelectorAll('img')
+      if (images && images.length > 0) {
+        images.forEach(img => {
+          // Убеждаемся, что изображения имеют правильные стили
+          if (!img.classList.contains('max-w-full')) {
+            img.classList.add('max-w-full', 'h-auto', 'rounded-lg', 'my-4')
+          }
+          
+          // Принудительно устанавливаем стили для гарантированного отображения
+          img.style.maxWidth = '100%'
+          img.style.height = 'auto'
+          img.style.display = img.src ? 'block' : 'none'
+          
+          // Проверяем, что src установлен и валиден
+          if (!img.src || img.src === window.location.href) {
+            logger.warn('[ArticleContent] Image has invalid or missing src:', {
+              src: img.getAttribute('src'),
+              alt: img.alt,
+            })
+          }
+          
+          if (import.meta.env.DEV && img.src) {
+            logger.debug('[ArticleContent] Found image in DOM:', {
+              src: img.src.substring(0, 100),
+              alt: img.alt,
+              width: img.width,
+              height: img.height,
+              naturalWidth: img.naturalWidth,
+              naturalHeight: img.naturalHeight,
+              display: window.getComputedStyle(img).display,
+              visibility: window.getComputedStyle(img).visibility,
+            })
+          }
+        })
+      } else if (import.meta.env.DEV) {
+        // Если в JSON есть изображения, но в DOM их нет - это проблема
+        const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
+        if (hasImages) {
+          logger.warn('[ArticleContent] Images in JSON but not in DOM!')
+        }
+      }
+
       // Находим все элементы video и audio внутри редактора
       const videoWrappers = editorRef.current?.querySelectorAll('.editor-video-wrapper')
       const audioWrappers = editorRef.current?.querySelectorAll('.editor-audio-wrapper')
@@ -163,7 +218,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
 
     // Запускаем после небольшой задержки, чтобы дать TipTap время отрендерить
-    const timeoutId = setTimeout(handleVideoAudio, 100)
+    const timeoutId = setTimeout(handleMediaElements, 200)
     return () => clearTimeout(timeoutId)
   }, [editor, proseMirrorContent])
 
