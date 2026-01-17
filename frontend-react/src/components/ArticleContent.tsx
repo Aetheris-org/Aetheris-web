@@ -56,8 +56,10 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         },
       }),
       Image.configure({
+        inline: false,
+        allowBase64: false,
         HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg',
+          class: 'max-w-full h-auto rounded-lg my-4',
         },
       }),
       CodeBlockWithCopy,
@@ -71,6 +73,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           'column',
           'blockquote',
           'codeBlock',
+          'image',
         ],
       }),
       Column,
@@ -91,6 +94,28 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       },
     },
   })
+
+  // Обновляем контент редактора при изменении proseMirrorContent
+  useEffect(() => {
+    if (!editor || !proseMirrorContent) return
+    
+    const currentContent = editor.getJSON()
+    // Сравниваем контент, чтобы не обновлять без необходимости
+    const currentContentStr = JSON.stringify(currentContent)
+    const newContentStr = JSON.stringify(proseMirrorContent)
+    
+    if (currentContentStr !== newContentStr) {
+      editor.commands.setContent(proseMirrorContent, false)
+      
+      if (import.meta.env.DEV) {
+        // Логируем наличие изображений в контенте для отладки
+        const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
+        if (hasImages) {
+          logger.debug('[ArticleContent] Content contains images')
+        }
+      }
+    }
+  }, [editor, proseMirrorContent])
 
   // Обработка HTML-элементов видео и аудио после рендеринга
   useEffect(() => {

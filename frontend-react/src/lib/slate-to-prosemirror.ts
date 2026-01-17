@@ -326,6 +326,30 @@ function convertSlateToProseMirror(node: SlateNode): any {
         type: 'horizontalRule',
       }
 
+    case 'image':
+      // Обработка изображений из Slate формата
+      const imageUrl = node.url || node.src || ''
+      const imageAlt = node.alt || ''
+      const imageBlockId = node.blockId || null
+      
+      if (!imageUrl) {
+        return null
+      }
+
+      const imageResult: any = {
+        type: 'image',
+        attrs: {
+          src: imageUrl,
+          alt: imageAlt || undefined,
+        },
+      }
+
+      if (imageBlockId) {
+        imageResult.attrs.blockId = imageBlockId
+      }
+
+      return imageResult
+
     case 'layout':
       // KeystoneJS layout → TipTap columns
       const layoutAreas = children.filter((child: any) => child.type === 'layout-area')

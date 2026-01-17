@@ -899,12 +899,45 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     event.preventDefault()
     event.stopPropagation()
 
+    const view = editor.view
+    
+    // Получаем позицию курсора из координат мыши
+    const posAtCoords = view.posAtCoords({ 
+      left: event.clientX, 
+      top: event.clientY 
+    })
+
+    if (!posAtCoords) {
+      // Если не удалось получить позицию, используем координаты мыши напрямую
+      const menuType: 'empty' | 'text' = 'empty'
+      const menuWidth = 180
+      const menuHeight = 120
+      const x = event.clientX + menuWidth > window.innerWidth 
+        ? window.innerWidth - menuWidth - 10 
+        : event.clientX
+      const y = event.clientY + menuHeight > window.innerHeight 
+        ? window.innerHeight - menuHeight - 10 
+        : event.clientY
+
+      setContextMenu({
+        open: true,
+        x,
+        y,
+        type: menuType,
+      })
+      return
+    }
+
+    // Обновляем позицию курсора в редакторе
+    const { pos } = posAtCoords
+    editor.commands.setTextSelection(pos)
+
     // Определяем, есть ли выделенный текст
     const { selection } = editor.state
     const hasSelection = !selection.empty && selection.from !== selection.to
 
     // Определяем, есть ли текст под курсором
-    const { $from } = selection
+    const { $from } = editor.state.doc.resolve(pos)
     const node = $from.node()
     const hasText = node && node.textContent && node.textContent.trim().length > 0
 
@@ -912,9 +945,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     // Иначе - меню добавления медиа
     const menuType: 'empty' | 'text' = (hasSelection || hasText) ? 'text' : 'empty'
 
-    // Получаем координаты курсора из редактора TipTap
-    const view = editor.view
-    const coords = view.coordsAtPos($from.pos)
+    // Получаем координаты курсора для позиционирования меню
+    const coords = view.coordsAtPos(pos)
     
     // Позиционируем меню с учетом границ экрана
     const menuWidth = 180
