@@ -195,12 +195,48 @@ export function transformArticle(article: any, _userId?: string): Article {
   let contentJSON: any = null;
   let content: any = '';
 
+  console.log('[transformArticle] Processing rawContent:', {
+    rawContentType: typeof rawContent,
+    isArray: Array.isArray(rawContent),
+    isObject: rawContent && typeof rawContent === 'object',
+    hasType: rawContent?.type,
+    preview: typeof rawContent === 'string' ? rawContent.substring(0, 200) : JSON.stringify(rawContent).substring(0, 200),
+  });
+
   if (typeof rawContent === 'string') {
     try {
       const parsed = JSON.parse(rawContent);
       // Проверяем формат - если это уже ProseMirror формат (type: 'doc'), используем как есть
       if (parsed && typeof parsed === 'object' && parsed.type === 'doc') {
         contentJSON = parsed;
+      } else if (Array.isArray(parsed)) {
+        // Это массив - проверяем, Slate это или нет
+        const isSlateFormat = parsed.length > 0 && parsed.some((block: any) => 
+          block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
+        );
+        
+        console.log('[transformArticle] Parsed string to array:', {
+          arrayLength: parsed.length,
+          isSlateFormat,
+          firstBlock: parsed[0] ? {
+            type: parsed[0].type,
+            hasChildren: Array.isArray(parsed[0].children),
+            hasContent: Array.isArray(parsed[0].content),
+          } : null,
+        });
+        
+        if (isSlateFormat) {
+          console.log('[transformArticle] Detected Slate format in string, converting to ProseMirror');
+          contentJSON = slateToProseMirror(parsed);
+          console.log('[transformArticle] Converted result:', {
+            hasType: contentJSON.type === 'doc',
+            hasContent: Array.isArray(contentJSON.content),
+            contentLength: contentJSON.content?.length || 0,
+          });
+        } else {
+          // Не Slate - оборачиваем как есть
+          contentJSON = { type: 'doc', content: parsed };
+        }
       } else {
         contentJSON = parsed;
       }
@@ -222,6 +258,16 @@ export function transformArticle(article: any, _userId?: string): Article {
         block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
       );
       
+      console.log('[transformArticle] Processing array, checking Slate format:', {
+        arrayLength: rawContent.length,
+        isSlateFormat,
+        firstBlock: rawContent[0] ? {
+          type: rawContent[0].type,
+          hasChildren: Array.isArray(rawContent[0].children),
+          hasContent: Array.isArray(rawContent[0].content),
+        } : null,
+      });
+      
       if (isSlateFormat) {
         try {
           contentJSON = slateToProseMirror(rawContent);
@@ -231,12 +277,13 @@ export function transformArticle(article: any, _userId?: string): Article {
             proseMirrorContentLength: contentJSON.content?.length || 0,
           });
         } catch (e) {
-          console.warn('[transformArticle] Failed to convert Slate to ProseMirror, using wrapper:', e);
+          console.error('[transformArticle] Failed to convert Slate to ProseMirror:', e);
           // Fallback: оборачиваем в ProseMirror doc без конвертации
           contentJSON = { type: 'doc', content: rawContent };
         }
       } else {
         // Не Slate формат - оборачиваем как есть
+        console.log('[transformArticle] Not Slate format, wrapping array in doc');
         contentJSON = { type: 'doc', content: rawContent };
       }
     }
