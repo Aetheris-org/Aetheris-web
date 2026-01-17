@@ -57,12 +57,14 @@ export async function uploadToR2(
 
     // Генерируем уникальное имя файла
     const fileExt = file.name.split('.').pop();
-    // Для статей с articleId используем структуру: articles/{userId}/{articleId}/preview.jpg
-    // Это позволяет удалять только превью конкретной статьи
+    // Новая структура пути: {userId}/articles/{articleId}/... для статей
+    // Старая структура: {folder}/{userId}/... для аватаров и баннеров
     let fileName: string;
     if (folder === 'articles' && articleId) {
-      fileName = `${folder}/${userId}/${articleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // Для статей: {userId}/articles/{articleId}/filename.ext
+      fileName = `${userId}/articles/${articleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     } else {
+      // Для аватаров и баннеров: {folder}/{userId}/filename.ext (старая структура)
       fileName = `${folder}/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     }
 
@@ -186,13 +188,14 @@ export async function deleteOldFilesFromR2(
   try {
     checkR2Config();
 
-    // Для статей с articleId используем более специфичный префикс
-    // Формат: articles/{userId}/{articleId}/preview.jpg
-    // Если articleId не передан, удаляем все превью пользователя
+    // Новая структура пути для статей: {userId}/articles/{articleId}/...
+    // Старая структура для аватаров и баннеров: {folder}/{userId}/...
     let prefix: string;
     if (folder === 'articles' && articleId) {
-      prefix = `${folder}/${userId}/${articleId}/`;
+      // Для статей: {userId}/articles/{articleId}/
+      prefix = `${userId}/articles/${articleId}/`;
     } else {
+      // Для аватаров и баннеров: {folder}/{userId}/
       prefix = `${folder}/${userId}/`;
     }
     

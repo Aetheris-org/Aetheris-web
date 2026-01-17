@@ -105,15 +105,35 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     const newContentStr = JSON.stringify(proseMirrorContent)
     
     if (currentContentStr !== newContentStr) {
-      editor.commands.setContent(proseMirrorContent, { emitUpdate: false })
-      
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
         const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
         if (hasImages) {
-          logger.debug('[ArticleContent] Content contains images')
+          // Находим все узлы изображений для детального логирования
+          const findImages = (content: any[]): any[] => {
+            const images: any[] = []
+            for (const node of content || []) {
+              if (node.type === 'image') {
+                images.push(node)
+              }
+              if (node.content && Array.isArray(node.content)) {
+                images.push(...findImages(node.content))
+              }
+            }
+            return images
+          }
+          const images = findImages(proseMirrorContent.content || [])
+          logger.debug('[ArticleContent] Content contains images:', {
+            count: images.length,
+            images: images.map(img => ({
+              src: img.attrs?.src?.substring(0, 100),
+              alt: img.attrs?.alt,
+            })),
+          })
         }
       }
+      
+      editor.commands.setContent(proseMirrorContent, { emitUpdate: false })
     }
   }, [editor, proseMirrorContent])
 
