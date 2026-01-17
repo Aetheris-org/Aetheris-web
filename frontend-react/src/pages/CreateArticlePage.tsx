@@ -137,10 +137,25 @@ export default function CreateArticlePage() {
   const categoryFromUrl = searchParams.get('category') || null
   const [category, setCategory] = useState<string | null>(categoryFromUrl)
   
+  // Логирование категории при инициализации
+  useEffect(() => {
+    console.log('[CreateArticlePage] Initial category:', {
+      categoryFromUrl,
+      categoryState: category,
+      searchParamsCategory: searchParams.get('category'),
+      fullSearchParams: Object.fromEntries(searchParams.entries())
+    })
+  }, []) // Только при монтировании
+  
   // Обновляем category при изменении URL параметра
   useEffect(() => {
     const newCategory = searchParams.get('category') || null
     if (newCategory !== category) {
+      console.log('[CreateArticlePage] Category updated from URL:', { 
+        newCategory, 
+        oldCategory: category,
+        searchParamsCategory: searchParams.get('category')
+      })
       setCategory(newCategory)
       logger.debug('[CreateArticlePage] Category updated from URL:', { newCategory, oldCategory: category })
     }
@@ -3478,13 +3493,15 @@ export default function CreateArticlePage() {
 
       // Используем GraphQL API для создания/обновления статьи
       // ВАЖНО: excerpt обязателен, поэтому всегда передаем строку (не undefined)
+      // Используем category из state, но если его нет, проверяем URL напрямую
+      const currentCategory = category || searchParams.get('category') || null
       const articleData: any = {
         title: title.trim(),
         content: keystoneContent, // KeystoneJS ожидает массив блоков напрямую
         excerpt: excerpt.trim(), // excerpt обязателен, всегда передаем строку
         tags,
         difficulty: mapDifficultyToBackend(difficulty), // Преобразуем difficulty в backend формат
-        category: category || null, // Категория статьи (news или changes)
+        category: currentCategory, // Категория статьи (news или changes)
       }
       
       // Добавляем previewImage только если он есть (опциональное поле)
@@ -3494,6 +3511,23 @@ export default function CreateArticlePage() {
         articleData.cover_url = previewImageUrl // поле в таблице
       }
 
+      console.log('[CreateArticlePage] Article data prepared:', {
+        title: articleData.title,
+        contentLength: keystoneContent.length,
+        excerpt: articleData.excerpt,
+        excerptLength: articleData.excerpt.length,
+        tags: articleData.tags,
+        difficulty: articleData.difficulty,
+        category: articleData.category,
+        categoryState: category,
+        categoryFromUrl: categoryFromUrl,
+        hasCategory: !!articleData.category,
+        previewImage: articleData.previewImage,
+        hasPreviewImage: !!articleData.previewImage,
+        previewImageUrl: previewImageUrl,
+        existingPreviewImageId: existingPreviewImageId,
+      })
+      
       logger.debug('[CreateArticlePage] Article data prepared:', {
         title: articleData.title,
         contentLength: keystoneContent.length,
