@@ -1088,7 +1088,6 @@ function ProfileSettings() {
     setAvatarCroppedArea(null)
     setCoverCroppedArea(null)
     handleContactReset()
-    handleSocialReset()
     handleProfessionalReset()
     handleInsightsReset()
     setContactSaving(false)
@@ -1111,6 +1110,8 @@ function ProfileSettings() {
     githubHandle.trim() !== socialInitialRef.current.githubHandle ||
     vkHandle.trim() !== socialInitialRef.current.vkHandle ||
     whatsappHandle.trim() !== socialInitialRef.current.whatsappHandle
+
+  const contactOrSocialHasChanges = contactHasChanges || socialHasChanges
 
   const professionalHasChanges =
     headline.trim() !== professionalInitialRef.current.headline ||
@@ -1162,6 +1163,12 @@ function ProfileSettings() {
     setContactEmail(contactInitialRef.current.contactEmail)
     setWebsite(contactInitialRef.current.website)
     setLocationValue(contactInitialRef.current.location)
+    setDiscordHandle(socialInitialRef.current.discordHandle)
+    setTelegramHandle(socialInitialRef.current.telegramHandle)
+    setTwitterHandle(socialInitialRef.current.twitterHandle)
+    setGithubHandle(socialInitialRef.current.githubHandle)
+    setVkHandle(socialInitialRef.current.vkHandle)
+    setWhatsappHandle(socialInitialRef.current.whatsappHandle)
   }
 
   const handleContactSave = async () => {
@@ -1179,44 +1186,28 @@ function ProfileSettings() {
       website: contactInitialRef.current.website,
       location: contactInitialRef.current.location,
     })
+    if (socialHasChanges) {
+      const payload = {
+        discord: discordHandle.trim(),
+        telegram: telegramHandle.trim(),
+        twitter: twitterHandle.trim(),
+        github: githubHandle.trim(),
+        vk: vkHandle.trim(),
+        whatsapp: whatsappHandle.trim(),
+      }
+      setProfileDetails({ social: payload })
+      socialInitialRef.current = {
+        discordHandle: payload.discord,
+        telegramHandle: payload.telegram,
+        twitterHandle: payload.twitter,
+        githubHandle: payload.github,
+        vkHandle: payload.vk,
+        whatsappHandle: payload.whatsapp,
+      }
+    }
     setContactSaving(false)
     toast({
       title: t('settings.profile.contactDetailsSaved'),
-      description: t('settings.profile.description'),
-    })
-  }
-
-  const handleSocialReset = () => {
-    setDiscordHandle(socialInitialRef.current.discordHandle)
-    setTelegramHandle(socialInitialRef.current.telegramHandle)
-    setTwitterHandle(socialInitialRef.current.twitterHandle)
-    setGithubHandle(socialInitialRef.current.githubHandle)
-    setVkHandle(socialInitialRef.current.vkHandle)
-    setWhatsappHandle(socialInitialRef.current.whatsappHandle)
-  }
-
-  const handleSocialSave = async () => {
-    setSocialSaving(true)
-    const payload = {
-      discord: discordHandle.trim(),
-      telegram: telegramHandle.trim(),
-      twitter: twitterHandle.trim(),
-      github: githubHandle.trim(),
-      vk: vkHandle.trim(),
-      whatsapp: whatsappHandle.trim(),
-    }
-    setProfileDetails({ social: payload })
-    socialInitialRef.current = {
-      discordHandle: payload.discord,
-      telegramHandle: payload.telegram,
-      twitterHandle: payload.twitter,
-      githubHandle: payload.github,
-      vkHandle: payload.vk,
-      whatsappHandle: payload.whatsapp,
-    }
-    setSocialSaving(false)
-    toast({
-      title: t('settings.profile.socialLinksSaved'),
       description: t('settings.profile.description'),
     })
   }
@@ -1507,13 +1498,6 @@ function ProfileSettings() {
               >
                 <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span className="truncate min-w-0">{t('settings.profile.professional')}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="social" 
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/80 gap-1 sm:gap-2 min-w-0 max-w-[85px] sm:max-w-none"
-              >
-                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate min-w-0">{t('settings.profile.social')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1871,12 +1855,64 @@ function ProfileSettings() {
               </div>
             </div>
           </div>
+
+          <div className="space-y-1 border-t border-dashed pt-4">
+            <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.socialProfiles')}</Label>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+              {t('settings.profile.socialProfilesDescription')}
+            </p>
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-discord" className="text-xs sm:text-sm">{t('settings.profile.discord')}</Label>
+                <div className="relative">
+                  <MessageCircle className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-discord" value={discordHandle} onChange={(e) => setDiscordHandle(e.target.value)} placeholder="discord.gg/... or username" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-telegram" className="text-xs sm:text-sm">{t('settings.profile.telegram')}</Label>
+                <div className="relative">
+                  <Send className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-telegram" value={telegramHandle} onChange={(e) => setTelegramHandle(e.target.value)} placeholder="t.me/username or @username" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-twitter" className="text-xs sm:text-sm">{t('settings.profile.twitter')}</Label>
+                <div className="relative">
+                  <Twitter className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-twitter" value={twitterHandle} onChange={(e) => setTwitterHandle(e.target.value)} placeholder="@username or x.com/username" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-github" className="text-xs sm:text-sm">{t('settings.profile.github')}</Label>
+                <div className="relative">
+                  <Github className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-github" value={githubHandle} onChange={(e) => setGithubHandle(e.target.value)} placeholder="github.com/username" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-vk" className="text-xs sm:text-sm">{t('settings.profile.vk')}</Label>
+                <div className="relative">
+                  <Globe className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-vk" value={vkHandle} onChange={(e) => setVkHandle(e.target.value)} placeholder="vk.com/username or id123456" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="settings-whatsapp" className="text-xs sm:text-sm">{t('settings.profile.whatsapp')}</Label>
+                <div className="relative">
+                  <MessageSquare className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="settings-whatsapp" value={whatsappHandle} onChange={(e) => setWhatsappHandle(e.target.value)} placeholder="+1234567890 or wa.me/1234567890" className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2 border-t border-dashed pt-3 sm:pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleContactReset}
-              disabled={!contactHasChanges || contactSaving}
+              disabled={!contactOrSocialHasChanges || contactSaving}
               className="h-9 sm:h-10 text-xs sm:text-sm"
             >
               {t('common.reset')}
@@ -1884,7 +1920,7 @@ function ProfileSettings() {
             <Button
               size="sm"
               onClick={handleContactSave}
-              disabled={!contactHasChanges || contactSaving}
+              disabled={!contactOrSocialHasChanges || contactSaving}
               className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
             >
               {contactSaving ? (
@@ -1894,123 +1930,6 @@ function ProfileSettings() {
                 </>
               ) : (
                 t('settings.profile.saveContactInfo')
-              )}
-            </Button>
-          </div>
-            </section>
-          </TabsContent>
-
-          <TabsContent value="social" className="space-y-4 sm:space-y-6 mt-3 sm:mt-6">
-            <section className="space-y-3 sm:space-y-4">
-              <div className="space-y-1">
-                <Label className="text-xs sm:text-sm font-semibold">{t('settings.profile.socialProfiles')}</Label>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {t('settings.profile.socialProfilesDescription')}
-            </p>
-          </div>
-          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-discord" className="text-xs sm:text-sm">{t('settings.profile.discord')}</Label>
-              <div className="relative">
-                <MessageCircle className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-discord"
-                  value={discordHandle}
-                  onChange={(e) => setDiscordHandle(e.target.value)}
-                  placeholder="discord.gg/... or username"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-telegram" className="text-xs sm:text-sm">{t('settings.profile.telegram')}</Label>
-              <div className="relative">
-                <Send className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-telegram"
-                  value={telegramHandle}
-                  onChange={(e) => setTelegramHandle(e.target.value)}
-                  placeholder="t.me/username or @username"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-twitter" className="text-xs sm:text-sm">{t('settings.profile.twitter')}</Label>
-              <div className="relative">
-                <Twitter className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-twitter"
-                  value={twitterHandle}
-                  onChange={(e) => setTwitterHandle(e.target.value)}
-                  placeholder="@username or x.com/username"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-github" className="text-xs sm:text-sm">{t('settings.profile.github')}</Label>
-              <div className="relative">
-                <Github className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-github"
-                  value={githubHandle}
-                  onChange={(e) => setGithubHandle(e.target.value)}
-                  placeholder="github.com/username"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-vk" className="text-xs sm:text-sm">{t('settings.profile.vk')}</Label>
-              <div className="relative">
-                <Globe className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-vk"
-                  value={vkHandle}
-                  onChange={(e) => setVkHandle(e.target.value)}
-                  placeholder="vk.com/username or id123456"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="settings-whatsapp" className="text-xs sm:text-sm">{t('settings.profile.whatsapp')}</Label>
-              <div className="relative">
-                <MessageSquare className="absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="settings-whatsapp"
-                  value={whatsappHandle}
-                  onChange={(e) => setWhatsappHandle(e.target.value)}
-                  placeholder="+1234567890 or wa.me/1234567890"
-                  className="pl-8 sm:pl-9 h-9 sm:h-10 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 border-t border-dashed pt-3 sm:pt-4 sm:flex-row sm:justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSocialReset}
-              disabled={!socialHasChanges || socialSaving}
-              className="h-9 sm:h-10 text-xs sm:text-sm"
-            >
-              {t('common.reset')}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSocialSave}
-              disabled={!socialHasChanges || socialSaving}
-              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm"
-            >
-              {socialSaving ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                  {t('settings.profile.saving')}
-                </>
-              ) : (
-                t('settings.profile.saveSocialLinks')
               )}
             </Button>
           </div>
@@ -2349,7 +2268,7 @@ function ProfileSettings() {
         />
 
         <Dialog open={isCoverCropOpen} onOpenChange={(open) => (open ? setIsCoverCropOpen(true) : handleCancelCoverCrop())}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-2 text-left">
               <DialogTitle>{t('settings.profile.adjustProfileCover')}</DialogTitle>
               <DialogDescription>
@@ -2359,7 +2278,7 @@ function ProfileSettings() {
 
             <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
               <div className="space-y-4">
-                <div className="relative aspect-[4/1] w-full overflow-hidden rounded-xl border border-border/70 bg-muted/40">
+                <div className="relative w-full max-w-[min(640px,95vw)] aspect-[4/1] overflow-hidden rounded-xl border border-border/70 bg-muted/40 mx-auto">
                   {coverCropSource ? (
                     <>
                       <Cropper
@@ -2490,7 +2409,7 @@ function ProfileSettings() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm">
+              <div className="rounded-lg border border-border/70 bg-card/80 p-4 shadow-sm max-w-[min(380px,85vw)] mx-auto">
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span>{t('settings.profile.zoom')}</span>
                   <span className="text-muted-foreground">{avatarZoom.toFixed(1)}×</span>
@@ -2503,8 +2422,8 @@ function ProfileSettings() {
                   onValueChange={(value) => setAvatarZoom(value[0] ?? 1)}
                   disabled={isAvatarProcessing}
                   className="mt-3"
-          />
-        </div>
+                />
+              </div>
             </div>
 
             <DialogFooter className="mt-6">

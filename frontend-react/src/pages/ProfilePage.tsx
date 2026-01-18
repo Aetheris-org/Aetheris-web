@@ -32,11 +32,16 @@ import {
   Bookmark,
   FileEdit,
   Flame,
+  Github,
+  Globe,
+  MessageCircle,
   MessageSquare,
   NotebookPen,
   PenSquare,
+  Send,
   Settings,
   Trophy,
+  Twitter,
   Users,
   Heart,
   TrendingUp,
@@ -57,6 +62,7 @@ import {
   UserMinus,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
+import { useProfileDetailsStore } from '@/stores/profileDetailsStore'
 import { getUserProfile } from '@/api/profile'
 import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow'
 import { logger } from '@/lib/logger'
@@ -627,11 +633,31 @@ export default function ProfilePage() {
     }),
     shallow
   )
+  const { details: profileDetails } = useProfileDetailsStore()
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
   const isOwnProfile =
     profile?.user.uuid === currentUser?.uuid ||
     (!profile && profileId && currentUser?.uuid && profileId === currentUser.uuid)
+
+  const social = isOwnProfile ? (profileDetails?.social ?? {}) : {}
+  const buildSocialHref = (k: string, v: string) => {
+    const s = (v || '').trim()
+    if (!s) return null
+    if (s.startsWith('http://') || s.startsWith('https://')) return s
+    switch (k) {
+      case 'discord': return s.includes('discord.gg') ? 'https://' + s.replace(/^https?:\/\//, '') : null
+      case 'telegram': return 'https://t.me/' + s.replace(/^@/, '')
+      case 'twitter': return 'https://x.com/' + s.replace(/^@/, '')
+      case 'github': return 'https://github.com/' + s.replace(/^(github\.com\/?|@)/, '')
+      case 'vk': return 'https://vk.com/' + s.replace(/^vk\.com\/?/, '')
+      case 'whatsapp': return 'https://wa.me/' + s.replace(/\D/g, '')
+      default: return null
+    }
+  }
+  const socialEntries = (['discord', 'telegram', 'twitter', 'github', 'vk', 'whatsapp'] as const)
+    .map((k) => ({ k, href: buildSocialHref(k, social[k] ?? ''), Icon: { discord: MessageCircle, telegram: Send, twitter: Twitter, github: Github, vk: Globe, whatsapp: MessageSquare }[k] }))
+    .filter((x): x is typeof x & { href: string } => !!x.href)
 
   // Unified media/tag fallbacks
   const rawAvatar =
@@ -1215,6 +1241,17 @@ export default function ProfilePage() {
                 </p>
               )}
 
+              {/* Панель соцсетей (капсульная, скрывается если пусто) */}
+              {socialEntries.length > 0 && (
+                <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
+                  {socialEntries.map(({ k, href, Icon }) => (
+                    <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
+                      <Icon className="h-3.5 w-3.5" />
+                    </a>
+                  ))}
+                </div>
+              )}
+
               {/* Кнопки действий - улучшенные */}
               <div className="flex gap-2 w-full pt-1">
                     <Button
@@ -1376,6 +1413,17 @@ export default function ProfilePage() {
                     <span className="text-muted-foreground/70 hidden md:inline">{t('profile.followersLabel')}</span>
                   </div>
                 </div>
+
+                {/* Панель соцсетей (капсульная, скрывается если пусто) */}
+                {socialEntries.length > 0 && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
+                    {socialEntries.map(({ k, href, Icon }) => (
+                      <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
+                        <Icon className="h-3.5 w-3.5" />
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                     </div>
 
