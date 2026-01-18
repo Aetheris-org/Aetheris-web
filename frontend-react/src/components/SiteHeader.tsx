@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2, Newspaper, GitBranch, Scale, HelpCircle } from 'lucide-react'
+import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2, Newspaper, GitBranch, Scale, HelpCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -50,6 +50,10 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
   // На лендинге (/) не показываем навигацию
   const isLandingPage = location.pathname === '/'
 
+  // На страницах из Community и подобных — кнопка «Назад» вместо выбора раздела
+  const backPagePaths = ['/news', '/changes', '/rules', '/faq']
+  const showBackButton = backPagePaths.includes(location.pathname)
+
   const destinations = destinationKeys.map(item => ({
     ...item,
     label: t(`header.${item.key}`),
@@ -81,7 +85,19 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
             Aetheris
           </button>
 
-          {!isLandingPage && (
+          {!isLandingPage && showBackButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
+              onClick={() => navigate(-1)}
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">{t('common.back')}</span>
+            </Button>
+          )}
+          {!isLandingPage && !showBackButton && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

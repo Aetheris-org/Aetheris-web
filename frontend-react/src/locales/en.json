@@ -10,6 +10,7 @@
     "filter": "Filter",
     "close": "Close",
     "back": "Back",
+    "pageInDevelopment": "This page is under development",
     "next": "Next",
     "previous": "Previous",
     "loading": "Loading...",
@@ -105,10 +106,12 @@
       "focusVisibility": "Focus & visibility",
       "focusVisibilityDescription": "Highlight the work you are excited about and how collaborators should reach out.",
       "availability": "Availability",
+      "discord": "Discord",
+      "telegram": "Telegram",
       "twitter": "Twitter / X",
       "github": "GitHub",
-      "linkedin": "LinkedIn",
-      "portfolio": "Portfolio",
+      "vk": "VK",
+      "whatsapp": "WhatsApp",
       "headline": "Headline",
       "headlinePlaceholder": "Design director crafting calm, accessible publishing tools",
       "availabilityNote": "Availability note",
@@ -2681,7 +2684,19 @@
     "noArticlesDescription": "Check back later for updates and changes"
   },
   "rules": {
-    "sections": "Rules sections"
+    "sections": "Rules sections",
+    "general": {
+      "title": "General rules",
+      "body": "Respect other participants. Insults, bullying, and discrimination are prohibited.\n\nSpam, advertising, and off-topic content are not allowed in sections not intended for them."
+    },
+    "content": {
+      "title": "Content",
+      "body": "Only publish content that you have the rights to distribute.\n\nContent that violates legislation or platform rules is prohibited."
+    },
+    "behavior": {
+      "title": "Behavior",
+      "body": "Create a friendly environment: criticize ideas, not people.\n\nIn case of conflicts, contact the moderators."
+    }
   },
   "home": {
     "spotlight": {

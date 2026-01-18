@@ -26,10 +26,12 @@ export interface ProfileDetails {
   officeHours: string
   collaborationNotes: string
   social: {
+    discord: string
+    telegram: string
     twitter: string
     github: string
-    linkedin: string
-    portfolio: string
+    vk: string
+    whatsapp: string
   }
 }
 
@@ -56,10 +58,12 @@ export const defaultProfileDetails: ProfileDetails = {
   officeHours: '',
   collaborationNotes: '',
   social: {
+    discord: '',
+    telegram: '',
     twitter: '',
     github: '',
-    linkedin: '',
-    portfolio: '',
+    vk: '',
+    whatsapp: '',
   },
 }
 
@@ -92,7 +96,21 @@ export const useProfileDetailsStore = create<ProfileDetailsState>()(
     }),
     {
       name: 'aetheris-profile-details',
-      version: 1,
+      version: 2,
+      migrate: (persisted: any, from) => {
+        if (from < 2 && persisted?.details?.social) {
+          const s = persisted.details.social
+          persisted.details.social = {
+            discord: '',
+            telegram: '',
+            twitter: s.twitter ?? '',
+            github: s.github ?? '',
+            vk: '',
+            whatsapp: '',
+          }
+        }
+        return persisted
+      },
     }
   )
 )
