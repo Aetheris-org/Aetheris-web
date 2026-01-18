@@ -864,6 +864,7 @@ export default function ProfilePage() {
     undefined
   const roleStyles: Record<string, { bg: string; label: string }> = {
     owner: { bg: 'bg-red-500', label: t('roles.owner') },
+    main_admin: { bg: 'bg-orange-500', label: t('roles.main_admin') },
     admin: { bg: 'bg-yellow-400', label: t('roles.admin') },
     super_admin: { bg: 'bg-orange-500', label: t('roles.admin') },
     developer: { bg: 'bg-purple-500', label: t('roles.developer') },

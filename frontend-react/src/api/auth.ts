@@ -142,6 +142,7 @@ export async function getCurrentUser(): Promise<User | null> {
       nickname: profile.username || '',
       email: '',
       avatar: profile.avatar || profile.avatar_url || undefined,
+      coverImage: profile.cover_image || profile.cover_url || undefined,
       tag: profile.tag || undefined,
       bio: profile.bio || undefined,
       role: (profile.role || 'user') as 'user' | 'moderator' | 'admin' | 'super_admin',

@@ -3367,6 +3367,7 @@
   },
   "roles": {
     "owner": "Owner",
+    "main_admin": "Main Admin",
     "admin": "Admin",
     "moderator": "Moderator",
     "developer": "Developer"

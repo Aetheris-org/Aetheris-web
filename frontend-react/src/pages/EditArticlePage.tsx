@@ -295,7 +295,7 @@ export default function EditArticlePage() {
     if (targetEditId && user && !isLoadingArticle && !articleToEdit) {
       setIsLoadingArticle(true)
       getArticle(targetEditId)
-        .then((article) => {
+        .then(async (article) => {
           if (article) {
             // Проверяем, что пользователь является автором статьи (сравниваем по id/uuid/username)
             const userIdStr = user?.id ? String(user.id) : null
@@ -354,41 +354,55 @@ export default function EditArticlePage() {
               selectedImageUrlRef.current = article.previewImage
             }
             
-            // Преобразуем контент из JSON в HTML для редактора
+            // Преобразуем контент в формат TipTap (ProseMirror type:'doc') и/или HTML для редактора
             if (article.content) {
               try {
-                const content = article.content as any
-                // Если content - это объект с document (TipTap формат)
-                if (content && typeof content === 'object' && 'document' in content && content.document) {
-                  setContentJSON(content.document)
-                } else if (typeof content === 'string') {
-                  // Если content - это строка (HTML)
-                  setContent(content)
-                } else if (Array.isArray(content)) {
-                  // Если content - это массив (Slate формат)
-                  setContentJSON(content)
-                  // Преобразуем в HTML для отображения
-                  const htmlContent = content
-                    .map((block: any) => {
-                      if (block.type === 'paragraph') {
-                        const text = block.children?.map((child: any) => child.text || '').join('') || ''
-                        return `<p>${text}</p>`
+                const raw = article.content as any
+                const { slateToProseMirror } = await import('@/lib/slate-to-prosemirror')
+                const { slateToHtml } = await import('@/lib/slate-to-html')
+
+                if (raw && typeof raw === 'object' && raw.type === 'doc') {
+                  setContentJSON(raw)
+                } else if (raw && typeof raw === 'object' && 'document' in raw && raw.document) {
+                  const doc = raw.document
+                  if (doc && typeof doc === 'object' && doc.type === 'doc') {
+                    setContentJSON(doc)
+                  } else {
+                    setContentJSON(slateToProseMirror(raw))
+                    setContent(slateToHtml(raw))
+                  }
+                } else if (Array.isArray(raw)) {
+                  setContentJSON(slateToProseMirror(raw))
+                  setContent(slateToHtml(raw))
+                } else if (typeof raw === 'string') {
+                  const s = raw.trim()
+                  if (s.startsWith('[') || s.startsWith('{')) {
+                    try {
+                      const parsed = JSON.parse(raw)
+                      if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) {
+                        setContentJSON(slateToProseMirror(parsed))
+                        setContent(slateToHtml(parsed))
+                      } else {
+                        setContent(raw)
                       }
-                      return ''
-                    })
-                    .join('')
-                  setContent(htmlContent)
-                } else if (content && typeof content === 'object' && content.type === 'doc') {
-                  // Если content - это ProseMirror документ напрямую
-                  setContentJSON(content)
+                    } catch {
+                      setContent(raw)
+                    }
+                  } else {
+                    setContent(raw)
+                  }
+                } else {
+                  setContentJSON(slateToProseMirror(raw))
+                  setContent(slateToHtml(raw))
                 }
               } catch (error) {
-                logger.error('[CreateArticlePage] Failed to parse article content:', error)
+                logger.error('[EditArticlePage] Failed to parse article content:', error)
                 setContent('')
+                setContentJSON(null)
               }
             }
             
-            logger.debug('[CreateArticlePage] Article loaded for editing:', { articleId: article.id })
+            logger.debug('[EditArticlePage] Article loaded for editing:', { articleId: article.id })
           } else {
             toast({
               title: t('createArticle.articleNotFound') || 'Article not found',
@@ -2900,11 +2914,12 @@ export default function EditArticlePage() {
       let publishedArticle
       let wasUpdated = false
 
-      // Жёстко: если есть edit-id, только обновляем
+      // Жёстко: если есть edit-id, только обновляем существующую запись (не создаём новую)
       const editingTargetId =
         editArticleIdRef.current ||
         (articleToEdit?.id ? String(articleToEdit.id) : null) ||
         editArticleId ||
+        id ||
         null
 
       const isEditMode = Boolean(editingTargetId)

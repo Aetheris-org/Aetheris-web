@@ -73,8 +73,9 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileDetailsStore, type PreferredContactMethod } from '@/stores/profileDetailsStore'
-import { updateUserProfile } from '@/api/profile'
+import { updateUserProfile, getUserProfile } from '@/api/profile'
 import { uploadImage } from '@/lib/upload'
+import { normalizeR2Url } from '@/lib/r2-url-helper'
 import { logger } from '@/lib/logger'
 import {
   Dialog,
@@ -565,6 +566,8 @@ function ProfileSettings() {
   const [insightsSaving, setInsightsSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar ?? null)
   const [coverPreview, setCoverPreview] = useState<string | null>(user?.coverImage ?? null)
+  const [fetchedAvatar, setFetchedAvatar] = useState<string | null>(null)
+  const [fetchedCover, setFetchedCover] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [avatarRemoved, setAvatarRemoved] = useState(false)
@@ -582,8 +585,8 @@ function ProfileSettings() {
   const initialBio = user?.bio ?? ''
   const initialTag = (user as any)?.tag ?? ''
   const [tag, setTag] = useState(initialTag)
-  const initialAvatar = user?.avatar ?? null
-  const initialCover = user?.coverImage ?? null
+  const initialAvatar = fetchedAvatar ?? user?.avatar ?? null
+  const initialCover = fetchedCover ?? user?.coverImage ?? null
   const initialFirstName = user?.firstName ?? ''
   const initialLastName = user?.lastName ?? ''
   const initialContactEmail = profileDetails.contactEmail || '' // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не используем user?.email (он хеширован)
@@ -700,6 +703,23 @@ function ProfileSettings() {
       URL.revokeObjectURL(url)
     }
   }
+
+  // Подтягиваем актуальные аватар и баннер из профиля при открытии настроек
+  useEffect(() => {
+    if (!user?.uuid) return
+    const u = user
+    getUserProfile(u.uuid)
+      .then((profile) => {
+        const av = profile.user.avatarUrl ?? null
+        const cov = profile.user.coverImageUrl ?? null
+        setFetchedAvatar(av)
+        setFetchedCover(cov)
+        setAvatarPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(av) || av || null))
+        setCoverPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(cov) || cov || null))
+        setUser({ ...u, avatar: av || undefined, coverImage: cov || undefined })
+      })
+      .catch((err) => { logger.warn('[ProfileSettings] Failed to load profile for settings', err) })
+  }, [user?.uuid, setUser])
 
   useEffect(() => {
     setNickname(initialNickname)

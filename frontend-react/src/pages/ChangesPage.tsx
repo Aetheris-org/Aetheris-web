@@ -29,7 +29,7 @@ export default function ChangesPage() {
   const pageSize = 10
 
   // Проверка, является ли пользователь админом
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || (user?.uuid && getRoleByUuid(user.uuid) === 'owner')
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || (user?.uuid && (getRoleByUuid(user.uuid) === 'owner' || getRoleByUuid(user.uuid) === 'main_admin'))
 
   const { data: articlesData, isLoading, error: articlesError } = useQuery({
     queryKey: ['articles', 'changes', page, pageSize],
