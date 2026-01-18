@@ -1241,17 +1241,6 @@ export default function ProfilePage() {
                 </p>
               )}
 
-              {/* Панель соцсетей (капсульная, скрывается если пусто) */}
-              {socialEntries.length > 0 && (
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
-                  {socialEntries.map(({ k, href, Icon }) => (
-                    <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
-                      <Icon className="h-3.5 w-3.5" />
-                    </a>
-                  ))}
-                </div>
-              )}
-
               {/* Кнопки действий - улучшенные */}
               <div className="flex gap-2 w-full pt-1">
                 {socialEntries.length > 0 && (
@@ -1262,7 +1251,7 @@ export default function ProfilePage() {
                         <span className="truncate">{t('profile.socialNetworks')}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-2xl border-border/60 bg-card/95 p-3 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
+                    <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-full border border-border/60 bg-card/95 px-4 py-2.5 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
                       <div className="flex items-center gap-2">
                         {socialEntries.map(({ k, href, Icon }) => (
                           <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
@@ -1424,17 +1413,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Панель соцсетей (капсульная, скрывается если пусто) */}
-                {socialEntries.length > 0 && (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
-                    {socialEntries.map(({ k, href, Icon }) => (
-                      <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
-                        <Icon className="h-3.5 w-3.5" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-
                     </div>
 
               {/* Правая колонка: дропдаун сверху, кнопки внизу */}
@@ -1487,7 +1465,7 @@ export default function ProfilePage() {
                           <span>{t('profile.socialNetworks')}</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-2xl border-border/60 bg-card/95 p-3 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
+                      <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-full border border-border/60 bg-card/95 px-4 py-2.5 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
                         <div className="flex items-center gap-2">
                           {socialEntries.map(({ k, href, Icon }) => (
                             <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
