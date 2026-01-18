@@ -1254,15 +1254,25 @@ export default function ProfilePage() {
 
               {/* Кнопки действий - улучшенные */}
               <div className="flex gap-2 w-full pt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                  onClick={() => navigate('/forum')}
-                  className="gap-1.5 flex-1 h-9 text-xs"
-                    >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                        <span className="truncate">{t('profile.openArticles')}</span>
-                    </Button>
+                {socialEntries.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5 flex-1 h-9 text-xs">
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span className="truncate">{t('profile.socialNetworks')}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-2xl border-border/60 bg-card/95 p-3 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
+                      <div className="flex items-center gap-2">
+                        {socialEntries.map(({ k, href, Icon }) => (
+                          <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
+                            <Icon className="h-4 w-4" />
+                          </a>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 {isOwnProfile ? (
                     <Button
                       size="sm"
@@ -1469,16 +1479,25 @@ export default function ProfilePage() {
 
                 {/* Кнопки действий - справа внизу */}
                 <div className="flex flex-row gap-1.5 sm:gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/forum')}
-                    className="gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">{t('profile.openArticles')}</span>
-                    <span className="sm:hidden">{t('profile.articlesTabShort')}</span>
-                  </Button>
+                  {socialEntries.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+                          <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span>{t('profile.socialNetworks')}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="top" sideOffset={8} align="center" className="rounded-2xl border-border/60 bg-card/95 p-3 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=top]:slide-in-from-bottom-2">
+                        <div className="flex items-center gap-2">
+                          {socialEntries.map(({ k, href, Icon }) => (
+                            <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label={k}>
+                              <Icon className="h-4 w-4" />
+                            </a>
+                          ))}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                   {isOwnProfile ? (
                     <Button
                       size="sm"
