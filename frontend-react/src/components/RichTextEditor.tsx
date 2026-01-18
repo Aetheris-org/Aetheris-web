@@ -24,8 +24,6 @@ import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import Highlight from '@tiptap/extension-highlight'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
-import tippy, { type Instance as TippyInstance } from 'tippy.js'
-import 'tippy.js/dist/tippy.css'
 import {
   Bold,
   Italic,
@@ -40,7 +38,6 @@ import {
   Heading2,
   Heading3,
   Text,
-  Sparkles,
   Image as ImageIcon,
   Link as LinkIcon,
   RemoveFormatting,
@@ -54,6 +51,12 @@ import {
   Type,
   Video,
   Music,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -96,6 +99,11 @@ let slashCommandItemsResolver: () => SlashCommandItem[] = () => []
 export const setSlashCommandItemsResolver = (resolver: () => SlashCommandItem[]) => {
   slashCommandItemsResolver = resolver
 }
+
+// Для размещения slash-меню сбоку (вместо Tippy)
+const _slashPanelRef: { current: HTMLDivElement | null } = { current: null }
+let _setSlashActive: (v: boolean) => void = () => {}
+let _pendingSlashComponent: ReactRenderer<typeof SlashCommandList> | null = null
 
 const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, ref) => {
   const { items, command } = props
@@ -287,7 +295,6 @@ const SlashCommandExtension = Extension.create<{
         },
         render: () => {
           let component: ReactRenderer<typeof SlashCommandList> | null = null
-          let popup: TippyInstance | null = null
 
           return {
             onStart: (props) => {
@@ -296,61 +303,29 @@ const SlashCommandExtension = Extension.create<{
                 props,
                 editor: props.editor,
               })
-
-              if (!props.clientRect) {
-                return
-              }
-
-              // @ts-expect-error - TipTap types incompatibility
-              popup = tippy('body', {
-                getReferenceClientRect: props.clientRect,
-                appendTo: () => document.body,
-                // @ts-expect-error - component.element may be null
-                content: component.element,
-                showOnCreate: true,
-                interactive: true,
-                trigger: 'manual',
-                placement: 'bottom-start',
-                animation: 'shift-away',
-                duration: [120, 80],
-                theme: 'slash-command',
-                arrow: false,
-              })[0]
+              _pendingSlashComponent = component
+              _setSlashActive(true)
             },
             onUpdate: (props) => {
               component?.updateProps(props)
-              if (!props.clientRect || !popup) {
-                return
-              }
-
-              popup.setProps({
-                // @ts-expect-error - TipTap types incompatibility (null not allowed)
-                getReferenceClientRect: props.clientRect,
-              })
             },
             onKeyDown: (props) => {
               if (props.event.key === 'Escape') {
-                popup?.hide()
                 return true
               }
-
               const handler = (component?.ref as unknown as { onKeyDown?: (props: SlashCommandProps) => boolean })?.onKeyDown
-
               if (handler) {
-                // @ts-expect-error - TipTap types incompatibility (SuggestionKeyDownProps vs SlashCommandProps)
+                // @ts-expect-error - TipTap types incompatibility
                 return handler(props)
               }
-
               return false
             },
             onExit: () => {
+              _pendingSlashComponent = null
               component?.destroy()
               component = null
-
-              if (popup) {
-                popup.destroy()
-                popup = null
-              }
+              if (_slashPanelRef.current) _slashPanelRef.current.innerHTML = ''
+              _setSlashActive(false)
             },
           }
         },
@@ -558,6 +533,41 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   })
   const contextMenuRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [isFormatPanelOpen, setFormatPanelOpen] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [slashActive, setSlashActive] = useState(false)
+  const editorWrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    _setSlashActive = setSlashActive
+    return () => { _setSlashActive = () => {} }
+  }, [])
+
+  useEffect(() => {
+    if (slashActive && _pendingSlashComponent && _slashPanelRef.current) {
+      _slashPanelRef.current.innerHTML = ''
+      _slashPanelRef.current.appendChild(_pendingSlashComponent.element)
+      _pendingSlashComponent = null
+    }
+  }, [slashActive])
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === editorWrapperRef.current)
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    if (!editorWrapperRef.current) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      editorWrapperRef.current.requestFullscreen()
+    }
+  }, [])
 
   const extensions = useMemo(
     () => [
@@ -1255,190 +1265,218 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const activeColumnsLayout = editor ? getActiveColumnsLayout(editor) : null
   const activeColumnsPreset = findPresetByLayout(activeColumnsLayout)
 
+  const formatButtons = editor ? [
+    { label: 'Bold', aria: 'Bold', icon: Bold, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive('bold'), disabled: !editor.can().chain().focus().toggleBold().run() },
+    { label: 'Italic', aria: 'Italic', icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive('italic'), disabled: !editor.can().chain().focus().toggleItalic().run() },
+    { label: 'Strikethrough', aria: 'Strikethrough', icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive('strike'), disabled: !editor.can().chain().focus().toggleStrike().run() },
+    { label: 'Inline code', aria: 'Code', icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
+  ] : []
+
   return (
     <>
-      <div
-        className={cn(
-          'relative flex flex-col overflow-hidden border border-border/50 bg-background transition-all',
-          disabled && 'opacity-80',
-          className
+      <div className={cn('flex flex-row items-stretch gap-0', className)}>
+        {/* Панель форматирования — СЛЕВА от редактора, только desktop, скрыта в fullscreen */}
+        {!isFullscreen && editor && (
+          <div
+            className={cn(
+              'hidden md:flex shrink-0 flex-col items-center overflow-hidden border-r border-border/40 bg-muted/10 transition-all duration-200',
+              isFormatPanelOpen ? 'w-14' : 'w-10'
+            )}
+          >
+            {isFormatPanelOpen ? (
+              <>
+                <div className="flex flex-col gap-0.5 p-2">
+                  {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
+                    <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Text color" className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
+                        <Type className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start" className="w-48 p-2">
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Dark Gray', value: '#404040' }, { name: 'Gray', value: '#808080' }, { name: 'Light Gray', value: '#C0C0C0' }, { name: 'White', value: '#FFFFFF' }, { name: 'Red', value: '#EF4444' }, { name: 'Orange', value: '#F97316' }, { name: 'Amber', value: '#F59E0B' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Lime', value: '#84CC16' }, { name: 'Green', value: '#22C55E' }, { name: 'Emerald', value: '#10B981' }, { name: 'Teal', value: '#14B8A6' }, { name: 'Cyan', value: '#06B6D4' }, { name: 'Sky', value: '#0EA5E9' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Indigo', value: '#6366F1' }, { name: 'Violet', value: '#8B5CF6' }, { name: 'Purple', value: '#A855F7' }, { name: 'Fuchsia', value: '#D946EF' }, { name: 'Pink', value: '#EC4899' }, { name: 'Rose', value: '#F43F5E' }].map((c) => (
+                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c.value).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('textStyle').color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                            {c.value === null && <span className="text-[10px] text-muted-foreground">A</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Highlight" className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight color">
+                        <Highlighter className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start" className="w-48 p-2">
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Purple', value: '#E9D5FF' }, { name: 'Orange', value: '#FED7AA' }, { name: 'Red', value: '#FECACA' }, { name: 'Gray', value: '#E5E7EB' }, { name: 'Cyan', value: '#A5F3FC' }, { name: 'Lime', value: '#D9F99D' }, { name: 'Amber', value: '#FDE68A' }].map((c) => (
+                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetHighlight().run() : editor.chain().focus().setHighlight({ color: c.value }).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('highlight')?.color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                            {c.value === null && <span className="text-[10px] text-muted-foreground">×</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+                    <LinkIcon className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                    <RemoveFormatting className="h-4 w-4" />
+                  </button>
+                </div>
+                <button type="button" aria-label="Collapse" className="mt-auto mb-2 flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Collapse" onClick={() => setFormatPanelOpen(false)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <button type="button" aria-label="Expand" className="mt-4 flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Expand" onClick={() => setFormatPanelOpen(true)}>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         )}
-        style={{
-          borderRadius: 'var(--radius-md)',
-        }}
-      >
-        {/* Minimal top bar - only essential controls */}
-        <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Undo"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              disabled={!editor?.can().chain().focus().undo().run()}
-              onClick={() => editor?.chain().focus().undo().run()}
-              title="Undo"
-            >
-              <Undo className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Redo"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              disabled={!editor?.can().chain().focus().redo().run()}
-              onClick={() => editor?.chain().focus().redo().run()}
-              title="Redo"
-            >
-              <Redo className="h-3.5 w-3.5" />
-            </Button>
-            {editor && activeColumnsLayout && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" aria-label="Column layout" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
-                    <Columns3 className="h-3.5 w-3.5" />
-                    {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Columns'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  {(Object.entries(COLUMN_LAYOUTS) as [ColumnPresetKey, typeof COLUMN_LAYOUTS[keyof typeof COLUMN_LAYOUTS]][]).map(
-                    ([key, config]) => (
-                      <DropdownMenuItem
-                        key={key}
-                        className={cn(
-                          'flex flex-col items-start gap-1',
-                          activeColumnsPreset === key && 'bg-muted text-foreground'
-                        )}
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          // @ts-expect-error - Custom command not in TipTap types
-                          editor.chain().focus().setColumnsLayout(key).run()
-                        }}
-                      >
+
+        {/* Мобильная панель форматирования — внизу экрана, скрывается вниз */}
+        {!isFullscreen && editor && (
+          <div className={cn('fixed bottom-0 left-0 right-0 z-40 flex flex-col border-t border-border/40 bg-muted/20 shadow-lg transition-all duration-200 md:hidden', isFormatPanelOpen ? 'max-h-[200px]' : 'max-h-14')}>
+            {isFormatPanelOpen ? (
+              <>
+                <div className="flex flex-row gap-1 overflow-x-auto p-2">
+                  {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
+                    <button key={label} type="button" aria-label={aria} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Text color" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
+                        <Type className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="center" className="w-48 p-2">
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Red', value: '#EF4444' }, { name: 'Green', value: '#22C55E' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Orange', value: '#F97316' }, { name: 'Purple', value: '#A855F7' }, { name: 'Pink', value: '#EC4899' }, { name: 'Gray', value: '#808080' }].map((c) => (
+                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c.value).run())} className={cn('h-6 w-6 rounded border-2 transition-all', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('textStyle').color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                            {c.value === null && <span className="text-[10px] text-muted-foreground">A</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Highlight" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight">
+                        <Highlighter className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="center" className="w-48 p-2">
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Orange', value: '#FED7AA' }].map((c) => (
+                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetHighlight().run() : editor.chain().focus().setHighlight({ color: c.value }).run())} className={cn('h-6 w-6 rounded border-2 transition-all', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('highlight')?.color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                            {c.value === null && <span className="text-[10px] text-muted-foreground">×</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+                    <LinkIcon className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Clear formatting" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                    <RemoveFormatting className="h-4 w-4" />
+                  </button>
+                </div>
+                <button type="button" aria-label="Collapse" className="flex h-9 items-center justify-center border-t border-border/40 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(false)}>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <button type="button" aria-label="Expand" className="flex h-14 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(true)}>
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Карточка редактора */}
+        <div
+          ref={editorWrapperRef}
+          className={cn(
+            'flex min-w-0 flex-1 flex-col overflow-hidden border border-border/50 bg-background transition-all',
+            disabled && 'opacity-80'
+          )}
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          {/* Верхняя панель: Undo Redo Columns | Полноэкранный режим */}
+          <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2">
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="ghost" size="icon" aria-label="Undo" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().undo().run()} onClick={() => editor?.chain().focus().undo().run()} title="Undo">
+                <Undo className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" aria-label="Redo" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().redo().run()} onClick={() => editor?.chain().focus().redo().run()} title="Redo">
+                <Redo className="h-3.5 w-3.5" />
+              </Button>
+              {editor && activeColumnsLayout && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" aria-label="Column layout" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
+                      <Columns3 className="h-3.5 w-3.5" />
+                      {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Columns'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    {(Object.entries(COLUMN_LAYOUTS) as [ColumnPresetKey, typeof COLUMN_LAYOUTS[keyof typeof COLUMN_LAYOUTS]][]).map(([key, config]) => (
+                      <DropdownMenuItem key={key} className={cn('flex flex-col items-start gap-1', activeColumnsPreset === key && 'bg-muted text-foreground')} onSelect={(e) => {
+                      e.preventDefault()
+                      // @ts-expect-error - Custom command not in TipTap types
+                      editor.chain().focus().setColumnsLayout(key).run()
+                    }}>
                         <span className="text-sm font-medium">{config.label}</span>
                         <span className="text-xs text-muted-foreground">{config.description}</span>
                       </DropdownMenuItem>
-                    )
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
-            <span className="flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              Type "/" for commands
-            </span>
-          </div>
-        </div>
-
-        {/* Main editor area - clean and focused */}
-        <div className="relative flex-1">
-          <div className="flex items-start gap-4 px-6 py-8">
-            {/* Left format toolbar */}
-            {editor && (
-              <div className="flex shrink-0 flex-col gap-0.5 rounded-lg border border-border/40 bg-muted/20 p-1.5 sticky top-[5.5rem]">
-                {[
-                  { label: 'Bold', aria: 'Bold', icon: Bold, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive('bold'), disabled: !editor.can().chain().focus().toggleBold().run() },
-                  { label: 'Italic', aria: 'Italic', icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive('italic'), disabled: !editor.can().chain().focus().toggleItalic().run() },
-                  { label: 'Strikethrough', aria: 'Strikethrough', icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive('strike'), disabled: !editor.can().chain().focus().toggleStrike().run() },
-                  { label: 'Inline code', aria: 'Code', icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
-                ].map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-label={aria}
-                    className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')}
-                    disabled={disabled}
-                    onClick={(e) => { e.preventDefault(); action() }}
-                    title={label}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Text color"
-                      className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')}
-                      title="Text color"
-                    >
-                      <Type className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start" className="w-48 p-2">
-                    <div className="grid grid-cols-6 gap-1.5">
-                      {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Dark Gray', value: '#404040' }, { name: 'Gray', value: '#808080' }, { name: 'Light Gray', value: '#C0C0C0' }, { name: 'White', value: '#FFFFFF' }, { name: 'Red', value: '#EF4444' }, { name: 'Orange', value: '#F97316' }, { name: 'Amber', value: '#F59E0B' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Lime', value: '#84CC16' }, { name: 'Green', value: '#22C55E' }, { name: 'Emerald', value: '#10B981' }, { name: 'Teal', value: '#14B8A6' }, { name: 'Cyan', value: '#06B6D4' }, { name: 'Sky', value: '#0EA5E9' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Indigo', value: '#6366F1' }, { name: 'Violet', value: '#8B5CF6' }, { name: 'Purple', value: '#A855F7' }, { name: 'Fuchsia', value: '#D946EF' }, { name: 'Pink', value: '#EC4899' }, { name: 'Rose', value: '#F43F5E' }].map((color) => (
-                      <button key={color.name} type="button" onClick={() => color.value === null ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(color.value).run()} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', color.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('textStyle').color === color.value && 'ring-2 ring-primary ring-offset-1')} style={color.value ? { backgroundColor: color.value } : undefined} title={color.name}>
-                        {color.value === null && <span className="text-[10px] text-muted-foreground">A</span>}
-                      </button>
                     ))}
-                    </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button type="button" aria-label="Highlight" className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight color">
-                      <Highlighter className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start" className="w-48 p-2">
-                    <div className="grid grid-cols-6 gap-1.5">
-                      {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Purple', value: '#E9D5FF' }, { name: 'Orange', value: '#FED7AA' }, { name: 'Red', value: '#FECACA' }, { name: 'Gray', value: '#E5E7EB' }, { name: 'Cyan', value: '#A5F3FC' }, { name: 'Lime', value: '#D9F99D' }, { name: 'Amber', value: '#FDE68A' }].map((color) => (
-                        <button key={color.name} type="button" onClick={() => color.value === null ? editor.chain().focus().unsetHighlight().run() : editor.chain().focus().setHighlight({ color: color.value }).run()} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', color.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('highlight')?.color === color.value && 'ring-2 ring-primary ring-offset-1')} style={color.value ? { backgroundColor: color.value } : undefined} title={color.name}>
-                          {color.value === null && <span className="text-[10px] text-muted-foreground">×</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
-                  <LinkIcon className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
-                  <RemoveFormatting className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-
-            <div className="group/editor relative flex-1 min-w-0">
-              <EditorContent
-                editor={editor}
-                id={id}
-                aria-label={ariaLabel}
-                aria-labelledby={ariaLabelledBy}
-                aria-describedby={ariaDescribedBy}
-                className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none"
-                onContextMenu={handleContextMenu}
-              />
-              {/* Скрытый input для загрузки файлов */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
+              )}
             </div>
-            <EditorOutline editor={editor} />
+            <Button type="button" variant="ghost" size="icon" aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="h-7 w-7 text-muted-foreground hover:text-foreground" title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </Button>
           </div>
-        </div>
 
-        {/* Minimal bottom bar - only stats */}
-        <div className="flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
-          <span>{wordCount} words</span>
-          {characterLimit ? (
-            <span className={cn(
-              characterCount > characterLimit * 0.9 && 'text-amber-600 dark:text-amber-400',
-              characterCount >= characterLimit && 'text-destructive font-medium'
-            )}>
-              {characterCount}/{characterLimit}
-            </span>
-          ) : (
-            <span>{characterCount} chars</span>
-          )}
+          {/* Область контента: редактор + панель slash или outline справа */}
+          <div className="relative flex flex-1">
+            <div className="flex min-w-0 flex-1 items-start gap-4 px-4 pt-6 pb-24 md:px-6 md:py-8">
+              <div className="group/editor relative min-w-0 flex-1">
+                <EditorContent editor={editor} id={id} aria-label={ariaLabel} aria-labelledby={ariaLabelledBy} aria-describedby={ariaDescribedBy} className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none" onContextMenu={handleContextMenu} />
+                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
+              </div>
+              {/* Справа: slash-меню при / или Outline */}
+              {slashActive ? (
+                <div ref={(el) => { _slashPanelRef.current = el }} className="w-80 shrink-0 overflow-y-auto overflow-x-hidden" />
+              ) : (
+                <EditorOutline editor={editor} />
+              )}
+            </div>
+          </div>
+
+          {/* Нижняя панель — счётчики */}
+          <div className="flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
+            <span>{wordCount} words</span>
+            {characterLimit ? (
+              <span className={cn(characterCount > characterLimit * 0.9 && 'text-amber-600 dark:text-amber-400', characterCount >= characterLimit && 'text-destructive font-medium')}>
+                {characterCount}/{characterLimit}
+              </span>
+            ) : (
+              <span>{characterCount} chars</span>
+            )}
+          </div>
         </div>
       </div>
 
