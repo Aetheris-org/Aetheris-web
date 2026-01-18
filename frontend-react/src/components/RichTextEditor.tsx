@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { EditorContent, ReactRenderer, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -1273,34 +1274,30 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     { label: 'Inline code', aria: 'Code', icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
   ] : []
 
-  return (
-    <>
-      {/* Кнопка возврата панели — у левого края экрана, только когда панель скрыта (desktop) */}
-      {!isFullscreen && editor && !isFormatPanelOpen && (
-        <button
-          type="button"
-          aria-label="Show format panel"
-          className="fixed left-0 top-1/2 z-40 hidden h-12 w-10 -translate-y-1/2 items-center justify-center rounded-r-xl border border-l-0 border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-colors hover:bg-muted hover:shadow-lg md:flex"
-          title="Show format panel"
-          onClick={() => setFormatPanelOpen(true)}
-        >
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </button>
-      )}
-
-      <div
-        className={cn(
-          'relative flex flex-row items-stretch transition-[margin-left] duration-200 ease-out',
-          !isFullscreen && editor && isFormatPanelOpen && 'md:ml-[4.5rem]',
-          className
-        )}
-      >
-        {/* Панель форматирования — привязана к левому краю сайта, не к статье; уезжает за границу или в блочек (desktop) */}
-        {!isFullscreen && editor && (
+  // Панель и кнопка возврата — через портал в body, чтобы fixed работал относительно viewport
+  // (родитель с transform ломает fixed, панель не уезжала за экран)
+  const formatPanelPortal =
+    typeof document !== 'undefined' &&
+    createPortal(
+      !isFullscreen && editor ? (
+        <>
+          {/* Кнопка-блочек у самого края экрана — только когда панель скрыта */}
+          {!isFormatPanelOpen && (
+            <button
+              type="button"
+              aria-label="Show format panel"
+              className="fixed left-0 top-1/2 z-[100] hidden h-12 w-10 -translate-y-1/2 items-center justify-center rounded-r-xl border border-l-0 border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex"
+              title="Show format panel"
+              onClick={() => setFormatPanelOpen(true)}
+            >
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          )}
+          {/* Панель: при закрытии уезжает полностью за левый край (calc(100%+1rem)) */}
           <div
             className={cn(
-              'fixed left-0 top-1/2 z-10 hidden w-14 flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
-              isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-full -translate-y-1/2'
+              'fixed left-0 top-1/2 z-[99] hidden w-14 flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
+              isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'
             )}
           >
             <div className="flex flex-col gap-0.5 px-2">
@@ -1352,8 +1349,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               <ChevronLeft className="h-4 w-4" />
             </button>
           </div>
-        )}
+        </>
+      ) : null,
+      document.body
+    )
 
+  return (
+    <>
+      {formatPanelPortal}
+
+      <div
+        className={cn(
+          'relative flex flex-row items-stretch transition-[margin-left] duration-200 ease-out',
+          !isFullscreen && editor && isFormatPanelOpen && 'md:ml-[4.5rem]',
+          className
+        )}
+      >
         {/* Мобильная панель форматирования — внизу экрана, скрывается вниз */}
         {!isFullscreen && editor && (
           <div className={cn('fixed bottom-0 left-0 right-0 z-40 flex flex-col border-t border-border/40 bg-muted/20 shadow-lg transition-all duration-200 md:hidden', isFormatPanelOpen ? 'max-h-[200px]' : 'max-h-14')}>
