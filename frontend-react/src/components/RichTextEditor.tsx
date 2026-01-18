@@ -116,6 +116,7 @@ let _setSlashActive: (v: boolean) => void = () => {}
 let _pendingSlashComponent: ReactRenderer<typeof SlashCommandList> | null = null
 
 const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, ref) => {
+  const { t } = useTranslation()
   const { items, command } = props
   const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -180,7 +181,7 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
         className="w-80 border border-border/70 bg-popover/95 shadow-lg backdrop-blur"
       >
         <CardContent className="p-4 text-sm text-muted-foreground">
-          No matches for “{props.query}”.
+          {t('editor.noMatchesFor', { query: props.query })}
         </CardContent>
       </Card>
     )
@@ -237,7 +238,7 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
                   )}
                   {isDisabled && !item.hint && (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground/60">
-                      (в разработке)
+                      ({t('editor.inDevelopment')})
                     </span>
                   )}
                 </span>
@@ -263,8 +264,8 @@ const SlashCommandList = forwardRef<HTMLDivElement, SlashCommandProps>((props, r
           )
         })}
         <div className="flex items-center justify-between rounded-md border border-dashed border-border/70 px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-          <span>Use ↑ ↓ ↵</span>
-          <span>Slash commands</span>
+          <span>{t('editor.slashHintKeys')}</span>
+          <span>{t('editor.slashHintLabel')}</span>
         </div>
       </CardContent>
     </Card>
@@ -391,6 +392,7 @@ type OutlineItem = {
 }
 
 const EditorOutline = ({ editor }: { editor: Editor | null }) => {
+  const { t } = useTranslation()
   const [items, setItems] = useState<OutlineItem[]>([])
   const [activePos, setActivePos] = useState<number | null>(null)
 
@@ -402,7 +404,7 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'heading') {
           const level = node.attrs.level ?? 1
-          const text = node.textContent.trim() || `Заголовок ${headings.length + 1}`
+          const text = node.textContent.trim() || t('editor.outlineHeadingDefault', { n: headings.length + 1 })
           headings.push({
             id: node.attrs.blockId ?? `heading-${pos}`,
             pos,
@@ -436,7 +438,7 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
       editor.off('transaction', collectHeadings)
       editor.off('selectionUpdate', updateActive)
     }
-  }, [editor])
+  }, [editor, t])
 
   if (!editor || items.length === 0) {
     return null
@@ -445,7 +447,7 @@ const EditorOutline = ({ editor }: { editor: Editor | null }) => {
   return (
     <aside className="sticky top-[5.5rem] hidden max-h-[420px] w-56 shrink-0 overflow-y-auto text-sm lg:block">
       <div className="mb-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
-        Outline
+        {t('editor.outline')}
       </div>
       <nav className="space-y-0.5">
         {items.map((item) => {
@@ -1325,11 +1327,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const activeColumnsPreset = findPresetByLayout(activeColumnsLayout)
 
   const formatButtons = editor ? [
-    { label: 'Bold', aria: 'Bold', icon: Bold, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive('bold'), disabled: !editor.can().chain().focus().toggleBold().run() },
-    { label: 'Italic', aria: 'Italic', icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive('italic'), disabled: !editor.can().chain().focus().toggleItalic().run() },
-    { label: 'Strikethrough', aria: 'Strikethrough', icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive('strike'), disabled: !editor.can().chain().focus().toggleStrike().run() },
-    { label: 'Underline', aria: 'Underline', icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive('underline'), disabled: !editor.can().chain().focus().toggleUnderline().run() },
-    { label: 'Inline code', aria: 'Code', icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
+    { label: t('editor.ctxBold'), aria: t('editor.ctxBold'), icon: Bold, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive('bold'), disabled: !editor.can().chain().focus().toggleBold().run() },
+    { label: t('editor.ctxItalic'), aria: t('editor.ctxItalic'), icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive('italic'), disabled: !editor.can().chain().focus().toggleItalic().run() },
+    { label: t('editor.ctxStrikethrough'), aria: t('editor.ctxStrikethrough'), icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive('strike'), disabled: !editor.can().chain().focus().toggleStrike().run() },
+    { label: t('editor.underline'), aria: t('editor.underline'), icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive('underline'), disabled: !editor.can().chain().focus().toggleUnderline().run() },
+    { label: t('editor.ctxCode'), aria: t('editor.ctxCode'), icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
   ] : []
 
   const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '32px'] as const
@@ -1663,21 +1665,21 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editor?.isActive('link') ? 'Edit link' : 'Add link'}</DialogTitle>
-          <DialogDescription>Paste a valid URL. Leave blank to remove the link.</DialogDescription>
+          <DialogTitle>{editor?.isActive('link') ? t('editor.linkEdit') : t('editor.linkAdd')}</DialogTitle>
+          <DialogDescription>{t('editor.linkDescription')}</DialogDescription>
         </DialogHeader>
         <Input
           value={linkValue}
           onChange={(event) => setLinkValue(event.target.value)}
-          placeholder="https://example.com"
+          placeholder={t('editor.linkPlaceholder')}
           autoFocus
         />
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="ghost" onClick={() => setIsLinkDialogOpen(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleApplyLink} disabled={!editor}>
-            Apply
+            {t('common.apply')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1686,22 +1688,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Вставить изображение</DialogTitle>
-            <DialogDescription>Укажите ссылку на изображение и альтернативный текст.</DialogDescription>
+            <DialogTitle>{t('editor.imageInsertTitle')}</DialogTitle>
+            <DialogDescription>{t('editor.imageDescriptionDialog')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="image-url">Image URL</Label>
+              <Label htmlFor="image-url">{t('editor.imageUrl')}</Label>
               <Input
                 id="image-url"
                 value={imageUrl}
                 onChange={(event) => setImageUrl(event.target.value)}
-                placeholder="https://example.com/image.jpg"
+                placeholder={t('editor.imageUrlPlaceholder')}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image-alt">Alt text</Label>
+              <Label htmlFor="image-alt">{t('editor.imageAlt')}</Label>
               <Input
                 id="image-alt"
                 value={imageAlt}
@@ -1712,10 +1714,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="ghost" onClick={() => setIsImageDialogOpen(false)}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleInsertImage} disabled={!editor}>
-              Вставить
+              {t('editor.imageInsertBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1724,32 +1726,30 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       <Dialog open={isAnchorDialogOpen} onOpenChange={setIsAnchorDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{anchorMode === 'create' ? 'Добавить якорь' : 'Ссылка на якорь'}</DialogTitle>
+            <DialogTitle>{anchorMode === 'create' ? t('editor.anchorAdd') : t('editor.anchorLink')}</DialogTitle>
             <DialogDescription>
-              {anchorMode === 'create'
-                ? 'Присвойте блоку удобный идентификатор. Если оставить поле пустым — он сгенерируется автоматически.'
-                : 'Выберите существующий якорь и задайте текст ссылки.'}
+              {anchorMode === 'create' ? t('editor.anchorAddDescription') : t('editor.anchorLinkDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {anchorMode === 'create' ? (
               <div className="space-y-2">
-                <Label htmlFor="anchor-id">Идентификатор блока</Label>
+                <Label htmlFor="anchor-id">{t('editor.anchorIdLabel')}</Label>
                 <Input
                   id="anchor-id"
                   value={anchorId}
                   onChange={(event) => setAnchorId(event.target.value)}
-                  placeholder="section-overview"
+                  placeholder={t('editor.anchorIdPlaceholder')}
                 />
               </div>
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label>Выберите якорь</Label>
+                  <Label>{t('editor.anchorChoose')}</Label>
                   <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-border/60 p-2">
                     {anchorOptions.length === 0 && (
                       <span className="text-sm text-muted-foreground">
-                        Пока нет блоков с якорями. Сначала пометьте нужный блок.
+                        {t('editor.anchorNoAnchors')}
                       </span>
                     )}
                     {anchorOptions.map((option) => (
