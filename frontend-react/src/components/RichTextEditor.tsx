@@ -23,7 +23,10 @@ import Suggestion, { type SuggestionOptions, type SuggestionProps } from '@tipta
 // Используем CodeBlockWithCopy, который уже настроен с lowlight и всеми языками
 import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import Highlight from '@tiptap/extension-highlight'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
+import { FontSize } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import {
   Bold,
@@ -58,6 +61,12 @@ import {
   ChevronDown,
   Maximize2,
   Minimize2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Underline as UnderlineIcon,
+  CaseSensitive,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -538,6 +547,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const [isFormatPanelOpen, setFormatPanelOpen] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [slashActive, setSlashActive] = useState(false)
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -649,10 +659,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       DragHandle, // Кастомная реализация уже содержит всю необходимую логику
       CodeBlockWithCopy,
       TextStyle,
+      FontSize,
       Color,
       Highlight.configure({
         multicolor: true,
       }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph', 'blockquote'],
+        alignments: ['left', 'center', 'right', 'justify'],
+      }),
+      Underline,
       CharacterCount.configure({
         limit: characterLimit ?? 20000,
       }),
@@ -1007,66 +1023,107 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
   }, [contextMenu.open])
 
-  // Обработка загрузки файлов
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || !editor || !onUploadMedia) return
+  // Вставка медиа из файла (общая логика для input и drag-and-drop)
+  const insertMediaFromFile = useCallback(
+    async (file: File, atPosition?: number) => {
+      if (!editor || !onUploadMedia) return
 
-    // Определяем тип файла
-    const fileType = file.type
-    let mediaType: 'image' | 'video' | 'audio' = 'image'
-    
-    if (fileType.startsWith('video/')) {
-      mediaType = 'video'
-    } else if (fileType.startsWith('audio/')) {
-      mediaType = 'audio'
-    } else if (fileType.startsWith('image/')) {
-      mediaType = 'image'
-    } else {
-      logger.warn('[RichTextEditor] Unsupported file type:', fileType)
-      return
-    }
+      const fileType = file.type
+      let mediaType: 'image' | 'video' | 'audio' = 'image'
+      if (fileType.startsWith('video/')) mediaType = 'video'
+      else if (fileType.startsWith('audio/')) mediaType = 'audio'
+      else if (fileType.startsWith('image/')) mediaType = 'image'
+      else {
+        logger.warn('[RichTextEditor] Unsupported file type:', fileType)
+        return
+      }
 
-    try {
-      // Загружаем файл через onUploadMedia
       const url = await onUploadMedia(file, mediaType)
-      
-      // Вставляем медиа в редактор
+      const chain = editor.chain().focus()
+
       if (mediaType === 'image') {
-        editor.chain().focus().setImage({ src: url }).run()
-        
-        // Проверяем, что изображение добавлено в JSON
+        if (atPosition != null) {
+          chain.insertContentAt(atPosition, { type: 'image', attrs: { src: url } }).run()
+        } else {
+          chain.setImage({ src: url }).run()
+        }
         if (import.meta.env.DEV) {
           setTimeout(() => {
             const json = editor.getJSON()
             const hasImage = JSON.stringify(json).includes(url)
-            if (hasImage) {
-              logger.debug('[RichTextEditor] Image added to editor JSON:', { url: url.substring(0, 100) })
-            } else {
-              logger.warn('[RichTextEditor] Image URL not found in editor JSON after insertion!', { url: url.substring(0, 100) })
-            }
+            if (hasImage) logger.debug('[RichTextEditor] Image added to editor JSON:', { url: url.substring(0, 100) })
+            else logger.warn('[RichTextEditor] Image URL not found in editor JSON after insertion!', { url: url.substring(0, 100) })
           }, 100)
         }
       } else if (mediaType === 'video') {
-        // Для видео вставляем через HTML
-        const videoHTML = `<div class="editor-video-wrapper"><video controls src="${url}" class="max-w-full h-auto rounded-lg"></video></div>`
-        editor.chain().focus().insertContent(videoHTML).run()
-      } else if (mediaType === 'audio') {
-        // Для аудио вставляем через HTML
-        const audioHTML = `<div class="editor-audio-wrapper"><audio controls src="${url}" class="w-full"></audio></div>`
-        editor.chain().focus().insertContent(audioHTML).run()
+        const html = `<div class="editor-video-wrapper"><video controls src="${url}" class="max-w-full h-auto rounded-lg"></video></div>`
+        if (atPosition != null) chain.insertContentAt(atPosition, html).run()
+        else chain.insertContent(html).run()
+      } else {
+        const html = `<div class="editor-audio-wrapper"><audio controls src="${url}" class="w-full"></audio></div>`
+        if (atPosition != null) chain.insertContentAt(atPosition, html).run()
+        else chain.insertContent(html).run()
       }
-      
-      setContextMenu(prev => ({ ...prev, open: false }))
-    } catch (error) {
-      logger.error('[RichTextEditor] Failed to upload media:', error)
-    } finally {
-      // Сбрасываем input для возможности загрузки того же файла снова
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      setContextMenu((prev) => (prev.open ? { ...prev, open: false } : prev))
+    },
+    [editor, onUploadMedia]
+  )
+
+  const handleFileSelect = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+      try {
+        await insertMediaFromFile(file)
+      } catch (error) {
+        logger.error('[RichTextEditor] Failed to upload media:', error)
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = ''
       }
+    },
+    [insertMediaFromFile]
+  )
+
+  // Drag-and-drop: вставка фото, видео, аудио из проводника
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer?.types.includes('Files')) {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'copy'
     }
-  }, [editor, onUploadMedia])
+  }, [])
+
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files') && onUploadMedia && !disabled) setIsDraggingOver(true)
+    },
+    [onUploadMedia, disabled]
+  )
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDraggingOver(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDraggingOver(false)
+      if (disabled || !editor || !onUploadMedia) return
+      const files = e.dataTransfer?.files
+      if (!files?.length) return
+
+      const file = files[0]
+      const t = file.type
+      if (!t.startsWith('image/') && !t.startsWith('video/') && !t.startsWith('audio/')) return
+
+      try {
+        const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos
+        await insertMediaFromFile(file, pos)
+      } catch (err) {
+        logger.error('[RichTextEditor] Failed to insert media from drop:', err)
+      }
+    },
+    [disabled, editor, onUploadMedia, insertMediaFromFile]
+  )
 
   // Функция для открытия диалога выбора файла
   const handleInsertMedia = useCallback((type: 'image' | 'video' | 'audio') => {
@@ -1271,8 +1328,17 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     { label: 'Bold', aria: 'Bold', icon: Bold, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive('bold'), disabled: !editor.can().chain().focus().toggleBold().run() },
     { label: 'Italic', aria: 'Italic', icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive('italic'), disabled: !editor.can().chain().focus().toggleItalic().run() },
     { label: 'Strikethrough', aria: 'Strikethrough', icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive('strike'), disabled: !editor.can().chain().focus().toggleStrike().run() },
+    { label: 'Underline', aria: 'Underline', icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive('underline'), disabled: !editor.can().chain().focus().toggleUnderline().run() },
     { label: 'Inline code', aria: 'Code', icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
   ] : []
+
+  const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '32px'] as const
+  const alignOptions = [
+    { id: 'left', icon: AlignLeft, cmd: 'left' as const },
+    { id: 'center', icon: AlignCenter, cmd: 'center' as const },
+    { id: 'right', icon: AlignRight, cmd: 'right' as const },
+    { id: 'justify', icon: AlignJustify, cmd: 'justify' as const },
+  ]
 
   // Панель и кнопка возврата — через портал в body, чтобы fixed работал относительно viewport
   // (родитель с transform ломает fixed, панель не уезжала за экран)
@@ -1300,7 +1366,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'
             )}
           >
-            <div className="flex flex-col gap-0.5 px-2">
+            <div className="flex max-h-[min(70vh,520px)] flex-col gap-0.5 overflow-y-auto px-2">
               {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
                 <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
                   <Icon className="h-4 w-4" />
@@ -1338,8 +1404,53 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" aria-label="Font size" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title="Font size">
+                    <CaseSensitive className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-36 p-2">
+                  <div className="grid grid-cols-2 gap-1">
+                    <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>По умолчанию</button>
+                    {fontSizeOptions.map((sz) => (
+                      <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" aria-label="Text alignment" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')} title="Text alignment">
+                    <AlignLeft className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-36 p-2">
+                  {alignOptions.map((a) => {
+                    const Icon = a.icon
+                    return (
+                      <button key={a.id} type="button" onClick={() => editor.chain().focus().setTextAlign(a.cmd).run()} className={cn('flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted', editor.isActive({ textAlign: a.cmd }) && 'bg-primary/10 text-primary')}>
+                        <Icon className="h-4 w-4" />
+                        {a.id === 'left' && 'По левому'}
+                        {a.id === 'center' && 'По центру'}
+                        {a.id === 'right' && 'По правому'}
+                        {a.id === 'justify' && 'По ширине'}
+                      </button>
+                    )
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
                 <LinkIcon className="h-4 w-4" />
+              </button>
+              <button type="button" aria-label="Insert image" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert image" onClick={(e) => { e.preventDefault(); openImageDialog() }}>
+                <ImageIcon className="h-4 w-4" />
+              </button>
+              <button type="button" aria-label="Insert video" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert video" onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
+                <Video className="h-4 w-4" />
+              </button>
+              <button type="button" aria-label="Insert audio" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert audio" onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
+                <Music className="h-4 w-4" />
               </button>
               <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
                 <RemoveFormatting className="h-4 w-4" />
@@ -1411,6 +1522,49 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
                     <LinkIcon className="h-4 w-4" />
                   </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Font size" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title="Font size">
+                        <CaseSensitive className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="center" className="w-36 p-2">
+                      <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>По умолчанию</button>
+                      {fontSizeOptions.map((sz) => (
+                        <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" aria-label="Text alignment" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Text alignment">
+                        <AlignLeft className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="center" className="w-36 p-2">
+                      {alignOptions.map((a) => {
+                        const Icon = a.icon
+                        return (
+                          <button key={a.id} type="button" onClick={() => editor.chain().focus().setTextAlign(a.cmd).run()} className={cn('flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted', editor.isActive({ textAlign: a.cmd }) && 'bg-primary/10 text-primary')}>
+                            <Icon className="h-4 w-4" />
+                            {a.id === 'left' && 'По левому'}
+                            {a.id === 'center' && 'По центру'}
+                            {a.id === 'right' && 'По правому'}
+                            {a.id === 'justify' && 'По ширине'}
+                          </button>
+                        )
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <button type="button" aria-label="Insert image" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert image" onClick={(e) => { e.preventDefault(); openImageDialog() }}>
+                    <ImageIcon className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Insert video" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert video" onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
+                    <Video className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Insert audio" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert audio" onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
+                    <Music className="h-4 w-4" />
+                  </button>
                   <button type="button" aria-label="Clear formatting" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
                     <RemoveFormatting className="h-4 w-4" />
                   </button>
@@ -1473,7 +1627,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           {/* Область контента: редактор + панель slash или outline справа */}
           <div className="relative flex flex-1">
             <div className="flex min-w-0 flex-1 items-start gap-4 px-4 pt-6 pb-24 md:px-6 md:py-8">
-              <div className="group/editor relative min-w-0 flex-1">
+              <div
+                className={cn('group/editor relative min-w-0 flex-1 rounded-lg transition-[box-shadow]', isDraggingOver && 'ring-2 ring-primary/60 ring-dashed')}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <EditorContent editor={editor} id={id} aria-label={ariaLabel} aria-labelledby={ariaLabelledBy} aria-describedby={ariaDescribedBy} className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none" onContextMenu={handleContextMenu} />
                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
               </div>
