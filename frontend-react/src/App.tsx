@@ -38,6 +38,7 @@ import ChangesPage from '@/pages/ChangesPage'
 import RulesPage from '@/pages/RulesPage'
 import FAQPage from '@/pages/FAQPage'
 import { useAuthStore } from '@/stores/authStore'
+import { getCurrentUser } from '@/api/auth'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
 import { DraftRecoveryProvider } from '@/components/DraftRecoveryProvider'
@@ -109,6 +110,16 @@ function App() {
   useEffect(() => {
     void initializeAuth()
   }, [initializeAuth])
+
+  // При возврате в приложение (в т.ч. на мобильных) обновляем пользователя, чтобы аватар и данные были актуальны
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      getCurrentUser().then((u) => { if (u) useAuthStore.getState().setUser(u) })
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>

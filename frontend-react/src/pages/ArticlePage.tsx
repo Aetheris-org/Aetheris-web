@@ -1563,7 +1563,7 @@ export default function ArticlePage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words break-all">
+                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
                     {node.text}
                   </p>
                   )}
@@ -2679,7 +2679,7 @@ export default function ArticlePage() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {t('article.commentText')}
                 </p>
-                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-background/70 p-3 text-sm leading-relaxed">
+                <div className="rounded-[calc(var(--radius)*1.1)] border border-border/60 bg-background/70 p-3 text-sm leading-relaxed break-words" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
                   {infoComment.text}
                 </div>
               </div>

@@ -56,7 +56,7 @@ export function ArticleCardSquare({
 
   return (
     <Card
-      className="group overflow-hidden border border-border/40 bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer h-full flex flex-col"
+      className="group overflow-hidden border border-border/40 bg-card hover:border-2 hover:border-primary/50 transition-all duration-300 cursor-pointer h-full flex flex-col"
       onClick={() => onArticleClick?.(article.id)}
       onMouseEnter={onMouseEnter}
     >

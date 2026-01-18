@@ -104,7 +104,7 @@ export function ArticleCard({
 
   return (
     <Card
-      className="group relative overflow-hidden border border-border/40 bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer"
+      className="group relative overflow-hidden border border-border/40 bg-card hover:border-2 hover:border-primary/50 transition-all duration-300 cursor-pointer"
       onClick={() => onArticleClick?.(article.id)}
       onMouseEnter={onMouseEnter}
     >

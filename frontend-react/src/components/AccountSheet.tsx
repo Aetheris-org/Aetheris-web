@@ -124,7 +124,8 @@ export function AccountSheet() {
         >
           {user.avatar ? (
             <img
-              src={normalizeR2Url(user.avatar) || user.avatar}
+              key={user.avatar}
+              src={(() => { const u = normalizeR2Url(user.avatar) || user.avatar; const sep = u && u.includes('?') ? '&' : '?'; return `${u || ''}${sep}v=${user.updatedAt || ''}`; })()}
               alt={user.nickname}
               className="h-full w-full object-cover"
             />
@@ -139,11 +140,16 @@ export function AccountSheet() {
           <div className="flex items-center justify-between gap-3 pb-4 border-b border-border/60">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-sm font-semibold text-primary">
-                {user.avatar ? (
-                  <img src={normalizeR2Url(user.avatar) || user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
-                ) : (
-                  initials || 'AU'
-                )}
+{user.avatar ? (
+                <img
+                  key={user.avatar}
+                  src={(() => { const u = normalizeR2Url(user.avatar) || user.avatar; const sep = u && u.includes('?') ? '&' : '?'; return `${u || ''}${sep}v=${user.updatedAt || ''}`; })()}
+                  alt={user.nickname}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initials || 'AU'
+              )}
               </div>
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
