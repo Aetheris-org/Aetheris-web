@@ -841,7 +841,18 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   }, [editor, linkValue])
 
   const handleRemoveFormatting = useCallback(() => {
-    editor?.chain().focus().unsetAllMarks().unsetColor().unsetHighlight().clearNodes().run()
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    if (from === to) {
+      const { $from } = editor.state.selection
+      const fromPos = $from.before($from.depth) + 1
+      const toPos = $from.after($from.depth) - 1
+      if (fromPos < toPos) {
+        editor.chain().focus().setTextSelection({ from: fromPos, to: toPos }).unsetAllMarks().unsetColor().unsetHighlight().run()
+        return
+      }
+    }
+    editor.chain().focus().unsetAllMarks().unsetColor().unsetHighlight().run()
   }, [editor])
 
   const openImageDialog = useCallback(() => {
@@ -923,23 +934,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     })
 
     if (!posAtCoords) {
-      // Если не удалось получить позицию, используем координаты мыши напрямую
       const menuType: 'empty' | 'text' = 'empty'
       const menuWidth = 180
       const menuHeight = 120
-      const x = event.clientX + menuWidth > window.innerWidth 
-        ? window.innerWidth - menuWidth - 10 
-        : event.clientX
-      const y = event.clientY + menuHeight > window.innerHeight 
-        ? window.innerHeight - menuHeight - 10 
-        : event.clientY
-
-      setContextMenu({
-        open: true,
-        x,
-        y,
-        type: menuType,
-      })
+      let x = event.clientX
+      let y = event.clientY
+      if (x + menuWidth > window.innerWidth - 10) x = window.innerWidth - menuWidth - 10
+      if (y + menuHeight > window.innerHeight - 10) y = window.innerHeight - menuHeight - 10
+      if (x < 10) x = 10
+      if (y < 10) y = 10
+      setContextMenu({ open: true, x, y, type: menuType })
       return
     }
 
@@ -960,18 +964,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     // Иначе - меню добавления медиа
     const menuType: 'empty' | 'text' = (hasSelection || hasText) ? 'text' : 'empty'
 
-    // Получаем координаты курсора для позиционирования меню
-    const coords = view.coordsAtPos(pos)
-    
-    // Позиционируем меню с учетом границ экрана
+    // Позиция у курсора (место клика правой кнопкой)
     const menuWidth = 180
     const menuHeight = menuType === 'empty' ? 120 : 200
-    const x = coords.left + menuWidth > window.innerWidth 
-      ? window.innerWidth - menuWidth - 10 
-      : coords.left
-    const y = coords.top + menuHeight > window.innerHeight 
-      ? window.innerHeight - menuHeight - 10 
-      : coords.top
+    let x = event.clientX
+    let y = event.clientY
+    if (x + menuWidth > window.innerWidth - 10) x = window.innerWidth - menuWidth - 10
+    if (y + menuHeight > window.innerHeight - 10) y = window.innerHeight - menuHeight - 10
+    if (x < 10) x = 10
+    if (y < 10) y = 10
 
     setContextMenu({
       open: true,
@@ -1274,71 +1275,71 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
   return (
     <>
-      <div className={cn('flex flex-row items-stretch gap-0', className)}>
-        {/* Панель форматирования — СЛЕВА от редактора, только desktop, скрыта в fullscreen */}
-        {!isFullscreen && editor && (
-          <div
-            className={cn(
-              'hidden md:flex shrink-0 flex-col items-center overflow-hidden border-r border-border/40 bg-muted/10 transition-all duration-200',
-              isFormatPanelOpen ? 'w-14' : 'w-10'
-            )}
-          >
-            {isFormatPanelOpen ? (
-              <>
-                <div className="flex flex-col gap-0.5 p-2">
-                  {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
-                    <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
-                      <Icon className="h-4 w-4" />
-                    </button>
-                  ))}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Text color" className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
-                        <Type className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start" className="w-48 p-2">
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Dark Gray', value: '#404040' }, { name: 'Gray', value: '#808080' }, { name: 'Light Gray', value: '#C0C0C0' }, { name: 'White', value: '#FFFFFF' }, { name: 'Red', value: '#EF4444' }, { name: 'Orange', value: '#F97316' }, { name: 'Amber', value: '#F59E0B' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Lime', value: '#84CC16' }, { name: 'Green', value: '#22C55E' }, { name: 'Emerald', value: '#10B981' }, { name: 'Teal', value: '#14B8A6' }, { name: 'Cyan', value: '#06B6D4' }, { name: 'Sky', value: '#0EA5E9' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Indigo', value: '#6366F1' }, { name: 'Violet', value: '#8B5CF6' }, { name: 'Purple', value: '#A855F7' }, { name: 'Fuchsia', value: '#D946EF' }, { name: 'Pink', value: '#EC4899' }, { name: 'Rose', value: '#F43F5E' }].map((c) => (
-                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c.value).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('textStyle').color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
-                            {c.value === null && <span className="text-[10px] text-muted-foreground">A</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Highlight" className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight color">
-                        <Highlighter className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start" className="w-48 p-2">
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Purple', value: '#E9D5FF' }, { name: 'Orange', value: '#FED7AA' }, { name: 'Red', value: '#FECACA' }, { name: 'Gray', value: '#E5E7EB' }, { name: 'Cyan', value: '#A5F3FC' }, { name: 'Lime', value: '#D9F99D' }, { name: 'Amber', value: '#FDE68A' }].map((c) => (
-                          <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetHighlight().run() : editor.chain().focus().setHighlight({ color: c.value }).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('highlight')?.color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
-                            {c.value === null && <span className="text-[10px] text-muted-foreground">×</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
-                    <LinkIcon className="h-4 w-4" />
-                  </button>
-                  <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
-                    <RemoveFormatting className="h-4 w-4" />
-                  </button>
-                </div>
-                <button type="button" aria-label="Collapse" className="mt-auto mb-2 flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Collapse" onClick={() => setFormatPanelOpen(false)}>
-                  <ChevronLeft className="h-4 w-4" />
+      {/* Кнопка возврата панели — у левого края экрана, только когда панель скрыта (desktop) */}
+      {!isFullscreen && editor && !isFormatPanelOpen && (
+        <button
+          type="button"
+          aria-label="Show format panel"
+          className="fixed left-0 top-1/2 z-40 hidden h-12 w-10 -translate-y-1/2 items-center justify-center rounded-r-xl border border-l-0 border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-colors hover:bg-muted hover:shadow-lg md:flex"
+          title="Show format panel"
+          onClick={() => setFormatPanelOpen(true)}
+        >
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
+
+      <div className={cn('flex flex-row items-stretch', isFormatPanelOpen ? 'gap-4' : 'gap-0', className)}>
+        {/* Панель форматирования — капсульная, отдельно от редактора, только desktop */}
+        {!isFullscreen && editor && isFormatPanelOpen && (
+          <div className="hidden shrink-0 flex-col items-center self-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex">
+            <div className="flex flex-col gap-0.5 px-2">
+              {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
+                <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
+                  <Icon className="h-4 w-4" />
                 </button>
-              </>
-            ) : (
-              <button type="button" aria-label="Expand" className="mt-4 flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Expand" onClick={() => setFormatPanelOpen(true)}>
-                <ChevronRight className="h-4 w-4" />
+              ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" aria-label="Text color" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
+                    <Type className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-48 p-2">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Dark Gray', value: '#404040' }, { name: 'Gray', value: '#808080' }, { name: 'Light Gray', value: '#C0C0C0' }, { name: 'White', value: '#FFFFFF' }, { name: 'Red', value: '#EF4444' }, { name: 'Orange', value: '#F97316' }, { name: 'Amber', value: '#F59E0B' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Lime', value: '#84CC16' }, { name: 'Green', value: '#22C55E' }, { name: 'Emerald', value: '#10B981' }, { name: 'Teal', value: '#14B8A6' }, { name: 'Cyan', value: '#06B6D4' }, { name: 'Sky', value: '#0EA5E9' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Indigo', value: '#6366F1' }, { name: 'Violet', value: '#8B5CF6' }, { name: 'Purple', value: '#A855F7' }, { name: 'Fuchsia', value: '#D946EF' }, { name: 'Pink', value: '#EC4899' }, { name: 'Rose', value: '#F43F5E' }].map((c) => (
+                      <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c.value).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('textStyle').color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                        {c.value === null && <span className="text-[10px] text-muted-foreground">A</span>}
+                      </button>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" aria-label="Highlight" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight color">
+                    <Highlighter className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-48 p-2">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Purple', value: '#E9D5FF' }, { name: 'Orange', value: '#FED7AA' }, { name: 'Red', value: '#FECACA' }, { name: 'Gray', value: '#E5E7EB' }, { name: 'Cyan', value: '#A5F3FC' }, { name: 'Lime', value: '#D9F99D' }, { name: 'Amber', value: '#FDE68A' }].map((c) => (
+                      <button key={c.name} type="button" onClick={() => (c.value === null ? editor.chain().focus().unsetHighlight().run() : editor.chain().focus().setHighlight({ color: c.value }).run())} className={cn('h-6 w-6 rounded border-2 transition-all hover:scale-110', c.value === null ? 'border-border bg-muted flex items-center justify-center' : 'border-transparent', editor.getAttributes('highlight')?.color === c.value && 'ring-2 ring-primary ring-offset-1')} style={c.value ? { backgroundColor: c.value } : undefined} title={c.name}>
+                        {c.value === null && <span className="text-[10px] text-muted-foreground">×</span>}
+                      </button>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+                <LinkIcon className="h-4 w-4" />
               </button>
-            )}
+              <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                <RemoveFormatting className="h-4 w-4" />
+              </button>
+            </div>
+            <button type="button" aria-label="Collapse" className="mt-2 flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Collapse" onClick={() => setFormatPanelOpen(false)}>
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
         )}
 
@@ -1388,7 +1389,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
                     <LinkIcon className="h-4 w-4" />
                   </button>
-                  <button type="button" aria-label="Clear formatting" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                  <button type="button" aria-label="Clear formatting" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
                     <RemoveFormatting className="h-4 w-4" />
                   </button>
                 </div>
