@@ -1288,10 +1288,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         </button>
       )}
 
-      <div className={cn('flex flex-row items-stretch', isFormatPanelOpen ? 'gap-4' : 'gap-0', className)}>
-        {/* Панель форматирования — капсульная, отдельно от редактора, только desktop */}
-        {!isFullscreen && editor && isFormatPanelOpen && (
-          <div className="hidden shrink-0 flex-col items-center self-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex">
+      <div className={cn('relative flex flex-row items-stretch', className)}>
+        {/* Панель форматирования — капсульная, у края, с плавной анимацией вбок (desktop) */}
+        {!isFullscreen && editor && (
+          <div
+            className={cn(
+              'absolute left-0 top-1/2 z-10 hidden w-14 flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
+              isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-full -translate-y-1/2'
+            )}
+          >
             <div className="flex flex-col gap-0.5 px-2">
               {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
                 <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
@@ -1405,12 +1410,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </div>
         )}
 
-        {/* Карточка редактора */}
+        {/* Карточка редактора — отступ слева при открытой панели, с плавной анимацией */}
         <div
           ref={editorWrapperRef}
           className={cn(
-            'flex min-w-0 flex-1 flex-col overflow-hidden border border-border/50 bg-background transition-all',
-            disabled && 'opacity-80'
+            'flex min-w-0 flex-1 flex-col overflow-hidden border border-border/50 bg-background transition-[margin-left] duration-200 ease-out',
+            disabled && 'opacity-80',
+            !isFullscreen && editor && isFormatPanelOpen && 'md:ml-16'
           )}
           style={{ borderRadius: 'var(--radius-md)' }}
         >
