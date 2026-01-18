@@ -3111,6 +3111,8 @@
     "publishingGuidelines": "Publishing Guidelines",
     "publishingGuidelinesDescription": "Review the rules and requirements before publishing your article",
     "reviewRulesBeforePublishing": "Review the rules and requirements before publishing your article",
+    "readRulesBeforePublish": "Before publishing, please read the rules.",
+    "goToRules": "Go to rules",
     "requirements": "Requirements",
     "titleRequirement": "10-{max} characters, clear and descriptive",
     "charactersClearDescriptive": "characters, clear and descriptive",

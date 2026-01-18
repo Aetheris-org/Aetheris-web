@@ -3093,6 +3093,8 @@
     "publishingGuidelines": "Правила публикации",
     "publishingGuidelinesDescription": "Ознакомьтесь с правилами и требованиями перед публикацией статьи",
     "reviewRulesBeforePublishing": "Ознакомьтесь с правилами и требованиями перед публикацией статьи",
+    "readRulesBeforePublish": "Перед публикацией необходимо ознакомиться с правилами.",
+    "goToRules": "Перейти к правилам",
     "requirements": "Требования",
     "titleRequirement": "10-{max} символов, четкий и описательный",
     "charactersClearDescriptive": "символов, четкий и описательный",

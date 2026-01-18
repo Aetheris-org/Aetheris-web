@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { ArrowLeft, Save, Eye, ImagePlus, RefreshCw, XCircle, Crop, Check, ChevronRight, ChevronLeft, FileText, Tag, Image as ImageIcon, Type, User, Clock, AlertCircle, Info, CheckCircle2, Link2 } from 'lucide-react'
@@ -3842,217 +3842,49 @@ export default function EditArticlePage() {
                   </p>
                 </div>
 
-                <div className="space-y-6 sm:space-y-8">
-                  {/* Requirements Section */}
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.requirements')}</h3>
-                    </div>
-                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.title')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            10-{TITLE_MAX_LENGTH} {t('createArticle.charactersClearDescriptive')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.content')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.minWordsMaxChars', { max: CONTENT_MAX_LENGTH.toLocaleString() })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.excerpt')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.optionalUpToChars', { max: EXCERPT_MAX_LENGTH })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                <Card className="border-border/60 bg-muted/20">
+                  <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-6">
+                    <p className="text-sm text-foreground">{t('createArticle.readRulesBeforePublish')}</p>
+                    <Button variant="outline" size="sm" className="shrink-0 gap-1.5" asChild>
+                      <Link to="/rules">
+                        <Link2 className="h-3.5 w-3.5" />
+                        {t('createArticle.goToRules')}
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                    <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.important')}</h3>
                   </div>
+                  <p className="text-xs sm:text-sm text-foreground pl-5 sm:pl-7 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                    {t('createArticle.byPublishingYouConfirm')}
+                  </p>
+                </div>
 
-                  <Separator />
-
-                  {/* Guidelines Section */}
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <Info className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.guidelines')}</h3>
-                    </div>
-                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.originality')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.originalContentOrAttributed')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.quality')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.wellWrittenInformative')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.formatting')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.properStructureHeadings')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Prohibited Section */}
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.prohibited')}</h3>
-                    </div>
-                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.harmfulContent')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.hatefulDiscriminatoryViolent')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.spamMisinformation')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.clickbaitSpamMisleading')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.copyright')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.noCopyrightViolations')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.inappropriateMedia')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.explicitViolentInappropriate')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Publishing Section */}
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.publishing')}</h3>
-                    </div>
-                    <div className="space-y-2.5 sm:space-y-3 pl-5 sm:pl-7">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.reviewProcess')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.allArticlesSubjectToReview')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.edits')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.significantChangesMayRequireReview')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.tagsCategories')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.useRelevantTagsDifficulty')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm font-medium">{t('createArticle.heroImage')}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('createArticle.optionalButRecommended')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Important Notes */}
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      <h3 className="text-base sm:text-lg font-semibold">{t('createArticle.important')}</h3>
-                    </div>
-                    <p className="text-xs sm:text-sm text-foreground pl-5 sm:pl-7 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                      {t('createArticle.byPublishingYouConfirm')}
-                    </p>
-                  </div>
-
-                  <Separator />
-
-                  {/* Agreement Checkbox */}
-                  <div className="space-y-2 sm:space-y-3">
-                    <div className="flex items-start gap-3 sm:gap-4">
-                      <Checkbox
-                        id="agree-terms"
-                        checked={agreedToTerms}
-                        onCheckedChange={(checked) => {
-                          setAgreedToTerms(checked === true)
-                        }}
-                        className="mt-1 h-4 w-4 sm:h-5 sm:w-5 shrink-0"
-                      />
-                      <div className="space-y-1 flex-1 min-w-0 pt-0.5">
-                        <Label
-                          htmlFor="agree-terms"
-                          className="text-xs sm:text-sm font-medium leading-relaxed cursor-pointer break-words block"
-                          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                        >
-                          {t('createArticle.agreeToGuidelines')}
-                        </Label>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
-                          {t('createArticle.mustAgree')}
-                        </p>
-                      </div>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <Checkbox
+                      id="agree-terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => {
+                        setAgreedToTerms(checked === true)
+                      }}
+                      className="mt-1 h-4 w-4 sm:h-5 sm:w-5 shrink-0"
+                    />
+                    <div className="space-y-1 flex-1 min-w-0 pt-0.5">
+                      <Label
+                        htmlFor="agree-terms"
+                        className="text-xs sm:text-sm font-medium leading-relaxed cursor-pointer break-words block"
+                        style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                      >
+                        {t('createArticle.agreeToGuidelines')}
+                      </Label>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
+                        {t('createArticle.mustAgree')}
+                      </p>
                     </div>
                   </div>
                 </div>
