@@ -6,7 +6,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowLeft,
-  AtSign,
   Bell,
   BellRing,
   Briefcase,
@@ -25,7 +24,6 @@ import {
   ImagePlus,
   Laptop,
   LayoutGrid,
-  Linkedin,
   List,
   Loader2,
   LogOut,
