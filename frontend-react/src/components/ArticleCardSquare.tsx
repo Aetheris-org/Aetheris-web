@@ -56,7 +56,7 @@ export function ArticleCardSquare({
 
   return (
     <Card
-      className="group overflow-hidden border-border/40 bg-card hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col"
+      className="group overflow-hidden border border-border/40 bg-card hover:border-primary/50 transition-all duration-300 cursor-pointer h-full flex flex-col"
       onClick={() => onArticleClick?.(article.id)}
       onMouseEnter={onMouseEnter}
     >
@@ -66,7 +66,7 @@ export function ArticleCardSquare({
           <img
             src={article.previewImage}
             alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement
