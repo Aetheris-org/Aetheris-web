@@ -563,7 +563,6 @@ function ProfileSettings() {
   const [vkHandle, setVkHandle] = useState(profileDetails.social.vk ?? '')
   const [whatsappHandle, setWhatsappHandle] = useState(profileDetails.social.whatsapp ?? '')
   const [contactSaving, setContactSaving] = useState(false)
-  const [socialSaving, setSocialSaving] = useState(false)
   const [professionalSaving, setProfessionalSaving] = useState(false)
   const [insightsSaving, setInsightsSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar ?? null)
@@ -806,7 +805,6 @@ function ProfileSettings() {
     setWhatsappHandle(socialInitialRef.current.whatsappHandle)
 
     setContactSaving(false)
-    setSocialSaving(false)
     setProfessionalSaving(false)
     setInsightsSaving(false)
 
@@ -1091,7 +1089,6 @@ function ProfileSettings() {
     handleProfessionalReset()
     handleInsightsReset()
     setContactSaving(false)
-    setSocialSaving(false)
     setProfessionalSaving(false)
     setInsightsSaving(false)
   }

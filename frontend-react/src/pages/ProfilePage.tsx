@@ -62,7 +62,7 @@ import {
   UserMinus,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { useProfileDetailsStore } from '@/stores/profileDetailsStore'
+import { useProfileDetailsStore, type ProfileDetails } from '@/stores/profileDetailsStore'
 import { getUserProfile } from '@/api/profile'
 import { followUser, unfollowUser, checkFollowStatus } from '@/api/follow'
 import { logger } from '@/lib/logger'
@@ -640,7 +640,7 @@ export default function ProfilePage() {
     profile?.user.uuid === currentUser?.uuid ||
     (!profile && profileId && currentUser?.uuid && profileId === currentUser.uuid)
 
-  const social = isOwnProfile ? (profileDetails?.social ?? {}) : {}
+  const social: Partial<ProfileDetails['social']> = isOwnProfile ? (profileDetails?.social ?? {}) : {}
   const buildSocialHref = (k: string, v: string) => {
     const s = (v || '').trim()
     if (!s) return null
