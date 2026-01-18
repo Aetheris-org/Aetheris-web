@@ -706,9 +706,10 @@ function ProfileSettings() {
 
   // Подтягиваем актуальные аватар и баннер из профиля при открытии настроек
   useEffect(() => {
-    if (!user?.uuid) return
-    const u = user
-    getUserProfile(u.uuid)
+    const uid = user?.uuid
+    if (!uid) return
+    const u = user!
+    getUserProfile(uid)
       .then((profile) => {
         const av = profile.user.avatarUrl ?? null
         const cov = profile.user.coverImageUrl ?? null
