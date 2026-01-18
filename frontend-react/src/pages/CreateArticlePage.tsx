@@ -3683,6 +3683,8 @@ export default function CreateArticlePage() {
       // чтобы на HomePage новые статьи появились сразу, без жесткого перезагруза.
       queryClient.invalidateQueries({ queryKey: ['articles'] })
       queryClient.invalidateQueries({ queryKey: ['trending-articles'] })
+      // Сбрасываем кэш страницы статьи, чтобы при переходе на /article/:id подтянулась новая версия
+      queryClient.removeQueries({ queryKey: ['article', String(publishedArticle.id)] })
       
       // id - это строковое представление числового Strapi id
       const articleId = publishedArticle.id
