@@ -35,6 +35,8 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage'
 import OnboardingPage from '@/pages/OnboardingPage'
 import NewsPage from '@/pages/NewsPage'
 import ChangesPage from '@/pages/ChangesPage'
+import RulesPage from '@/pages/RulesPage'
+import FAQPage from '@/pages/FAQPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
@@ -148,6 +150,8 @@ function App() {
           <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/news" element={<NewsPage />} />
           <Route path="/changes" element={<ChangesPage />} />
+          <Route path="/rules" element={<RulesPage />} />
+          <Route path="/faq" element={<FAQPage />} />
         </Routes>
         <DraftRecoveryProvider />
         <SiteFooter />

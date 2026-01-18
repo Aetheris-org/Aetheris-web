@@ -2619,7 +2619,9 @@
     "socialNetworks": "Social Networks",
     "socialNetworksDescription": "Join our community on social media",
     "news": "News",
-    "changes": "Changes"
+    "changes": "Changes",
+    "rules": "Rules",
+    "faq": "FAQ"
   },
   "explore": {
     "title": "Explore",
@@ -2677,6 +2679,9 @@
     "createArticle": "Create Article",
     "noArticles": "No changes yet",
     "noArticlesDescription": "Check back later for updates and changes"
+  },
+  "rules": {
+    "sections": "Rules sections"
   },
   "home": {
     "spotlight": {

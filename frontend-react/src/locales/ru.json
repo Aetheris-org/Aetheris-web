@@ -2607,7 +2607,9 @@
     "socialNetworks": "Социальные сети",
     "socialNetworksDescription": "Присоединяйтесь к нашему сообществу в соц.сетях",
     "news": "Новости",
-    "changes": "Изменения"
+    "changes": "Изменения",
+    "rules": "Правила",
+    "faq": "FAQ"
   },
   "explore": {
     "title": "Исследовать",
@@ -2659,6 +2661,9 @@
     "createArticle": "Создать статью",
     "noArticles": "Пока нет изменений",
     "noArticlesDescription": "Загляните позже, чтобы узнать об обновлениях и изменениях"
+  },
+  "rules": {
+    "sections": "Разделы правил"
   },
   "home": {
     "spotlight": {

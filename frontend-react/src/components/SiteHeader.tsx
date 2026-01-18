@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2, Newspaper, GitBranch } from 'lucide-react'
+import { Compass, MessageSquare, UsersRound, GraduationCap, Code2, PenSquare, Swords, MessageCircle, Send, Share2, Newspaper, GitBranch, Scale, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AccountSheet } from '@/components/AccountSheet'
@@ -163,6 +163,14 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
                 <DropdownMenuItem onClick={() => navigate('/changes')} className="flex items-center gap-2 cursor-pointer">
                   <GitBranch className="h-4 w-4" />
                   <span>{t('header.changes')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/rules')} className="flex items-center gap-2 cursor-pointer">
+                  <Scale className="h-4 w-4" />
+                  <span>{t('header.rules')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/faq')} className="flex items-center gap-2 cursor-pointer">
+                  <HelpCircle className="h-4 w-4" />
+                  <span>{t('header.faq')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
