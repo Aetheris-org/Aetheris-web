@@ -2742,6 +2742,14 @@
       "title": "Popular Tags",
       "description": "Select a tag to filter your feed."
     },
+    "collectionsPanel": {
+      "title": "Collections",
+      "description": "Article compilations. Save and create your own.",
+      "viewMore": "View more",
+      "create": "Create",
+      "empty": "No collections yet",
+      "articlesShort": "items"
+    },
     "filtersDrawer": {
       "title": "Refine results",
       "description": "Narrow down the article feed by difficulty, popularity, or topic tags. Updated results will load instantly.",

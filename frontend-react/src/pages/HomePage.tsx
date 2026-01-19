@@ -10,9 +10,13 @@ import {
   List,
   Rows,
   Hash,
+  FolderOpen,
+  Plus,
+  ChevronRight,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getArticles, getArticle, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
+import { getCollections } from '@/api/collections'
 import type { Article } from '@/types/article'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
@@ -248,8 +252,14 @@ export default function HomePage() {
       if (error?.response?.status >= 400 && error?.response?.status < 500) {
         return false
       }
-      return failureCount < 2
+      return failureCount < 3
     },
+  })
+
+  const { data: collectionsData } = useQuery({
+    queryKey: ['collections-home', 3],
+    queryFn: () => getCollections({ page: 1, pageSize: 3, sort: 'likes' }),
+    staleTime: 5 * 60 * 1000,
   })
 
   // Debounce search query
@@ -980,6 +990,55 @@ export default function HomePage() {
                     </div>
                     </button>
                   ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Коллекции — между трендами и тегами */}
+            <Card className="border-border/70">
+              <CardHeader className="space-y-1 p-4 sm:p-6 pb-2">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-sm sm:text-base font-semibold">
+                      <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      {t('home.collectionsPanel.title')}
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">{t('home.collectionsPanel.description')}</CardDescription>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => navigate('/collections')}>
+                      {t('home.collectionsPanel.viewMore')}
+                    </Button>
+                    <Button size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => navigate('/collections/create')}>
+                      <Plus className="h-3 w-3" />
+                      {t('home.collectionsPanel.create')}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6 pt-0">
+                {!collectionsData?.data?.length ? (
+                  <p className="text-xs text-muted-foreground py-2">{t('home.collectionsPanel.empty')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {collectionsData.data.slice(0, 3).map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className="w-full flex items-center gap-2 rounded-lg border border-border/40 bg-background/70 px-2.5 py-2 text-left transition hover:border-primary/50 hover:bg-muted/40"
+                        onClick={() => navigate(`/collections/${c.id}`)}
+                      >
+                        <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium truncate">{c.title}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {(c.owner?.nickname || c.owner?.username) || '—'} · {(c.articlesCount ?? 0)} {t('home.collectionsPanel.articlesShort')}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
