@@ -1158,8 +1158,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         // @ts-expect-error — insertCallout from Callout extension, не в типах ChainedCommands
         editor.chain().focus().deleteRange(range).insertCallout('info').run()
       } },
-      { id: 'columns-two', title: t('editor.slashColumns2'), description: t('editor.slashColumns2Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).insertColumns('twoEqual').run() } },
-      { id: 'columns-three', title: t('editor.slashColumns3'), description: t('editor.slashColumns3Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid', 'three'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).insertColumns('threeEqual').run() } },
+      { id: 'columns-two', title: t('editor.slashColumns2'), description: t('editor.slashColumns2Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid'], command: ({ editor, range }) => {
+        // @ts-expect-error — insertColumns из расширения Columns, не в типах ChainedCommands
+        editor.chain().focus().deleteRange(range).insertColumns('twoEqual').run()
+      } },
+      { id: 'columns-three', title: t('editor.slashColumns3'), description: t('editor.slashColumns3Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid', 'three'], command: ({ editor, range }) => {
+        // @ts-expect-error — insertColumns из расширения Columns, не в типах ChainedCommands
+        editor.chain().focus().deleteRange(range).insertColumns('threeEqual').run()
+      } },
       { id: 'anchor', title: t('editor.slashAnchor'), description: t('editor.slashAnchorDesc'), hint: t('editor.inDevelopment'), disabled: true, icon: <Hash className="h-4 w-4" />, command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openAnchorDialog('create') } },
       { id: 'anchor-link', title: t('editor.slashAnchorLink'), description: t('editor.slashAnchorLinkDesc'), hint: t('editor.inDevelopment'), disabled: true, icon: <Link2 className="h-4 w-4" />, command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openAnchorDialog('link') } },
       { id: 'image', title: t('editor.slashImage'), description: t('editor.slashImageDesc'), icon: <ImageIcon className="h-4 w-4" />, keywords: ['picture', 'media'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openImageDialog() } },
