@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link2, UserPlus, Search, Copy, Check } from 'lucide-react'
 import {
@@ -162,9 +162,9 @@ export function InviteCollaboratorsSheet({ open, onOpenChange, collectionId, onJ
                   <Button
                     size="sm"
                     onClick={() => addMu.mutate(p.id)}
-                    disabled={addMu.isPending || p.id === user?.id}
+                    disabled={addMu.isPending || (user?.id != null && p.id === String(user.id))}
                   >
-                    {p.id === user?.id ? t('collections.you') : t('collections.add')}
+                    {user?.id != null && p.id === String(user.id) ? t('collections.you') : t('collections.add')}
                   </Button>
                 </div>
               ))}

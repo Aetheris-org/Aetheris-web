@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Loader2, XCircle } from 'lucide-react'
 import { SiteHeader } from '@/components/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { joinCollectionByInviteToken } from '@/api/collections'

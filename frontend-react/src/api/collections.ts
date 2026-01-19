@@ -24,7 +24,7 @@ function validateUuid(id: string, name = 'id'): string {
   return id;
 }
 
-function transformCollection(row: any, userId?: string | null): Collection {
+function transformCollection(row: any, _userId?: string | null): Collection {
   const owner = row.owner || row.owner_id;
   const o = typeof owner === 'object' && owner !== null ? owner : {};
   return {
@@ -90,7 +90,7 @@ export async function getCollections(params?: CollectionQueryParams): Promise<Co
     }
 
     const order = sort === 'likes' ? 'likes_count' : sort === 'saves' ? 'saves_count' : 'created_at';
-    q = q.order(order, { ascending: sort === 'oldest' });
+    q = q.order(order, { ascending: false });
     const { data: rows, count, error } = await q.range(from, from + pageSize - 1);
 
     if (error) {
@@ -190,7 +190,7 @@ export async function getCollection(id: string, options?: { withArticles?: boole
       : Promise.resolve({ data: [] }),
   ]);
 
-  const owner = ownerProf?.data || row.owner;
+  const owner = ownerProf?.data;
   const memData = members?.data || [];
   let profMap: Record<string, any> = {};
   if (memData.length > 0) {

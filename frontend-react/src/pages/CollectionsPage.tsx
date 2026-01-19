@@ -15,14 +15,12 @@ import {
   toggleCollectionLike,
   toggleCollectionSave,
 } from '@/api/collections'
-import { useToast } from '@/components/ui/use-toast'
 
 export default function CollectionsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
-  const { toast } = useToast()
   const [tab, setTab] = useState<'all' | 'my' | 'saved'>('all')
   const [search, setSearch] = useState('')
 
@@ -34,7 +32,7 @@ export default function CollectionsPage() {
 
   const { data: myData, isLoading: myLoading } = useQuery({
     queryKey: ['collections', 'my', user?.id],
-    queryFn: () => getCollections({ page: 1, pageSize: 24, ownerId: user?.id ?? '', sort: 'newest' }),
+    queryFn: () => getCollections({ page: 1, pageSize: 24, ownerId: user?.id != null ? String(user.id) : undefined, sort: 'newest' }),
     enabled: tab === 'my' && !!user,
   })
 

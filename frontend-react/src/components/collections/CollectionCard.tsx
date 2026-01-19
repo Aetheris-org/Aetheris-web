@@ -1,7 +1,6 @@
-import { Heart, Bookmark, Users, FileText } from 'lucide-react'
+import { Heart, Bookmark, FileText } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import type { Collection } from '@/types/collection'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/lib/utils'
