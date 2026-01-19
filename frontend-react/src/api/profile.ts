@@ -510,3 +510,42 @@ export async function updateUserProfile(input: {
   };
 }
 
+/**
+ * Поиск пользователей по тегу (для приглашения в коллекции)
+ * tag — точное совпадение или начало строки (например "algo" найдёт "algowizard")
+ */
+export async function searchProfilesByTag(tagQuery: string, limit: number = 20): Promise<Array<{
+  id: string;
+  username: string;
+  nickname?: string;
+  tag?: string;
+  avatar?: string;
+}>> {
+  try {
+    const q = (tagQuery || '').trim();
+    if (q.length < 2) return [];
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, nickname, tag, avatar')
+      .not('tag', 'is', null)
+      .or(`tag.ilike.%${q}%,username.ilike.%${q}%`)
+      .limit(limit);
+
+    if (error) {
+      logger.warn('[searchProfilesByTag] Error:', error);
+      return [];
+    }
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      username: p.username || '',
+      nickname: p.nickname,
+      tag: p.tag,
+      avatar: p.avatar || p.avatar_url,
+    }));
+  } catch (e) {
+    logger.warn('[searchProfilesByTag] Unexpected error:', e);
+    return [];
+  }
+}
+
