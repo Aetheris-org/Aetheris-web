@@ -42,6 +42,7 @@ import { getCurrentUser } from '@/api/auth'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
 import { DraftRecoveryProvider } from '@/components/DraftRecoveryProvider'
+import { GamificationActivityTracker } from '@/components/GamificationActivityTracker'
 
 /**
  * QueryClient с оптимизированными настройками для высокой нагрузки
@@ -165,6 +166,7 @@ function App() {
           <Route path="/faq" element={<FAQPage />} />
         </Routes>
         <DraftRecoveryProvider />
+        <GamificationActivityTracker />
         <SiteFooter />
         <Toaster />
       </BrowserRouter>

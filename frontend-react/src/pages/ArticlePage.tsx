@@ -48,6 +48,7 @@ import {
 } from '@/api/comments'
 import type { Comment as RemoteComment } from '@/api/comments'
 import { useAuthStore } from '@/stores/authStore'
+import { useGamificationStore } from '@/stores/gamificationStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -165,6 +166,7 @@ export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const registerActivity = useGamificationStore((s) => s.registerActivity)
   const { toast } = useToast()
   const { t, language } = useTranslation()
   const queryClient = useQueryClient()
@@ -680,6 +682,8 @@ export default function ArticlePage() {
     onSuccess: async (_data, variables, context) => {
       const queryKey = ['bookmark', variables.articleId]
       const newValue = context?.newValue ?? !variables.currentlySaved
+
+      if (variables.currentlySaved === false) registerActivity('add_bookmark')
       
       logger.debug('[Bookmark] onSuccess:', { articleId: variables.articleId, newValue, currentlySaved: variables.currentlySaved })
       
@@ -813,6 +817,8 @@ export default function ArticlePage() {
     },
     onSuccess: (newComment, variables) => {
       logger.debug('[createCommentMutation] Comment created:', newComment)
+
+      registerActivity('add_comment')
       
       // Очищаем текст только при успешном создании комментария
       if (variables.parentId) {

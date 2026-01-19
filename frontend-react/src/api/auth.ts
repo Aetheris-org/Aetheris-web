@@ -5,6 +5,8 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import type { User } from '@/types/user';
+import { getGamification } from '@/api/gamification';
+import { calculateLevelInfo } from '@/lib/gamification';
 
 export interface SupabaseUser {
   id: string;
@@ -136,6 +138,9 @@ export async function getCurrentUser(): Promise<User | null> {
       return Math.abs(hash);
     };
 
+    const gamification = await getGamification();
+    const levelInfo = calculateLevelInfo(gamification.experience);
+
     const user: User = {
       id: profile.id ? uuidToNumber(profile.id) : 0,
       uuid: profile.id, // Сохраняем оригинальный UUID для запросов к базе 
@@ -159,8 +164,11 @@ export async function getCurrentUser(): Promise<User | null> {
       showEmail: false,
       showLastSeen: false,
       reputation: 0,
-      level: 1,
-      experience: 0,
+      level: levelInfo.level,
+      experience: gamification.experience,
+      streakDays: gamification.streak_days,
+      bestStreak: gamification.best_streak,
+      lastActivityDate: gamification.last_activity_date,
     };
 
     return user;

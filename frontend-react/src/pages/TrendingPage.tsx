@@ -34,7 +34,6 @@ import { getTopComment } from '@/api/comments'
 import type { Article } from '@/types/article'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
-import { DevelopmentBanner } from '@/components/DevelopmentBanner'
 
 const PERIODS: { id: TrendingPeriod; labelKey: string }[] = [
   { id: 'day', labelKey: 'trending.timeframes.day' },
@@ -141,7 +140,6 @@ export default function TrendingPage() {
           </div>
         </div>
       </header>
-      <DevelopmentBanner storageKey="trending-dev-banner" />
       <main className="container space-y-10 pb-6 pt-6">
         {/* Hero */}
         {!isHeroDismissed && (

@@ -18,6 +18,7 @@ import { AccountSheet } from '@/components/AccountSheet'
 import { RichTextEditor, type RichTextEditorRef } from '@/components/RichTextEditor'
 import { ArticleContent } from '@/components/ArticleContent'
 import { useAuthStore } from '@/stores/authStore'
+import { useGamificationStore } from '@/stores/gamificationStore'
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,7 @@ export default function EditArticlePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { user } = useAuthStore()
+  const registerActivity = useGamificationStore((s) => s.registerActivity)
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
@@ -3028,6 +3030,8 @@ export default function EditArticlePage() {
       queryClient.invalidateQueries({ queryKey: ['trending-articles'] })
       // Сбрасываем кэш страницы статьи, чтобы при переходе на /article/:id подтянулась новая версия
       queryClient.removeQueries({ queryKey: ['article', String(publishedArticle.id)] })
+
+      registerActivity('publish_article')
       
       // id - это строковое представление числового Strapi id
       const articleId = publishedArticle.id

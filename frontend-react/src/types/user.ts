@@ -39,6 +39,13 @@ export interface User {
   reputation: number
   level: number
   experience: number
+
+  /** Стрик дней подряд с активностью (посещение/действия) */
+  streakDays?: number
+  /** Лучший стрик за всё время */
+  bestStreak?: number
+  /** Дата последней активности YYYY-MM-DD */
+  lastActivityDate?: string | null
 }
 
 export interface PublicUser {

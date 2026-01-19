@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types/user'
+import { calculateLevelInfo, xpForLevel, isoToday } from '@/lib/gamification'
+import { syncGamification } from '@/api/gamification'
 
 type PreferredActivity =
   | 'publish_article'
@@ -8,6 +10,8 @@ type PreferredActivity =
   | 'daily_login'
   | 'complete_daily_quest'
   | 'share_article'
+  | 'add_comment'
+  | 'add_bookmark'
 
 type GamificationAchievementId =
   | 'reach_level_2'
@@ -114,11 +118,10 @@ export interface DailyQuest {
   completedAt?: string
 }
 
-interface LevelInfo {
-  level: number
-  xpIntoLevel: number
-  xpForLevel: number
-  nextLevelTotal: number
+export interface StatsForAchievements {
+  publishedArticles: number
+  totalComments: number
+  bookmarksCount: number
 }
 
 interface GamificationState {
@@ -130,6 +133,8 @@ interface GamificationState {
   streakDays: number
   bestStreak: number
   lastActivityDate: string | null
+  /** Данные для разблокировки достижений по публикациям/комментам/закладкам. Не персистится. */
+  statsForAchievements?: StatsForAchievements
   achievements: GamificationAchievement[]
   dailyQuests: DailyQuest[]
   lastQuestReset: string | null
@@ -138,6 +143,7 @@ interface GamificationState {
   registerActivity: (activity: PreferredActivity) => void
   completeQuest: (questId: string) => void
   hydrateFromUser: (user: User | null) => void
+  setStatsForAchievements: (stats: StatsForAchievements) => void
   resetDailyQuests: () => void
 }
 
@@ -587,6 +593,8 @@ const ACTION_REWARDS: Record<PreferredActivity, { xp: number; label: string }> =
   daily_login: { xp: 10, label: 'Checked in today' },
   complete_daily_quest: { xp: 0, label: 'Completed a daily quest' },
   share_article: { xp: 30, label: 'Shared your work with the community' },
+  add_comment: { xp: 15, label: 'Left a comment' },
+  add_bookmark: { xp: 5, label: 'Added a bookmark' },
 }
 
 export const LEVEL_MILESTONES: LevelMilestone[] = [
@@ -622,31 +630,6 @@ export const LEVEL_MILESTONES: LevelMilestone[] = [
   },
 ]
 
-function xpForLevel(level: number): number {
-  return 100 + (level - 1) * 75
-}
-
-function calculateLevelInfo(experience: number): LevelInfo {
-  let level = 1
-  let xpRemaining = experience
-  let xpNeeded = xpForLevel(level)
-
-  while (xpRemaining >= xpNeeded) {
-    xpRemaining -= xpNeeded
-    level += 1
-    xpNeeded = xpForLevel(level)
-  }
-
-  const nextLevelTotal = experience - xpRemaining + xpNeeded
-
-  return {
-    level,
-    xpIntoLevel: xpRemaining,
-    xpForLevel: xpNeeded,
-    nextLevelTotal,
-  }
-}
-
 function buildFreshAchievements(): GamificationAchievement[] {
   return ACHIEVEMENT_DEFINITIONS.map((achievement) => ({
     ...achievement,
@@ -661,10 +644,6 @@ function buildFreshQuests(): DailyQuest[] {
   }))
 }
 
-function isoToday(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
 function daysBetween(a: string | null, b: string): number | null {
   if (!a) return null
   const start = new Date(a)
@@ -674,8 +653,11 @@ function daysBetween(a: string | null, b: string): number | null {
 }
 
 function evaluateAchievements(state: GamificationState) {
-  const { achievements, level, streakDays, bestStreak, dailyQuests } = state
+  const { achievements, level, streakDays, bestStreak, dailyQuests, statsForAchievements } = state
   const now = new Date().toISOString()
+  const pub = statsForAchievements?.publishedArticles ?? 0
+  const com = statsForAchievements?.totalComments ?? 0
+  const book = statsForAchievements?.bookmarksCount ?? 0
 
   const updated = achievements.map((achievement) => {
     if (achievement.unlocked) return achievement
@@ -695,31 +677,43 @@ function evaluateAchievements(state: GamificationState) {
     }
     // Milestone achievements
     else if (id === 'complete_daily_set') {
-        shouldUnlock = dailyQuests.length > 0 && dailyQuests.every((quest) => quest.completed)
+      shouldUnlock = dailyQuests.length > 0 && dailyQuests.every((quest) => quest.completed)
     }
-    // Profile achievements - these would need to be checked against user data
-    // For now, we'll leave them as false until backend integration
+    // Profile achievements — требуют отдельной проверки
     else if (id === 'complete_profile' || id === 'update_avatar' || id === 'join_community' || id === 'early_adopter') {
-      // These require user profile data - will be handled in backend integration
       shouldUnlock = false
     }
-    // Activity achievements (publishing, commenting, reactions, etc.)
-    // These require tracking counters - will be handled in backend integration
-    else if (
-      id.startsWith('publish_') ||
-      id.startsWith('comment_') ||
-      id.startsWith('receive_') ||
-      id.startsWith('share_') ||
-      id.startsWith('bookmark_') ||
-      id === 'first_comment' ||
-      id === 'first_reaction'
-    ) {
-      // These require activity counters - will be handled in backend integration
+    // Публикации
+    else if (id === 'publish_first_article') shouldUnlock = pub >= 1
+    else if (id === 'publish_5_articles') shouldUnlock = pub >= 5
+    else if (id === 'publish_10_articles') shouldUnlock = pub >= 10
+    else if (id === 'publish_25_articles') shouldUnlock = pub >= 25
+    else if (id === 'publish_50_articles') shouldUnlock = pub >= 50
+    else if (id === 'publish_100_articles') shouldUnlock = pub >= 100
+    else if (id === 'publish_250_articles') shouldUnlock = pub >= 250
+    else if (id === 'publish_500_articles') shouldUnlock = pub >= 500
+    // Комментарии
+    else if (id === 'first_comment') shouldUnlock = com >= 1
+    else if (id === 'comment_5_times') shouldUnlock = com >= 5
+    else if (id === 'comment_10_times') shouldUnlock = com >= 10
+    else if (id === 'comment_25_times') shouldUnlock = com >= 25
+    else if (id === 'comment_50_times') shouldUnlock = com >= 50
+    else if (id === 'comment_100_times') shouldUnlock = com >= 100
+    else if (id === 'comment_250_times') shouldUnlock = com >= 250
+    // Закладки
+    else if (id === 'first_bookmark') shouldUnlock = book >= 1
+    else if (id === 'bookmark_5_articles') shouldUnlock = book >= 5
+    else if (id === 'bookmark_10_articles') shouldUnlock = book >= 10
+    else if (id === 'bookmark_25_articles') shouldUnlock = book >= 25
+    else if (id === 'bookmark_50_articles') shouldUnlock = book >= 50
+    else if (id === 'bookmark_100_articles') shouldUnlock = book >= 100
+    // Реакции, шеринг — нет счётчиков, пока false
+    else if (id.startsWith('receive_') || id === 'first_reaction' || id.startsWith('share_')) {
       shouldUnlock = false
     }
-    // Unknown achievements
+    // Остальные
     else {
-        shouldUnlock = false
+      shouldUnlock = false
     }
 
     if (!shouldUnlock) return achievement
@@ -782,6 +776,9 @@ export const useGamificationStore = create<GamificationState>()(
         const initialExperience = Math.max(user.experience ?? 0, 0)
         const { level, xpForLevel: levelXp, xpIntoLevel, nextLevelTotal } =
           calculateLevelInfo(initialExperience)
+        const streakDays = user.streakDays ?? 0
+        const bestStreak = user.bestStreak ?? 0
+        const lastActivityDate = user.lastActivityDate ?? null
 
         set((state) => ({
           level,
@@ -789,13 +786,14 @@ export const useGamificationStore = create<GamificationState>()(
           xpIntoLevel,
           xpForLevel: levelXp,
           nextLevelAt: nextLevelTotal,
-          streakDays: state.streakDays || 0,
-          bestStreak: state.bestStreak || 0,
+          streakDays,
+          bestStreak,
+          lastActivityDate,
           achievements: evaluateAchievements({
             ...state,
             level,
-            streakDays: state.streakDays,
-            bestStreak: state.bestStreak,
+            streakDays,
+            bestStreak,
             dailyQuests: state.dailyQuests,
           }),
         }))
@@ -860,6 +858,14 @@ export const useGamificationStore = create<GamificationState>()(
             achievements: evaluatedAchievements,
           }
         })
+
+        const s = get()
+        syncGamification({
+          experience: s.experience,
+          streak_days: s.streakDays,
+          best_streak: s.bestStreak,
+          last_activity_date: s.lastActivityDate,
+        }).catch(() => {})
       },
       registerActivity: (activity) => {
         const reward = ACTION_REWARDS[activity]
@@ -925,6 +931,12 @@ export const useGamificationStore = create<GamificationState>()(
           return quest?.title ?? 'daily quest'
         }
       },
+      setStatsForAchievements: (stats) => {
+        set((state) => ({
+          statsForAchievements: stats,
+          achievements: evaluateAchievements({ ...state, statsForAchievements: stats }),
+        }))
+      },
       resetDailyQuests: () => {
         set({
           dailyQuests: buildFreshQuests(),
@@ -935,6 +947,20 @@ export const useGamificationStore = create<GamificationState>()(
     {
       name: 'aetheris-gamification',
       version: 1,
+      partialize: (state) => ({
+        level: state.level,
+        experience: state.experience,
+        xpIntoLevel: state.xpIntoLevel,
+        xpForLevel: state.xpForLevel,
+        nextLevelAt: state.nextLevelAt,
+        streakDays: state.streakDays,
+        bestStreak: state.bestStreak,
+        lastActivityDate: state.lastActivityDate,
+        achievements: state.achievements,
+        dailyQuests: state.dailyQuests,
+        lastQuestReset: state.lastQuestReset,
+        recentActivity: state.recentActivity,
+      }),
     }
   )
 )

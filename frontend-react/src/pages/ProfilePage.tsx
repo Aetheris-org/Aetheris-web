@@ -623,16 +623,18 @@ export default function ProfilePage() {
     gcTime: 0,
   })
 
-  const { level, xpIntoLevel, xpForLevel, streakDays, achievements } = useGamificationStore(
-    (state) => ({
-      level: state.level,
-      xpIntoLevel: state.xpIntoLevel,
-      xpForLevel: state.xpForLevel,
-      streakDays: state.streakDays,
-      achievements: state.achievements,
-    }),
-    shallow
-  )
+  const { level, xpIntoLevel, xpForLevel, streakDays, achievements, setStatsForAchievements } =
+    useGamificationStore(
+      (state) => ({
+        level: state.level,
+        xpIntoLevel: state.xpIntoLevel,
+        xpForLevel: state.xpForLevel,
+        streakDays: state.streakDays,
+        achievements: state.achievements,
+        setStatsForAchievements: state.setStatsForAchievements,
+      }),
+      shallow
+    )
   const { details: profileDetails } = useProfileDetailsStore()
 
   const xpProgressPercent = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
@@ -694,6 +696,16 @@ export default function ProfilePage() {
     setAvatarError(false)
     setCoverError(false)
   }, [profile?.user?.uuid, profile?.user?.avatarUrl, profile?.user?.coverImageUrl])
+
+  // Обновляем статистику для разблокировки достижений (свой профиль)
+  useEffect(() => {
+    if (!profile || !isOwnProfile || !setStatsForAchievements) return
+    setStatsForAchievements({
+      publishedArticles: profile.stats?.publishedArticles ?? 0,
+      totalComments: profile.stats?.totalComments ?? 0,
+      bookmarksCount: profile.bookmarks?.length ?? 0,
+    })
+  }, [profile, isOwnProfile, setStatsForAchievements])
 
   // Проверяем статус подписки
   const { data: followStatus } = useQuery({
