@@ -3399,8 +3399,30 @@
     "timeframes": {
       "24h": "Last 24h",
       "7d": "Last 7 days",
-      "30d": "Last 30 days"
+      "30d": "Last 30 days",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
     },
+    "popularTags": {
+      "title": "Popular tags",
+      "description": "Tags that appear most often in articles for the selected period.",
+      "empty": "No data for this period yet."
+    },
+    "commentOfThePeriod": {
+      "title": "Comment of the period",
+      "description": "The most popular comment by community likes.",
+      "noComment": "No comments in this period yet.",
+      "viewArticle": "View article"
+    },
+    "topAuthors": {
+      "title": "Top authors",
+      "description": "Authors with the highest combined activity (views and reactions) for the period.",
+      "points": "points"
+    },
+    "noResults": "No results matching your search.",
+    "emptyLeaderboard": "No published articles in this period yet.",
     "topArticle": "Top article right now",
     "readArticle": "Read article",
     "saveForLater": "Save for later",

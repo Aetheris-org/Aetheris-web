@@ -1354,19 +1354,33 @@ export async function toggleBookmark(articleId: string): Promise<{ isBookmarked:
   }
 }
 
+export type TrendingPeriod = 'day' | 'week' | 'month' | 'year';
+
+const TRENDING_PERIOD_DAYS: Record<TrendingPeriod, number> = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365,
+};
+
+function getSinceForPeriod(period: TrendingPeriod): string {
+  const days = TRENDING_PERIOD_DAYS[period];
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 /**
- * Получить трендовые статьи за 7 дней по количеству просмотров
+ * Получить трендовые статьи за выбранный период (день, неделя, месяц, год).
+ * Ранжирование: просмотры и реакции (опубликованные статьи).
  */
 export async function getTrendingArticles(
   _userId?: string | number,
-  limit: number = 5
+  limit: number = 25,
+  period: TrendingPeriod = 'week'
 ): Promise<Article[]> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
-
-    // Последние 7 дней
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const since = getSinceForPeriod(period);
 
     const { data, error } = await supabase
       .from('articles')
@@ -1382,7 +1396,8 @@ export async function getTrendingArticles(
           )
         `
       )
-      .gte('created_at', weekAgo)
+      .not('published_at', 'is', null)
+      .gte('published_at', since)
       .order('views', { ascending: false })
       .limit(limit);
 
@@ -1395,10 +1410,61 @@ export async function getTrendingArticles(
       return [];
     }
 
-    return data.map((item: any) => transformArticle(item, userId));
+    // Доп. сортировка по просмотрам + реакции для более точного тренда
+    const withScore = data.map((a: any) => ({
+      ...a,
+      _score: (a.views || 0) + ((a.likes_count || 0) + (a.dislikes_count || 0)) * 2,
+    }));
+    withScore.sort((a: any, b: any) => (b._score || 0) - (a._score || 0));
+
+    return withScore.map((item: any) => {
+      const { _score, ...rest } = item;
+      return transformArticle(rest, userId);
+    });
   } catch (error: any) {
     logger.error('Error in getTrendingArticles', error);
     throw error;
+  }
+}
+
+/**
+ * Получить самые популярные теги за период по статьям, опубликованным в этом периоде.
+ */
+export async function getTrendingPopularTags(
+  period: TrendingPeriod = 'week',
+  limit: number = 12
+): Promise<{ tag: string; count: number }[]> {
+  try {
+    const since = getSinceForPeriod(period);
+
+    const { data, error } = await supabase
+      .from('articles')
+      .select('tags')
+      .not('published_at', 'is', null)
+      .gte('published_at', since)
+      .limit(500);
+
+    if (error) {
+      logger.error('Error fetching articles for tags', error);
+      return [];
+    }
+
+    const counts: Record<string, number> = {};
+    for (const row of data || []) {
+      const tags = Array.isArray(row?.tags) ? row.tags : [];
+      for (const t of tags) {
+        const tag = String(t || '').trim();
+        if (tag) counts[tag] = (counts[tag] || 0) + 1;
+      }
+    }
+
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, limit)
+      .map(([tag, count]) => ({ tag, count }));
+  } catch (error: any) {
+    logger.error('Error in getTrendingPopularTags', error);
+    return [];
   }
 }
 

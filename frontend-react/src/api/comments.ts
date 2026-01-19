@@ -4,6 +4,7 @@
  */
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import type { TrendingPeriod } from '@/api/articles';
 
 function validateUuid(id: string): string {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -400,6 +401,68 @@ export async function reactToComment(
   } catch (error: any) {
     logger.error('Error in reactToComment', error);
     throw error;
+  }
+}
+
+const TOP_COMMENT_PERIOD_DAYS: Record<TrendingPeriod, number> = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365,
+};
+
+/**
+ * Получить самый популярный комментарий за период (по лайкам).
+ * Возвращает комментарий и данные статьи для перехода.
+ */
+export async function getTopComment(
+  period: TrendingPeriod = 'week'
+): Promise<{ comment: Comment; article: { id: string; title: string } } | null> {
+  try {
+    const days = TOP_COMMENT_PERIOD_DAYS[period];
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+      .from('comments')
+      .select(
+        `
+        *,
+        author:profiles!comments_author_id_fkey (
+          id,
+          username,
+          avatar,
+          tag
+        ),
+        article:articles!comments_article_id_fkey (
+          id,
+          title
+        )
+      `
+      )
+      .gte('created_at', since)
+      .order('likes_count', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Error fetching top comment', error);
+      return null;
+    }
+
+    if (!data || !data.article) {
+      return null;
+    }
+
+    const article = data.article as { id: string; title: string };
+    const comment = transformComment(data, undefined);
+
+    return {
+      comment,
+      article: { id: String(article.id), title: article.title || '' },
+    };
+  } catch (error: any) {
+    logger.error('Error in getTopComment', error);
+    return null;
   }
 }
 
