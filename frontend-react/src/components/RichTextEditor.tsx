@@ -1145,183 +1145,23 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   useEffect(() => {
     if (!editor) return
     setSlashCommandItemsResolver(() => [
-      {
-        id: 'text',
-        title: 'Paragraph',
-        description: 'Стандартный текстовый блок',
-        icon: <Text className="h-4 w-4" />,
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).setParagraph().run()
-        },
-      },
-      {
-        id: 'heading-1',
-        title: 'Heading 1',
-        description: 'Крупный заголовок секции',
-        icon: <Heading1 className="h-4 w-4" />,
-        keywords: ['title', 'h1'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleHeading({ level: 1 }).run()
-        },
-      },
-      {
-        id: 'heading-2',
-        title: 'Heading 2',
-        description: 'Средний заголовок',
-        icon: <Heading2 className="h-4 w-4" />,
-        keywords: ['h2'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleHeading({ level: 2 }).run()
-        },
-      },
-      {
-        id: 'heading-3',
-        title: 'Heading 3',
-        description: 'Младший заголовок',
-        icon: <Heading3 className="h-4 w-4" />,
-        keywords: ['h3'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleHeading({ level: 3 }).run()
-        },
-      },
-      {
-        id: 'bullet-list',
-        title: 'Bullet list',
-        description: 'Маркированный список',
-        icon: <List className="h-4 w-4" />,
-        keywords: ['list'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleBulletList().run()
-        },
-      },
-      {
-        id: 'ordered-list',
-        title: 'Numbered list',
-        description: 'Нумерованный список',
-        icon: <ListOrdered className="h-4 w-4" />,
-        keywords: ['list', 'numbers'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleOrderedList().run()
-        },
-      },
-      {
-        id: 'quote',
-        title: 'Quote',
-        description: 'Цитата с выделением',
-        icon: <Quote className="h-4 w-4" />,
-        keywords: ['blockquote'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleBlockquote().run()
-        },
-      },
-      {
-        id: 'code-block',
-        title: 'Code block',
-        description: 'Блок кода с подсветкой',
-        hint: 'В разработке',
-        disabled: true,
-        icon: <Braces className="h-4 w-4" />,
-        keywords: ['code', 'snippet'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
-        },
-      },
-      {
-        id: 'divider',
-        title: 'Divider',
-        description: 'Горизонтальная линия',
-        icon: <Minus className="h-4 w-4" />,
-        keywords: ['line', 'hr'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).setHorizontalRule().run()
-        },
-      },
-      {
-        id: 'callout',
-        title: 'Callout',
-        description: 'Заметка или выделенный блок',
-        icon: <StickyNote className="h-4 w-4" />,
-        keywords: ['note', 'info'],
-        command: ({ editor, range }) => {
-          // @ts-expect-error - Custom command not in TipTap types
-          editor.chain().focus().deleteRange(range).insertCallout('info').run()
-        },
-      },
-      // Toggle временно отключен
-      // {
-      //   id: 'toggle',
-      //   title: 'Toggle block',
-      //   description: 'Сворачиваемая секция',
-      //   icon: <ListTodo className="h-4 w-4" />,
-      //   keywords: ['details', 'collapse'],
-      //   command: ({ editor, range }) => {
-      //     editor
-      //       .chain()
-      //       .focus()
-      //       .deleteRange(range)
-      //       .toggleDetails()
-      //       .run()
-      //   },
-      // },
-      {
-        id: 'columns-two',
-        title: 'Two columns',
-        description: 'Секция с двумя колонками',
-        icon: <Columns3 className="h-4 w-4" />,
-        keywords: ['layout', 'grid'],
-        command: ({ editor, range }) => {
-          // @ts-expect-error - Custom command not in TipTap types
-          editor.chain().focus().deleteRange(range).insertColumns('twoEqual').run()
-        },
-      },
-      {
-        id: 'columns-three',
-        title: 'Three columns',
-        description: 'Три колонки для контента',
-        icon: <Columns3 className="h-4 w-4" />,
-        keywords: ['layout', 'grid', 'three'],
-        command: ({ editor, range }) => {
-          // @ts-expect-error - Custom command not in TipTap types
-          editor.chain().focus().deleteRange(range).insertColumns('threeEqual').run()
-        },
-      },
-      {
-        id: 'anchor',
-        title: 'Anchor',
-        description: 'Добавить якорь к блоку',
-        hint: 'В разработке',
-        disabled: true,
-        icon: <Hash className="h-4 w-4" />,
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).run()
-          openAnchorDialog('create')
-        },
-      },
-      {
-        id: 'anchor-link',
-        title: 'Link to anchor',
-        description: 'Ссылка на существующий блок',
-        hint: 'В разработке',
-        disabled: true,
-        icon: <Link2 className="h-4 w-4" />,
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).run()
-          openAnchorDialog('link')
-        },
-      },
-      {
-        id: 'image',
-        title: 'Image',
-        description: 'Вставить изображение по URL',
-        icon: <ImageIcon className="h-4 w-4" />,
-        keywords: ['picture', 'media'],
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).run()
-          openImageDialog()
-        },
-      },
+      { id: 'text', title: t('editor.slashParagraph'), description: t('editor.slashParagraphDesc'), icon: <Text className="h-4 w-4" />, command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).setParagraph().run() } },
+      { id: 'heading-1', title: t('editor.slashH1'), description: t('editor.slashH1Desc'), icon: <Heading1 className="h-4 w-4" />, keywords: ['title', 'h1'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleHeading({ level: 1 }).run() } },
+      { id: 'heading-2', title: t('editor.slashH2'), description: t('editor.slashH2Desc'), icon: <Heading2 className="h-4 w-4" />, keywords: ['h2'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleHeading({ level: 2 }).run() } },
+      { id: 'heading-3', title: t('editor.slashH3'), description: t('editor.slashH3Desc'), icon: <Heading3 className="h-4 w-4" />, keywords: ['h3'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleHeading({ level: 3 }).run() } },
+      { id: 'bullet-list', title: t('editor.slashBulletList'), description: t('editor.slashBulletListDesc'), icon: <List className="h-4 w-4" />, keywords: ['list'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleBulletList().run() } },
+      { id: 'ordered-list', title: t('editor.slashOrderedList'), description: t('editor.slashOrderedListDesc'), icon: <ListOrdered className="h-4 w-4" />, keywords: ['list', 'numbers'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleOrderedList().run() } },
+      { id: 'quote', title: t('editor.slashQuote'), description: t('editor.slashQuoteDesc'), icon: <Quote className="h-4 w-4" />, keywords: ['blockquote'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleBlockquote().run() } },
+      { id: 'code-block', title: t('editor.slashCodeBlock'), description: t('editor.slashCodeBlockDesc'), hint: t('editor.inDevelopment'), disabled: true, icon: <Braces className="h-4 w-4" />, keywords: ['code', 'snippet'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).toggleCodeBlock().run() } },
+      { id: 'divider', title: t('editor.slashDivider'), description: t('editor.slashDividerDesc'), icon: <Minus className="h-4 w-4" />, keywords: ['line', 'hr'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).setHorizontalRule().run() } },
+      { id: 'callout', title: t('editor.slashCallout'), description: t('editor.slashCalloutDesc'), icon: <StickyNote className="h-4 w-4" />, keywords: ['note', 'info'], command: ({ editor, range }) => { /* @ts-expect-error - Custom command not in TipTap types */ editor.chain().focus().deleteRange(range).insertCallout('info').run() } },
+      { id: 'columns-two', title: t('editor.slashColumns2'), description: t('editor.slashColumns2Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid'], command: ({ editor, range }) => { /* @ts-expect-error - Custom command not in TipTap types */ editor.chain().focus().deleteRange(range).insertColumns('twoEqual').run() } },
+      { id: 'columns-three', title: t('editor.slashColumns3'), description: t('editor.slashColumns3Desc'), icon: <Columns3 className="h-4 w-4" />, keywords: ['layout', 'grid', 'three'], command: ({ editor, range }) => { /* @ts-expect-error - Custom command not in TipTap types */ editor.chain().focus().deleteRange(range).insertColumns('threeEqual').run() } },
+      { id: 'anchor', title: t('editor.slashAnchor'), description: t('editor.slashAnchorDesc'), hint: t('editor.inDevelopment'), disabled: true, icon: <Hash className="h-4 w-4" />, command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openAnchorDialog('create') } },
+      { id: 'anchor-link', title: t('editor.slashAnchorLink'), description: t('editor.slashAnchorLinkDesc'), hint: t('editor.inDevelopment'), disabled: true, icon: <Link2 className="h-4 w-4" />, command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openAnchorDialog('link') } },
+      { id: 'image', title: t('editor.slashImage'), description: t('editor.slashImageDesc'), icon: <ImageIcon className="h-4 w-4" />, keywords: ['picture', 'media'], command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); openImageDialog() } },
     ])
-  }, [editor, openAnchorDialog, openImageDialog])
+  }, [editor, openAnchorDialog, openImageDialog, t])
 
   const activeColumnsLayout = editor ? getActiveColumnsLayout(editor) : null
   const activeColumnsPreset = findPresetByLayout(activeColumnsLayout)
@@ -1353,9 +1193,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           {!isFormatPanelOpen && (
             <button
               type="button"
-              aria-label="Show format panel"
+              aria-label={t('editor.showFormatPanel')}
               className="fixed left-0 top-1/2 z-[100] hidden h-12 w-10 -translate-y-1/2 items-center justify-center rounded-r-xl border border-l-0 border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex"
-              title="Show format panel"
+              title={t('editor.showFormatPanel')}
               onClick={() => setFormatPanelOpen(true)}
             >
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -1376,7 +1216,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               ))}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label="Text color" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
+                  <button type="button" aria-label={t('editor.textColor')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title={t('editor.textColor')}>
                     <Type className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -1392,7 +1232,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label="Highlight" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight color">
+                  <button type="button" aria-label={t('editor.highlight')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title={t('editor.highlight')}>
                     <Highlighter className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -1408,13 +1248,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label="Font size" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title="Font size">
+                  <button type="button" aria-label={t('editor.fontSize')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title={t('editor.fontSize')}>
                     <CaseSensitive className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-36 p-2">
                   <div className="grid grid-cols-2 gap-1">
-                    <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>По умолчанию</button>
+                    <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>{t('editor.fontSizeDefault')}</button>
                     {fontSizeOptions.map((sz) => (
                       <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
                     ))}
@@ -1423,42 +1263,40 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label="Text alignment" className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')} title="Text alignment">
+                  <button type="button" aria-label={t('editor.textAlignment')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')} title={t('editor.textAlignment')}>
                     <AlignLeft className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-36 p-2">
                   {alignOptions.map((a) => {
                     const Icon = a.icon
+                    const alignLabel = a.id === 'left' ? t('editor.alignLeft') : a.id === 'center' ? t('editor.alignCenter') : a.id === 'right' ? t('editor.alignRight') : t('editor.alignJustify')
                     return (
                       <button key={a.id} type="button" onClick={() => editor.chain().focus().setTextAlign(a.cmd).run()} className={cn('flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted', editor.isActive({ textAlign: a.cmd }) && 'bg-primary/10 text-primary')}>
                         <Icon className="h-4 w-4" />
-                        {a.id === 'left' && 'По левому'}
-                        {a.id === 'center' && 'По центру'}
-                        {a.id === 'right' && 'По правому'}
-                        {a.id === 'justify' && 'По ширине'}
+                        {alignLabel}
                       </button>
                     )
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? 'Edit link' : 'Add link'} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+              <button type="button" aria-label={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
                 <LinkIcon className="h-4 w-4" />
               </button>
-              <button type="button" aria-label="Insert image" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert image" onClick={(e) => { e.preventDefault(); openImageDialog() }}>
+              <button type="button" aria-label={t('editor.insertImage')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertImage')} onClick={(e) => { e.preventDefault(); openImageDialog() }}>
                 <ImageIcon className="h-4 w-4" />
               </button>
-              <button type="button" aria-label="Insert video" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert video" onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
+              <button type="button" aria-label={t('editor.insertVideo')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertVideo')} onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
                 <Video className="h-4 w-4" />
               </button>
-              <button type="button" aria-label="Insert audio" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert audio" onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
+              <button type="button" aria-label={t('editor.insertAudio')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertAudio')} onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
                 <Music className="h-4 w-4" />
               </button>
-              <button type="button" aria-label="Clear formatting" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Clear formatting" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+              <button type="button" aria-label={t('editor.clearFormat')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.clearFormat')} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
                 <RemoveFormatting className="h-4 w-4" />
               </button>
             </div>
-            <button type="button" aria-label="Collapse" className="mt-2 flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Collapse" onClick={() => setFormatPanelOpen(false)}>
+            <button type="button" aria-label={t('editor.collapse')} className="mt-2 flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.collapse')} onClick={() => setFormatPanelOpen(false)}>
               <ChevronLeft className="h-4 w-4" />
             </button>
           </div>
@@ -1491,7 +1329,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   ))}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Text color" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title="Text color">
+                      <button type="button" aria-label={t('editor.textColor')} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title={t('editor.textColor')}>
                         <Type className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
@@ -1507,7 +1345,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </DropdownMenu>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Highlight" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight">
+                      <button type="button" aria-label={t('editor.highlight')} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title={t('editor.highlight')}>
                         <Highlighter className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
@@ -1521,17 +1359,17 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                       </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <button type="button" aria-label={editor.isActive('link') ? 'Edit link' : 'Add link'} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+                  <button type="button" aria-label={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
                     <LinkIcon className="h-4 w-4" />
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Font size" className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title="Font size">
+                      <button type="button" aria-label={t('editor.fontSize')} className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title={t('editor.fontSize')}>
                         <CaseSensitive className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="top" align="center" className="w-36 p-2">
-                      <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>По умолчанию</button>
+                      <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>{t('editor.fontSizeDefault')}</button>
                       {fontSizeOptions.map((sz) => (
                         <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
                       ))}
@@ -1539,44 +1377,42 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </DropdownMenu>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" aria-label="Text alignment" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Text alignment">
+                      <button type="button" aria-label={t('editor.textAlignment')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.textAlignment')}>
                         <AlignLeft className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="top" align="center" className="w-36 p-2">
                       {alignOptions.map((a) => {
                         const Icon = a.icon
+                        const alignLabel = a.id === 'left' ? t('editor.alignLeft') : a.id === 'center' ? t('editor.alignCenter') : a.id === 'right' ? t('editor.alignRight') : t('editor.alignJustify')
                         return (
                           <button key={a.id} type="button" onClick={() => editor.chain().focus().setTextAlign(a.cmd).run()} className={cn('flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted', editor.isActive({ textAlign: a.cmd }) && 'bg-primary/10 text-primary')}>
                             <Icon className="h-4 w-4" />
-                            {a.id === 'left' && 'По левому'}
-                            {a.id === 'center' && 'По центру'}
-                            {a.id === 'right' && 'По правому'}
-                            {a.id === 'justify' && 'По ширине'}
+                            {alignLabel}
                           </button>
                         )
                       })}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <button type="button" aria-label="Insert image" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert image" onClick={(e) => { e.preventDefault(); openImageDialog() }}>
+                  <button type="button" aria-label={t('editor.insertImage')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertImage')} onClick={(e) => { e.preventDefault(); openImageDialog() }}>
                     <ImageIcon className="h-4 w-4" />
                   </button>
-                  <button type="button" aria-label="Insert video" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert video" onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
+                  <button type="button" aria-label={t('editor.insertVideo')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertVideo')} onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
                     <Video className="h-4 w-4" />
                   </button>
-                  <button type="button" aria-label="Insert audio" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Insert audio" onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
+                  <button type="button" aria-label={t('editor.insertAudio')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertAudio')} onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
                     <Music className="h-4 w-4" />
                   </button>
-                  <button type="button" aria-label="Clear formatting" className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                  <button type="button" aria-label={t('editor.clearFormat')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
                     <RemoveFormatting className="h-4 w-4" />
                   </button>
                 </div>
-                <button type="button" aria-label="Collapse" className="flex h-9 items-center justify-center border-t border-border/40 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(false)}>
+                <button type="button" aria-label={t('editor.collapse')} className="flex h-9 items-center justify-center border-t border-border/40 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(false)}>
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </>
             ) : (
-              <button type="button" aria-label="Expand" className="flex h-14 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(true)}>
+              <button type="button" aria-label={t('editor.expand')} className="flex h-14 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" onClick={() => setFormatPanelOpen(true)}>
                 <ChevronUp className="h-4 w-4" />
               </button>
             )}
@@ -1592,18 +1428,18 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           {/* Верхняя панель: Undo Redo Columns | Полноэкранный режим */}
           <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2">
             <div className="flex items-center gap-3">
-              <Button type="button" variant="ghost" size="icon" aria-label="Undo" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().undo().run()} onClick={() => editor?.chain().focus().undo().run()} title="Undo">
+              <Button type="button" variant="ghost" size="icon" aria-label={t('editor.undo')} className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().undo().run()} onClick={() => editor?.chain().focus().undo().run()} title={t('editor.undo')}>
                 <Undo className="h-3.5 w-3.5" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" aria-label="Redo" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().redo().run()} onClick={() => editor?.chain().focus().redo().run()} title="Redo">
+              <Button type="button" variant="ghost" size="icon" aria-label={t('editor.redo')} className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().redo().run()} onClick={() => editor?.chain().focus().redo().run()} title={t('editor.redo')}>
                 <Redo className="h-3.5 w-3.5" />
               </Button>
               {editor && activeColumnsLayout && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" aria-label="Column layout" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="sm" aria-label={t('editor.columnLayout')} className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
                       <Columns3 className="h-3.5 w-3.5" />
-                      {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : 'Columns'}
+                      {activeColumnsPreset ? COLUMN_LAYOUTS[activeColumnsPreset].label : t('editor.columnLayout')}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">
@@ -1621,7 +1457,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 </DropdownMenu>
               )}
             </div>
-            <Button type="button" variant="ghost" size="icon" aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="h-7 w-7 text-muted-foreground hover:text-foreground" title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} onClick={toggleFullscreen}>
+            <Button type="button" variant="ghost" size="icon" aria-label={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} className="h-7 w-7 text-muted-foreground hover:text-foreground" title={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} onClick={toggleFullscreen}>
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </Button>
           </div>
@@ -1650,13 +1486,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
           {/* Нижняя панель — счётчики */}
           <div className="flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
-            <span>{wordCount} words</span>
+            <span>{wordCount} {t('editor.words')}</span>
             {characterLimit ? (
               <span className={cn(characterCount > characterLimit * 0.9 && 'text-amber-600 dark:text-amber-400', characterCount >= characterLimit && 'text-destructive font-medium')}>
                 {characterCount}/{characterLimit}
               </span>
             ) : (
-              <span>{characterCount} chars</span>
+              <span>{characterCount} {t('editor.chars')}</span>
             )}
           </div>
         </div>
@@ -1771,7 +1607,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="anchor-text">Текст ссылки</Label>
+                  <Label htmlFor="anchor-text">{t('editor.anchorTextLabel')}</Label>
                   <Input
                     id="anchor-text"
                     value={anchorText}
@@ -1784,10 +1620,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="ghost" onClick={() => setIsAnchorDialogOpen(false)}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleApplyAnchor} disabled={!editor}>
-              Сохранить
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1816,7 +1652,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <ImageIcon className="h-4 w-4" />
-                <span>Add image</span>
+                <span>{t('editor.ctxAddImage')}</span>
               </button>
               <button
                 type="button"
@@ -1827,7 +1663,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Video className="h-4 w-4" />
-                <span>Add video</span>
+                <span>{t('editor.ctxAddVideo')}</span>
               </button>
               <button
                 type="button"
@@ -1838,7 +1674,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Music className="h-4 w-4" />
-                <span>Add audio</span>
+                <span>{t('editor.ctxAddAudio')}</span>
               </button>
             </>
           ) : (
@@ -1853,7 +1689,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Bold className="h-4 w-4" />
-                <span>Bold</span>
+                <span>{t('editor.ctxBold')}</span>
               </button>
               <button
                 type="button"
@@ -1864,7 +1700,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Italic className="h-4 w-4" />
-                <span>Italic</span>
+                <span>{t('editor.ctxItalic')}</span>
               </button>
               <button
                 type="button"
@@ -1875,7 +1711,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Strikethrough className="h-4 w-4" />
-                <span>Strikethrough</span>
+                <span>{t('editor.ctxStrikethrough')}</span>
               </button>
               <button
                 type="button"
@@ -1886,7 +1722,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <Code className="h-4 w-4" />
-                <span>Code</span>
+                <span>{t('editor.ctxCode')}</span>
               </button>
               <div className="my-1 h-px bg-muted" />
               <button
@@ -1898,7 +1734,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <LinkIcon className="h-4 w-4" />
-                <span>Insert link</span>
+                <span>{t('editor.ctxInsertLink')}</span>
               </button>
               <button
                 type="button"
@@ -1909,7 +1745,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <RemoveFormatting className="h-4 w-4" />
-                <span>Clear formatting</span>
+                <span>{t('editor.ctxClearFormat')}</span>
               </button>
             </>
           )}

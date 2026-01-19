@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Github, Twitter, Mail, Heart, Code2, MessageSquare, UsersRound, GraduationCap, ChevronUp, Send, MessageCircle } from 'lucide-react'
+import { Github, Twitter, Mail, Heart, Code2, MessageSquare, UsersRound, GraduationCap, ChevronUp, ChevronDown, Send, MessageCircle } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -47,19 +47,23 @@ export function SiteFooter() {
 
   return (
     <footer ref={footerRef} className="w-full border-t border-border bg-background">
-      {/* Свернутое состояние - минимальная полоска */}
+      {/* Свернутое состояние — панель с явной подсказкой «развернуть» */}
       <div
         className={cn(
           'container transition-all duration-300 ease-in-out overflow-hidden',
-          isExpanded ? 'max-h-0 opacity-0 py-0' : 'max-h-20 opacity-100 py-3'
+          isExpanded ? 'max-h-0 opacity-0 py-0' : 'max-h-28 opacity-100 py-3'
         )}
       >
         <button
           onClick={() => setIsExpanded(true)}
-          className="w-full flex items-center justify-between"
+          className={cn(
+            'w-full flex items-center justify-between gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3',
+            'transition-colors hover:bg-muted/60 hover:border-muted-foreground/30',
+            'group cursor-pointer'
+          )}
           aria-label={t('footer.expand')}
         >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-4 flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">
               {t('footer.copyright', { year: currentYear })}
             </p>
@@ -68,7 +72,10 @@ export function SiteFooter() {
               <span className="font-medium text-foreground">{t('footer.passion')}</span>
             </div>
           </div>
-          <ChevronUp className="h-3 w-3 text-muted-foreground/20 ml-4 flex-shrink-0" />
+          <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+            <span>{t('footer.expandHint')}</span>
+            <ChevronDown className="h-4 w-4" />
+          </span>
         </button>
       </div>
 
@@ -174,7 +181,10 @@ export function SiteFooter() {
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+              className={cn(
+                'text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5',
+                'rounded-md px-2.5 py-1.5 hover:bg-muted/70 border border-transparent hover:border-border'
+              )}
               aria-label={t('footer.collapse')}
             >
               <ChevronUp className="h-3.5 w-3.5 rotate-180" />
