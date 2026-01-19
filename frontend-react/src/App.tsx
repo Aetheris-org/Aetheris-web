@@ -37,6 +37,10 @@ import NewsPage from '@/pages/NewsPage'
 import ChangesPage from '@/pages/ChangesPage'
 import RulesPage from '@/pages/RulesPage'
 import FAQPage from '@/pages/FAQPage'
+import CollectionsPage from '@/pages/CollectionsPage'
+import CreateCollectionPage from '@/pages/CreateCollectionPage'
+import CollectionDetailPage from '@/pages/CollectionDetailPage'
+import CollectionJoinPage from '@/pages/CollectionJoinPage'
 import { useAuthStore } from '@/stores/authStore'
 import { getCurrentUser } from '@/api/auth'
 import { useThemeStore } from '@/stores/themeStore'
@@ -151,6 +155,10 @@ function App() {
           <Route path="/edit/:id" element={<EditArticlePage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/reading-list" element={<ReadingListPage />} />
+          <Route path="/collections" element={<CollectionsPage />} />
+          <Route path="/collections/create" element={<CreateCollectionPage />} />
+          <Route path="/collections/join/:token" element={<CollectionJoinPage />} />
+          <Route path="/collections/:id" element={<CollectionDetailPage />} />
           <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

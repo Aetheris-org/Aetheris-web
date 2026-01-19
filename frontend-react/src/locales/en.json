@@ -3421,6 +3421,14 @@
       "description": "Authors with the highest combined activity (views and reactions) for the period.",
       "points": "points"
     },
+    "collectionsPanel": {
+      "title": "Collections",
+      "description": "Article compilations by topic. Save ones you like and create your own.",
+      "viewMore": "View more",
+      "create": "Create",
+      "addCollection": "Add collection",
+      "empty": "No collections yet. Create the first one!"
+    },
     "noResults": "No results matching your search.",
     "emptyLeaderboard": "No published articles in this period yet.",
     "topArticle": "Top article right now",

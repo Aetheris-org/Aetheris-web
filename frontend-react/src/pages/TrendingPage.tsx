@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Flame,
   CalendarDays,
@@ -14,6 +14,9 @@ import {
   Tag,
   Trophy,
   ExternalLink,
+  FolderOpen,
+  Plus,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -31,9 +34,12 @@ import {
   type TrendingPeriod,
 } from '@/api/articles'
 import { getTopComment } from '@/api/comments'
+import { getCollections, toggleCollectionLike, toggleCollectionSave } from '@/api/collections'
+import { CollectionCard } from '@/components/collections/CollectionCard'
 import type { Article } from '@/types/article'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useAuthStore } from '@/stores/authStore'
 
 const PERIODS: { id: TrendingPeriod; labelKey: string }[] = [
   { id: 'day', labelKey: 'trending.timeframes.day' },
@@ -41,6 +47,12 @@ const PERIODS: { id: TrendingPeriod; labelKey: string }[] = [
   { id: 'month', labelKey: 'trending.timeframes.month' },
   { id: 'year', labelKey: 'trending.timeframes.year' },
 ]
+
+/** Отображаемое имя: сначала никнейм (tag), затем nickname, затем username. */
+function authorDisplay(a: { tag?: string; nickname?: string; username?: string } | null | undefined): string {
+  if (!a) return '—'
+  return (a.tag || a.nickname || a.username || '—').trim() || '—'
+}
 
 export default function TrendingPage() {
   const { t } = useTranslation()
@@ -77,6 +89,27 @@ export default function TrendingPage() {
     queryFn: () => getTopComment(period),
   })
 
+  const { data: collectionsData, isLoading: loadingCollections } = useQuery({
+    queryKey: ['collections-trending', 3],
+    queryFn: () => getCollections({ page: 1, pageSize: 3, sort: 'likes' }),
+  })
+  const queryClient = useQueryClient()
+  const { user } = useAuthStore()
+  const likeColMu = useMutation({
+    mutationFn: (id: string) => toggleCollectionLike(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections-trending'] })
+      queryClient.invalidateQueries({ queryKey: ['collections'] })
+    },
+  })
+  const saveColMu = useMutation({
+    mutationFn: (id: string) => toggleCollectionSave(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections-trending'] })
+      queryClient.invalidateQueries({ queryKey: ['collections'] })
+    },
+  })
+
   const categories = [
     t('trending.categories.all'),
     t('trending.categories.architecture'),
@@ -92,7 +125,7 @@ export default function TrendingPage() {
       const matchesCategory =
         category === allTopicsLabel ||
         (a.tags || []).some((tag) => tag.toLowerCase() === category.toLowerCase())
-      const authorName = [a.author?.nickname, a.author?.username].filter(Boolean).join(' ')
+      const authorName = [a.author?.tag, a.author?.nickname, a.author?.username].filter(Boolean).join(' ')
       const matchesSearch = search
         ? [a.title, a.excerpt, authorName].join(' ').toLowerCase().includes(search.toLowerCase())
         : true
@@ -203,7 +236,7 @@ export default function TrendingPage() {
                     {topArticle.excerpt || ''}
                   </p>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span>{topArticle.author?.nickname || topArticle.author?.username || '—'}</span>
+                    <span>{authorDisplay(topArticle.author)}</span>
                     <Separator orientation="vertical" className="h-4" />
                     <span>{formatDate(topArticle.publishedAt || topArticle.createdAt)}</span>
                     <Separator orientation="vertical" className="h-4" />
@@ -342,11 +375,11 @@ export default function TrendingPage() {
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={topCommentData.comment.author?.avatar} />
                         <AvatarFallback className="text-xs">
-                          {(topCommentData.comment.author?.username || '?').slice(0, 1)}
+                          {(topCommentData.comment.author?.tag || topCommentData.comment.author?.username || '?').slice(0, 1)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-xs font-medium">
-                        {topCommentData.comment.author?.username || '—'}
+                        {topCommentData.comment.author?.tag || topCommentData.comment.author?.username || '—'}
                       </span>
                     </button>
                     <span className="text-xs text-muted-foreground">
@@ -367,6 +400,63 @@ export default function TrendingPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Коллекции — между тегами и таблицей лидеров */}
+        <Card className="border border-border/60">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                  {t('trending.collectionsPanel.title')}
+                </CardTitle>
+                <CardDescription>{t('trending.collectionsPanel.description')}</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/collections')}>
+                  {t('trending.collectionsPanel.viewMore')}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button size="sm" className="gap-1.5" onClick={() => navigate('/collections/create')}>
+                  <Plus className="h-4 w-4" />
+                  {t('trending.collectionsPanel.create')}
+                </Button>
+                <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => navigate('/collections/create')}>
+                  {t('trending.collectionsPanel.addCollection')}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingCollections ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-44 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : !collectionsData?.data?.length ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <FolderOpen className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground mb-3">{t('trending.collectionsPanel.empty')}</p>
+                <Button size="sm" variant="outline" onClick={() => navigate('/collections/create')}>
+                  {t('trending.collectionsPanel.create')}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {collectionsData.data.slice(0, 3).map((c) => (
+                  <CollectionCard
+                    key={c.id}
+                    collection={c}
+                    onClick={() => navigate(`/collections/${c.id}`)}
+                    onLike={user ? () => likeColMu.mutate(c.id) : undefined}
+                    onSave={user ? () => saveColMu.mutate(c.id) : undefined}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Таблица лидеров — статьи */}
         <section className="space-y-6 rounded-3xl border border-border/70 bg-muted/5 p-6 shadow-sm">
@@ -436,7 +526,7 @@ export default function TrendingPage() {
                         {article.excerpt || ''}
                       </p>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span>{article.author?.nickname || article.author?.username || '—'}</span>
+                        <span>{authorDisplay(article.author)}</span>
                         <Separator orientation="vertical" className="h-4" />
                         <span>{formatDate(article.publishedAt || article.createdAt)}</span>
                         <Separator orientation="vertical" className="h-4" />
@@ -500,11 +590,11 @@ export default function TrendingPage() {
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={author?.avatar ?? undefined} />
                       <AvatarFallback className="text-sm">
-                        {(author?.nickname || author?.username || '?').slice(0, 1)}
+                        {authorDisplay(author) === '—' ? '?' : authorDisplay(author).slice(0, 1)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="text-left">
-                      <p className="text-sm font-medium">{author?.nickname || author?.username || '—'}</p>
+                      <p className="text-sm font-medium">{authorDisplay(author)}</p>
                       <p className="text-xs text-muted-foreground">
                         {score.toLocaleString()} {t('trending.topAuthors.points')}
                       </p>
