@@ -3752,6 +3752,7 @@
     "dailyStreak": "Daily streak",
     "days": "{count} {count, plural, one {день} few {дня} other {дней}}",
     "streakDescription": "Держите ритм для прогресса.",
+    "bestStreak": "Лучший результат: {count} {count, plural, one {день} few {дня} other {дней}}",
     "notifications": "Уведомления",
     "reviewInbox": "Просмотреть",
     "lifetimeExperience": "Опыт за все время:",

@@ -94,13 +94,11 @@ import { normalizeR2Url } from '@/lib/r2-url-helper'
 import {
   mockAudienceInsights,
   mockContentMix,
-  mockActivityFeed,
   mockCreatorGoals,
   mockQuickActions,
   mockPinnedCollections,
   type MockAudienceInsight,
   type MockContentMix,
-  type MockActivityItem,
   type MockCreatorGoal,
   type MockQuickAction,
   type MockPinnedCollection,
@@ -149,7 +147,7 @@ function LevelCard({
 }) {
   const { t } = useTranslation()
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
+    <Card className="border border-border/60">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -383,9 +381,13 @@ function ContentMixCard({ mix }: { mix: MockContentMix[] }) {
   )
 }
 
-// Компонент ленты активности
-function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
-  const { t } = useTranslation()
+// Компонент ленты активности (реальные данные из геймификации)
+function ActivityFeedCard({
+  activities,
+}: {
+  activities: Array<{ id: string; title: string; timestamp: string; icon: string; xp?: number }>
+}) {
+  const { t, language } = useTranslation()
   if (activities.length === 0) return null
 
   const getIcon = (iconName: string) => {
@@ -394,13 +396,14 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
       MessageSquare,
       Heart,
       Bookmark,
+      Zap,
     }
     const IconComponent = icons[iconName] || Activity
     return <IconComponent className="h-4 w-4" />
   }
 
   return (
-    <Card className="border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity">
+    <Card className="border border-border/60">
       <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-3 sm:pt-6">
         <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
           <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -412,17 +415,22 @@ function ActivityFeedCard({ activities }: { activities: MockActivityItem[] }) {
           <div key={activity.id} className="flex items-start gap-2 sm:gap-3 rounded-lg border bg-muted/50 p-2 sm:p-3">
             <div className="mt-0.5 text-muted-foreground shrink-0">{getIcon(activity.icon)}</div>
             <div className="flex-1 space-y-0.5 sm:space-y-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium break-words">{activity.title}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-xs sm:text-sm font-medium break-words">{activity.title}</p>
+                {activity.xp != null && activity.xp > 0 && (
+                  <span className="text-[10px] text-primary font-medium">+{activity.xp} XP</span>
+                )}
+              </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                {new Date(activity.timestamp).toLocaleDateString('ru-RU', {
+                {new Date(activity.timestamp).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', {
                   month: 'short',
                   day: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </p>
-              </div>
             </div>
+          </div>
         ))}
       </CardContent>
     </Card>
@@ -623,7 +631,7 @@ export default function ProfilePage() {
     gcTime: 0,
   })
 
-  const { level, xpIntoLevel, xpForLevel, streakDays, achievements, setStatsForAchievements } =
+  const { level, xpIntoLevel, xpForLevel, streakDays, achievements, recentActivity, setStatsForAchievements } =
     useGamificationStore(
       (state) => ({
         level: state.level,
@@ -631,6 +639,7 @@ export default function ProfilePage() {
         xpForLevel: state.xpForLevel,
         streakDays: state.streakDays,
         achievements: state.achievements,
+        recentActivity: state.recentActivity,
         setStatsForAchievements: state.setStatsForAchievements,
       }),
       shallow
@@ -826,7 +835,9 @@ export default function ProfilePage() {
   // Используем мок-данные для восстановленных блоков
   const audienceInsights = isOwnProfile ? mockAudienceInsights : []
   const contentMix = isOwnProfile ? mockContentMix : []
-  const activityFeed = isOwnProfile ? mockActivityFeed : []
+  const activityFeed = isOwnProfile
+    ? recentActivity.map((a) => ({ id: a.id, title: a.label, timestamp: a.at, icon: 'Zap', xp: a.xp }))
+    : []
   const creatorGoals = isOwnProfile ? mockCreatorGoals : []
   const quickActions = isOwnProfile
     ? mockQuickActions.map((action) => {

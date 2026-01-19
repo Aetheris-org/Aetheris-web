@@ -3770,6 +3770,7 @@
     "dailyStreak": "Daily streak",
     "days": "{count} {count, plural, one {day} other {days}}",
     "streakDescription": "Stay consistent to keep rewards flowing.",
+    "bestStreak": "Best: {count} {count, plural, one {day} other {days}}",
     "notifications": "Notifications",
     "reviewInbox": "Review inbox",
     "lifetimeExperience": "Lifetime experience:",

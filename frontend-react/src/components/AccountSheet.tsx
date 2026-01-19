@@ -63,12 +63,15 @@ export function AccountSheet() {
     refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
     refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
   })
-  const { level, xpIntoLevel, xpForLevel, streakDays } = useGamificationStore((state) => ({
+  const { level, xpIntoLevel, xpForLevel, streakDays, achievements } = useGamificationStore((state) => ({
     level: state.level,
     xpIntoLevel: state.xpIntoLevel,
     xpForLevel: state.xpForLevel,
     streakDays: state.streakDays,
+    achievements: state.achievements,
   }))
+
+  const unlockedAchievementsCount = achievements.filter((a) => a.unlocked).length
 
   const xpProgress = xpForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpForLevel) * 100)) : 0
 
@@ -165,11 +168,11 @@ export function AccountSheet() {
             </Badge>
           </div>
 
-          {/* Quick Stats Preview */}
+          {/* Quick Stats Preview: XP, стрик, уведомления */}
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-20 hover:opacity-100"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
             >
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{xpProgress}%</span>
@@ -177,7 +180,7 @@ export function AccountSheet() {
             </button>
             <button
               onClick={() => setStatsSheetOpen(true)}
-              className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 bg-background p-3 hover:bg-muted/50 transition-colors opacity-20 hover:opacity-100"
+              className="flex flex-col items-center gap-1.5 rounded-md border border-border/60 bg-background p-3 hover:bg-muted/50 transition-colors"
             >
               <Flame className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">{streakDays}</span>
@@ -203,7 +206,7 @@ export function AccountSheet() {
           {/* View Full Stats Button */}
           <Button
             variant="outline"
-            className="w-full gap-2 border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
+            className="w-full gap-2 border-border/60"
             onClick={() => setStatsSheetOpen(true)}
           >
             <TrendingUp className="h-4 w-4" />
@@ -263,11 +266,16 @@ export function AccountSheet() {
             <SheetClose asChild>
               <Button
                 variant="outline"
-                className="w-full justify-center gap-2 border-dashed border-muted-foreground/40 opacity-20 hover:opacity-100 transition-opacity"
+                className="w-full justify-center gap-2 border-border/60"
                 onClick={() => navigate('/achievements')}
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
                 <span className="flex-1 text-center truncate">{t('accountSheet.viewAchievements')}</span>
+                {unlockedAchievementsCount > 0 && (
+                  <Badge variant="secondary" className="rounded-full px-2 py-0 text-xs">
+                    {unlockedAchievementsCount}
+                  </Badge>
+                )}
               </Button>
             </SheetClose>
           </section>

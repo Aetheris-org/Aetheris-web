@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthStore } from '@/stores/authStore'
 import { useGamificationStore } from '@/stores/gamificationStore'
-import { Flame, Award, Bell, TrendingUp } from 'lucide-react'
+import { Flame, Award, Bell, TrendingUp, Sparkles } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '@/api/notifications'
@@ -36,11 +36,12 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
     refetchOnMount: true, // Рефетчить при монтировании, если данные устарели
     refetchOnWindowFocus: true, // Рефетчить при фокусе окна, если данные устарели
   })
-  const { level, xpIntoLevel, xpForLevel, streakDays, experience } = useGamificationStore((state) => ({
+  const { level, xpIntoLevel, xpForLevel, streakDays, bestStreak, experience } = useGamificationStore((state) => ({
     level: state.level,
     xpIntoLevel: state.xpIntoLevel,
     xpForLevel: state.xpForLevel,
     streakDays: state.streakDays,
+    bestStreak: state.bestStreak,
     experience: state.experience,
   }))
 
@@ -91,7 +92,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
           </Card>
 
           {/* XP Progress */}
-          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
+          <Card className="border border-border/60 bg-card/90">
             <CardContent className="p-5 space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -109,7 +110,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
 
           {/* Stats Grid */}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
+            <Card className="border border-border/60 bg-card/90">
               <CardContent className="p-4">
                 <div className="flex flex-col gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -119,9 +120,16 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
                     <Flame className="h-5 w-5 text-primary" />
                     {t('accountSheet.days', { count: streakDays })}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {t('accountSheet.streakDescription')}
-                  </p>
+                  {bestStreak > 0 && bestStreak !== streakDays && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {t('accountSheet.bestStreak', { count: bestStreak })}
+                    </p>
+                  )}
+                  {(!bestStreak || bestStreak === streakDays) && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {t('accountSheet.streakDescription')}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -152,7 +160,7 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
           </div>
 
           {/* Lifetime Experience */}
-          <Card className="border border-dashed border-muted-foreground/40 bg-card/90 opacity-20 hover:opacity-100 transition-opacity">
+          <Card className="border border-border/60 bg-card/90">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -167,6 +175,17 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
               </div>
             </CardContent>
           </Card>
+
+          <SheetClose asChild>
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-border/60"
+              onClick={() => navigate('/achievements')}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('accountSheet.viewAchievements')}
+            </Button>
+          </SheetClose>
 
         </div>
       </SheetContent>
