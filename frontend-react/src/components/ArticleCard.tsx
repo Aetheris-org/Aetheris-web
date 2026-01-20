@@ -132,7 +132,7 @@ export function ArticleCard({
             <div
               className={`${article.previewImage ? 'hidden' : 'flex'} h-full w-full items-center justify-center bg-muted text-muted-foreground text-xs`}
             >
-              No preview
+              {t('article.noPreview')}
             </div>
           </div>
           {article.previewImage && (

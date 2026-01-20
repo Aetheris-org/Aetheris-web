@@ -108,7 +108,7 @@ export function ArticleCardLine({
               <div
                 className={`${article.previewImage ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center bg-muted text-muted-foreground text-[10px]`}
               >
-                No preview
+                {t('article.noPreview')}
               </div>
             </div>
             {article.previewImage && (

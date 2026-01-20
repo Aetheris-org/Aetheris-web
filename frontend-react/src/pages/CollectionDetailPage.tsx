@@ -226,7 +226,7 @@ export default function CollectionDetailPage() {
               {c.members.map((m) => (
                 <Badge key={m.id} variant="secondary" className="gap-1">
                   {m.user?.username || m.userId}
-                  <span className="text-muted-foreground">({m.role})</span>
+                  <span className="text-muted-foreground">({t('collections.roles.' + m.role) || m.role})</span>
                 </Badge>
               ))}
             </div>
