@@ -9202,7 +9202,7 @@ function HotkeysSettings() {
 
   useEffect(() => {
     if (!recording) return
-    const onKeyDown = (e: KeyboardEvent) => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
         setRecording(null)
