@@ -1,5 +1,6 @@
 import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { ArticlePreviewZoom } from '@/components/ArticlePreviewZoom'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -82,6 +83,9 @@ export function ArticleCardSquare({
             No preview
           </div>
         </div>
+        {article.previewImage && (
+          <ArticlePreviewZoom src={article.previewImage} alt={article.title} />
+        )}
       </div>
       <div className="p-5 space-y-3 flex-1 flex flex-col">
         {/* Header */}

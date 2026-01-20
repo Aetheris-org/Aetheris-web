@@ -2796,6 +2796,7 @@
   "article": {
     "edited": "Edited",
     "readTime": "min",
+    "viewPreview": "View full preview",
     "noComments": "No comments yet",
     "beFirst": "Be the first to comment",
     "writeComment": "Write a comment...",

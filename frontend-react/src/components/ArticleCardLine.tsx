@@ -1,5 +1,6 @@
 import { Calendar, Clock, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { ArticlePreviewZoom } from '@/components/ArticlePreviewZoom'
 import { Badge } from '@/components/ui/badge'
 import type { Article } from '@/types/article'
 import { useMemo, useEffect, useState } from 'react'
@@ -110,6 +111,9 @@ export function ArticleCardLine({
                 No preview
               </div>
             </div>
+            {article.previewImage && (
+              <ArticlePreviewZoom src={article.previewImage} alt={article.title} />
+            )}
           </div>
           {/* Content */}
           <div className="flex-1 min-w-0 space-y-2">

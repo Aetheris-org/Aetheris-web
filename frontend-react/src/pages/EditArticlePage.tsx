@@ -3064,6 +3064,14 @@ export default function EditArticlePage() {
       setSearchParams(nextParams, { replace: true })
       loadedDraftIdRef.current = null
 
+      // Очищаем localStorage редактора после публикации, чтобы при следующем заходе не подтягивались старые данные
+      try {
+        Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => localStorage.removeItem(k))
+        logger.debug('[EditArticlePage] Cleared draft localStorage after publish')
+      } catch (e) {
+        logger.warn('[EditArticlePage] Failed to clear localStorage after publish:', e)
+      }
+
       // Небольшая задержка перед навигацией, чтобы дать время базе данных синхронизироваться
       // Это особенно важно для только что созданных статей
       await new Promise(resolve => setTimeout(resolve, 200))

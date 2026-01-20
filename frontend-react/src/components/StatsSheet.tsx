@@ -68,21 +68,22 @@ export function StatsSheet({ open, onOpenChange }: StatsSheetProps) {
           <Card className="border border-border/60 bg-card/90 shadow-md">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-base font-semibold text-primary">
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
-                    ) : (
-                      initials
-                    )}
-                  </div>
-                  <div className="min-w-0">
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => user && navigate(`/profile/${user.uuid || user.id}`)}
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 transition-colors hover:bg-muted/50 text-left"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-base font-semibold text-primary">
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt={user.nickname} className="h-full w-full object-cover" />
+                      ) : (
+                        initials
+                      )}
+                    </div>
                     <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user?.nickname}</h2>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {t('accountSheet.signedInAs')} — {/* КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email скрыт для безопасности */}
-                    </p>
-                  </div>
-                </div>
+                  </button>
+                </SheetClose>
                 <Badge variant="outline" className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-3 py-1 text-xs text-primary">
                   <Award className="h-3 w-3" />
                   {t('accountSheet.level', { level })}

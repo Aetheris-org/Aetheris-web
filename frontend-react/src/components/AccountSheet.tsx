@@ -141,27 +141,27 @@ export function AccountSheet() {
         <div className="space-y-6">
           {/* Compact Profile */}
           <div className="flex items-center justify-between gap-3 pb-4 border-b border-border/60">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-sm font-semibold text-primary">
-{user.avatar ? (
-                <img
-                  key={user.avatar}
-                  src={(() => { const u = normalizeR2Url(user.avatar) || user.avatar; const sep = u && u.includes('?') ? '&' : '?'; return `${u || ''}${sep}v=${user.updatedAt || ''}`; })()}
-                  alt={user.nickname}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initials || 'AU'
-              )}
-              </div>
-              <div className="min-w-0">
+            <SheetClose asChild>
+              <button
+                type="button"
+                onClick={() => navigate(`/profile/${user.uuid || user.id}`)}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 transition-colors hover:bg-muted/50 text-left"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background text-sm font-semibold text-primary">
+                  {user.avatar ? (
+                    <img
+                      key={user.avatar}
+                      src={(() => { const u = normalizeR2Url(user.avatar) || user.avatar; const sep = u && u.includes('?') ? '&' : '?'; return `${u || ''}${sep}v=${user.updatedAt || ''}`; })()}
+                      alt={user.nickname}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials || 'AU'
+                  )}
+                </div>
                 <h2 className="truncate text-sm font-semibold leading-tight text-foreground">{user.nickname}</h2>
-                {/* КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Email скрыт для безопасности */}
-                <p className="truncate text-xs text-muted-foreground">
-                  {t('accountSheet.signedInAs')} —
-                </p>
-              </div>
-            </div>
+              </button>
+            </SheetClose>
             <Badge variant="outline" className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-primary/50 px-2.5 py-1 text-xs text-primary">
               <Award className="h-3 w-3" />
               {level}

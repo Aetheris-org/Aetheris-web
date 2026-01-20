@@ -3721,6 +3721,14 @@ export default function CreateArticlePage() {
       setSearchParams(nextParams, { replace: true })
       loadedDraftIdRef.current = null
 
+      // Очищаем localStorage редактора после публикации, чтобы при следующем заходе не подтягивались старые данные
+      try {
+        Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => localStorage.removeItem(k))
+        logger.debug('[CreateArticlePage] Cleared draft localStorage after publish')
+      } catch (e) {
+        logger.warn('[CreateArticlePage] Failed to clear localStorage after publish:', e)
+      }
+
       // Небольшая задержка перед навигацией, чтобы дать время базе данных синхронизироваться
       // Это особенно важно для только что созданных статей
       await new Promise(resolve => setTimeout(resolve, 200))
@@ -4623,44 +4631,50 @@ export default function CreateArticlePage() {
       <Dialog open={showExitDialog} onOpenChange={(open) => {
         if (!open) handleExitContinue()
       }}>
-        <DialogContent className="sm:max-w-[500px] p-6">
-          <DialogHeader className="flex flex-row items-center justify-center sm:justify-start gap-3 pb-4 border-b border-border/60">
-            <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
-            <DialogTitle className="text-lg sm:text-xl text-center sm:text-left">
+        <DialogContent
+          className="max-w-[min(500px,calc(100vw-2rem))] w-[calc(100vw-2rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto gap-3 sm:gap-4"
+          aria-describedby="exit-unsaved-description"
+        >
+          <DialogHeader className="flex flex-row items-start sm:items-center justify-start gap-2 sm:gap-3 pb-3 sm:pb-4 border-b border-border/60">
+            <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 shrink-0 mt-0.5 sm:mt-0" aria-hidden />
+            <DialogTitle className="text-base sm:text-lg leading-tight text-left pr-10">
               {t('draftRecovery.title')}
             </DialogTitle>
           </DialogHeader>
-          <DialogDescription className="text-sm sm:text-base text-center sm:text-left pt-2 space-y-2">
+          <DialogDescription
+            id="exit-unsaved-description"
+            className="text-sm sm:text-base text-left pt-2 sm:pt-3 space-y-2"
+          >
             <p>{t('createArticle.unsavedChangesWarning') || 'У вас есть несохранённые изменения. Что вы хотите сделать?'}</p>
             {title && (
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2 rounded-md">
-                <FileText className="h-4 w-4 shrink-0" />
-                <p className="font-medium truncate">{title || t('createArticle.untitledDraft')}</p>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2.5 sm:p-2 rounded-lg border border-border/40">
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                <p className="font-medium text-foreground truncate flex-1 min-w-0">{title || t('createArticle.untitledDraft')}</p>
               </div>
             )}
           </DialogDescription>
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-2 pt-3 sm:pt-4">
             <Button
               variant="outline"
               onClick={handleExitDelete}
-              className="w-full sm:w-auto text-destructive hover:text-destructive"
+              className="w-full sm:w-auto min-h-11 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive focus-visible:ring-destructive/30"
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle className="mr-2 h-4 w-4 shrink-0" aria-hidden />
               {t('draftRecovery.delete')}
             </Button>
             <Button
               variant="outline"
               onClick={handleExitContinue}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto min-h-11"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4 shrink-0" aria-hidden />
               {t('draftRecovery.continue')}
             </Button>
             <Button
               onClick={handleExitSaveDraft}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto min-h-11"
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-2 h-4 w-4 shrink-0" aria-hidden />
               {t('draftRecovery.saveToDraft')}
             </Button>
           </DialogFooter>

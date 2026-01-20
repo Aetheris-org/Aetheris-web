@@ -250,50 +250,56 @@ export function DraftRecoveryDialog({ draftData, localStorageKey, onClose, onPro
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-6">
-        <DialogHeader className="flex flex-row items-center justify-center sm:justify-start gap-3 pb-4 border-b border-border/60">
-          <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
-          <DialogTitle className="text-lg sm:text-xl text-center sm:text-left">
+      <DialogContent
+        className="max-w-[min(500px,calc(100vw-2rem))] w-[calc(100vw-2rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto gap-3 sm:gap-4"
+        aria-describedby="draft-recovery-description"
+      >
+        <DialogHeader className="flex flex-row items-start sm:items-center justify-start gap-2 sm:gap-3 pb-3 sm:pb-4 border-b border-border/60">
+          <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 shrink-0 mt-0.5 sm:mt-0" aria-hidden />
+          <DialogTitle className="text-base sm:text-lg leading-tight text-left pr-10">
             {t('draftRecovery.title')}
           </DialogTitle>
         </DialogHeader>
-        <DialogDescription className="text-sm sm:text-base text-center sm:text-left pt-2 space-y-2">
+        <DialogDescription
+          id="draft-recovery-description"
+          className="text-sm sm:text-base text-left pt-2 sm:pt-3 space-y-2"
+        >
           <p>{t('draftRecovery.description')}</p>
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2 rounded-md">
-            <FileText className="h-4 w-4 shrink-0" />
+          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground bg-muted/30 p-2.5 sm:p-2 rounded-lg border border-border/40">
+            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{draftTitle}</p>
+              <p className="font-medium text-foreground truncate">{draftTitle}</p>
               {timeAgo && (
-                <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{timeAgo}</p>
               )}
             </div>
           </div>
         </DialogDescription>
-        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-2 pt-3 sm:pt-4">
           <Button
             variant="outline"
             onClick={handleDelete}
             disabled={isDeleting || isSaving}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto min-h-11 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive focus-visible:ring-destructive/30"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 h-4 w-4 shrink-0" aria-hidden />
             {isDeleting ? t('common.loading') : t('draftRecovery.delete')}
           </Button>
           <Button
             variant="outline"
             onClick={handleContinue}
             disabled={isDeleting || isSaving}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto min-h-11"
           >
-            <Edit className="mr-2 h-4 w-4" />
+            <Edit className="mr-2 h-4 w-4 shrink-0" aria-hidden />
             {t('draftRecovery.continue')}
           </Button>
           <Button
             onClick={handleSaveToDraft}
             disabled={isDeleting || isSaving}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto min-h-11"
           >
-            <Save className="mr-2 h-4 w-4" />
+            <Save className="mr-2 h-4 w-4 shrink-0" aria-hidden />
             {isSaving ? t('common.loading') : t('draftRecovery.saveToDraft')}
           </Button>
         </DialogFooter>
