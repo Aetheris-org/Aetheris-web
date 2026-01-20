@@ -2589,6 +2589,33 @@
       "english": "English",
       "languageSaved": "Язык интерфейса сохранен",
       "languageDescription": "Изменения вступят в силу после перезагрузки страницы."
+    },
+    "hotkeys": {
+      "title": "Горячие клавиши",
+      "description": "Привяжите действия платформы к клавиатурным сокращениям. Они работают глобально, кроме ввода в полях текста.",
+      "createPost": "Создать пост",
+      "createPostDescription": "Открыть страницу новой статьи",
+      "goToForum": "Перейти в Форум",
+      "goToForumDescription": "Открыть главную ленту",
+      "goToNotifications": "Перейти в Уведомления",
+      "goToNotificationsDescription": "Открыть уведомления",
+      "goToReadingList": "Перейти в Избранное",
+      "goToReadingListDescription": "Открыть сохранённые статьи",
+      "goToSettings": "Перейти в Настройки",
+      "goToSettingsDescription": "Открыть настройки",
+      "goToProfile": "Перейти в Профиль",
+      "goToProfileDescription": "Открыть свой профиль",
+      "toggleTheme": "Переключить тему",
+      "toggleThemeDescription": "Переключить светлую и тёмную тему",
+      "pressKeys": "Нажмите клавиши…",
+      "notSet": "Не назначено",
+      "hint": "Используйте Ctrl, Alt, Shift или ⌘ (Cmd на Mac) как модификаторы, чтобы не пересекаться с вводом текста.",
+      "browserNote": "Горячие клавиши работают в браузере через события клавиатуры и сохраняются в хранилище этого устройства.",
+      "resetToDefaults": "Сбросить по умолчанию",
+      "resetDone": "Горячие клавиши сброшены",
+      "resetDoneDescription": "Все сочетания восстановлены к значениям по умолчанию.",
+      "reassigned": "Сокращение переназначено",
+      "reassignedDescription": "Эта комбинация была привязана к «{other}}». Она переназначена."
     }
   },
   "header": {

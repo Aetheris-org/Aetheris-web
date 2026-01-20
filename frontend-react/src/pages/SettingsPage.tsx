@@ -57,6 +57,7 @@ import {
   ChevronDown,
   Languages,
   Info,
+  Keyboard,
   Sliders,
   Star,
   X,
@@ -103,6 +104,12 @@ import {
 } from '@/stores/themeStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { useI18nStore, type Language } from '@/stores/i18nStore'
+import {
+  useHotkeysStore,
+  formatKeyCombo,
+  keyEventToCombo,
+  type HotkeyActionId,
+} from '@/stores/hotkeysStore'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/lib/utils'
 import {
@@ -130,6 +137,7 @@ const settingsNavItems = [
   { id: 'profile', icon: User },
   { id: 'appearance', icon: Palette },
   { id: 'language', icon: Languages },
+  { id: 'hotkeys', icon: Keyboard },
   { id: 'privacy', icon: Shield, inDevelopment: true },
   { id: 'notifications', icon: Bell, inDevelopment: true },
   { id: 'sessions', icon: Monitor, inDevelopment: true },
@@ -502,6 +510,7 @@ export default function SettingsPage() {
             {currentSection === 'profile' && <ProfileSettings />}
             {currentSection === 'appearance' && <AppearanceSettings />}
             {currentSection === 'language' && <LanguageSettings />}
+            {currentSection === 'hotkeys' && <HotkeysSettings />}
             {currentSection === 'privacy' && <PrivacySettings />}
             {currentSection === 'notifications' && <NotificationsSettings />}
             {currentSection === 'sessions' && <SessionsSettings />}
@@ -9170,6 +9179,107 @@ function LanguageSettings() {
               </p>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function HotkeysSettings() {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { keybinds, setKeybind, getKeybind, resetToDefaults } = useHotkeysStore()
+  const [recording, setRecording] = useState<HotkeyActionId | null>(null)
+
+  const actions: Array<{ id: HotkeyActionId; labelKey: string; descKey?: string }> = [
+    { id: 'createPost', labelKey: 'settings.hotkeys.createPost', descKey: 'settings.hotkeys.createPostDescription' },
+    { id: 'goToForum', labelKey: 'settings.hotkeys.goToForum', descKey: 'settings.hotkeys.goToForumDescription' },
+    { id: 'goToNotifications', labelKey: 'settings.hotkeys.goToNotifications', descKey: 'settings.hotkeys.goToNotificationsDescription' },
+    { id: 'goToReadingList', labelKey: 'settings.hotkeys.goToReadingList', descKey: 'settings.hotkeys.goToReadingListDescription' },
+    { id: 'goToSettings', labelKey: 'settings.hotkeys.goToSettings', descKey: 'settings.hotkeys.goToSettingsDescription' },
+    { id: 'goToProfile', labelKey: 'settings.hotkeys.goToProfile', descKey: 'settings.hotkeys.goToProfileDescription' },
+    { id: 'toggleTheme', labelKey: 'settings.hotkeys.toggleTheme', descKey: 'settings.hotkeys.toggleThemeDescription' },
+  ]
+
+  useEffect(() => {
+    if (!recording) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setRecording(null)
+        return
+      }
+      const combo = keyEventToCombo(e)
+      e.preventDefault()
+      e.stopPropagation()
+      const prev = Object.entries(keybinds).find(([, v]) => v === combo && v)
+      if (prev && prev[0] !== recording) {
+        toast({
+          title: t('settings.hotkeys.reassigned'),
+          description: t('settings.hotkeys.reassignedDescription', { other: t('settings.hotkeys.' + prev[0]) }),
+          variant: 'default',
+        })
+      }
+      setKeybind(recording, combo)
+      setRecording(null)
+    }
+    window.addEventListener('keydown', onKeyDown, { capture: true })
+    return () => window.removeEventListener('keydown', onKeyDown, { capture: true })
+  }, [recording, keybinds, setKeybind, t, toast])
+
+  const handleReset = () => {
+    resetToDefaults()
+    toast({
+      title: t('settings.hotkeys.resetDone'),
+      description: t('settings.hotkeys.resetDoneDescription'),
+    })
+  }
+
+  return (
+    <Card>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.hotkeys.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          {t('settings.hotkeys.description')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
+        <div className="space-y-3">
+          {actions.map(({ id, labelKey, descKey }) => {
+            const combo = getKeybind(id)
+            const isRecording = recording === id
+            return (
+              <div
+                key={id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-border/60 last:border-0"
+              >
+                <div>
+                  <p className="text-sm font-medium">{t(labelKey)}</p>
+                  {descKey && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(descKey)}</p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'font-mono text-xs sm:w-40 shrink-0 justify-center',
+                    isRecording && 'ring-2 ring-primary'
+                  )}
+                  onClick={() => setRecording(isRecording ? null : id)}
+                >
+                  {isRecording ? t('settings.hotkeys.pressKeys') : (combo ? formatKeyCombo(combo) : t('settings.hotkeys.notSet'))}
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+        <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground">
+          <p className="mb-2">{t('settings.hotkeys.hint')}</p>
+          <p className="text-muted-foreground/90">{t('settings.hotkeys.browserNote')}</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleReset}>
+          {t('settings.hotkeys.resetToDefaults')}
+        </Button>
       </CardContent>
     </Card>
   )

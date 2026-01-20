@@ -108,6 +108,7 @@ export default function CreateArticlePage() {
   const [existingPreviewImageId, setExistingPreviewImageId] = useState<string | null>(null)
   const [lastDraftSaveTime, setLastDraftSaveTime] = useState<number>(0)
   const isUnmountingRef = useRef(false) // Флаг для предотвращения создания новых черновиков при размонтировании
+  const publishedSuccessfullyRef = useRef(false) // При успешной публикации — не писать в localStorage при unmount, а очистить
   const [currentStep, setCurrentStep] = useState(0)
   const [isTitleFocused, setIsTitleFocused] = useState(false)
   const [isExcerptFocused, setIsExcerptFocused] = useState(false)
@@ -2313,6 +2314,18 @@ export default function CreateArticlePage() {
     return () => {
       // Устанавливаем флаг размонтирования, чтобы предотвратить создание новых черновиков
       isUnmountingRef.current = true
+
+      // После успешной публикации — только очищаем localStorage, не пишем черновик
+      if (publishedSuccessfullyRef.current) {
+        try {
+          Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => localStorage.removeItem(k))
+          localStorage.removeItem('draft_pending_recovery')
+          logger.debug('[CreateArticlePage] Cleared draft localStorage on unmount (published successfully)')
+        } catch (e) {
+          logger.warn('[CreateArticlePage] Failed to clear localStorage on unmount after publish', e)
+        }
+        return
+      }
       
       // Получаем актуальные значения напрямую из refs и state для надежного сохранения
       try {
@@ -3692,6 +3705,9 @@ export default function CreateArticlePage() {
       
       // id - это строковое представление числового Strapi id
       const articleId = publishedArticle.id
+
+      // Не даём unmount-эффекту записать черновик в localStorage после успешной публикации
+      publishedSuccessfullyRef.current = true
       
       logger.debug('[CreateArticlePage] Article published:', {
         id: publishedArticle.id,
@@ -3721,19 +3737,20 @@ export default function CreateArticlePage() {
       setSearchParams(nextParams, { replace: true })
       loadedDraftIdRef.current = null
 
-      // Очищаем localStorage редактора после публикации, чтобы при следующем заходе не подтягивались старые данные
+      // Небольшая задержка перед навигацией, чтобы дать время базе данных синхронизироваться
+      // Это особенно важно для только что созданных статей
+      await new Promise(resolve => setTimeout(resolve, 200))
+
+      // Очищаем localStorage после задержки, чтобы unmount-эффект не перезаписал; replace — чтобы Back с статьи вёл на ленту, а не в редактор
       try {
         Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => localStorage.removeItem(k))
+        localStorage.removeItem('draft_pending_recovery')
         logger.debug('[CreateArticlePage] Cleared draft localStorage after publish')
       } catch (e) {
         logger.warn('[CreateArticlePage] Failed to clear localStorage after publish:', e)
       }
-
-      // Небольшая задержка перед навигацией, чтобы дать время базе данных синхронизироваться
-      // Это особенно важно для только что созданных статей
-      await new Promise(resolve => setTimeout(resolve, 200))
       
-      navigate(`/article/${articleId}`)
+      navigate(`/article/${articleId}`, { replace: true })
     } catch (error: unknown) {
       // Логируем полную информацию об ошибке
       logger.error('[CreateArticlePage] Failed to publish article:', {

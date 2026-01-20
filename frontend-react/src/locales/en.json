@@ -2601,6 +2601,33 @@
       "english": "English",
       "languageSaved": "Interface language saved",
       "languageDescription": "Changes will take effect after page reload."
+    },
+    "hotkeys": {
+      "title": "Hotkeys",
+      "description": "Bind platform actions to keyboard shortcuts. Shortcuts work globally except when typing in text fields.",
+      "createPost": "Create post",
+      "createPostDescription": "Open the new article page",
+      "goToForum": "Go to Forum",
+      "goToForumDescription": "Navigate to the main feed",
+      "goToNotifications": "Go to Notifications",
+      "goToNotificationsDescription": "Open notifications",
+      "goToReadingList": "Go to Reading list",
+      "goToReadingListDescription": "Open saved articles",
+      "goToSettings": "Go to Settings",
+      "goToSettingsDescription": "Open settings",
+      "goToProfile": "Go to Profile",
+      "goToProfileDescription": "Open your profile",
+      "toggleTheme": "Toggle theme",
+      "toggleThemeDescription": "Switch between light and dark mode",
+      "pressKeys": "Press keys…",
+      "notSet": "Not set",
+      "hint": "Use Ctrl, Alt, Shift or ⌘ (Cmd on Mac) as modifiers to avoid conflicts with typing.",
+      "browserNote": "Hotkeys run in the browser via keyboard events and are saved in this device's storage.",
+      "resetToDefaults": "Reset to defaults",
+      "resetDone": "Hotkeys reset",
+      "resetDoneDescription": "All shortcuts have been restored to their defaults.",
+      "reassigned": "Shortcut reassigned",
+      "reassignedDescription": "This combination was previously assigned to «{other}}». It has been reassigned."
     }
   },
   "header": {

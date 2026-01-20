@@ -47,6 +47,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useI18nStore } from '@/stores/i18nStore'
 import { DraftRecoveryProvider } from '@/components/DraftRecoveryProvider'
 import { GamificationActivityTracker } from '@/components/GamificationActivityTracker'
+import { HotkeysListener } from '@/components/HotkeysListener'
 
 /**
  * QueryClient с оптимизированными настройками для высокой нагрузки
@@ -134,6 +135,7 @@ function App() {
           v7_relativeSplatPath: true,
         }}
       >
+        <HotkeysListener />
         <Routes>
           <Route path="/" element={<ForumLandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
