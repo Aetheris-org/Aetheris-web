@@ -566,6 +566,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     isDragging: boolean
     isResizing: boolean
   } | null>(null)
+  const snapZoneRef = useRef<'left' | 'right' | 'top' | 'bottom' | null>(null)
 
   useEffect(() => {
     _setSlashActive = setSlashActive
@@ -1343,7 +1344,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
 
     let rafId: number | null = null
-    const snapZoneRef = { current: null as 'left' | 'right' | 'top' | 'bottom' | null }
     let lastUpdateTime = 0
     const UPDATE_THROTTLE = 16 // ~60fps
     
@@ -1490,20 +1490,26 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         const wasFloating = editorSettings.toolbarPosition === 'floating'
         
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1487',message:'Toolbar mouse up',data:{wasDragging,wasFloating,finalSnapZone,currentPosition:editorSettings.toolbarPosition},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1487',message:'Toolbar mouse up',data:{wasDragging,wasFloating,finalSnapZone,currentPosition:editorSettings.toolbarPosition,snapZoneRefValue:snapZoneRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
         // #endregion
         
-        // Сбрасываем snapZone перед проверкой трансформации
-        snapZoneRef.current = null
-        
+        // НЕ сбрасываем snapZoneRef.current до проверки трансформации!
+        // Проверяем условие трансформации
         if (wasDragging && finalSnapZone && wasFloating) {
           // Автоматически меняем позицию на соответствующую
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1495',message:'Transforming toolbar',data:{from:'floating',to:finalSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1495',message:'Transforming toolbar - condition met',data:{from:'floating',to:finalSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
+          
+          // Сбрасываем snapZone только после сохранения значения
+          snapZoneRef.current = null
           
           // Используем requestAnimationFrame для синхронного обновления в следующем кадре
           requestAnimationFrame(() => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1505',message:'Executing toolbar transformation',data:{to:finalSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
             // Сначала меняем позицию
             editorSettings.setToolbarPosition(finalSnapZone)
             // Затем открываем панель
@@ -1516,9 +1522,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               height: 400,
             })
             // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1505',message:'Toolbar transformed',data:{newPosition:finalSnapZone,isFormatPanelOpen:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1515',message:'Toolbar transformed',data:{newPosition:finalSnapZone,isFormatPanelOpen:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
             // #endregion
           })
+        } else {
+          // Сбрасываем snapZone только если трансформация не произошла
+          snapZoneRef.current = null
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1520',message:'Toolbar transformation skipped',data:{wasDragging,wasFloating,finalSnapZone,reason:!wasDragging ? 'not dragging' : !wasFloating ? 'not floating' : !finalSnapZone ? 'no snap zone' : 'unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
         }
       }
       currentState.isDragging = false
