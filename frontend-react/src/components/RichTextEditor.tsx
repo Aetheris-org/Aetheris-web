@@ -1265,20 +1265,26 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   useEffect(() => {
     if (editorSettings.toolbarPosition !== 'floating' || !toolbarRef.current) return
 
-    const toolbar = toolbarRef.current
-    if (!dragStateRef.current) {
-      dragStateRef.current = {
-        startX: 0,
-        startY: 0,
-        startLeft: 0,
-        startTop: 0,
-        startWidth: 0,
-        startHeight: 0,
-        isDragging: false,
-        isResizing: false,
+    let cleanup: (() => void) | null = null
+
+    // Небольшая задержка, чтобы убедиться, что тулбар полностью отрендерился после изменения полноэкранного режима
+    const timeoutId = setTimeout(() => {
+      if (!toolbarRef.current) return
+      
+      const toolbar = toolbarRef.current
+      if (!dragStateRef.current) {
+        dragStateRef.current = {
+          startX: 0,
+          startY: 0,
+          startLeft: 0,
+          startTop: 0,
+          startWidth: 0,
+          startHeight: 0,
+          isDragging: false,
+          isResizing: false,
+        }
       }
-    }
-    const state = dragStateRef.current
+      const state = dragStateRef.current
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -1444,27 +1450,40 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       currentState.isResizing = false
     }
 
-    // Добавляем обработчики
-    toolbar.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-    // Также обрабатываем mouseleave для надежности
-    document.addEventListener('mouseleave', handleMouseUp)
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1310',message:'Toolbar drag handlers attached',data:{toolbarExists:!!toolbar,toolbarPosition:editorSettings.toolbarPosition},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
+      // Добавляем обработчики
+      toolbar.addEventListener('mousedown', handleMouseDown)
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      // Также обрабатываем mouseleave для надежности
+      document.addEventListener('mouseleave', handleMouseUp)
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1310',message:'Toolbar drag handlers attached',data:{toolbarExists:!!toolbar,toolbarPosition:editorSettings.toolbarPosition,isFullscreen},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
 
+      // Сохраняем cleanup функцию
+      cleanup = () => {
+        if (toolbar) {
+          toolbar.removeEventListener('mousedown', handleMouseDown)
+        }
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('mouseleave', handleMouseUp)
+        // Восстанавливаем стили
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+    }, 0)
+
+    // Cleanup для useEffect
     return () => {
-      toolbar.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.removeEventListener('mouseleave', handleMouseUp)
-      // Восстанавливаем стили
-      document.body.style.userSelect = ''
-      document.body.style.cursor = ''
+      clearTimeout(timeoutId)
+      // Вызываем cleanup если он был создан
+      if (cleanup) {
+        cleanup()
+      }
     }
-  }, [editorSettings])
+  }, [editorSettings, isFullscreen])
 
   // Панель и кнопка возврата — через портал в body, чтобы fixed работал относительно viewport
   // (родитель с transform ломает fixed, панель не уезжала за экран)
@@ -1528,20 +1547,46 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors z-10 pointer-events-auto" />
               </>
             )}
-            <div className={cn(
-              'gap-0.5 overflow-y-auto overflow-x-hidden',
-              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
-                ? 'grid grid-flow-col auto-cols-[2rem] overflow-x-auto' 
-                : 'grid grid-flow-row auto-rows-[2rem]',
-              editorSettings.toolbarPosition === 'floating' 
-                ? 'h-full w-full' 
-                : 'max-h-[min(70vh,520px)]',
-              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
-                ? 'max-w-full' 
-                : '',
-              // Добавляем отступ сверху для drag handle в floating режиме
-              editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-2' : 'px-2 py-2'
-            )}>
+            <div 
+              className={cn(
+                'gap-0.5 overflow-y-auto overflow-x-hidden',
+                editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
+                  ? 'grid grid-flow-col overflow-x-auto' 
+                  : 'grid',
+                editorSettings.toolbarPosition === 'floating' 
+                  ? 'h-full w-full' 
+                  : 'max-h-[min(70vh,520px)]',
+                editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
+                  ? 'max-w-full' 
+                  : '',
+                // Добавляем отступ сверху для drag handle в floating режиме
+                editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-2' : 'px-2 py-2'
+              )}
+              style={
+                editorSettings.toolbarPosition === 'floating'
+                  ? {
+                      // Адаптивная сетка: автоматически определяет количество колонок на основе доступной ширины
+                      // Иконки фиксированного размера 2rem, перестраиваются по сетке при изменении размера тулбара
+                      gridTemplateColumns: 'repeat(auto-fit, 2rem)',
+                      gridAutoRows: '2rem',
+                      gridAutoFlow: 'row',
+                      justifyItems: 'center',
+                    }
+                  : editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom'
+                  ? {
+                      // Для горизонтального расположения: одна строка, автоматические колонки
+                      gridTemplateRows: '2rem',
+                      gridAutoColumns: '2rem',
+                      gridAutoFlow: 'column',
+                    }
+                  : {
+                      // Для вертикального расположения: одна колонка, автоматические строки
+                      gridTemplateColumns: '2rem',
+                      gridAutoRows: '2rem',
+                      gridAutoFlow: 'row',
+                    }
+              }
+            >
               {editorSettings.toolbarButtons.bold && formatButtons.find(b => b.label === t('editor.ctxBold')) && (
                 <button type="button" aria-label={t('editor.ctxBold')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('bold') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleBold().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run() }} title={t('editor.ctxBold')}>
                   <Bold className="h-4 w-4" />
