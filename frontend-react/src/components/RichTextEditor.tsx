@@ -555,6 +555,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [slashActive, setSlashActive] = useState(false)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false)
+  const [isResizingToolbar, setIsResizingToolbar] = useState(false)
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     _setSlashActive = setSlashActive
@@ -1216,44 +1220,195 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     { id: 'justify', icon: AlignJustify, cmd: 'justify' as const },
   ]
 
+  // Получаем стили для тулбара на основе настроек расположения
+  const getToolbarStyles = useCallback(() => {
+    const { toolbarPosition, toolbarFloating } = editorSettings
+    const baseStyles: React.CSSProperties = {}
+    
+    if (toolbarPosition === 'floating') {
+      baseStyles.position = 'fixed'
+      baseStyles.left = `${toolbarFloating.x}px`
+      baseStyles.top = `${toolbarFloating.y}px`
+      baseStyles.width = `${toolbarFloating.width}px`
+      baseStyles.height = `${toolbarFloating.height}px`
+      baseStyles.zIndex = 100
+    } else {
+      baseStyles.position = 'fixed'
+      baseStyles.zIndex = 99
+    }
+    
+    return baseStyles
+  }, [editorSettings])
+
+  // Обработчики для drag-and-drop тулбара
+  useEffect(() => {
+    if (editorSettings.toolbarPosition !== 'floating' || !toolbarRef.current) return
+
+    const toolbar = toolbarRef.current
+    let startX = 0
+    let startY = 0
+    let startLeft = 0
+    let startTop = 0
+    let startWidth = 0
+    let startHeight = 0
+    let isDragging = false
+    let isResizing = false
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('.toolbar-resize-handle')) {
+        e.preventDefault()
+        e.stopPropagation()
+        isResizing = true
+        startX = e.clientX
+        startY = e.clientY
+        startWidth = editorSettings.toolbarFloating.width
+        startHeight = editorSettings.toolbarFloating.height
+        setIsResizingToolbar(true)
+        return
+      }
+      if (target.closest('.toolbar-drag-handle')) {
+        e.preventDefault()
+        e.stopPropagation()
+        isDragging = true
+        startX = e.clientX
+        startY = e.clientY
+        startLeft = editorSettings.toolbarFloating.x
+        startTop = editorSettings.toolbarFloating.y
+        setIsDraggingToolbar(true)
+      }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const deltaX = e.clientX - startX
+        const deltaY = e.clientY - startY
+        editorSettings.setToolbarFloating({
+          x: Math.max(0, Math.min(startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width)),
+          y: Math.max(0, Math.min(startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height)),
+        })
+      } else if (isResizing) {
+        const deltaX = e.clientX - startX
+        const deltaY = e.clientY - startY
+        const newWidth = Math.max(56, Math.min(startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
+        const newHeight = Math.max(100, Math.min(startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
+        editorSettings.setToolbarFloating({
+          width: newWidth,
+          height: newHeight,
+        })
+      }
+    }
+
+    const handleMouseUp = () => {
+      isDragging = false
+      isResizing = false
+      setIsDraggingToolbar(false)
+      setIsResizingToolbar(false)
+    }
+
+    toolbar.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      toolbar.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [editorSettings])
+
   // Панель и кнопка возврата — через портал в body, чтобы fixed работал относительно viewport
   // (родитель с transform ломает fixed, панель не уезжала за экран)
   const formatPanelPortal =
     typeof document !== 'undefined' &&
     createPortal(
-      !isFullscreen && editor ? (
+      editor ? (
         <>
           {/* Кнопка-блочек у самого края экрана — только когда панель скрыта */}
-          {!isFormatPanelOpen && (
+          {!isFormatPanelOpen && editorSettings.toolbarPosition !== 'floating' && (
             <button
               type="button"
               aria-label={t('editor.showFormatPanel')}
-              className="fixed left-0 top-1/2 z-[100] hidden h-12 w-10 -translate-y-1/2 items-center justify-center rounded-r-xl border border-l-0 border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex"
+              className={cn(
+                'fixed z-[100] hidden h-12 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex',
+                editorSettings.toolbarPosition === 'left' && 'left-0 top-1/2 -translate-y-1/2 rounded-l-none border-l-0',
+                editorSettings.toolbarPosition === 'right' && 'right-0 top-1/2 -translate-y-1/2 rounded-r-none border-r-0',
+                editorSettings.toolbarPosition === 'top' && 'top-0 left-1/2 -translate-x-1/2 rounded-t-none border-t-0',
+                editorSettings.toolbarPosition === 'bottom' && 'bottom-0 left-1/2 -translate-x-1/2 rounded-b-none border-b-0'
+              )}
               title={t('editor.showFormatPanel')}
               onClick={() => setFormatPanelOpen(true)}
             >
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              {editorSettings.toolbarPosition === 'left' && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+              {editorSettings.toolbarPosition === 'right' && <ChevronLeft className="h-5 w-5 text-muted-foreground" />}
+              {editorSettings.toolbarPosition === 'top' && <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+              {editorSettings.toolbarPosition === 'bottom' && <ChevronUp className="h-5 w-5 text-muted-foreground" />}
             </button>
           )}
-          {/* Панель: при закрытии уезжает полностью за левый край (calc(100%+1rem)) */}
+          {/* Панель: при закрытии уезжает полностью за край */}
           <div
+            ref={toolbarRef}
             className={cn(
-              'fixed left-0 top-1/2 z-[99] hidden w-14 flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
-              isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'
+              'hidden flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
+              editorSettings.toolbarPosition === 'floating' && 'toolbar-drag-handle',
+              editorSettings.toolbarPosition === 'left' && 'w-14',
+              editorSettings.toolbarPosition === 'right' && 'w-14',
+              editorSettings.toolbarPosition === 'top' && 'w-auto flex-row h-14 px-2',
+              editorSettings.toolbarPosition === 'bottom' && 'w-auto flex-row h-14 px-2',
+              editorSettings.toolbarPosition === 'floating' && 'w-14',
+              editorSettings.toolbarPosition === 'left' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'),
+              editorSettings.toolbarPosition === 'right' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : 'translate-x-[calc(100%+1rem)] -translate-y-1/2'),
+              editorSettings.toolbarPosition === 'top' && (isFormatPanelOpen ? 'translate-x-0 translate-y-0' : 'translate-x-0 -translate-y-[calc(100%+1rem)]'),
+              editorSettings.toolbarPosition === 'bottom' && (isFormatPanelOpen ? 'translate-x-0 translate-y-0' : 'translate-x-0 translate-y-[calc(100%+1rem)]')
             )}
+            style={getToolbarStyles()}
           >
-            <div className="flex max-h-[min(70vh,520px)] flex-col gap-0.5 overflow-y-auto px-2">
-              {formatButtons.map(({ icon: Icon, label, aria, action, isActive, disabled }) => (
-                <button key={label} type="button" aria-label={aria} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', isActive && 'bg-primary/10 text-primary')} disabled={disabled} onClick={(e) => { e.preventDefault(); action() }} title={label}>
-                  <Icon className="h-4 w-4" />
+            {editorSettings.toolbarPosition === 'floating' && (
+              <>
+                <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center">
+                  <div className="h-1 w-8 rounded-full bg-primary/20" />
+                </div>
+                <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors" />
+              </>
+            )}
+            <div className={cn(
+              'flex gap-0.5 overflow-y-auto px-2',
+              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'flex-row overflow-x-auto' : 'flex-col',
+              editorSettings.toolbarPosition === 'floating' ? 'h-full flex-col' : 'max-h-[min(70vh,520px)]',
+              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'max-w-full' : ''
+            )}>
+              {editorSettings.toolbarButtons.bold && formatButtons.find(b => b.label === t('editor.ctxBold')) && (
+                <button type="button" aria-label={t('editor.ctxBold')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('bold') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleBold().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run() }} title={t('editor.ctxBold')}>
+                  <Bold className="h-4 w-4" />
                 </button>
-              ))}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label={t('editor.textColor')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title={t('editor.textColor')}>
-                    <Type className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
+              )}
+              {editorSettings.toolbarButtons.italic && formatButtons.find(b => b.label === t('editor.ctxItalic')) && (
+                <button type="button" aria-label={t('editor.ctxItalic')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('italic') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleItalic().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run() }} title={t('editor.ctxItalic')}>
+                  <Italic className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.strikethrough && formatButtons.find(b => b.label === t('editor.ctxStrikethrough')) && (
+                <button type="button" aria-label={t('editor.ctxStrikethrough')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('strike') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleStrike().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run() }} title={t('editor.ctxStrikethrough')}>
+                  <Strikethrough className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.underline && formatButtons.find(b => b.label === t('editor.underline')) && (
+                <button type="button" aria-label={t('editor.underline')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('underline') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleUnderline().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleUnderline().run() }} title={t('editor.underline')}>
+                  <UnderlineIcon className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.code && formatButtons.find(b => b.label === t('editor.ctxCode')) && (
+                <button type="button" aria-label={t('editor.ctxCode')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('code') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleCode().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleCode().run() }} title={t('editor.ctxCode')}>
+                  <Code className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.textColor && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" aria-label={t('editor.textColor')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').color && 'bg-primary/10 text-primary')} title={t('editor.textColor')}>
+                      <Type className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-48 p-2">
                   <div className="grid grid-cols-6 gap-1.5">
                     {[{ name: 'Default', value: null }, { name: 'Black', value: '#000000' }, { name: 'Dark Gray', value: '#404040' }, { name: 'Gray', value: '#808080' }, { name: 'Light Gray', value: '#C0C0C0' }, { name: 'White', value: '#FFFFFF' }, { name: 'Red', value: '#EF4444' }, { name: 'Orange', value: '#F97316' }, { name: 'Amber', value: '#F59E0B' }, { name: 'Yellow', value: '#EAB308' }, { name: 'Lime', value: '#84CC16' }, { name: 'Green', value: '#22C55E' }, { name: 'Emerald', value: '#10B981' }, { name: 'Teal', value: '#14B8A6' }, { name: 'Cyan', value: '#06B6D4' }, { name: 'Sky', value: '#0EA5E9' }, { name: 'Blue', value: '#3B82F6' }, { name: 'Indigo', value: '#6366F1' }, { name: 'Violet', value: '#8B5CF6' }, { name: 'Purple', value: '#A855F7' }, { name: 'Fuchsia', value: '#D946EF' }, { name: 'Pink', value: '#EC4899' }, { name: 'Rose', value: '#F43F5E' }].map((c) => (
@@ -1264,12 +1419,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label={t('editor.highlight')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title={t('editor.highlight')}>
-                    <Highlighter className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
+              )}
+              {editorSettings.toolbarButtons.highlight && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" aria-label={t('editor.highlight')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title={t('editor.highlight')}>
+                      <Highlighter className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-48 p-2">
                   <div className="grid grid-cols-6 gap-1.5">
                     {[{ name: 'None', value: null }, { name: 'Yellow', value: '#FEF08A' }, { name: 'Green', value: '#BBF7D0' }, { name: 'Blue', value: '#BFDBFE' }, { name: 'Pink', value: '#FBCFE8' }, { name: 'Purple', value: '#E9D5FF' }, { name: 'Orange', value: '#FED7AA' }, { name: 'Red', value: '#FECACA' }, { name: 'Gray', value: '#E5E7EB' }, { name: 'Cyan', value: '#A5F3FC' }, { name: 'Lime', value: '#D9F99D' }, { name: 'Amber', value: '#FDE68A' }].map((c) => (
@@ -1280,12 +1437,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label={t('editor.fontSize')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title={t('editor.fontSize')}>
-                    <CaseSensitive className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
+              )}
+              {editorSettings.toolbarButtons.fontSize && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" aria-label={t('editor.fontSize')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')} title={t('editor.fontSize')}>
+                      <CaseSensitive className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-36 p-2">
                   <div className="grid grid-cols-2 gap-1">
                     <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>{t('editor.fontSizeDefault')}</button>
@@ -1295,12 +1454,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button type="button" aria-label={t('editor.textAlignment')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')} title={t('editor.textAlignment')}>
-                    <AlignLeft className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
+              )}
+              {editorSettings.toolbarButtons.textAlignment && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" aria-label={t('editor.textAlignment')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')} title={t('editor.textAlignment')}>
+                      <AlignLeft className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-36 p-2">
                   {alignOptions.map((a) => {
                     const Icon = a.icon
@@ -1314,25 +1475,44 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button type="button" aria-label={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
-                <LinkIcon className="h-4 w-4" />
-              </button>
-              <button type="button" aria-label={t('editor.insertImage')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertImage')} onClick={(e) => { e.preventDefault(); openImageDialog() }}>
-                <ImageIcon className="h-4 w-4" />
-              </button>
-              <button type="button" aria-label={t('editor.insertVideo')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertVideo')} onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
-                <Video className="h-4 w-4" />
-              </button>
-              <button type="button" aria-label={t('editor.insertAudio')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertAudio')} onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
-                <Music className="h-4 w-4" />
-              </button>
-              <button type="button" aria-label={t('editor.clearFormat')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.clearFormat')} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
-                <RemoveFormatting className="h-4 w-4" />
-              </button>
+              )}
+              {editorSettings.toolbarButtons.link && (
+                <button type="button" aria-label={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('link') && 'bg-primary/10 text-primary')} title={editor.isActive('link') ? t('editor.editLink') : t('editor.addLink')} onClick={(e) => { e.preventDefault(); handleOpenLinkDialog() }}>
+                  <LinkIcon className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.image && (
+                <button type="button" aria-label={t('editor.insertImage')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertImage')} onClick={(e) => { e.preventDefault(); openImageDialog() }}>
+                  <ImageIcon className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.video && (
+                <button type="button" aria-label={t('editor.insertVideo')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertVideo')} onClick={(e) => { e.preventDefault(); handleInsertMedia('video') }}>
+                  <Video className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.audio && (
+                <button type="button" aria-label={t('editor.insertAudio')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.insertAudio')} onClick={(e) => { e.preventDefault(); handleInsertMedia('audio') }}>
+                  <Music className="h-4 w-4" />
+                </button>
+              )}
+              {editorSettings.toolbarButtons.clearFormat && (
+                <button type="button" aria-label={t('editor.clearFormat')} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.clearFormat')} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); handleRemoveFormatting() }}>
+                  <RemoveFormatting className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <button type="button" aria-label={t('editor.collapse')} className="mt-2 flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title={t('editor.collapse')} onClick={() => setFormatPanelOpen(false)}>
-              <ChevronLeft className="h-4 w-4" />
-            </button>
+            {editorSettings.toolbarPosition !== 'floating' && (
+              <button type="button" aria-label={t('editor.collapse')} className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'ml-2' : 'mt-2'
+              )} title={t('editor.collapse')} onClick={() => setFormatPanelOpen(false)}>
+                {editorSettings.toolbarPosition === 'left' && <ChevronLeft className="h-4 w-4" />}
+                {editorSettings.toolbarPosition === 'right' && <ChevronRight className="h-4 w-4" />}
+                {editorSettings.toolbarPosition === 'top' && <ChevronUp className="h-4 w-4" />}
+                {editorSettings.toolbarPosition === 'bottom' && <ChevronDown className="h-4 w-4" />}
+              </button>
+            )}
           </div>
         </>
       ) : null,
@@ -1346,12 +1526,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       <div
         className={cn(
           'relative flex flex-row items-stretch transition-[margin-left] duration-200 ease-out',
-          !isFullscreen && editor && isFormatPanelOpen && 'md:ml-[4.5rem]',
+          !isFullscreen && editor && isFormatPanelOpen && editorSettings.toolbarPosition === 'left' && 'md:ml-[4.5rem]',
+          !isFullscreen && editor && isFormatPanelOpen && editorSettings.toolbarPosition === 'right' && 'md:mr-[4.5rem]',
           className
         )}
       >
         {/* Мобильная панель форматирования — внизу экрана, скрывается вниз */}
-        {!isFullscreen && editor && (
+        {editor && (
           <div className={cn('fixed bottom-0 left-0 right-0 z-40 flex flex-col border-t border-border/40 bg-muted/20 shadow-lg transition-all duration-200 md:hidden', isFormatPanelOpen ? 'max-h-[200px]' : 'max-h-14')}>
             {isFormatPanelOpen ? (
               <>

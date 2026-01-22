@@ -55,6 +55,8 @@ import {
   Copy,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Languages,
   Info,
   Keyboard,
@@ -110,6 +112,7 @@ import {
   keyEventToCombo,
   type HotkeyActionId,
 } from '@/stores/hotkeysStore'
+import { useEditorSettingsStore, type ToolbarButtonId } from '@/stores/editorSettingsStore'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/lib/utils'
 import {
@@ -138,6 +141,7 @@ const settingsNavItems = [
   { id: 'appearance', icon: Palette },
   { id: 'language', icon: Languages },
   { id: 'hotkeys', icon: Keyboard },
+  { id: 'editor', icon: Sliders },
   { id: 'privacy', icon: Shield, inDevelopment: true },
   { id: 'notifications', icon: Bell, inDevelopment: true },
   { id: 'sessions', icon: Monitor, inDevelopment: true },
@@ -511,6 +515,7 @@ export default function SettingsPage() {
             {currentSection === 'appearance' && <AppearanceSettings />}
             {currentSection === 'language' && <LanguageSettings />}
             {currentSection === 'hotkeys' && <HotkeysSettings />}
+            {currentSection === 'editor' && <EditorSettings />}
             {currentSection === 'privacy' && <PrivacySettings />}
             {currentSection === 'notifications' && <NotificationsSettings />}
             {currentSection === 'sessions' && <SessionsSettings />}
@@ -9280,6 +9285,73 @@ function HotkeysSettings() {
         <Button variant="outline" size="sm" onClick={handleReset}>
           {t('settings.hotkeys.resetToDefaults')}
         </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EditorSettings() {
+  const { t } = useTranslation()
+  const editorSettings = useEditorSettingsStore()
+
+  return (
+    <Card>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{t('settings.editor.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          {t('settings.editor.description')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
+        {/* Расположение тулбара */}
+        <div className="space-y-2">
+          <Label>{t('editor.toolbarPosition')}</Label>
+          <div className="grid grid-cols-5 gap-2">
+            {(['left', 'right', 'top', 'bottom', 'floating'] as const).map((pos) => (
+              <Button
+                key={pos}
+                type="button"
+                variant={editorSettings.toolbarPosition === pos ? 'default' : 'outline'}
+                onClick={() => editorSettings.setToolbarPosition(pos)}
+                className="h-20 flex-col gap-2"
+              >
+                {pos === 'left' && <ChevronLeft className="h-5 w-5" />}
+                {pos === 'right' && <ChevronRight className="h-5 w-5" />}
+                {pos === 'top' && <ChevronUp className="h-5 w-5" />}
+                {pos === 'bottom' && <ChevronDown className="h-5 w-5" />}
+                {pos === 'floating' && <Sliders className="h-5 w-5" />}
+                <span className="text-xs">{t(`editor.toolbarPosition${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Видимость кнопок тулбара */}
+        <div className="space-y-2">
+          <Label>{t('editor.toolbarButtons')}</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(editorSettings.toolbarButtons).map(([id, visible]) => (
+              <div key={id} className="flex items-center justify-between rounded-lg border p-2">
+                <Label htmlFor={`toolbar-${id}`} className="cursor-pointer flex-1">
+                  {t(`editor.toolbarButton${id.charAt(0).toUpperCase() + id.slice(1)}`)}
+                </Label>
+                <input
+                  id={`toolbar-${id}`}
+                  type="checkbox"
+                  checked={visible}
+                  onChange={(e) => editorSettings.setToolbarButton(id as ToolbarButtonId, e.target.checked)}
+                  className="h-4 w-4"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => editorSettings.resetSettings()}>
+            {t('common.reset')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

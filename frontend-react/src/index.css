@@ -540,6 +540,14 @@
   margin-right: auto;
 }
 
+.toolbar-drag-handle {
+  user-select: none;
+}
+
+.toolbar-resize-handle {
+  user-select: none;
+}
+
 .editor-drag-handle {
   cursor: grab;
   display: none; /* Скрыт по умолчанию, расширение само управляет видимостью */

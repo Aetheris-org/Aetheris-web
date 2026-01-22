@@ -2632,6 +2632,10 @@
       "resetDoneDescription": "All shortcuts have been restored to their defaults.",
       "reassigned": "Shortcut reassigned",
       "reassignedDescription": "This combination was previously assigned to «{other}}». It has been reassigned."
+    },
+    "editor": {
+      "title": "Editor Settings",
+      "description": "Customize the appearance and functionality of the article editor"
     }
   },
   "header": {
@@ -4227,7 +4231,32 @@
     "slashAnchorLink": "Link to anchor",
     "slashAnchorLinkDesc": "Link to existing block",
     "slashImage": "Image",
-    "slashImageDesc": "Insert image by URL"
+    "slashImageDesc": "Insert image by URL",
+    "settings": "Editor Settings",
+    "settingsDescription": "Customize the appearance and functionality of the editor",
+    "toolbarPosition": "Toolbar Position",
+    "toolbarPositionLeft": "Left",
+    "toolbarPositionRight": "Right",
+    "toolbarPositionTop": "Top",
+    "toolbarPositionBottom": "Bottom",
+    "toolbarPositionFloating": "Floating",
+    "toolbarButtons": "Toolbar Buttons",
+    "toolbarButtonBold": "Bold",
+    "toolbarButtonItalic": "Italic",
+    "toolbarButtonStrikethrough": "Strikethrough",
+    "toolbarButtonUnderline": "Underline",
+    "toolbarButtonCode": "Code",
+    "toolbarButtonTextColor": "Text Color",
+    "toolbarButtonHighlight": "Highlight",
+    "toolbarButtonFontSize": "Font Size",
+    "toolbarButtonTextAlignment": "Text Alignment",
+    "toolbarButtonLink": "Link",
+    "toolbarButtonImage": "Image",
+    "toolbarButtonVideo": "Video",
+    "toolbarButtonAudio": "Audio",
+    "toolbarButtonClearFormat": "Clear Formatting",
+    "selectFromFile": "Select from File",
+    "openFileExplorer": "Open File Explorer"
   },
   "pricing": {
     "pageTitle": "Pricing",
