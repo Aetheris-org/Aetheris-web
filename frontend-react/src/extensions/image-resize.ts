@@ -31,7 +31,6 @@ export const ImageResize = Extension.create({
               event.stopPropagation()
 
               const startX = event.clientX
-              const startY = event.clientY
               const startWidth = img.offsetWidth
               const startHeight = img.offsetHeight
               const aspectRatio = startWidth / startHeight
@@ -84,7 +83,7 @@ export const ImageResize = Extension.create({
 
               return true
             },
-            mouseover(view, event) {
+            mouseover(_view, event) {
               const target = event.target as HTMLElement
               const img = target.closest('img') as HTMLImageElement
               if (!img || !img.closest('.ProseMirror')) return false
@@ -100,7 +99,7 @@ export const ImageResize = Extension.create({
               }
               return false
             },
-            mouseout(view, event) {
+            mouseout(_view, event) {
               const target = event.target as HTMLElement
               const img = target.closest('img') as HTMLImageElement
               if (!img || !img.closest('.ProseMirror')) return false
