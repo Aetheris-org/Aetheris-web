@@ -548,6 +548,27 @@
   user-select: none;
 }
 
+/* Визуальная индикация зон фиксации тулбара */
+.toolbar-snap-left {
+  border-left: 3px solid hsl(var(--primary));
+  box-shadow: -4px 0 12px hsl(var(--primary) / 0.3);
+}
+
+.toolbar-snap-right {
+  border-right: 3px solid hsl(var(--primary));
+  box-shadow: 4px 0 12px hsl(var(--primary) / 0.3);
+}
+
+.toolbar-snap-top {
+  border-top: 3px solid hsl(var(--primary));
+  box-shadow: 0 -4px 12px hsl(var(--primary) / 0.3);
+}
+
+.toolbar-snap-bottom {
+  border-bottom: 3px solid hsl(var(--primary));
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+}
+
 .editor-drag-handle {
   cursor: grab;
   display: none; /* Скрыт по умолчанию, расширение само управляет видимостью */

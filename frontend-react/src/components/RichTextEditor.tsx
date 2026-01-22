@@ -1303,8 +1303,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
 
     let rafId: number | null = null
+    let snapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
+    
     const handleMouseMove = (e: MouseEvent) => {
-      if (rafId) return // Предотвращаем множественные вызовы
+      if (!state.isDragging && !state.isResizing) return
+      
+      // Отменяем предыдущий кадр если он есть
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
       
       rafId = requestAnimationFrame(() => {
         rafId = null
@@ -1312,10 +1319,59 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           e.preventDefault()
           const deltaX = e.clientX - state.startX
           const deltaY = e.clientY - state.startY
-          const newX = Math.max(0, Math.min(state.startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
-          const newY = Math.max(0, Math.min(state.startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
+          let newX = state.startLeft + deltaX
+          let newY = state.startTop + deltaY
+          
+          // Snap to edges logic
+          const snapThreshold = 50 // пикселей от края для фиксации
+          const toolbarWidth = editorSettings.toolbarFloating.width
+          const toolbarHeight = editorSettings.toolbarFloating.height
+          const windowWidth = window.innerWidth
+          const windowHeight = window.innerHeight
+          
+          // Проверяем близость к краям
+          const distToLeft = newX
+          const distToRight = windowWidth - newX - toolbarWidth
+          const distToTop = newY
+          const distToBottom = windowHeight - newY - toolbarHeight
+          
+          let newSnapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
+          
+          // Определяем ближайший край
+          if (distToLeft < snapThreshold && distToLeft < distToRight && distToLeft < distToTop && distToLeft < distToBottom) {
+            newX = 0
+            newSnapZone = 'left'
+          } else if (distToRight < snapThreshold && distToRight < distToTop && distToRight < distToBottom) {
+            newX = windowWidth - toolbarWidth
+            newSnapZone = 'right'
+          } else if (distToTop < snapThreshold && distToTop < distToBottom) {
+            newY = 0
+            newSnapZone = 'top'
+          } else if (distToBottom < snapThreshold) {
+            newY = windowHeight - toolbarHeight
+            newSnapZone = 'bottom'
+          }
+          
+          // Ограничиваем границами если не зафиксировались
+          if (newSnapZone === null) {
+            newX = Math.max(0, Math.min(newX, windowWidth - toolbarWidth))
+            newY = Math.max(0, Math.min(newY, windowHeight - toolbarHeight))
+          }
+          
+          // Обновляем визуальную индикацию
+          if (newSnapZone !== snapZone) {
+            snapZone = newSnapZone
+            // Добавляем/удаляем класс для подсветки зоны
+            if (toolbar) {
+              toolbar.classList.toggle('toolbar-snap-left', newSnapZone === 'left')
+              toolbar.classList.toggle('toolbar-snap-right', newSnapZone === 'right')
+              toolbar.classList.toggle('toolbar-snap-top', newSnapZone === 'top')
+              toolbar.classList.toggle('toolbar-snap-bottom', newSnapZone === 'bottom')
+            }
+          }
+          
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1277',message:'Toolbar drag move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newX,newY,isDragging:state.isDragging},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1311',message:'Toolbar drag move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newX,newY,isDragging:state.isDragging,snapZone:newSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
           editorSettings.setToolbarFloating({
             x: newX,
@@ -1328,7 +1384,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           const newWidth = Math.max(56, Math.min(state.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
           const newHeight = Math.max(100, Math.min(state.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1288',message:'Toolbar resize move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newWidth,newHeight,isResizing:state.isResizing},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1340',message:'Toolbar resize move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newWidth,newHeight,isResizing:state.isResizing},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
           editorSettings.setToolbarFloating({
             width: newWidth,
@@ -1346,6 +1402,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       if (state.isDragging || state.isResizing) {
         document.body.style.userSelect = ''
         document.body.style.cursor = ''
+        // Убираем классы подсветки при отпускании
+        if (toolbar) {
+          toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
+        }
+        snapZone = null
       }
       state.isDragging = false
       state.isResizing = false
@@ -1699,7 +1760,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         {/* Карточка редактора — отступ создаётся margin у корня, тулбар не привязан к ней */}
         <div
           ref={editorWrapperRef}
-          className={cn('flex min-w-0 flex-1 flex-col overflow-hidden border border-border/50 bg-background transition-all', disabled && 'opacity-80')}
+          className={cn(
+            'flex min-w-0 flex-1 flex-col border border-border/50 bg-background transition-all',
+            isFullscreen ? 'overflow-y-auto' : 'overflow-hidden',
+            disabled && 'opacity-80'
+          )}
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {/* Верхняя панель: Undo Redo Columns | Полноэкранный режим */}
