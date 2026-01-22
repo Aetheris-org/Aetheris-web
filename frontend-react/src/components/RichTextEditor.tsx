@@ -2184,7 +2184,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
       {/* Диалог настроек редактора */}
       <Dialog open={isEditorSettingsOpen} onOpenChange={setIsEditorSettingsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[10001]">
+        <DialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          container={isFullscreen ? editorWrapperRef.current : undefined}
+          style={isFullscreen ? { zIndex: 2147483647 } : undefined}
+        >
           <DialogHeader>
             <DialogTitle>{t('editor.settings')}</DialogTitle>
             <DialogDescription>{t('editor.settingsDescription')}</DialogDescription>
