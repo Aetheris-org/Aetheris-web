@@ -60,6 +60,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         openOnClick: false,
         HTMLAttributes: {
           class: 'text-primary underline hover:text-primary/80 cursor-pointer',
+          style: 'color: hsl(var(--primary));',
         },
       }),
       Image.extend({

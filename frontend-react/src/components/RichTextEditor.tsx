@@ -90,6 +90,9 @@ import { SmartInput } from '@/extensions/smart-input'
 import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/block-anchor'
 // import DragHandle from '@tiptap/extension-drag-handle' // Требует дополнительные зависимости
 import { DragHandle } from '@/extensions/drag-handle' // Используем кастомную реализацию
+import { ImageResize } from '@/extensions/image-resize'
+import { useEditorSettingsStore } from '@/stores/editorSettingsStore'
+import { Settings, FolderOpen } from 'lucide-react'
 
 type SlashCommandItem = {
   id: string
@@ -519,11 +522,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   articleId: _articleId,
 }, ref) => {
   const { t } = useTranslation()
+  const editorSettings = useEditorSettingsStore()
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkValue, setLinkValue] = useState('')
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [imageAlt, setImageAlt] = useState('')
+  const [isEditorSettingsOpen, setIsEditorSettingsOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isAnchorDialogOpen, setIsAnchorDialogOpen] = useState(false)
   const [anchorMode, setAnchorMode] = useState<'create' | 'link'>('create')
@@ -544,12 +550,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     type: 'empty',
   })
   const contextMenuRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isFormatPanelOpen, setFormatPanelOpen] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [slashActive, setSlashActive] = useState(false)
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -626,16 +630,55 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         HTMLAttributes: {
           rel: 'noopener noreferrer',
           class: 'font-medium text-primary underline underline-offset-4 cursor-pointer',
+          style: 'color: hsl(var(--primary));',
         },
       }),
       Typography,
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: (element) => {
+                const width = element.getAttribute('width')
+                return width ? parseInt(width, 10) : null
+              },
+              renderHTML: (attributes) => {
+                if (!attributes.width) {
+                  return {}
+                }
+                return {
+                  width: attributes.width,
+                }
+              },
+            },
+            height: {
+              default: null,
+              parseHTML: (element) => {
+                const height = element.getAttribute('height')
+                return height ? parseInt(height, 10) : null
+              },
+              renderHTML: (attributes) => {
+                if (!attributes.height) {
+                  return {}
+                }
+                return {
+                  height: attributes.height,
+                }
+              },
+            },
+          }
+        },
+      }).configure({
         inline: false,
         allowBase64: false,
         HTMLAttributes: {
           class: 'editor-image',
+          style: 'max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: auto;',
         },
       }),
+      ImageResize,
       // Details временно отключен
       // Details.configure({
       //   HTMLAttributes: {
@@ -958,10 +1001,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       const menuHeight = 120
       let x = event.clientX
       let y = event.clientY
-      if (x + menuWidth > window.innerWidth - 10) x = window.innerWidth - menuWidth - 10
-      if (y + menuHeight > window.innerHeight - 10) y = window.innerHeight - menuHeight - 10
+      
+      // Проверяем границы по ширине
+      if (x + menuWidth > window.innerWidth - 10) {
+        x = event.clientX - menuWidth // Размещаем слева от курсора
+      }
       if (x < 10) x = 10
+      
+      // Проверяем границы по высоте - привязываем к позиции курсора
+      if (y + menuHeight > window.innerHeight - 10) {
+        y = event.clientY - menuHeight // Размещаем выше курсора
+      }
       if (y < 10) y = 10
+      
       setContextMenu({ open: true, x, y, type: menuType })
       return
     }
@@ -988,9 +1040,17 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const menuHeight = menuType === 'empty' ? 120 : 200
     let x = event.clientX
     let y = event.clientY
-    if (x + menuWidth > window.innerWidth - 10) x = window.innerWidth - menuWidth - 10
-    if (y + menuHeight > window.innerHeight - 10) y = window.innerHeight - menuHeight - 10
+    
+    // Проверяем границы по ширине
+    if (x + menuWidth > window.innerWidth - 10) {
+      x = event.clientX - menuWidth // Размещаем слева от курсора
+    }
     if (x < 10) x = 10
+    
+    // Проверяем границы по высоте - привязываем к позиции курсора
+    if (y + menuHeight > window.innerHeight - 10) {
+      y = event.clientY - menuHeight // Размещаем выше курсора
+    }
     if (y < 10) y = 10
 
     setContextMenu({
@@ -1031,11 +1091,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       if (!editor || !onUploadMedia) return
 
       const fileType = file.type
+      const fileName = file.name.toLowerCase()
       let mediaType: 'image' | 'video' | 'audio' = 'image'
-      if (fileType.startsWith('video/')) mediaType = 'video'
-      else if (fileType.startsWith('audio/')) mediaType = 'audio'
-      else if (fileType.startsWith('image/')) mediaType = 'image'
-      else {
+      if (fileType.startsWith('video/') || fileName.endsWith('.mp4') || fileName.endsWith('.webm') || fileName.endsWith('.ogg')) {
+        mediaType = 'video'
+      } else if (fileType.startsWith('audio/') || fileName.endsWith('.mp3') || fileName.endsWith('.wav') || fileName.endsWith('.ogg') || fileName.endsWith('.m4a')) {
+        mediaType = 'audio'
+      } else if (fileType.startsWith('image/')) {
+        mediaType = 'image'
+      } else {
         logger.warn('[RichTextEditor] Unsupported file type:', fileType)
         return
       }
@@ -1086,46 +1150,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     [insertMediaFromFile]
   )
 
-  // Drag-and-drop: вставка фото, видео, аудио из проводника
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (e.dataTransfer?.types.includes('Files')) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'copy'
-    }
-  }, [])
-
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent) => {
-      if (e.dataTransfer?.types.includes('Files') && onUploadMedia && !disabled) setIsDraggingOver(true)
-    },
-    [onUploadMedia, disabled]
-  )
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDraggingOver(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDraggingOver(false)
-      if (disabled || !editor || !onUploadMedia) return
-      const files = e.dataTransfer?.files
-      if (!files?.length) return
-
-      const file = files[0]
-      const t = file.type
-      if (!t.startsWith('image/') && !t.startsWith('video/') && !t.startsWith('audio/')) return
-
-      try {
-        const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos
-        await insertMediaFromFile(file, pos)
-      } catch (err) {
-        logger.error('[RichTextEditor] Failed to insert media from drop:', err)
-      }
-    },
-    [disabled, editor, onUploadMedia, insertMediaFromFile]
-  )
+  // Drag-and-drop отключен по требованию - используем только кнопку проводника
 
   // Функция для открытия диалога выбора файла
   const handleInsertMedia = useCallback((type: 'image' | 'video' | 'audio') => {
@@ -1466,20 +1491,29 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 </DropdownMenu>
               )}
             </div>
-            <Button type="button" variant="ghost" size="icon" aria-label={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} className="h-7 w-7 text-muted-foreground hover:text-foreground" title={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} onClick={toggleFullscreen}>
-              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                aria-label={t('editor.settings')} 
+                className="h-7 w-7 text-muted-foreground hover:text-foreground" 
+                title={t('editor.settings')} 
+                onClick={() => setIsEditorSettingsOpen(true)}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" aria-label={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} className="h-7 w-7 text-muted-foreground hover:text-foreground" title={isFullscreen ? t('editor.exitFullscreen') : t('editor.fullscreen')} onClick={toggleFullscreen}>
+                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
           </div>
 
           {/* Область контента: редактор + панель slash или outline справа */}
           <div className="relative flex flex-1">
             <div className="flex min-w-0 flex-1 items-start gap-4 px-4 pt-6 pb-24 md:px-6 md:py-8">
               <div
-                className={cn('group/editor relative min-w-0 flex-1 rounded-lg transition-[box-shadow]', isDraggingOver && 'ring-2 ring-primary/60 ring-dashed')}
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                className="group/editor relative min-w-0 flex-1 rounded-lg transition-[box-shadow]"
               >
                 <EditorContent editor={editor} id={id} aria-label={ariaLabel} aria-labelledby={ariaLabelledBy} aria-describedby={ariaDescribedBy} className="prose prose-neutral dark:prose-invert max-w-none focus:outline-none" onContextMenu={handleContextMenu} />
                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
@@ -1556,12 +1590,48 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 placeholder={t('editor.imageDescription')}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{t('editor.selectFromFile')}</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                {t('editor.openFileExplorer')}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file || !onUploadMedia) return
+                  try {
+                    const url = await onUploadMedia(file, 'image')
+                    if (editor) {
+                      editor.chain().focus().setImage({ src: url, alt: imageAlt || undefined }).run()
+                    }
+                    setIsImageDialogOpen(false)
+                    setImageUrl('')
+                    setImageAlt('')
+                  } catch (error) {
+                    logger.error('[RichTextEditor] Failed to upload image:', error)
+                  }
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = ''
+                  }
+                }}
+              />
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="ghost" onClick={() => setIsImageDialogOpen(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleInsertImage} disabled={!editor}>
+            <Button onClick={handleInsertImage} disabled={!editor || !imageUrl}>
               {t('editor.imageInsertBtn')}
             </Button>
           </DialogFooter>
@@ -1760,6 +1830,66 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           )}
         </div>
       )}
+
+      {/* Диалог настроек редактора */}
+      <Dialog open={isEditorSettingsOpen} onOpenChange={setIsEditorSettingsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('editor.settings')}</DialogTitle>
+            <DialogDescription>{t('editor.settingsDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Расположение тулбара */}
+            <div className="space-y-2">
+              <Label>{t('editor.toolbarPosition')}</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {(['left', 'right', 'top', 'bottom', 'floating'] as const).map((pos) => (
+                  <Button
+                    key={pos}
+                    type="button"
+                    variant={editorSettings.toolbarPosition === pos ? 'default' : 'outline'}
+                    onClick={() => editorSettings.setToolbarPosition(pos)}
+                    className="h-20 flex-col gap-2"
+                  >
+                    {pos === 'left' && <ChevronLeft className="h-5 w-5" />}
+                    {pos === 'right' && <ChevronRight className="h-5 w-5" />}
+                    {pos === 'top' && <ChevronUp className="h-5 w-5" />}
+                    {pos === 'bottom' && <ChevronDown className="h-5 w-5" />}
+                    {pos === 'floating' && <Settings className="h-5 w-5" />}
+                    <span className="text-xs">{t(`editor.toolbarPosition${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Видимость кнопок тулбара */}
+            <div className="space-y-2">
+              <Label>{t('editor.toolbarButtons')}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(editorSettings.toolbarButtons).map(([id, visible]) => (
+                  <div key={id} className="flex items-center justify-between rounded-lg border p-2">
+                    <Label htmlFor={`toolbar-${id}`} className="cursor-pointer flex-1">
+                      {t(`editor.toolbarButton${id.charAt(0).toUpperCase() + id.slice(1)}`)}
+                    </Label>
+                    <input
+                      id={`toolbar-${id}`}
+                      type="checkbox"
+                      checked={visible}
+                      onChange={(e) => editorSettings.setToolbarButton(id as any, e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsEditorSettingsOpen(false)}>
+              {t('common.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 })

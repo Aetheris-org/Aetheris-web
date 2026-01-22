@@ -415,6 +415,7 @@
 
   .tiptap a {
     @apply font-medium text-primary underline underline-offset-4;
+    color: hsl(var(--primary)) !important;
   }
 
 .tiptap img {
@@ -533,7 +534,10 @@
 }
 
 .editor-image {
-  @apply my-6 w-full rounded-xl border border-border/60 object-cover shadow-sm;
+  @apply my-6 max-w-full h-auto rounded-xl border border-border/60 shadow-sm;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .editor-drag-handle {

@@ -53,6 +53,21 @@ export function DraftRecoveryProvider() {
     }
   }
 
+  // Проверяем, был ли черновик сохранен намеренно (через Ctrl+S или кнопку)
+  const wasDraftIntentionallySaved = (key: string): boolean => {
+    try {
+      const savedFlag = sessionStorage.getItem(`draft_intentionally_saved_${key}`)
+      if (savedFlag === 'true') {
+        // Удаляем флаг после проверки, чтобы не блокировать показ при реальных проблемах
+        sessionStorage.removeItem(`draft_intentionally_saved_${key}`)
+        return true
+      }
+    } catch (error) {
+      logger.warn('[DraftRecoveryProvider] Failed to check intentionally saved flag:', error)
+    }
+    return false
+  }
+
   // Функция проверки localStorage
   const checkLocalStorage = () => {
     // Если мы на странице создания или редактирования статьи, не показываем модальное окно
@@ -93,6 +108,12 @@ export function DraftRecoveryProvider() {
           // Пропускаем уже обработанные ключи
           if (processedKeys.has(key)) {
             logger.debug('[DraftRecoveryProvider] Skipping processed key:', { key })
+            continue
+          }
+
+          // Пропускаем черновики, которые были сохранены намеренно
+          if (wasDraftIntentionallySaved(key)) {
+            logger.debug('[DraftRecoveryProvider] Skipping intentionally saved draft:', { key })
             continue
           }
 

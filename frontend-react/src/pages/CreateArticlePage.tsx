@@ -386,9 +386,12 @@ export default function CreateArticlePage() {
           // Сбрасываем флаг — изменения сохранены
           userHasEditedRef.current = false
           
-          // Очищаем localStorage чтобы DraftRecoveryProvider не показывал модальное окно
+          // Помечаем черновик как намеренно сохраненный, чтобы DraftRecoveryProvider не показывал панель
           try {
-            Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+            const draftKeys = Object.keys(localStorage).filter(k => k.startsWith('draft_'))
+            draftKeys.forEach(k => {
+              // Устанавливаем флаг в sessionStorage перед очисткой localStorage
+              sessionStorage.setItem(`draft_intentionally_saved_${k}`, 'true')
               localStorage.removeItem(k)
             })
           } catch (err) {
@@ -530,9 +533,12 @@ export default function CreateArticlePage() {
       
       queryClient.invalidateQueries({ queryKey: ['drafts'] })
       
-      // Очищаем localStorage
+      // Помечаем черновик как намеренно сохраненный, чтобы DraftRecoveryProvider не показывал панель
       try {
-        Object.keys(localStorage).filter(k => k.startsWith('draft_')).forEach(k => {
+        const draftKeys = Object.keys(localStorage).filter(k => k.startsWith('draft_'))
+        draftKeys.forEach(k => {
+          // Устанавливаем флаг в sessionStorage перед очисткой localStorage
+          sessionStorage.setItem(`draft_intentionally_saved_${k}`, 'true')
           localStorage.removeItem(k)
         })
       } catch (e) {
