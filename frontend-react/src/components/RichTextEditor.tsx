@@ -556,9 +556,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const [slashActive, setSlashActive] = useState(false)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false)
-  const [isResizingToolbar, setIsResizingToolbar] = useState(false)
-  const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     _setSlashActive = setSlashActive
@@ -1264,7 +1261,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startWidth = editorSettings.toolbarFloating.width
         startHeight = editorSettings.toolbarFloating.height
-        setIsResizingToolbar(true)
         return
       }
       if (target.closest('.toolbar-drag-handle')) {
@@ -1275,7 +1271,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startLeft = editorSettings.toolbarFloating.x
         startTop = editorSettings.toolbarFloating.y
-        setIsDraggingToolbar(true)
       }
     }
 
@@ -1302,8 +1297,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const handleMouseUp = () => {
       isDragging = false
       isResizing = false
-      setIsDraggingToolbar(false)
-      setIsResizingToolbar(false)
     }
 
     toolbar.addEventListener('mousedown', handleMouseDown)
