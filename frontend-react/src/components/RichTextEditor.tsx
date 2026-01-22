@@ -1000,8 +1000,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       const menuType: 'empty' | 'text' = 'empty'
       const menuWidth = 180
       const menuHeight = 120
-      const offsetX = 5 // Небольшое смещение от курсора по X
-      const offsetY = 5 // Небольшое смещение от курсора по Y
+      const offsetX = 2 // Небольшое смещение от курсора по X
+      const offsetY = 2 // Небольшое смещение от курсора по Y
       let x = event.clientX + offsetX
       let y = event.clientY + offsetY
       
@@ -1041,8 +1041,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     // Позиция у курсора (место клика правой кнопкой)
     const menuWidth = 180
     const menuHeight = menuType === 'empty' ? 120 : 200
-    const offsetX = 5 // Небольшое смещение от курсора по X
-    const offsetY = 5 // Небольшое смещение от курсора по Y
+    const offsetX = 2 // Небольшое смещение от курсора по X
+    const offsetY = 2 // Небольшое смещение от курсора по Y
     let x = event.clientX + offsetX
     let y = event.clientY + offsetY
     
@@ -1232,24 +1232,28 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       baseStyles.top = `${toolbarFloating.y}px`
       baseStyles.width = `${toolbarFloating.width}px`
       baseStyles.height = `${toolbarFloating.height}px`
-      baseStyles.zIndex = 100
+      baseStyles.zIndex = 10000
     } else {
       baseStyles.position = 'fixed'
-      baseStyles.zIndex = 99
+      baseStyles.zIndex = 9999
       
       // Устанавливаем позицию для не-floating тулбара
       if (toolbarPosition === 'left') {
         baseStyles.left = '0'
         baseStyles.top = '50%'
+        baseStyles.transform = 'translateY(-50%)'
       } else if (toolbarPosition === 'right') {
         baseStyles.right = '0'
         baseStyles.top = '50%'
+        baseStyles.transform = 'translateY(-50%)'
       } else if (toolbarPosition === 'top') {
         baseStyles.top = '0'
         baseStyles.left = '50%'
+        baseStyles.transform = 'translateX(-50%)'
       } else if (toolbarPosition === 'bottom') {
         baseStyles.bottom = '0'
         baseStyles.left = '50%'
+        baseStyles.transform = 'translateX(-50%)'
       }
     }
     
@@ -1280,6 +1284,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startWidth = editorSettings.toolbarFloating.width
         startHeight = editorSettings.toolbarFloating.height
+        // Блокируем выделение текста при ресайзе
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'nwse-resize'
         return
       }
       if (target.closest('.toolbar-drag-handle')) {
@@ -1290,11 +1297,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startLeft = editorSettings.toolbarFloating.x
         startTop = editorSettings.toolbarFloating.y
+        // Блокируем выделение текста при перетаскивании
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'grabbing'
       }
     }
 
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
+        e.preventDefault()
         const deltaX = e.clientX - startX
         const deltaY = e.clientY - startY
         editorSettings.setToolbarFloating({
@@ -1302,6 +1313,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           y: Math.max(0, Math.min(startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height)),
         })
       } else if (isResizing) {
+        e.preventDefault()
         const deltaX = e.clientX - startX
         const deltaY = e.clientY - startY
         const newWidth = Math.max(56, Math.min(startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
@@ -1314,6 +1326,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
 
     const handleMouseUp = () => {
+      if (isDragging || isResizing) {
+        // Восстанавливаем выделение текста
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
       isDragging = false
       isResizing = false
     }
@@ -1326,6 +1343,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       toolbar.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
+      // Восстанавливаем стили при размонтировании
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
     }
   }, [editorSettings])
 
@@ -1342,7 +1362,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               type="button"
               aria-label={t('editor.showFormatPanel')}
               className={cn(
-                'fixed z-[100] hidden h-12 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex',
+                'fixed z-[10000] hidden h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex',
                 editorSettings.toolbarPosition === 'left' && 'left-0 top-1/2 -translate-y-1/2 rounded-l-none border-l-0',
                 editorSettings.toolbarPosition === 'right' && 'right-0 top-1/2 -translate-y-1/2 rounded-r-none border-r-0',
                 editorSettings.toolbarPosition === 'top' && 'top-0 left-1/2 -translate-x-1/2 rounded-t-none border-t-0',
@@ -1370,8 +1390,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               editorSettings.toolbarPosition === 'floating' && 'w-14',
               editorSettings.toolbarPosition === 'left' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'),
               editorSettings.toolbarPosition === 'right' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : 'translate-x-[calc(100%+1rem)] -translate-y-1/2'),
-              editorSettings.toolbarPosition === 'top' && (isFormatPanelOpen ? 'translate-x-0 translate-y-0' : 'translate-x-0 -translate-y-[calc(100%+1rem)]'),
-              editorSettings.toolbarPosition === 'bottom' && (isFormatPanelOpen ? 'translate-x-0 translate-y-0' : 'translate-x-0 translate-y-[calc(100%+1rem)]')
+              editorSettings.toolbarPosition === 'top' && (isFormatPanelOpen ? '-translate-x-1/2 translate-y-0' : '-translate-x-1/2 -translate-y-[calc(100%+1rem)]'),
+              editorSettings.toolbarPosition === 'bottom' && (isFormatPanelOpen ? '-translate-x-1/2 translate-y-0' : '-translate-x-1/2 translate-y-[calc(100%+1rem)]')
             )}
             style={getToolbarStyles()}
           >
