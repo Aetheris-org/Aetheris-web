@@ -28,6 +28,7 @@ export interface EditorSettings {
     width: number
     height: number
   }
+  enableSnapToEdge: boolean
 }
 
 const defaultToolbarButtons: Record<ToolbarButtonId, boolean> = {
@@ -56,12 +57,14 @@ const defaultSettings: EditorSettings = {
     width: 56,
     height: 400,
   },
+  enableSnapToEdge: true,
 }
 
 interface EditorSettingsStore extends EditorSettings {
   setToolbarPosition: (position: ToolbarPosition) => void
   setToolbarButton: (id: ToolbarButtonId, visible: boolean) => void
   setToolbarFloating: (floating: Partial<EditorSettings['toolbarFloating']>) => void
+  setEnableSnapToEdge: (enable: boolean) => void
   resetSettings: () => void
 }
 
@@ -84,6 +87,7 @@ export const useEditorSettingsStore = create<EditorSettingsStore>()(
             ...floating,
           },
         })),
+      setEnableSnapToEdge: (enable) => set({ enableSnapToEdge: enable }),
       resetSettings: () => set(defaultSettings),
     }),
     {

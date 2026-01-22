@@ -4240,6 +4240,7 @@
     "toolbarPositionTop": "Top",
     "toolbarPositionBottom": "Bottom",
     "toolbarPositionFloating": "Floating",
+    "enableSnapToEdge": "Snap to screen edges",
     "toolbarButtons": "Toolbar Buttons",
     "toolbarButtonBold": "Bold",
     "toolbarButtonItalic": "Italic",

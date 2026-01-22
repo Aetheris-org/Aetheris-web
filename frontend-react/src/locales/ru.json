@@ -4222,6 +4222,7 @@
     "toolbarPositionTop": "Сверху",
     "toolbarPositionBottom": "Снизу",
     "toolbarPositionFloating": "Плавающий",
+    "enableSnapToEdge": "Привязка к краям экрана",
     "toolbarButtons": "Кнопки тулбара",
     "toolbarButtonBold": "Жирный",
     "toolbarButtonItalic": "Курсив",

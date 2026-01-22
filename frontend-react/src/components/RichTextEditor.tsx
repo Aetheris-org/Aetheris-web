@@ -1380,38 +1380,44 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           let newX = currentState.startLeft + deltaX
           let newY = currentState.startTop + deltaY
           
-          // Snap to edges logic
+          // Snap to edges logic (только если включено в настройках)
           const snapThreshold = 50 // пикселей от края для фиксации
           const toolbarWidth = editorSettings.toolbarFloating.width
           const toolbarHeight = editorSettings.toolbarFloating.height
           const windowWidth = window.innerWidth
           const windowHeight = window.innerHeight
           
-          // Проверяем близость к краям
-          const distToLeft = newX
-          const distToRight = windowWidth - newX - toolbarWidth
-          const distToTop = newY
-          const distToBottom = windowHeight - newY - toolbarHeight
-          
           let newSnapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
           
-          // Определяем ближайший край
-          if (distToLeft < snapThreshold && distToLeft < distToRight && distToLeft < distToTop && distToLeft < distToBottom) {
-            newX = 0
-            newSnapZone = 'left'
-          } else if (distToRight < snapThreshold && distToRight < distToTop && distToRight < distToBottom) {
-            newX = windowWidth - toolbarWidth
-            newSnapZone = 'right'
-          } else if (distToTop < snapThreshold && distToTop < distToBottom) {
-            newY = 0
-            newSnapZone = 'top'
-          } else if (distToBottom < snapThreshold) {
-            newY = windowHeight - toolbarHeight
-            newSnapZone = 'bottom'
+          if (editorSettings.enableSnapToEdge) {
+            // Проверяем близость к краям
+            const distToLeft = newX
+            const distToRight = windowWidth - newX - toolbarWidth
+            const distToTop = newY
+            const distToBottom = windowHeight - newY - toolbarHeight
+            
+            // Определяем ближайший край
+            if (distToLeft < snapThreshold && distToLeft < distToRight && distToLeft < distToTop && distToLeft < distToBottom) {
+              newX = 0
+              newSnapZone = 'left'
+            } else if (distToRight < snapThreshold && distToRight < distToTop && distToRight < distToBottom) {
+              newX = windowWidth - toolbarWidth
+              newSnapZone = 'right'
+            } else if (distToTop < snapThreshold && distToTop < distToBottom) {
+              newY = 0
+              newSnapZone = 'top'
+            } else if (distToBottom < snapThreshold) {
+              newY = windowHeight - toolbarHeight
+              newSnapZone = 'bottom'
+            }
           }
           
           // Ограничиваем границами если не зафиксировались
           if (newSnapZone === null) {
+            const windowWidth = window.innerWidth
+            const windowHeight = window.innerHeight
+            const toolbarWidth = editorSettings.toolbarFloating.width
+            const toolbarHeight = editorSettings.toolbarFloating.height
             newX = Math.max(0, Math.min(newX, windowWidth - toolbarWidth))
             newY = Math.max(0, Math.min(newY, windowHeight - toolbarHeight))
           }
@@ -1428,14 +1434,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             }
             // Показываем/скрываем визуальную индикацию зоны привязки на экране
             let snapZoneIndicator = document.getElementById('toolbar-snap-zone-indicator')
-            if (newSnapZone) {
+            if (newSnapZone && editorSettings.enableSnapToEdge) {
               if (!snapZoneIndicator) {
                 snapZoneIndicator = document.createElement('div')
                 snapZoneIndicator.id = 'toolbar-snap-zone-indicator'
                 snapZoneIndicator.className = 'toolbar-snap-zone-indicator'
-                document.body.appendChild(snapZoneIndicator)
+                // В полноэкранном режиме рендерим в fullscreen элемент, иначе в body
+                const container = isFullscreen && editorWrapperRef.current ? editorWrapperRef.current : document.body
+                container.appendChild(snapZoneIndicator)
               }
               snapZoneIndicator.className = `toolbar-snap-zone-indicator toolbar-snap-zone-${newSnapZone}`
+              // Устанавливаем высокий z-index для полноэкранного режима
+              if (isFullscreen) {
+                snapZoneIndicator.style.zIndex = '2147483646'
+              } else {
+                snapZoneIndicator.style.zIndex = '9998'
+              }
             } else {
               if (snapZoneIndicator) {
                 snapZoneIndicator.remove()
@@ -1628,21 +1642,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             )}
             style={getToolbarStyles()}
           >
-            {/* Drag handle - показываем для всех позиций */}
-            {editorSettings.toolbarPosition !== 'floating' && (
-              <div className={cn(
-                "toolbar-drag-handle absolute cursor-grab active:cursor-grabbing bg-primary/5 flex items-center justify-center z-10 pointer-events-auto",
-                (editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && "top-0 left-0 right-0 h-6 rounded-t-xl",
-                (editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && "left-0 top-0 bottom-0 w-6 rounded-l-xl"
-              )}>
-                {(editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && (
-                  <div className="h-1 w-8 rounded-full bg-primary/20" />
-                )}
-                {(editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && (
-                  <div className="w-1 h-8 rounded-full bg-primary/20" />
-                )}
-              </div>
-            )}
+            {/* Drag handle - показываем для всех позиций, включая floating */}
+            <div className={cn(
+              "toolbar-drag-handle absolute cursor-grab active:cursor-grabbing bg-primary/5 flex items-center justify-center z-10 pointer-events-auto",
+              (editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && "top-0 left-0 right-0 h-6 rounded-t-xl",
+              (editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && "left-0 top-0 bottom-0 w-6 rounded-l-xl"
+            )}>
+              {(editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && (
+                <div className="h-1 w-8 rounded-full bg-primary/20" />
+              )}
+              {(editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && (
+                <div className="w-1 h-8 rounded-full bg-primary/20" />
+              )}
+            </div>
             {/* Resize handle - только для floating */}
             {editorSettings.toolbarPosition === 'floating' && (
               <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors z-10 pointer-events-auto" />
@@ -2380,6 +2392,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                     <span className="text-xs">{t(`editor.toolbarPosition${pos.charAt(0).toUpperCase() + pos.slice(1)}`)}</span>
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            {/* Привязка к краям */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-lg border p-2">
+                <Label htmlFor="toolbar-snap-to-edge" className="cursor-pointer flex-1">
+                  {t('editor.enableSnapToEdge')}
+                </Label>
+                <input
+                  id="toolbar-snap-to-edge"
+                  type="checkbox"
+                  checked={editorSettings.enableSnapToEdge}
+                  onChange={(e) => editorSettings.setEnableSnapToEdge(e.target.checked)}
+                  className="h-4 w-4"
+                />
               </div>
             </div>
 
