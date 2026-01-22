@@ -988,71 +988,56 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     event.preventDefault()
     event.stopPropagation()
 
+    // Используем координаты клика напрямую
+    const clickX = event.clientX
+    const clickY = event.clientY
+
     const view = editor.view
     
     // Получаем позицию курсора из координат мыши
     const posAtCoords = view.posAtCoords({ 
-      left: event.clientX, 
-      top: event.clientY 
+      left: clickX, 
+      top: clickY 
     })
 
-    if (!posAtCoords) {
-      const menuType: 'empty' | 'text' = 'empty'
-      const menuWidth = 180
-      const menuHeight = 120
-      // Позиционируем меню прямо у курсора
-      let x = event.clientX
-      let y = event.clientY
-      
-      // Проверяем границы по ширине
-      if (x + menuWidth > window.innerWidth - 10) {
-        x = event.clientX - menuWidth // Размещаем слева от курсора
-      }
-      if (x < 10) x = 10
-      
-      // Проверяем границы по высоте - привязываем к позиции курсора
-      if (y + menuHeight > window.innerHeight - 10) {
-        y = event.clientY - menuHeight // Размещаем выше курсора
-      }
-      if (y < 10) y = 10
-      
-      setContextMenu({ open: true, x, y, type: menuType })
-      return
+    let menuType: 'empty' | 'text' = 'empty'
+
+    if (posAtCoords) {
+      // Обновляем позицию курсора в редакторе
+      const { pos } = posAtCoords
+      editor.commands.setTextSelection(pos)
+
+      // Определяем, есть ли выделенный текст
+      const { selection } = editor.state
+      const hasSelection = !selection.empty && selection.from !== selection.to
+
+      // Определяем, есть ли текст под курсором
+      const $from = editor.state.doc.resolve(pos)
+      const node = $from.node()
+      const hasText = node && node.textContent && node.textContent.trim().length > 0
+
+      // Если есть выделение или текст под курсором - показываем меню форматирования
+      // Иначе - меню добавления медиа
+      menuType = (hasSelection || hasText) ? 'text' : 'empty'
     }
 
-    // Обновляем позицию курсора в редакторе
-    const { pos } = posAtCoords
-    editor.commands.setTextSelection(pos)
-
-    // Определяем, есть ли выделенный текст
-    const { selection } = editor.state
-    const hasSelection = !selection.empty && selection.from !== selection.to
-
-    // Определяем, есть ли текст под курсором
-    const $from = editor.state.doc.resolve(pos)
-    const node = $from.node()
-    const hasText = node && node.textContent && node.textContent.trim().length > 0
-
-    // Если есть выделение или текст под курсором - показываем меню форматирования
-    // Иначе - меню добавления медиа
-    const menuType: 'empty' | 'text' = (hasSelection || hasText) ? 'text' : 'empty'
-
-    // Позиция у курсора (место клика правой кнопкой)
+    // Позиция у курсора (место клика правой кнопкой) - используем координаты клика напрямую
     const menuWidth = 180
     const menuHeight = menuType === 'empty' ? 120 : 200
-    // Позиционируем меню прямо у курсора
-    let x = event.clientX
-    let y = event.clientY
     
-    // Проверяем границы по ширине
+    // Позиционируем меню прямо у курсора, где был клик
+    let x = clickX
+    let y = clickY
+    
+    // Проверяем границы по ширине - если не помещается справа, размещаем слева
     if (x + menuWidth > window.innerWidth - 10) {
-      x = event.clientX - menuWidth // Размещаем слева от курсора
+      x = clickX - menuWidth
     }
     if (x < 10) x = 10
     
-    // Проверяем границы по высоте - привязываем к позиции курсора
+    // Проверяем границы по высоте - если не помещается снизу, размещаем сверху
     if (y + menuHeight > window.innerHeight - 10) {
-      y = event.clientY - menuHeight // Размещаем выше курсора
+      y = clickY - menuHeight
     }
     if (y < 10) y = 10
 
@@ -1271,6 +1256,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement
+      
+      // Проверяем ресайз
       if (target.closest('.toolbar-resize-handle')) {
         e.preventDefault()
         e.stopPropagation()
@@ -1279,11 +1266,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startWidth = editorSettings.toolbarFloating.width
         startHeight = editorSettings.toolbarFloating.height
-        // Блокируем выделение текста при ресайзе
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'nwse-resize'
+        document.body.style.pointerEvents = 'none'
+        toolbar.style.pointerEvents = 'auto'
         return
       }
+      
+      // Проверяем перетаскивание
       if (target.closest('.toolbar-drag-handle')) {
         e.preventDefault()
         e.stopPropagation()
@@ -1292,23 +1282,28 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         startY = e.clientY
         startLeft = editorSettings.toolbarFloating.x
         startTop = editorSettings.toolbarFloating.y
-        // Блокируем выделение текста при перетаскивании
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'grabbing'
+        document.body.style.pointerEvents = 'none'
+        toolbar.style.pointerEvents = 'auto'
       }
     }
 
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
         e.preventDefault()
+        e.stopPropagation()
         const deltaX = e.clientX - startX
         const deltaY = e.clientY - startY
+        const newX = Math.max(0, Math.min(startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
+        const newY = Math.max(0, Math.min(startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
         editorSettings.setToolbarFloating({
-          x: Math.max(0, Math.min(startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width)),
-          y: Math.max(0, Math.min(startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height)),
+          x: newX,
+          y: newY,
         })
       } else if (isResizing) {
         e.preventDefault()
+        e.stopPropagation()
         const deltaX = e.clientX - startX
         const deltaY = e.clientY - startY
         const newWidth = Math.max(56, Math.min(startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
@@ -1320,27 +1315,38 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
     }
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
       if (isDragging || isResizing) {
-        // Восстанавливаем выделение текста
+        e.preventDefault()
+        e.stopPropagation()
         document.body.style.userSelect = ''
         document.body.style.cursor = ''
+        document.body.style.pointerEvents = ''
+        if (toolbar) {
+          toolbar.style.pointerEvents = ''
+        }
       }
       isDragging = false
       isResizing = false
     }
 
-    toolbar.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    // Добавляем обработчики на toolbar для mousedown
+    toolbar.addEventListener('mousedown', handleMouseDown, { capture: true })
+    // Добавляем обработчики на document для mousemove и mouseup
+    document.addEventListener('mousemove', handleMouseMove, { capture: true, passive: false })
+    document.addEventListener('mouseup', handleMouseUp, { capture: true })
 
     return () => {
-      toolbar.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+      toolbar.removeEventListener('mousedown', handleMouseDown, { capture: true })
+      document.removeEventListener('mousemove', handleMouseMove, { capture: true })
+      document.removeEventListener('mouseup', handleMouseUp, { capture: true })
       // Восстанавливаем стили при размонтировании
       document.body.style.userSelect = ''
       document.body.style.cursor = ''
+      document.body.style.pointerEvents = ''
+      if (toolbar) {
+        toolbar.style.pointerEvents = ''
+      }
     }
   }, [editorSettings])
 
@@ -2041,7 +2047,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
       {/* Диалог настроек редактора */}
       <Dialog open={isEditorSettingsOpen} onOpenChange={setIsEditorSettingsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[10001]">
           <DialogHeader>
             <DialogTitle>{t('editor.settings')}</DialogTitle>
             <DialogDescription>{t('editor.settingsDescription')}</DialogDescription>
