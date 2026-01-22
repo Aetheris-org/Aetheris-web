@@ -1226,12 +1226,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       baseStyles.top = `${toolbarFloating.y}px`
       baseStyles.width = `${toolbarFloating.width}px`
       baseStyles.height = `${toolbarFloating.height}px`
-      baseStyles.zIndex = 10000
+      // В полноэкранном режиме нужен очень высокий z-index
+      baseStyles.zIndex = isFullscreen ? 2147483647 : 10000
       // В полноэкранном режиме тулбар должен быть виден
       baseStyles.pointerEvents = 'auto'
     } else {
       baseStyles.position = 'fixed'
-      baseStyles.zIndex = 9999
+      // В полноэкранном режиме нужен очень высокий z-index
+      baseStyles.zIndex = isFullscreen ? 2147483647 : 9999
       // В полноэкранном режиме тулбар должен быть виден
       baseStyles.pointerEvents = 'auto'
       
@@ -1466,6 +1468,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
   // Панель и кнопка возврата — через портал в body, чтобы fixed работал относительно viewport
   // (родитель с transform ломает fixed, панель не уезжала за экран)
+  // В полноэкранном режиме рендерим в fullscreen элемент, чтобы тулбар был виден
   const formatPanelPortal =
     typeof document !== 'undefined' &&
     createPortal(
@@ -1483,7 +1486,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               type="button"
               aria-label={t('editor.showFormatPanel')}
               className={cn(
-                'fixed z-[10000] hidden h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted md:flex',
+                'fixed z-[10000] h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/90 shadow-md backdrop-blur-sm transition-opacity duration-200 hover:bg-muted',
+                isFullscreen ? 'flex' : 'hidden md:flex',
                 editorSettings.toolbarPosition === 'left' && 'left-0 top-1/2 -translate-y-1/2 rounded-l-none border-l-0',
                 editorSettings.toolbarPosition === 'right' && 'right-0 top-1/2 -translate-y-1/2 rounded-r-none border-r-0',
                 editorSettings.toolbarPosition === 'top' && 'top-0 left-1/2 -translate-x-1/2 rounded-t-none border-t-0',
@@ -1669,7 +1673,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </div>
         </>
       ) : null,
-      document.body
+      // В полноэкранном режиме рендерим в fullscreen элемент, иначе в body
+      isFullscreen && editorWrapperRef.current ? editorWrapperRef.current : document.body
     )
 
   return (
