@@ -1343,7 +1343,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
 
     let rafId: number | null = null
-    let snapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
+    const snapZoneRef = { current: null as 'left' | 'right' | 'top' | 'bottom' | null }
     let lastUpdateTime = 0
     const UPDATE_THROTTLE = 16 // ~60fps
     
@@ -1415,8 +1415,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           }
           
           // Обновляем визуальную индикацию зоны привязки
-          if (newSnapZone !== snapZone) {
-            snapZone = newSnapZone
+          if (newSnapZone !== snapZoneRef.current) {
+            snapZoneRef.current = newSnapZone
             // Добавляем/удаляем класс для подсветки зоны на тулбаре
             if (toolbar) {
               toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
@@ -1485,9 +1485,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         }
         
         // Если тулбар был зафиксирован к краю, трансформируем его в соответствующий боковой вид
-        if (currentState.isDragging && snapZone && editorSettings.toolbarPosition === 'floating') {
+        const finalSnapZone = snapZoneRef.current
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1487',message:'Toolbar mouse up',data:{isDragging:currentState.isDragging,finalSnapZone,currentPosition:editorSettings.toolbarPosition},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        if (currentState.isDragging && finalSnapZone && editorSettings.toolbarPosition === 'floating') {
           // Автоматически меняем позицию на соответствующую
-          editorSettings.setToolbarPosition(snapZone)
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1491',message:'Transforming toolbar',data:{from:'floating',to:finalSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+          editorSettings.setToolbarPosition(finalSnapZone)
           // Открываем панель после трансформации
           setFormatPanelOpen(true)
           // Сбрасываем floating координаты, так как теперь позиция фиксированная
@@ -1499,7 +1506,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           })
         }
         
-        snapZone = null
+        snapZoneRef.current = null
       }
       currentState.isDragging = false
       currentState.isResizing = false

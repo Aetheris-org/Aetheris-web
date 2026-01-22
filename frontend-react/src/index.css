@@ -574,8 +574,8 @@
   position: fixed;
   z-index: 9998;
   pointer-events: none;
-  border: 2px solid hsl(217 91% 60%);
-  background: hsl(217 91% 60% / 0.1);
+  border: 2px solid hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
   backdrop-filter: blur(4px);
   transition: all 0.2s ease;
   border-radius: 0.75rem;
