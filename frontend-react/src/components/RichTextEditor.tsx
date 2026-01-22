@@ -1261,9 +1261,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     return baseStyles
   }, [editorSettings, isFullscreen])
 
-  // Обработчики для drag-and-drop тулбара
+  // Обработчики для drag-and-drop тулбара (floating и left/right с drag handle)
   useEffect(() => {
-    if (editorSettings.toolbarPosition !== 'floating' || !toolbarRef.current) return
+    const isDraggable = editorSettings.toolbarPosition === 'floating' || 
+                       editorSettings.toolbarPosition === 'left' || 
+                       editorSettings.toolbarPosition === 'right'
+    if (!isDraggable || !toolbarRef.current) return
 
     let cleanup: (() => void) | null = null
 
@@ -1313,8 +1316,24 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         state.isDragging = true
         state.startX = e.clientX
         state.startY = e.clientY
-        state.startLeft = editorSettings.toolbarFloating.x
-        state.startTop = editorSettings.toolbarFloating.y
+        // Для left/right позиций используем текущие координаты из стилей, для floating - из настроек
+        if (editorSettings.toolbarPosition === 'floating') {
+          state.startLeft = editorSettings.toolbarFloating.x
+          state.startTop = editorSettings.toolbarFloating.y
+        } else {
+          // Для left/right позиций при перетаскивании переключаемся в floating режим
+          const rect = toolbar.getBoundingClientRect()
+          state.startLeft = rect.left
+          state.startTop = rect.top
+          // Переключаемся в floating режим для свободного перемещения
+          editorSettings.setToolbarPosition('floating')
+          editorSettings.setToolbarFloating({
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          })
+        }
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'grabbing'
         // #region agent log
@@ -1395,14 +1414,29 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             newY = Math.max(0, Math.min(newY, windowHeight - toolbarHeight))
           }
           
-          // Обновляем визуальную индикацию
+          // Обновляем визуальную индикацию зоны привязки
           if (newSnapZone !== snapZone) {
             snapZone = newSnapZone
-            // Добавляем/удаляем класс для подсветки зоны
+            // Добавляем/удаляем класс для подсветки зоны на тулбаре
             if (toolbar) {
               toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
               if (newSnapZone) {
                 toolbar.classList.add(`toolbar-snap-${newSnapZone}`)
+              }
+            }
+            // Показываем/скрываем визуальную индикацию зоны привязки на экране
+            let snapZoneIndicator = document.getElementById('toolbar-snap-zone-indicator')
+            if (newSnapZone) {
+              if (!snapZoneIndicator) {
+                snapZoneIndicator = document.createElement('div')
+                snapZoneIndicator.id = 'toolbar-snap-zone-indicator'
+                snapZoneIndicator.className = 'toolbar-snap-zone-indicator'
+                document.body.appendChild(snapZoneIndicator)
+              }
+              snapZoneIndicator.className = `toolbar-snap-zone-indicator toolbar-snap-zone-${newSnapZone}`
+            } else {
+              if (snapZoneIndicator) {
+                snapZoneIndicator.remove()
               }
             }
           }
@@ -1444,6 +1478,27 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         if (toolbar) {
           toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
         }
+        // Удаляем индикатор зоны привязки
+        const snapZoneIndicator = document.getElementById('toolbar-snap-zone-indicator')
+        if (snapZoneIndicator) {
+          snapZoneIndicator.remove()
+        }
+        
+        // Если тулбар был зафиксирован к краю, трансформируем его в соответствующий боковой вид
+        if (currentState.isDragging && snapZone && editorSettings.toolbarPosition === 'floating') {
+          // Автоматически меняем позицию на соответствующую
+          editorSettings.setToolbarPosition(snapZone)
+          // Открываем панель после трансформации
+          setFormatPanelOpen(true)
+          // Сбрасываем floating координаты, так как теперь позиция фиксированная
+          editorSettings.setToolbarFloating({
+            x: 0,
+            y: 0,
+            width: 56, // w-14 = 3.5rem = 56px
+            height: 400,
+          })
+        }
+        
         snapZone = null
       }
       currentState.isDragging = false
@@ -1539,13 +1594,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             )}
             style={getToolbarStyles()}
           >
+            {/* Drag handle - показываем для всех позиций, кроме top/bottom */}
+            {(editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && (
+              <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center z-10 pointer-events-auto">
+                <div className="h-1 w-8 rounded-full bg-primary/20" />
+              </div>
+            )}
+            {/* Resize handle - только для floating */}
             {editorSettings.toolbarPosition === 'floating' && (
-              <>
-                <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center z-10 pointer-events-auto">
-                  <div className="h-1 w-8 rounded-full bg-primary/20" />
-                </div>
-                <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors z-10 pointer-events-auto" />
-              </>
+              <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors z-10 pointer-events-auto" />
             )}
             <div 
               className={cn(
@@ -1561,7 +1618,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   : '',
                 // Добавляем отступ сверху для drag handle в floating режиме
                 // Минимальный padding для компактности при узкой ширине
-                editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-1' : 'px-2 py-2'
+                // Добавляем отступ сверху для drag handle
+              (editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') ? 'pt-8 pb-4 px-1' : 'px-2 py-2'
               )}
               style={
                 editorSettings.toolbarPosition === 'floating'
