@@ -1021,30 +1021,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       menuType = (hasSelection || hasText) ? 'text' : 'empty'
     }
 
-    // Позиция у курсора (место клика правой кнопкой) - используем координаты клика напрямую
-    const menuWidth = 180
-    const menuHeight = menuType === 'empty' ? 120 : 200
-    
-    // Позиционируем меню прямо у курсора, где был клик
-    let x = clickX
-    let y = clickY
-    
-    // Проверяем границы по ширине - если не помещается справа, размещаем слева
-    if (x + menuWidth > window.innerWidth - 10) {
-      x = clickX - menuWidth
-    }
-    if (x < 10) x = 10
-    
-    // Проверяем границы по высоте - если не помещается снизу, размещаем сверху
-    if (y + menuHeight > window.innerHeight - 10) {
-      y = clickY - menuHeight
-    }
-    if (y < 10) y = 10
-
+    // Позиционируем меню прямо в точке клика - без смещений и проверок границ
+    // Меню само скорректируется через CSS, если не поместится
     setContextMenu({
       open: true,
-      x,
-      y,
+      x: clickX,
+      y: clickY,
       type: menuType,
     })
   }, [editor, disabled])
@@ -1216,9 +1198,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       baseStyles.width = `${toolbarFloating.width}px`
       baseStyles.height = `${toolbarFloating.height}px`
       baseStyles.zIndex = 10000
+      // В полноэкранном режиме тулбар должен быть виден
+      baseStyles.pointerEvents = 'auto'
     } else {
       baseStyles.position = 'fixed'
       baseStyles.zIndex = 9999
+      // В полноэкранном режиме тулбар должен быть виден
+      baseStyles.pointerEvents = 'auto'
       
       // Устанавливаем позицию для не-floating тулбара
       // Transform будет применяться через классы Tailwind, чтобы не конфликтовать с анимацией
@@ -1245,14 +1231,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     if (editorSettings.toolbarPosition !== 'floating' || !toolbarRef.current) return
 
     const toolbar = toolbarRef.current
-    let startX = 0
-    let startY = 0
-    let startLeft = 0
-    let startTop = 0
-    let startWidth = 0
-    let startHeight = 0
-    let isDragging = false
-    let isResizing = false
+    const state = {
+      startX: 0,
+      startY: 0,
+      startLeft: 0,
+      startTop: 0,
+      startWidth: 0,
+      startHeight: 0,
+      isDragging: false,
+      isResizing: false,
+    }
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -1261,15 +1249,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       if (target.closest('.toolbar-resize-handle')) {
         e.preventDefault()
         e.stopPropagation()
-        isResizing = true
-        startX = e.clientX
-        startY = e.clientY
-        startWidth = editorSettings.toolbarFloating.width
-        startHeight = editorSettings.toolbarFloating.height
+        state.isResizing = true
+        state.startX = e.clientX
+        state.startY = e.clientY
+        state.startWidth = editorSettings.toolbarFloating.width
+        state.startHeight = editorSettings.toolbarFloating.height
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'nwse-resize'
-        document.body.style.pointerEvents = 'none'
-        toolbar.style.pointerEvents = 'auto'
         return
       }
       
@@ -1277,37 +1263,33 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       if (target.closest('.toolbar-drag-handle')) {
         e.preventDefault()
         e.stopPropagation()
-        isDragging = true
-        startX = e.clientX
-        startY = e.clientY
-        startLeft = editorSettings.toolbarFloating.x
-        startTop = editorSettings.toolbarFloating.y
+        state.isDragging = true
+        state.startX = e.clientX
+        state.startY = e.clientY
+        state.startLeft = editorSettings.toolbarFloating.x
+        state.startTop = editorSettings.toolbarFloating.y
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'grabbing'
-        document.body.style.pointerEvents = 'none'
-        toolbar.style.pointerEvents = 'auto'
       }
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
+      if (state.isDragging) {
         e.preventDefault()
-        e.stopPropagation()
-        const deltaX = e.clientX - startX
-        const deltaY = e.clientY - startY
-        const newX = Math.max(0, Math.min(startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
-        const newY = Math.max(0, Math.min(startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
+        const deltaX = e.clientX - state.startX
+        const deltaY = e.clientY - state.startY
+        const newX = Math.max(0, Math.min(state.startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
+        const newY = Math.max(0, Math.min(state.startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
         editorSettings.setToolbarFloating({
           x: newX,
           y: newY,
         })
-      } else if (isResizing) {
+      } else if (state.isResizing) {
         e.preventDefault()
-        e.stopPropagation()
-        const deltaX = e.clientX - startX
-        const deltaY = e.clientY - startY
-        const newWidth = Math.max(56, Math.min(startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
-        const newHeight = Math.max(100, Math.min(startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
+        const deltaX = e.clientX - state.startX
+        const deltaY = e.clientY - state.startY
+        const newWidth = Math.max(56, Math.min(state.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
+        const newHeight = Math.max(100, Math.min(state.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
         editorSettings.setToolbarFloating({
           width: newWidth,
           height: newHeight,
@@ -1315,38 +1297,30 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
     }
 
-    const handleMouseUp = (e: MouseEvent) => {
-      if (isDragging || isResizing) {
-        e.preventDefault()
-        e.stopPropagation()
+    const handleMouseUp = () => {
+      if (state.isDragging || state.isResizing) {
         document.body.style.userSelect = ''
         document.body.style.cursor = ''
-        document.body.style.pointerEvents = ''
-        if (toolbar) {
-          toolbar.style.pointerEvents = ''
-        }
       }
-      isDragging = false
-      isResizing = false
+      state.isDragging = false
+      state.isResizing = false
     }
 
-    // Добавляем обработчики на toolbar для mousedown
-    toolbar.addEventListener('mousedown', handleMouseDown, { capture: true })
-    // Добавляем обработчики на document для mousemove и mouseup
-    document.addEventListener('mousemove', handleMouseMove, { capture: true, passive: false })
-    document.addEventListener('mouseup', handleMouseUp, { capture: true })
+    // Добавляем обработчики
+    toolbar.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    // Также обрабатываем mouseleave для надежности
+    document.addEventListener('mouseleave', handleMouseUp)
 
     return () => {
-      toolbar.removeEventListener('mousedown', handleMouseDown, { capture: true })
-      document.removeEventListener('mousemove', handleMouseMove, { capture: true })
-      document.removeEventListener('mouseup', handleMouseUp, { capture: true })
-      // Восстанавливаем стили при размонтировании
+      toolbar.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('mouseleave', handleMouseUp)
+      // Восстанавливаем стили
       document.body.style.userSelect = ''
       document.body.style.cursor = ''
-      document.body.style.pointerEvents = ''
-      if (toolbar) {
-        toolbar.style.pointerEvents = ''
-      }
     }
   }, [editorSettings])
 
@@ -1926,10 +1900,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       {contextMenu.open && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 min-w-[180px] rounded-lg border border-border/60 bg-popover p-1 shadow-lg"
+          className="fixed z-[10002] min-w-[180px] rounded-lg border border-border/60 bg-popover p-1 shadow-lg"
           style={{
             left: `${contextMenu.x}px`,
             top: `${contextMenu.y}px`,
+            transform: 'none',
           }}
           onClick={(e) => e.stopPropagation()}
         >
