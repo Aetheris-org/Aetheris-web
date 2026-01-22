@@ -556,6 +556,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const [slashActive, setSlashActive] = useState(false)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const dragStateRef = useRef<{
+    startX: number
+    startY: number
+    startLeft: number
+    startTop: number
+    startWidth: number
+    startHeight: number
+    isDragging: boolean
+    isResizing: boolean
+  } | null>(null)
 
   useEffect(() => {
     _setSlashActive = setSlashActive
@@ -1254,16 +1264,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     if (editorSettings.toolbarPosition !== 'floating' || !toolbarRef.current) return
 
     const toolbar = toolbarRef.current
-    const state = {
-      startX: 0,
-      startY: 0,
-      startLeft: 0,
-      startTop: 0,
-      startWidth: 0,
-      startHeight: 0,
-      isDragging: false,
-      isResizing: false,
+    if (!dragStateRef.current) {
+      dragStateRef.current = {
+        startX: 0,
+        startY: 0,
+        startLeft: 0,
+        startTop: 0,
+        startWidth: 0,
+        startHeight: 0,
+        isDragging: false,
+        isResizing: false,
+      }
     }
+    const state = dragStateRef.current
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -1304,9 +1317,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
     let rafId: number | null = null
     let snapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
+    let lastUpdateTime = 0
+    const UPDATE_THROTTLE = 16 // ~60fps
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (!state.isDragging && !state.isResizing) return
+      // Проверяем состояние из ref, чтобы избежать проблем с замыканиями
+      if (!dragStateRef.current || (!dragStateRef.current.isDragging && !dragStateRef.current.isResizing)) return
+      
+      e.preventDefault()
+      e.stopPropagation()
+      
+      const now = performance.now()
+      // Throttle updates для плавности, но не пропускаем события
+      if (now - lastUpdateTime < UPDATE_THROTTLE && rafId !== null) {
+        return
+      }
+      lastUpdateTime = now
       
       // Отменяем предыдущий кадр если он есть
       if (rafId !== null) {
@@ -1315,12 +1341,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       
       rafId = requestAnimationFrame(() => {
         rafId = null
-        if (state.isDragging) {
-          e.preventDefault()
-          const deltaX = e.clientX - state.startX
-          const deltaY = e.clientY - state.startY
-          let newX = state.startLeft + deltaX
-          let newY = state.startTop + deltaY
+        // Проверяем состояние еще раз внутри RAF
+        if (!dragStateRef.current) return
+        const currentState = dragStateRef.current
+        
+        if (currentState.isDragging) {
+          const deltaX = e.clientX - currentState.startX
+          const deltaY = e.clientY - currentState.startY
+          let newX = currentState.startLeft + deltaX
+          let newY = currentState.startTop + deltaY
           
           // Snap to edges logic
           const snapThreshold = 50 // пикселей от края для фиксации
@@ -1363,28 +1392,27 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             snapZone = newSnapZone
             // Добавляем/удаляем класс для подсветки зоны
             if (toolbar) {
-              toolbar.classList.toggle('toolbar-snap-left', newSnapZone === 'left')
-              toolbar.classList.toggle('toolbar-snap-right', newSnapZone === 'right')
-              toolbar.classList.toggle('toolbar-snap-top', newSnapZone === 'top')
-              toolbar.classList.toggle('toolbar-snap-bottom', newSnapZone === 'bottom')
+              toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
+              if (newSnapZone) {
+                toolbar.classList.add(`toolbar-snap-${newSnapZone}`)
+              }
             }
           }
           
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1311',message:'Toolbar drag move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newX,newY,isDragging:state.isDragging,snapZone:newSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1311',message:'Toolbar drag move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newX,newY,isDragging:currentState.isDragging,snapZone:newSnapZone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
           editorSettings.setToolbarFloating({
             x: newX,
             y: newY,
           })
-        } else if (state.isResizing) {
-          e.preventDefault()
-          const deltaX = e.clientX - state.startX
-          const deltaY = e.clientY - state.startY
-          const newWidth = Math.max(56, Math.min(state.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
-          const newHeight = Math.max(100, Math.min(state.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
+        } else if (currentState.isResizing) {
+          const deltaX = e.clientX - currentState.startX
+          const deltaY = e.clientY - currentState.startY
+          const newWidth = Math.max(56, Math.min(currentState.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
+          const newHeight = Math.max(100, Math.min(currentState.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1340',message:'Toolbar resize move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newWidth,newHeight,isResizing:state.isResizing},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1340',message:'Toolbar resize move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newWidth,newHeight,isResizing:currentState.isResizing},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
           // #endregion
           editorSettings.setToolbarFloating({
             width: newWidth,
@@ -1399,7 +1427,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         cancelAnimationFrame(rafId)
         rafId = null
       }
-      if (state.isDragging || state.isResizing) {
+      if (!dragStateRef.current) return
+      const currentState = dragStateRef.current
+      if (currentState.isDragging || currentState.isResizing) {
         document.body.style.userSelect = ''
         document.body.style.cursor = ''
         // Убираем классы подсветки при отпускании
@@ -1408,8 +1438,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         }
         snapZone = null
       }
-      state.isDragging = false
-      state.isResizing = false
+      currentState.isDragging = false
+      currentState.isResizing = false
     }
 
     // Добавляем обработчики
@@ -1768,7 +1798,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           style={{ borderRadius: 'var(--radius-md)' }}
         >
           {/* Верхняя панель: Undo Redo Columns | Полноэкранный режим */}
-          <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2">
+          <div className={cn(
+            "flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-2",
+            isFullscreen && "sticky top-0 z-10 bg-background/95 backdrop-blur-sm"
+          )}>
             <div className="flex items-center gap-3">
               <Button type="button" variant="ghost" size="icon" aria-label={t('editor.undo')} className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={!editor?.can().chain().focus().undo().run()} onClick={() => editor?.chain().focus().undo().run()} title={t('editor.undo')}>
                 <Undo className="h-3.5 w-3.5" />
@@ -1836,7 +1869,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           </div>
 
           {/* Нижняя панель — счётчики */}
-          <div className="flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
+          <div className={cn(
+            "flex items-center justify-end gap-4 border-t border-border/40 bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground",
+            isFullscreen && "sticky bottom-0 z-10 bg-background/95 backdrop-blur-sm"
+          )}>
             <span>{wordCount} {t('editor.words')}</span>
             {characterLimit ? (
               <span className={cn(characterCount > characterLimit * 0.9 && 'text-amber-600 dark:text-amber-400', characterCount >= characterLimit && 'text-destructive font-medium')}>
