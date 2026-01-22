@@ -1262,11 +1262,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     return baseStyles
   }, [editorSettings, isFullscreen])
 
-  // Обработчики для drag-and-drop тулбара (floating и left/right с drag handle)
+  // Обработчики для drag-and-drop тулбара (floating и все позиции с drag handle)
   useEffect(() => {
     const isDraggable = editorSettings.toolbarPosition === 'floating' || 
                        editorSettings.toolbarPosition === 'left' || 
-                       editorSettings.toolbarPosition === 'right'
+                       editorSettings.toolbarPosition === 'right' ||
+                       editorSettings.toolbarPosition === 'top' ||
+                       editorSettings.toolbarPosition === 'bottom'
     if (!isDraggable || !toolbarRef.current) return
 
     let cleanup: (() => void) | null = null
@@ -1317,12 +1319,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         state.isDragging = true
         state.startX = e.clientX
         state.startY = e.clientY
-        // Для left/right позиций используем текущие координаты из стилей, для floating - из настроек
+        // Для floating позиции используем координаты из настроек
         if (editorSettings.toolbarPosition === 'floating') {
           state.startLeft = editorSettings.toolbarFloating.x
           state.startTop = editorSettings.toolbarFloating.y
         } else {
-          // Для left/right позиций при перетаскивании переключаемся в floating режим
+          // Для left/right/top/bottom позиций при перетаскивании переключаемся в floating режим
           const rect = toolbar.getBoundingClientRect()
           state.startLeft = rect.left
           state.startTop = rect.top
@@ -1338,7 +1340,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'grabbing'
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1266',message:'Toolbar drag started',data:{startX:state.startX,startY:state.startY,startLeft:state.startLeft,startTop:state.startTop,currentX:editorSettings.toolbarFloating.x,currentY:editorSettings.toolbarFloating.y},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1309',message:'Toolbar drag started',data:{startX:state.startX,startY:state.startY,startLeft:state.startLeft,startTop:state.startTop,currentPosition:editorSettings.toolbarPosition},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
         // #endregion
       }
     }
@@ -1626,10 +1628,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             )}
             style={getToolbarStyles()}
           >
-            {/* Drag handle - показываем для всех позиций, кроме top/bottom */}
-            {(editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && (
-              <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center z-10 pointer-events-auto">
-                <div className="h-1 w-8 rounded-full bg-primary/20" />
+            {/* Drag handle - показываем для всех позиций */}
+            {editorSettings.toolbarPosition !== 'floating' && (
+              <div className={cn(
+                "toolbar-drag-handle absolute cursor-grab active:cursor-grabbing bg-primary/5 flex items-center justify-center z-10 pointer-events-auto",
+                (editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && "top-0 left-0 right-0 h-6 rounded-t-xl",
+                (editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && "left-0 top-0 bottom-0 w-6 rounded-l-xl"
+              )}>
+                {(editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') && (
+                  <div className="h-1 w-8 rounded-full bg-primary/20" />
+                )}
+                {(editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom') && (
+                  <div className="w-1 h-8 rounded-full bg-primary/20" />
+                )}
               </div>
             )}
             {/* Resize handle - только для floating */}
@@ -1650,8 +1661,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   : '',
                 // Добавляем отступ сверху для drag handle в floating режиме
                 // Минимальный padding для компактности при узкой ширине
-                // Добавляем отступ сверху для drag handle
-              (editorSettings.toolbarPosition === 'floating' || editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right') ? 'pt-8 pb-4 px-1' : 'px-2 py-2'
+                // Добавляем отступ для drag handle
+                editorSettings.toolbarPosition === 'floating' 
+                  ? 'pt-8 pb-4 px-1' 
+                  : (editorSettings.toolbarPosition === 'left' || editorSettings.toolbarPosition === 'right')
+                  ? 'pt-8 pb-4 px-1'
+                  : (editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom')
+                  ? 'pl-8 pr-4 py-1'
+                  : 'px-2 py-2'
               )}
               style={
                 editorSettings.toolbarPosition === 'floating'
@@ -1808,13 +1825,15 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             </div>
             {editorSettings.toolbarPosition !== 'floating' && (
               <button type="button" aria-label={t('editor.collapse')} className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'ml-2' : 'mt-2'
+                'flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
+                  ? 'h-10 w-10 ml-2' 
+                  : 'h-10 w-10 mt-2'
               )} title={t('editor.collapse')} onClick={() => setFormatPanelOpen(false)}>
-                {editorSettings.toolbarPosition === 'left' && <ChevronLeft className="h-4 w-4" />}
-                {editorSettings.toolbarPosition === 'right' && <ChevronRight className="h-4 w-4" />}
-                {editorSettings.toolbarPosition === 'top' && <ChevronUp className="h-4 w-4" />}
-                {editorSettings.toolbarPosition === 'bottom' && <ChevronDown className="h-4 w-4" />}
+                {editorSettings.toolbarPosition === 'left' && <ChevronLeft className="h-5 w-5" />}
+                {editorSettings.toolbarPosition === 'right' && <ChevronRight className="h-5 w-5" />}
+                {editorSettings.toolbarPosition === 'top' && <ChevronUp className="h-5 w-5" />}
+                {editorSettings.toolbarPosition === 'bottom' && <ChevronDown className="h-5 w-5" />}
               </button>
             )}
           </div>
