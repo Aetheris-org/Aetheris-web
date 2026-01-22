@@ -572,7 +572,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === editorWrapperRef.current)
+      const newIsFullscreen = !!document.fullscreenElement && document.fullscreenElement === editorWrapperRef.current
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:574',message:'Fullscreen state changed',data:{isFullscreen:newIsFullscreen,fullscreenElement:!!document.fullscreenElement,isEditorWrapper:document.fullscreenElement === editorWrapperRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+      // #endregion
+      setIsFullscreen(newIsFullscreen)
     }
     document.addEventListener('fullscreenchange', onFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
@@ -992,6 +996,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const clickX = event.clientX
     const clickY = event.clientY
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:992',message:'Context menu click coordinates',data:{clientX:clickX,clientY:clickY,pageX:event.pageX,pageY:event.pageY,scrollX:window.scrollX,scrollY:window.scrollY},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
     const view = editor.view
     
     // Получаем позицию курсора из координат мыши
@@ -1023,6 +1031,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
     // Позиционируем меню прямо в точке клика - без смещений и проверок границ
     // Меню само скорректируется через CSS, если не поместится
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1026',message:'Setting context menu position',data:{x:clickX,y:clickY,menuType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     setContextMenu({
       open: true,
       x: clickX,
@@ -1046,6 +1057,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     }
 
     if (contextMenu.open) {
+      // #region agent log
+      setTimeout(() => {
+        if (contextMenuRef.current) {
+          const rect = contextMenuRef.current.getBoundingClientRect();
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1048',message:'Context menu rendered check',data:{setX:contextMenu.x,setY:contextMenu.y,actualLeft:rect.left,actualTop:rect.top,actualWidth:rect.width,actualHeight:rect.height,windowWidth:window.innerWidth,windowHeight:window.innerHeight,scrollX:window.scrollX,scrollY:window.scrollY},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        }
+      }, 0);
+      // #endregion
       document.addEventListener('mousedown', handleClickOutside)
       document.addEventListener('keydown', handleEscape)
       return () => {
@@ -1053,7 +1072,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         document.removeEventListener('keydown', handleEscape)
       }
     }
-  }, [contextMenu.open])
+  }, [contextMenu.open, contextMenu.x, contextMenu.y])
 
   // Вставка медиа из файла (общая логика для input и drag-and-drop)
   const insertMediaFromFile = useCallback(
@@ -1223,8 +1242,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1225',message:'Toolbar styles calculated',data:{toolbarPosition,isFullscreen,zIndex:baseStyles.zIndex,styles:baseStyles},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+    // #endregion
+    
     return baseStyles
-  }, [editorSettings])
+  }, [editorSettings, isFullscreen])
 
   // Обработчики для drag-and-drop тулбара
   useEffect(() => {
@@ -1256,6 +1279,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         state.startHeight = editorSettings.toolbarFloating.height
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'nwse-resize'
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1252',message:'Toolbar resize started',data:{startX:state.startX,startY:state.startY,startWidth:state.startWidth,startHeight:state.startHeight},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         return
       }
       
@@ -1270,34 +1296,53 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         state.startTop = editorSettings.toolbarFloating.y
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'grabbing'
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1266',message:'Toolbar drag started',data:{startX:state.startX,startY:state.startY,startLeft:state.startLeft,startTop:state.startTop,currentX:editorSettings.toolbarFloating.x,currentY:editorSettings.toolbarFloating.y},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
       }
     }
 
+    let rafId: number | null = null
     const handleMouseMove = (e: MouseEvent) => {
-      if (state.isDragging) {
-        e.preventDefault()
-        const deltaX = e.clientX - state.startX
-        const deltaY = e.clientY - state.startY
-        const newX = Math.max(0, Math.min(state.startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
-        const newY = Math.max(0, Math.min(state.startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
-        editorSettings.setToolbarFloating({
-          x: newX,
-          y: newY,
-        })
-      } else if (state.isResizing) {
-        e.preventDefault()
-        const deltaX = e.clientX - state.startX
-        const deltaY = e.clientY - state.startY
-        const newWidth = Math.max(56, Math.min(state.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
-        const newHeight = Math.max(100, Math.min(state.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
-        editorSettings.setToolbarFloating({
-          width: newWidth,
-          height: newHeight,
-        })
-      }
+      if (rafId) return // Предотвращаем множественные вызовы
+      
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        if (state.isDragging) {
+          e.preventDefault()
+          const deltaX = e.clientX - state.startX
+          const deltaY = e.clientY - state.startY
+          const newX = Math.max(0, Math.min(state.startLeft + deltaX, window.innerWidth - editorSettings.toolbarFloating.width))
+          const newY = Math.max(0, Math.min(state.startTop + deltaY, window.innerHeight - editorSettings.toolbarFloating.height))
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1277',message:'Toolbar drag move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newX,newY,isDragging:state.isDragging},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+          editorSettings.setToolbarFloating({
+            x: newX,
+            y: newY,
+          })
+        } else if (state.isResizing) {
+          e.preventDefault()
+          const deltaX = e.clientX - state.startX
+          const deltaY = e.clientY - state.startY
+          const newWidth = Math.max(56, Math.min(state.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
+          const newHeight = Math.max(100, Math.min(state.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1288',message:'Toolbar resize move',data:{clientX:e.clientX,clientY:e.clientY,deltaX,deltaY,newWidth,newHeight,isResizing:state.isResizing},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+          editorSettings.setToolbarFloating({
+            width: newWidth,
+            height: newHeight,
+          })
+        }
+      })
     }
 
     const handleMouseUp = () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId)
+        rafId = null
+      }
       if (state.isDragging || state.isResizing) {
         document.body.style.userSelect = ''
         document.body.style.cursor = ''
@@ -1312,6 +1357,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     document.addEventListener('mouseup', handleMouseUp)
     // Также обрабатываем mouseleave для надежности
     document.addEventListener('mouseleave', handleMouseUp)
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1310',message:'Toolbar drag handlers attached',data:{toolbarExists:!!toolbar,toolbarPosition:editorSettings.toolbarPosition},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
 
     return () => {
       toolbar.removeEventListener('mousedown', handleMouseDown)
@@ -1331,6 +1380,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     createPortal(
       editor ? (
         <>
+          {/* #region agent log */}
+          {(() => {
+            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RichTextEditor.tsx:1332',message:'Toolbar portal rendering',data:{editorExists:!!editor,isFullscreen,toolbarPosition:editorSettings.toolbarPosition,isFormatPanelOpen,toolbarFloating:editorSettings.toolbarFloating},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+            return null;
+          })()}
+          {/* #endregion */}
           {/* Кнопка-блочек у самого края экрана — только когда панель скрыта */}
           {!isFormatPanelOpen && (
             <button
@@ -1356,7 +1411,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           <div
             ref={toolbarRef}
             className={cn(
-              'hidden flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md md:flex transition-transform duration-200 ease-out',
+              'flex flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md transition-transform duration-200 ease-out',
               editorSettings.toolbarPosition === 'floating' && 'toolbar-drag-handle',
               editorSettings.toolbarPosition === 'left' && 'w-14',
               editorSettings.toolbarPosition === 'right' && 'w-14',
@@ -1896,8 +1951,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         </DialogContent>
       </Dialog>
 
-      {/* Контекстное меню */}
-      {contextMenu.open && (
+      {/* Контекстное меню - через portal для правильного позиционирования */}
+      {typeof document !== 'undefined' && contextMenu.open && createPortal(
         <div
           ref={contextMenuRef}
           className="fixed z-[10002] min-w-[180px] rounded-lg border border-border/60 bg-popover p-1 shadow-lg"
@@ -2017,7 +2072,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Диалог настроек редактора */}
