@@ -1000,20 +1000,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       const menuType: 'empty' | 'text' = 'empty'
       const menuWidth = 180
       const menuHeight = 120
-      const offsetX = 2 // Небольшое смещение от курсора по X
-      const offsetY = 2 // Небольшое смещение от курсора по Y
-      let x = event.clientX + offsetX
-      let y = event.clientY + offsetY
+      // Позиционируем меню прямо у курсора
+      let x = event.clientX
+      let y = event.clientY
       
       // Проверяем границы по ширине
       if (x + menuWidth > window.innerWidth - 10) {
-        x = event.clientX - menuWidth - offsetX // Размещаем слева от курсора
+        x = event.clientX - menuWidth // Размещаем слева от курсора
       }
       if (x < 10) x = 10
       
       // Проверяем границы по высоте - привязываем к позиции курсора
       if (y + menuHeight > window.innerHeight - 10) {
-        y = event.clientY - menuHeight - offsetY // Размещаем выше курсора
+        y = event.clientY - menuHeight // Размещаем выше курсора
       }
       if (y < 10) y = 10
       
@@ -1041,20 +1040,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     // Позиция у курсора (место клика правой кнопкой)
     const menuWidth = 180
     const menuHeight = menuType === 'empty' ? 120 : 200
-    const offsetX = 2 // Небольшое смещение от курсора по X
-    const offsetY = 2 // Небольшое смещение от курсора по Y
-    let x = event.clientX + offsetX
-    let y = event.clientY + offsetY
+    // Позиционируем меню прямо у курсора
+    let x = event.clientX
+    let y = event.clientY
     
     // Проверяем границы по ширине
     if (x + menuWidth > window.innerWidth - 10) {
-      x = event.clientX - menuWidth - offsetX // Размещаем слева от курсора
+      x = event.clientX - menuWidth // Размещаем слева от курсора
     }
     if (x < 10) x = 10
     
     // Проверяем границы по высоте - привязываем к позиции курсора
     if (y + menuHeight > window.innerHeight - 10) {
-      y = event.clientY - menuHeight - offsetY // Размещаем выше курсора
+      y = event.clientY - menuHeight // Размещаем выше курсора
     }
     if (y < 10) y = 10
 
@@ -1238,22 +1236,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       baseStyles.zIndex = 9999
       
       // Устанавливаем позицию для не-floating тулбара
+      // Transform будет применяться через классы Tailwind, чтобы не конфликтовать с анимацией
       if (toolbarPosition === 'left') {
         baseStyles.left = '0'
         baseStyles.top = '50%'
-        baseStyles.transform = 'translateY(-50%)'
       } else if (toolbarPosition === 'right') {
         baseStyles.right = '0'
         baseStyles.top = '50%'
-        baseStyles.transform = 'translateY(-50%)'
       } else if (toolbarPosition === 'top') {
         baseStyles.top = '0'
         baseStyles.left = '50%'
-        baseStyles.transform = 'translateX(-50%)'
       } else if (toolbarPosition === 'bottom') {
         baseStyles.bottom = '0'
         baseStyles.left = '50%'
-        baseStyles.transform = 'translateX(-50%)'
       }
     }
     
