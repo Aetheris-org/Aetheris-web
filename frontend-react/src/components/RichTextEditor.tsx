@@ -1506,12 +1506,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           <div
             ref={toolbarRef}
             className={cn(
-              'flex flex-col items-center rounded-2xl border border-border/50 bg-card/95 py-2 shadow-md transition-transform duration-200 ease-out',
+              'flex flex-col items-center rounded-2xl border border-border/50 bg-card/95 shadow-md transition-transform duration-200 ease-out relative',
               editorSettings.toolbarPosition === 'floating' && 'toolbar-drag-handle',
-              editorSettings.toolbarPosition === 'left' && 'w-14',
-              editorSettings.toolbarPosition === 'right' && 'w-14',
-              editorSettings.toolbarPosition === 'top' && 'w-auto flex-row h-14 px-2',
-              editorSettings.toolbarPosition === 'bottom' && 'w-auto flex-row h-14 px-2',
+              editorSettings.toolbarPosition === 'left' && 'w-14 py-2',
+              editorSettings.toolbarPosition === 'right' && 'w-14 py-2',
+              editorSettings.toolbarPosition === 'top' && 'w-auto h-14 px-2 py-0',
+              editorSettings.toolbarPosition === 'bottom' && 'w-auto h-14 px-2 py-0',
               editorSettings.toolbarPosition === 'floating' && 'w-14',
               editorSettings.toolbarPosition === 'left' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : '-translate-x-[calc(100%+1rem)] -translate-y-1/2'),
               editorSettings.toolbarPosition === 'right' && (isFormatPanelOpen ? 'translate-x-0 -translate-y-1/2' : 'translate-x-[calc(100%+1rem)] -translate-y-1/2'),
@@ -1522,17 +1522,25 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           >
             {editorSettings.toolbarPosition === 'floating' && (
               <>
-                <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center">
+                <div className="toolbar-drag-handle absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing bg-primary/5 rounded-t-xl flex items-center justify-center z-10 pointer-events-auto">
                   <div className="h-1 w-8 rounded-full bg-primary/20" />
                 </div>
-                <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors" />
+                <div className="toolbar-resize-handle absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-primary/20 rounded-tl-lg hover:bg-primary/30 transition-colors z-10 pointer-events-auto" />
               </>
             )}
             <div className={cn(
-              'flex gap-0.5 overflow-y-auto px-2',
-              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'flex-row overflow-x-auto' : 'flex-col',
-              editorSettings.toolbarPosition === 'floating' ? 'h-full flex-col' : 'max-h-[min(70vh,520px)]',
-              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' ? 'max-w-full' : ''
+              'gap-0.5 overflow-y-auto overflow-x-hidden',
+              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
+                ? 'grid grid-flow-col auto-cols-[2rem] overflow-x-auto' 
+                : 'grid grid-flow-row auto-rows-[2rem]',
+              editorSettings.toolbarPosition === 'floating' 
+                ? 'h-full w-full' 
+                : 'max-h-[min(70vh,520px)]',
+              editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom' 
+                ? 'max-w-full' 
+                : '',
+              // Добавляем отступ сверху для drag handle в floating режиме
+              editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-2' : 'px-2 py-2'
             )}>
               {editorSettings.toolbarButtons.bold && formatButtons.find(b => b.label === t('editor.ctxBold')) && (
                 <button type="button" aria-label={t('editor.ctxBold')} className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', editor.isActive('bold') && 'bg-primary/10 text-primary')} disabled={!editor.can().chain().focus().toggleBold().run()} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run() }} title={t('editor.ctxBold')}>
