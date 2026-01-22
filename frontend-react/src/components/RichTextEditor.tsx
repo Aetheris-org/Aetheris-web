@@ -1560,17 +1560,21 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                   ? 'max-w-full' 
                   : '',
                 // Добавляем отступ сверху для drag handle в floating режиме
-                editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-2' : 'px-2 py-2'
+                // Минимальный padding для компактности при узкой ширине
+                editorSettings.toolbarPosition === 'floating' ? 'pt-8 pb-4 px-1' : 'px-2 py-2'
               )}
               style={
                 editorSettings.toolbarPosition === 'floating'
                   ? {
-                      // Адаптивная сетка: автоматически определяет количество колонок на основе доступной ширины
-                      // Иконки фиксированного размера 2rem, перестраиваются по сетке при изменении размера тулбара
-                      gridTemplateColumns: 'repeat(auto-fit, 2rem)',
-                      gridAutoRows: '2rem',
+                      // Адаптивная сетка: используем auto-fill для точного расчета колонок
+                      // Иконки фиксированного размера 2rem (32px), перестраиваются по сетке при изменении размера тулбара
+                      // auto-fill создает только те колонки, которые помещаются, без растягивания
+                      gridTemplateColumns: 'repeat(auto-fill, 32px)',
+                      gridAutoRows: '32px',
                       gridAutoFlow: 'row',
                       justifyItems: 'center',
+                      // Минимальный gap для компактности
+                      gap: '0.125rem',
                     }
                   : editorSettings.toolbarPosition === 'top' || editorSettings.toolbarPosition === 'bottom'
                   ? {
