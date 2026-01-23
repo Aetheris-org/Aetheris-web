@@ -38,7 +38,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { getArticle, reactArticle, deleteArticle, incrementArticleView, incrementArticleViews } from '@/api/articles'
-import type { Article } from '@/types/article'
+import type { Article, ArticlesResponse } from '@/types/article'
 import { 
   getArticleComments, 
   createComment, 
@@ -632,6 +632,29 @@ export default function ArticlePage() {
         dislikes: updatedArticle.dislikes ?? currentArticle?.dislikes ?? 0,
       }
       queryClient.setQueryData(['article', id, user?.id], articleWithPreservedFields)
+      
+      // Также обновляем кеш на главной странице, если статья там есть
+      queryClient.setQueriesData<ArticlesResponse>(
+        { queryKey: ['articles'], exact: false },
+        (oldData) => {
+          if (!oldData?.articles) return oldData
+          const articleIndex = oldData.articles.findIndex(a => a.id === id)
+          if (articleIndex === -1) return oldData
+          
+          const updatedArticles = [...oldData.articles]
+          updatedArticles[articleIndex] = {
+            ...updatedArticles[articleIndex],
+            userReaction: updatedArticle.userReaction ?? null,
+            likes: updatedArticle.likes ?? 0,
+            dislikes: updatedArticle.dislikes ?? 0,
+          }
+          
+          return {
+            ...oldData,
+            articles: updatedArticles,
+          }
+        }
+      )
     },
     gcTime: 0,
     onError: (error: any, _variables, context) => {
@@ -705,15 +728,15 @@ export default function ArticlePage() {
 
       if (variables.currentlySaved === false) registerActivity('add_bookmark')
       
-      
-      // Инвалидируем список закладок
-      await queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+      // Инвалидируем список закладок для обновления на странице ReadingList
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
       
       // Устанавливаем новое значение в кеш для немедленного обновления UI
       queryClient.setQueryData(queryKey, newValue)
       
-      // Помечаем query как stale, чтобы при следующем монтировании он обновился
-      await queryClient.invalidateQueries({ queryKey, refetchType: 'none' })
+      // Также обновляем кеш для конкретной статьи, если она есть
+      const articleQueryKey = ['article', variables.articleId, user?.id]
+      queryClient.invalidateQueries({ queryKey: articleQueryKey, refetchType: 'none' })
     },
     onError: (error, _variables, context) => {
       // Откатываем optimistic update при ошибке

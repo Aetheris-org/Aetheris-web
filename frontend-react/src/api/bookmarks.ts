@@ -169,7 +169,7 @@ export async function addBookmark(articleId: string): Promise<Bookmark> {
     // Проверяем текущее состояние перед toggle
     const currentlyBookmarked = await isBookmarked(articleId);
     
-    // Если уже добавлена, просто возвращаем существующую закладку
+    // Если уже добавлена, получаем существующую закладку
     if (currentlyBookmarked) {
       const bookmarks = await getBookmarks(0, 1000);
       const bookmark = bookmarks.find((b) => b.article.id === articleId);
@@ -185,13 +185,18 @@ export async function addBookmark(articleId: string): Promise<Bookmark> {
       throw new Error('Failed to add bookmark');
     }
     
-    // Небольшая задержка для синхронизации базы данных
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    // Получаем созданную закладку
     const bookmarks = await getBookmarks(0, 1000);
     const bookmark = bookmarks.find((b) => b.article.id === articleId);
     
     if (!bookmark) {
+      // Если не найдена сразу, пробуем еще раз через небольшую задержку
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const retryBookmarks = await getBookmarks(0, 1000);
+      const retryBookmark = retryBookmarks.find((b) => b.article.id === articleId);
+      if (retryBookmark) {
+        return retryBookmark;
+      }
       throw new Error('Bookmark not found after creation');
     }
     

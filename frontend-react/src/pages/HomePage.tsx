@@ -242,6 +242,11 @@ export default function HomePage() {
     queryKey: ['collections-home', 3],
     queryFn: () => getCollections({ page: 1, pageSize: 3, sort: 'likes' }),
     staleTime: 5 * 60 * 1000,
+    retry: false, // Не повторять запрос при ошибке (избегаем бесконечной рекурсии)
+    onError: (error) => {
+      // Тихо игнорируем ошибки коллекций, чтобы не ломать главную страницу
+      console.warn('Failed to load collections:', error)
+    },
   })
 
   // Debounce search query
