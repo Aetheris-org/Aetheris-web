@@ -349,10 +349,16 @@ export default function ArticlePage() {
         const articleData = queryClient.getQueryData(['article', id, user.id]) as any
         const commentsData = queryClient.getQueryData(['article-comments', id, user.id]) as any
         
-        // Рефетчим, если:
+        // Рефетчим статью, если:
         // 1. Данных нет
         // 2. userReaction не определен (undefined) - значит данные были загружены до загрузки пользователя
-        const needsArticleRefetch = !articleData || articleData.userReaction === undefined
+        // 3. Или если статья была загружена без userId в queryKey (старая версия кеша)
+        const articleDataWithoutUser = queryClient.getQueryData(['article', id]) as any
+        // Проверяем, была ли статья загружена с userId - если нет, нужно рефетчить
+        const wasLoadedWithUser = articleData && 'userReaction' in articleData
+        const needsArticleRefetch = !articleData || 
+          !wasLoadedWithUser ||
+          (!!articleDataWithoutUser && !articleData)
         const needsCommentsRefetch = !commentsData
         
         if (needsArticleRefetch) {
@@ -362,8 +368,11 @@ export default function ArticlePage() {
               userId: user.id,
               hasData: !!articleData,
               currentUserReaction: articleData?.userReaction,
+              hasDataWithoutUser: !!articleDataWithoutUser,
             })
           }
+          // Инвалидируем старый кеш без userId и рефетчим с userId
+          queryClient.invalidateQueries({ queryKey: ['article', id] })
           queryClient.refetchQueries({ queryKey: ['article', id, user.id] })
         }
         
@@ -610,9 +619,21 @@ export default function ArticlePage() {
         author: currentArticle?.author || updatedArticle.author,
         content: currentArticle?.content || updatedArticle.content || '',
         contentJSON: currentArticle?.contentJSON || updatedArticle.contentJSON,
+        // Убеждаемся, что userReaction правильно установлен
+        userReaction: updatedArticle.userReaction ?? null,
       }
+      // Обновляем кеш с userId
       queryClient.setQueryData(['article', id, user?.id], articleWithPreservedFields)
+      // Также инвалидируем старый кеш без userId на случай, если он есть
+      queryClient.invalidateQueries({ queryKey: ['article', id], refetchType: 'none' })
       // Не показываем toast для toggle действий, чтобы не спамить
+      if (import.meta.env.DEV) {
+        logger.debug('[ArticlePage] Reaction updated:', {
+          articleId: id,
+          userId: user?.id,
+          userReaction: updatedArticle.userReaction,
+        })
+      }
     },
     // Не делать автоматический refetch связанных queries после мутации
     // Мы уже обновили кеш через setQueryData
@@ -649,14 +670,14 @@ export default function ArticlePage() {
 
   // Check if article is bookmarked
   const { data: isSaved = false } = useQuery({
-    queryKey: ['bookmark', article?.id],
+    queryKey: ['bookmark', article?.id, user?.id],
     queryFn: () => article?.id ? isBookmarked(article.id) : Promise.resolve(false),
     enabled: !!article?.id && !!user,
     staleTime: 0, // Всегда проверяем свежесть данных
     refetchOnMount: 'always', // Всегда обновляем при монтировании компонента
     refetchOnWindowFocus: true, // Обновляем при фокусе окна
     refetchOnReconnect: true, // Обновляем при переподключении
-    gcTime: 0, // Не кешируем в памяти (было cacheTime)
+    gcTime: 5 * 60 * 1000, // Кешируем 5 минут для оптимизации
   })
 
   // Bookmark mutation
@@ -670,28 +691,26 @@ export default function ArticlePage() {
     },
     onMutate: async ({ currentlySaved, articleId }) => {
       // Optimistic update: сразу обновляем состояние в кеше
-      const queryKey = ['bookmark', articleId]
+      const queryKey = ['bookmark', articleId, user?.id]
       await queryClient.cancelQueries({ queryKey })
       const previousValue = queryClient.getQueryData(queryKey) ?? false
       // Инвертируем текущее состояние
       const newValue = !currentlySaved
       queryClient.setQueryData(queryKey, newValue)
-      logger.debug('[Bookmark] Optimistic update:', { articleId, currentlySaved, newValue, previousValue })
+      logger.debug('[Bookmark] Optimistic update:', { articleId, currentlySaved, newValue, previousValue, userId: user?.id })
       return { previousValue, queryKey, newValue }
     },
     onSuccess: async (_data, variables, context) => {
-      const queryKey = ['bookmark', variables.articleId]
+      const queryKey = ['bookmark', variables.articleId, user?.id]
       const newValue = context?.newValue ?? !variables.currentlySaved
 
       if (variables.currentlySaved === false) registerActivity('add_bookmark')
       
-      logger.debug('[Bookmark] onSuccess:', { articleId: variables.articleId, newValue, currentlySaved: variables.currentlySaved })
+      logger.debug('[Bookmark] onSuccess:', { articleId: variables.articleId, newValue, currentlySaved: variables.currentlySaved, userId: user?.id })
       
       // Инвалидируем список закладок
       await queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: НЕ делаем refetch, так как он может вернуть старое значение
-      // Полагаемся на optimistic update и refetchOnMount при следующем монтировании компонента
       // Устанавливаем новое значение в кеш для немедленного обновления UI
       queryClient.setQueryData(queryKey, newValue)
       

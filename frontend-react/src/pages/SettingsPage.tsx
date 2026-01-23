@@ -722,6 +722,7 @@ function ProfileSettings() {
   }
 
   // Подтягиваем актуальные аватар и баннер из профиля при открытии настроек
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Добавлена проверка на существование данных перед обновлением
   useEffect(() => {
     const uid = user?.uuid
     if (!uid) return
@@ -730,13 +731,24 @@ function ProfileSettings() {
       .then((profile) => {
         const av = profile.user.avatarUrl ?? null
         const cov = profile.user.coverImageUrl ?? null
-        setFetchedAvatar(av)
-        setFetchedCover(cov)
-        setAvatarPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(av) || av || null))
-        setCoverPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(cov) || cov || null))
-        setUser({ ...u, avatar: av || undefined, coverImage: cov || undefined })
+        // Обновляем только если данные действительно есть в профиле
+        if (av) {
+          setFetchedAvatar(av)
+          setAvatarPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(av) || av || null))
+        }
+        if (cov) {
+          setFetchedCover(cov)
+          setCoverPreview(prev => (prev?.startsWith('blob:')) ? prev : (normalizeR2Url(cov) || cov || null))
+        }
+        // Обновляем user только если данные из профиля отличаются от текущих
+        if (av !== u.avatar || cov !== u.coverImage) {
+          setUser({ ...u, avatar: av || undefined, coverImage: cov || undefined })
+        }
       })
-      .catch((err) => { logger.warn('[ProfileSettings] Failed to load profile for settings', err) })
+      .catch((err) => { 
+        logger.warn('[ProfileSettings] Failed to load profile for settings', err)
+        // Не обновляем данные при ошибке, чтобы не потерять текущие значения
+      })
   }, [user?.uuid, setUser])
 
   useEffect(() => {

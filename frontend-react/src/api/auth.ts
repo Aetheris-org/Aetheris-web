@@ -32,15 +32,21 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-      const usernameFromMeta =
-        (authUser.user_metadata as any)?.username ||
-        (authUser.user_metadata as any)?.name ||
-        authUser.email?.split('@')[0] ||
-        'user';
-      const avatarFromMeta =
-        (authUser.user_metadata as any)?.avatar_url ||
-        (authUser.user_metadata as any)?.picture ||
-        null;
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Отключаем подтягивание данных из Google OAuth
+      // Генерируем рандомные данные вместо использования данных из user_metadata
+      const generateRandomUsername = (userId: string): string => {
+        const adjectives = ['swift', 'bright', 'clever', 'bold', 'quick', 'wise', 'sharp', 'keen', 'smart', 'brave']
+        const nouns = ['coder', 'dev', 'builder', 'creator', 'maker', 'hacker', 'wizard', 'ninja', 'hero', 'star']
+        const randomAdjective = adjectives[Math.abs(userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % adjectives.length]
+        const randomNoun = nouns[Math.abs(userId.split('').reverse().reduce((acc, char) => acc + char.charCodeAt(0), 0)) % nouns.length]
+        const randomNum = Math.abs(userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 10000
+        return `${randomAdjective}_${randomNoun}_${randomNum}`
+      }
+      
+      // Используем рандомный username вместо данных из Google
+      const usernameFromMeta = generateRandomUsername(authUser.id)
+      // Не используем аватарку из Google - всегда null
+      const avatarFromMeta = null
 
     const buildFallbackProfile = () => ({
       id: authUser.id,
@@ -55,6 +61,7 @@ export async function getCurrentUser(): Promise<User | null> {
     })
 
     // helper: ensure profile row exists for auth user (handles missing profiles for OAuth)
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не перезаписываем существующие данные из Google
     const ensureProfile = async () => {
       // check again before insert to avoid duplicates
       const { data: existing, error: existingError } = await supabase
@@ -64,25 +71,36 @@ export async function getCurrentUser(): Promise<User | null> {
         .maybeSingle();
 
       if (existing && !existingError) {
+        // Если профиль уже существует, не перезаписываем его данными из Google
         return existing;
       }
 
-      const { data: upserted, error: upsertError } = await supabase
+      // Создаем новый профиль только если его нет, используя рандомные данные
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем INSERT вместо UPSERT, чтобы не перезаписывать существующие данные
+      const { data: inserted, error: insertError } = await supabase
         .from('profiles')
-        .upsert(
-          {
+        .insert({
           id: authUser.id,
-            username: usernameFromMeta,
-            nickname: usernameFromMeta,
-          avatar: avatarFromMeta,
-          avatar_url: avatarFromMeta,
-          },
-          {
-            onConflict: 'id',
-          }
-        )
+          username: usernameFromMeta,
+          nickname: usernameFromMeta,
+          avatar: avatarFromMeta, // null - не используем данные из Google
+          avatar_url: avatarFromMeta, // null - не используем данные из Google
+        })
         .select()
         .maybeSingle();
+      
+      // Если профиль уже существует (ошибка уникальности), просто возвращаем существующий
+      if (insertError && (insertError as any).code === '23505') {
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        return existing;
+      }
+      
+      const upserted = inserted;
+      const upsertError = insertError;
 
       if (upsertError) {
         const msg = (upsertError as any)?.message || ''
@@ -346,8 +364,8 @@ export async function signInWithOAuth(provider: 'google' | 'github'): Promise<{ 
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        // Минимальные scope для Google, чтобы не тянуть email/avatar в raw_user_meta_data
-        scopes: provider === 'google' ? 'openid profile' : undefined,
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем только openid scope, чтобы не тянуть данные из Google
+        scopes: provider === 'google' ? 'openid' : undefined,
       },
     });
 

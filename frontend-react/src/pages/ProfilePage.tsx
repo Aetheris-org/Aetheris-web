@@ -671,13 +671,20 @@ export default function ProfilePage() {
     .filter((x): x is typeof x & { href: string } => !!x.href)
 
   // Unified media/tag fallbacks
-  const rawAvatar =
-    profile?.user?.avatarUrl ||
-    (profile?.user as any)?.avatar ||
-    (profile?.user as any)?.avatar_url ||
-    (profile?.user as any)?.photo_url ||
-    currentUser?.avatar ||
-    null
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Не используем currentUser?.avatar для чужих профилей
+  // чтобы избежать отображения чужой аватарки
+  const rawAvatar = isOwnProfile
+    ? profile?.user?.avatarUrl ||
+      (profile?.user as any)?.avatar ||
+      (profile?.user as any)?.avatar_url ||
+      (profile?.user as any)?.photo_url ||
+      currentUser?.avatar ||
+      null
+    : profile?.user?.avatarUrl ||
+      (profile?.user as any)?.avatar ||
+      (profile?.user as any)?.avatar_url ||
+      (profile?.user as any)?.photo_url ||
+      null
   const rawCover = isOwnProfile
     ? profile?.user?.coverImageUrl ||
     (profile?.user as any)?.coverImage ||
