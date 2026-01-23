@@ -155,16 +155,6 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
   const { words, images, codeBlocks, longTokensRatio } = extractReadMeta(contentToAnalyze);
 
   // Debug logging
-  logger.debug('[computeReadTimeMinutes]', {
-    articleId: article.id,
-    hasContent: !!article.content,
-    contentType: typeof article.content,
-    contentLength: contentToAnalyze.length,
-    words,
-    images,
-    codeBlocks,
-    longTokensRatio
-  });
 
   // Ensure we have at least some words to work with
   if (!words || Number.isNaN(words) || words < 10) {
@@ -207,13 +197,6 @@ export function transformArticle(article: any, _userId?: string): Article {
   let contentJSON: any = null;
   let content: any = '';
 
-  console.log('[transformArticle] Processing rawContent:', {
-    rawContentType: typeof rawContent,
-    isArray: Array.isArray(rawContent),
-    isObject: rawContent && typeof rawContent === 'object',
-    hasType: rawContent?.type,
-    preview: typeof rawContent === 'string' ? rawContent.substring(0, 200) : JSON.stringify(rawContent).substring(0, 200),
-  });
 
   if (typeof rawContent === 'string') {
     try {
@@ -227,24 +210,8 @@ export function transformArticle(article: any, _userId?: string): Article {
           block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
         );
         
-        console.log('[transformArticle] Parsed string to array:', {
-          arrayLength: parsed.length,
-          isSlateFormat,
-          firstBlock: parsed[0] ? {
-            type: parsed[0].type,
-            hasChildren: Array.isArray(parsed[0].children),
-            hasContent: Array.isArray(parsed[0].content),
-          } : null,
-        });
-        
         if (isSlateFormat) {
-          console.log('[transformArticle] Detected Slate format in string, converting to ProseMirror');
           contentJSON = slateToProseMirror(parsed);
-          console.log('[transformArticle] Converted result:', {
-            hasType: contentJSON.type === 'doc',
-            hasContent: Array.isArray(contentJSON.content),
-            contentLength: contentJSON.content?.length || 0,
-          });
         } else {
           // Не Slate - оборачиваем как есть
           contentJSON = { type: 'doc', content: parsed };
@@ -270,32 +237,15 @@ export function transformArticle(article: any, _userId?: string): Article {
         block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
       );
       
-      console.log('[transformArticle] Processing array, checking Slate format:', {
-        arrayLength: rawContent.length,
-        isSlateFormat,
-        firstBlock: rawContent[0] ? {
-          type: rawContent[0].type,
-          hasChildren: Array.isArray(rawContent[0].children),
-          hasContent: Array.isArray(rawContent[0].content),
-        } : null,
-      });
-      
       if (isSlateFormat) {
         try {
           contentJSON = slateToProseMirror(rawContent);
-          console.log('[transformArticle] Converted Slate array to ProseMirror:', {
-            slateBlocksCount: rawContent.length,
-            proseMirrorHasType: contentJSON.type === 'doc',
-            proseMirrorContentLength: contentJSON.content?.length || 0,
-          });
         } catch (e) {
-          console.error('[transformArticle] Failed to convert Slate to ProseMirror:', e);
           // Fallback: оборачиваем в ProseMirror doc без конвертации
           contentJSON = { type: 'doc', content: rawContent };
         }
       } else {
         // Не Slate формат - оборачиваем как есть
-        console.log('[transformArticle] Not Slate format, wrapping array in doc');
         contentJSON = { type: 'doc', content: rawContent };
       }
     }
@@ -401,57 +351,7 @@ export function transformArticle(article: any, _userId?: string): Article {
     (article as any)?.stats?.views ??
     0;
 
-  // Debug logging for views
-  logger.debug('[transformArticle] views calculation:', {
-    articleId: article.id,
-    rawViews: article.views,
-    views_count: article.views_count,
-    view_count: (article as any)?.view_count,
-    viewsCount: (article as any)?.viewsCount,
-    statsViews: (article as any)?.stats?.views,
-    finalViews: views
-  });
 
-  // Логирование contentJSON для диагностики изображений (работает везде)
-  if (contentJSON) {
-    const hasImages = JSON.stringify(contentJSON).includes('"type":"image"')
-    console.log('[transformArticle] contentJSON created:', {
-      articleId: article.id,
-      hasContentJSON: !!contentJSON,
-      contentJSONType: typeof contentJSON,
-      hasType: contentJSON.type === 'doc',
-      hasContent: Array.isArray(contentJSON.content),
-      contentLength: Array.isArray(contentJSON.content) ? contentJSON.content.length : 0,
-      hasImages,
-      contentJSONPreview: JSON.stringify(contentJSON).substring(0, 300),
-    })
-    
-    if (hasImages) {
-      const findImages = (nodes: any[]): any[] => {
-        const images: any[] = []
-        for (const node of nodes || []) {
-          if (node.type === 'image') images.push(node)
-          if (node.content && Array.isArray(node.content)) {
-            images.push(...findImages(node.content))
-          }
-        }
-        return images
-      }
-      const images = findImages(contentJSON.content || [])
-      console.log('[transformArticle] Images found in contentJSON:', {
-        count: images.length,
-        images: images.map(img => ({
-          src: img.attrs?.src?.substring(0, 100),
-          alt: img.attrs?.alt,
-        })),
-      })
-    }
-  } else {
-    console.warn('[transformArticle] contentJSON is null for article:', article.id, {
-      rawContentType: typeof rawContent,
-      rawContentPreview: typeof rawContent === 'string' ? rawContent.substring(0, 200) : JSON.stringify(rawContent).substring(0, 200),
-    })
-  }
 
   return {
     id: String(article.id),
@@ -508,22 +408,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
   const minViews = typeof params?.minViews === 'number' ? params?.minViews : undefined;
 
   try {
-    logger.debug('[getArticles] Starting fetch with params:', {
-      page,
-      pageSize,
-      sort,
-      difficulty,
-      tags,
-      search,
-      category,
-      authorId,
-      language,
-      publishedFrom,
-      publishedTo,
-      minReadMinutes,
-      minReactions,
-      minViews,
-    });
 
     // Получаем текущего пользователя
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -531,18 +415,8 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       logger.error('[getArticles] Auth error:', authError);
     }
     const userId = user?.id;
-    logger.debug('[getArticles] User ID:', userId);
 
     // Используем Database Function для поиска
-    logger.debug('[getArticles] Calling search_articles RPC with:', {
-      p_search: search || null,
-      p_tags: tags || null,
-      p_difficulty: difficulty || null,
-      p_sort: sort,
-      p_skip: (page - 1) * pageSize,
-      p_take: pageSize,
-      p_user_id: userId || null,
-    });
 
     // Supabase RPC currently supports only these parameters
     const rpcPayload: Record<string, any> = {
@@ -557,7 +431,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
 
     const { data, error } = await supabase.rpc('search_articles', rpcPayload as any);
 
-    logger.debug('[getArticles] RPC response:', { hasData: !!data, dataLength: data?.length, error });
 
     if (error) {
       logger.error('Error fetching articles', error);
@@ -570,43 +443,12 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
 
     // Извлекаем total_count из первой строки результата (COUNT(*) OVER() возвращает одинаковое значение для всех строк)
     const totalCountFromRPC = data[0]?.total_count ? Number(data[0].total_count) : 0;
-    
-    logger.debug('[getArticles] RPC total_count:', totalCountFromRPC);
 
     // Трансформируем данные
     const articles = data.map((item: any) => {
-      console.log('[getArticles] Raw article data from DB:', {
-        id: item.id,
-        title: item.title,
-        category: item.category,
-        hasCategory: !!item.category,
-        categoryType: typeof item.category,
-        allKeys: Object.keys(item),
-        views: item.views,
-        views_count: item.views_count,
-        read_time_minutes: item.read_time_minutes,
-        content: typeof item.content,
-        excerpt: item.excerpt?.substring(0, 100)
-      });
-      logger.debug('[getArticles] Raw article data:', {
-        id: item.id,
-        title: item.title,
-        category: item.category,
-        hasCategory: !!item.category,
-        views: item.views,
-        views_count: item.views_count,
-        read_time_minutes: item.read_time_minutes,
-        content: typeof item.content,
-        excerpt: item.excerpt?.substring(0, 100)
-      });
       return transformArticle(item, userId);
     });
 
-    logger.debug('[getArticles] Applying filters:', {
-      filterCategory: category,
-      articlesCount: articles.length,
-      articlesWithCategories: articles.filter((a: Article) => a.category).map((a: Article) => ({ id: a.id, title: a.title, category: a.category }))
-    });
 
     const filtered = applyClientFilters(articles, {
       category,
@@ -619,10 +461,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       minViews,
     });
 
-    logger.debug('[getArticles] After filtering:', {
-      filteredCount: filtered.length,
-      filteredArticles: filtered.map((a: Article) => ({ id: a.id, title: a.title, category: a.category }))
-    });
 
     const sorted = sortClientArticles(filtered, sort);
 
@@ -632,11 +470,6 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
     // но для пагинации это более точное значение, так как пагинация работает на уровне сервера
     const finalTotal = totalCountFromRPC > 0 ? totalCountFromRPC : sorted.length;
 
-    logger.debug('[getArticles] Final total:', {
-      totalCountFromRPC,
-      filteredCount: sorted.length,
-      finalTotal
-    });
 
     return {
       data: sorted,
@@ -721,15 +554,6 @@ export async function getArticle(id: string): Promise<Article> {
       }
     }
 
-    logger.debug('[getArticle] Raw article data:', {
-      id: data.id,
-      title: data.title,
-      views: data.views,
-      views_count: data.views_count,
-      read_time_minutes: data.read_time_minutes,
-      content: typeof data.content,
-      excerpt: data.excerpt?.substring(0, 100)
-    });
 
     return transformArticle(data, userId)
   } catch (error: any) {
@@ -746,10 +570,7 @@ export async function incrementArticleView(
   userId?: string | number | undefined
 ): Promise<void> {
   try {
-    logger.debug('[incrementArticleView] called with:', { id, idType: typeof id, userId, userIdType: typeof userId });
-
     if (id === undefined || id === null) {
-      logger.debug('[incrementArticleView] skip: id is null/undefined');
       return;
     }
 
@@ -761,10 +582,8 @@ export async function incrementArticleView(
     };
 
     const articleId = normalizeId(id);
-    logger.debug('[incrementArticleView] normalized articleId:', { articleId, originalId: id });
 
     if (articleId === null) {
-      logger.debug('[incrementArticleView] skip: non-numeric id', { id });
       return;
     }
 
@@ -799,15 +618,7 @@ export async function incrementArticleViews(
   userId: string | number | undefined
 ): Promise<void> {
   try {
-    logger.debug('[incrementArticleViews] called with:', {
-      id,
-      idType: typeof id,
-      userId,
-      userIdType: typeof userId
-    });
-
     if (id === undefined || id === null) {
-      logger.debug('[incrementArticleViews] skip: id is null/undefined');
       return;
     }
 
@@ -820,10 +631,8 @@ export async function incrementArticleViews(
     };
 
     const articleId = normalizeId(id);
-    logger.debug('[incrementArticleViews] normalized articleId:', { articleId, originalId: id });
 
     if (articleId === null) {
-      logger.debug('[incrementArticleViews] skip: invalid UUID id', { id });
       return;
     }
 
@@ -836,33 +645,15 @@ export async function incrementArticleViews(
 
     // Вызываем RPC функцию для инкремента просмотров
     try {
-      console.log('[incrementArticleViews] Calling RPC with:', {
-        p_article_id: articleId,
-        p_user_id: userIdStr,
-        articleIdType: typeof articleId,
-        userIdStrType: typeof userIdStr
-      })
-
       const { data, error } = await supabase.rpc('increment_article_views', {
         p_article_id: articleId,
         p_user_id: userIdStr,
       });
 
-      console.log('[incrementArticleViews] RPC response:', { data, error });
-
       if (error) {
         logger.warn('[incrementArticleViews] RPC failed', error);
-        console.error('[incrementArticleViews] RPC failed:', error);
-      } else if (data && data.success === false) {
-        logger.debug('[incrementArticleViews] View not incremented (already counted this hour)', data);
-        console.log('[incrementArticleViews] View not incremented:', data);
-      } else {
-        logger.debug('[incrementArticleViews] Views incremented successfully', data);
-        console.log('[incrementArticleViews] Views incremented successfully:', data);
-      }
     } catch (rpcError) {
       logger.warn('[incrementArticleViews] RPC call failed - function may not exist yet', rpcError);
-      console.error('[incrementArticleViews] RPC call failed:', rpcError);
     }
   } catch (error) {
     logger.warn('[incrementArticleViews] unexpected error', error);
@@ -883,27 +674,6 @@ export async function createArticle(input: {
   category?: string | null;
 }): Promise<Article> {
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        location:'api/articles.ts:680',
-        message:'createArticle called',
-        data:{
-          title: input.title?.substring(0, 50) + '...',
-          excerpt: input.excerpt?.substring(0, 50) + '...',
-          tags: input.tags,
-          difficulty: input.difficulty,
-          hasPreviewImage: Boolean(input.previewImage),
-          hasPublishedAt: Boolean(input.publishedAt)
-        },
-        sessionId:'debug-article-edit',
-        runId:'api-functions'
-      })
-    }).catch(()=>{})
-    // #endregion
-
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -931,29 +701,6 @@ export async function createArticle(input: {
       author_id: user.id,
     };
 
-    logger.debug('[createArticle] Insert data with category:', {
-      hasCategory: !!input.category,
-      category: input.category,
-      insertDataKeys: Object.keys(insertData),
-    });
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        location:'api/articles.ts:704',
-        message:'Executing Supabase INSERT',
-        data:{
-          insertDataKeys: Object.keys(insertData),
-          title: input.title?.substring(0, 50) + '...',
-          author_id: user.id
-        },
-        sessionId:'debug-article-edit',
-        runId:'api-functions'
-      })
-    }).catch(()=>{})
-    // #endregion
 
     const { data, error } = await supabase
       .from('articles')
@@ -999,24 +746,6 @@ export async function updateArticle(
   }
 ): Promise<Article> {
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        location:'api/articles.ts:744',
-        message:'updateArticle called',
-        data:{
-          id: id,
-          inputKeys: Object.keys(input),
-          inputValues: Object.values(input).map(v => typeof v === 'string' ? v.substring(0, 50) + '...' : v)
-        },
-        sessionId:'debug-article-edit',
-        runId:'api-functions'
-      })
-    }).catch(()=>{})
-    // #endregion
-
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -1072,24 +801,6 @@ export async function updateArticle(
     if (input.previewImage !== undefined) updateData.preview_image = input.previewImage;
     if (input.publishedAt !== undefined) updateData.published_at = input.publishedAt;
     if (input.category !== undefined) updateData.category = input.category;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        location:'api/articles.ts:812',
-        message:'Executing Supabase UPDATE',
-        data:{
-          articleId: articleId,
-          updateDataKeys: Object.keys(updateData),
-          updateDataValues: Object.values(updateData).map(v => typeof v === 'string' ? v.substring(0, 50) + '...' : v)
-        },
-        sessionId:'debug-article-edit',
-        runId:'api-functions'
-      })
-    }).catch(()=>{})
-    // #endregion
 
     const { data, error } = await supabase
       .from('articles')
@@ -1207,36 +918,21 @@ export async function reactToArticle(
   reaction: 'like' | 'dislike'
 ): Promise<Article> {
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1205',message:'reactToArticle called',data:{articleId,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-    // #endregion
-    
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1212',message:'Not authenticated',data:{articleId,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-      // #endregion
       throw new Error('Not authenticated');
     }
 
     const validatedArticleId = normalizeArticleId(articleId);
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1219',message:'Checking existing reaction',data:{articleId:validatedArticleId,userId:user.id,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-    // #endregion
-
-    // Упрощённо: прямой toggle + возврат статьи с актуальными данными
+    // Проверяем текущую реакцию
     const { data: existing, error: existingError } = await supabase
       .from('article_reactions')
       .select('reaction')
       .eq('article_id', validatedArticleId)
       .eq('user_id', user.id)
       .maybeSingle();
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1228',message:'Existing reaction check result',data:{articleId:validatedArticleId,existingReaction:existing?.reaction,error:existingError?.message,willToggle:existing?.reaction === reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-    // #endregion
 
     if (existingError && existingError.code !== 'PGRST116') {
       logger.error('Error fetching existing article reaction', existingError);
@@ -1253,15 +949,10 @@ export async function reactToArticle(
         .eq('article_id', validatedArticleId)
         .eq('user_id', user.id);
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1240',message:'Deleting reaction (toggle off)',data:{articleId:validatedArticleId,reaction,error:deleteError?.message},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-      // #endregion
-
       if (deleteError) {
         logger.error('Error deleting article reaction', deleteError);
         throw deleteError;
       }
-      // После удаления userReaction = null
       finalUserReaction = null;
     } else {
       // Добавляем или изменяем реакцию
@@ -1276,15 +967,10 @@ export async function reactToArticle(
           { onConflict: 'article_id,user_id' }
         );
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1254',message:'Upserting reaction',data:{articleId:validatedArticleId,reaction,error:upsertError?.message},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-      // #endregion
-
       if (upsertError) {
         logger.error('Error upserting article reaction', upsertError);
         throw upsertError;
       }
-      // После upsert userReaction = reaction
       finalUserReaction = reaction;
     }
 
@@ -1330,23 +1016,14 @@ export async function reactToArticle(
       throw updateAggError;
     }
 
-    // Возвращаем свежую статью, но поверх ставим пересчитанные значения,
-    // чтобы UI сразу увидел актуальные лайки/дизлайки.
+    // Возвращаем свежую статью с обновленными значениями
     const article = await getArticle(articleId);
-
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем finalUserReaction, который мы уже определили выше
-    // вместо повторного запроса к базе данных, чтобы избежать рассинхронизации
-    const userReaction = finalUserReaction;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1308',message:'Returning article with updated reaction',data:{articleId:validatedArticleId,userReaction,likes:likesCount,dislikes:dislikesCount,articleUserReaction:article?.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
-    // #endregion
 
     return {
       ...article,
       likes: likesCount,
       dislikes: dislikesCount,
-      userReaction, // Используем finalUserReaction вместо запроса к БД
+      userReaction: finalUserReaction,
     };
   } catch (error: any) {
     logger.error('Error in reactToArticle', error);

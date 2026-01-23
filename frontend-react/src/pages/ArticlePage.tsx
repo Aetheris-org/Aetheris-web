@@ -241,16 +241,7 @@ export default function ArticlePage() {
   // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id, user?.id],
-    queryFn: async () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:243',message:'Fetching article',data:{articleId:id,userId:user?.id},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'D'})}).catch(()=>{})
-      // #endregion
-      const articleData = await getArticle(id as string)
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:247',message:'Article fetched',data:{articleId:id,userId:user?.id,userReaction:articleData?.userReaction,likes:articleData?.likes,dislikes:articleData?.dislikes},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'D'})}).catch(()=>{})
-      // #endregion
-      return articleData
-    },
+    queryFn: () => getArticle(id as string),
     enabled: !!id,
     // Статьи кэшируем на 10 минут (контент меняется редко)
     staleTime: 10 * 60 * 1000,
@@ -277,33 +268,19 @@ export default function ArticlePage() {
   // Простой инкремент просмотров через 10 секунд
   useEffect(() => {
     if (!article) {
-      console.log('[ArticlePage] No article, skipping view increment')
       return
     }
 
-    console.log('[ArticlePage] Starting view increment timer for article:', {
-      id: article.id,
-      idType: typeof article.id,
-      userId: user?.id,
-      userIdType: typeof user?.id
-    })
-
     const timer = setTimeout(() => {
-      console.log('[ArticlePage] 10 seconds passed, incrementing views for article:', {
-        articleId: article.id,
-        userId: user?.id
-      })
       incrementArticleViews(article.id, user?.id).then(() => {
-        console.log('[ArticlePage] View increment completed successfully')
         // Обновляем данные статьи в кеше, чтобы отобразить новые просмотры
         queryClient.invalidateQueries({ queryKey: ['article', id, user?.id] })
       }).catch((error) => {
-        console.error('[ArticlePage] Failed to increment views:', error)
+        logger.warn('[ArticlePage] Failed to increment views:', error)
       })
     }, 10000) // 10 секунд - стандартное время для засчета просмотра
 
     return () => {
-      console.log('[ArticlePage] Clearing view increment timer')
       clearTimeout(timer)
     }
   }, [article?.id, user?.id])
@@ -319,33 +296,19 @@ export default function ArticlePage() {
 
   // Засчитываем просмотр спустя 10 секунд пребывания на странице
   useEffect(() => {
-    console.log('[ArticlePage] View increment effect triggered:', {
-      articleId: article?.id,
-      articleIdType: typeof article?.id,
-      userId: user?.id,
-      hasArticle: !!article
-    });
-
-    // incrementArticleView теперь работает с любыми ID (строковыми или числовыми)
     const articleId = article?.id
     if (!articleId) {
-      console.log('[ArticlePage] Skipping view increment: no articleId', { articleId });
       return;
     }
 
     const viewUserId = user?.id ? String(user.id) : undefined
-    console.log('[ArticlePage] Setting up view increment timer for 10 seconds');
 
     const timer = setTimeout(() => {
-      console.log('[ArticlePage] Timer fired, calling incrementArticleView with:', { articleId, viewUserId });
-      incrementArticleView(articleId, viewUserId).then(() => {
-        console.log('[ArticlePage] View increment completed successfully');
-      }).catch((error) => {
-        console.error('[ArticlePage] Failed to increment article view:', error);
+      incrementArticleView(articleId, viewUserId).catch((error) => {
+        logger.warn('[ArticlePage] Failed to increment article view:', error);
       })
-    }, 10_000) // Для тестирования можно уменьшить до 2000 (2 секунды)
+    }, 10_000)
     return () => {
-      console.log('[ArticlePage] Clearing view increment timer');
       clearTimeout(timer);
     }
   }, [article?.id, user?.id])
@@ -371,27 +334,12 @@ export default function ArticlePage() {
         const needsCommentsRefetch = !commentsData
         
         if (needsArticleRefetch) {
-          if (import.meta.env.DEV) {
-            logger.debug('[ArticlePage] Refetching article for userReaction:', {
-              articleId: id,
-              userId: user.id,
-              hasData: !!articleData,
-              currentUserReaction: articleData?.userReaction,
-              hasDataWithoutUser: !!articleDataWithoutUser,
-            })
-          }
           // Инвалидируем старый кеш без userId и рефетчим с userId
           queryClient.invalidateQueries({ queryKey: ['article', id] })
           queryClient.refetchQueries({ queryKey: ['article', id, user.id] })
         }
         
         if (needsCommentsRefetch) {
-          if (import.meta.env.DEV) {
-            logger.debug('[ArticlePage] Refetching comments for userReaction:', {
-              articleId: id,
-              userId: user.id,
-            })
-          }
           queryClient.refetchQueries({ queryKey: ['article-comments', id, user.id] })
         }
       }, 100) // Небольшая задержка для стабилизации
@@ -431,7 +379,7 @@ export default function ArticlePage() {
           }, 2000)
         }
       } catch (err) {
-        console.error('Failed to copy code:', err)
+        logger.warn('Failed to copy code:', err)
       }
     }
 
@@ -601,17 +549,8 @@ export default function ArticlePage() {
     refetchOnMount: true, // Всегда обновляем при монтировании
   })
 
-  // Логирование для отладки
-  useEffect(() => {
-    if (import.meta.env.DEV && commentsResponse) {
-      logger.debug('[ArticlePage] Comments response:', {
-        commentsCount: commentsResponse.comments?.length || 0,
-        comments: commentsResponse.comments,
-      })
-    }
-  }, [commentsResponse])
 
-  // React to article
+  // React to article с оптимистичными обновлениями
   const reactMutation = useMutation({
     mutationFn: ({ reaction }: { reaction: 'like' | 'dislike' }) => {
       if (!article) {
@@ -619,45 +558,87 @@ export default function ArticlePage() {
       }
       return reactArticle(article.id, reaction)
     },
-    onSuccess: (updatedArticle) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:613',message:'Reaction mutation success',data:{articleId:id,userId:user?.id,userReaction:updatedArticle?.userReaction,likes:updatedArticle?.likes,dislikes:updatedArticle?.dislikes},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
-      // #endregion
-      
-      // Обновляем кэш статьи с новыми данными (включая userReaction)
-      // Сохраняем author, content и contentJSON из текущей статьи, так как мутация не возвращает эти поля
+    onMutate: async ({ reaction }) => {
+      // Оптимистичное обновление: сразу обновляем UI
+      if (!article || !user) return
+
+      const currentArticle = queryClient.getQueryData<Article>(['article', id, user.id])
+      if (!currentArticle) return
+
+      const previousReaction = currentArticle.userReaction
+      const previousLikes = currentArticle.likes || 0
+      const previousDislikes = currentArticle.dislikes || 0
+
+      // Определяем новое состояние
+      let newUserReaction: 'like' | 'dislike' | null = null
+      let newLikes = previousLikes
+      let newDislikes = previousDislikes
+
+      if (previousReaction === reaction) {
+        // Удаляем реакцию (toggle off)
+        newUserReaction = null
+        if (reaction === 'like') {
+          newLikes = Math.max(0, previousLikes - 1)
+        } else {
+          newDislikes = Math.max(0, previousDislikes - 1)
+        }
+      } else {
+        // Добавляем или изменяем реакцию
+        newUserReaction = reaction
+        if (reaction === 'like') {
+          // Если была дизлайк, убираем её
+          if (previousReaction === 'dislike') {
+            newDislikes = Math.max(0, previousDislikes - 1)
+          }
+          // Добавляем лайк (если его не было)
+          if (previousReaction !== 'like') {
+            newLikes = previousLikes + 1
+          }
+        } else {
+          // Если был лайк, убираем его
+          if (previousReaction === 'like') {
+            newLikes = Math.max(0, previousLikes - 1)
+          }
+          // Добавляем дизлайк (если его не было)
+          if (previousReaction !== 'dislike') {
+            newDislikes = previousDislikes + 1
+          }
+        }
+      }
+
+      // Моментально обновляем кеш для мгновенного отображения
+      const optimisticArticle = {
+        ...currentArticle,
+        userReaction: newUserReaction,
+        likes: newLikes,
+        dislikes: newDislikes,
+      }
+
+      queryClient.setQueryData(['article', id, user.id], optimisticArticle)
+
+      return { previousArticle: currentArticle }
+    },
+    onSuccess: (updatedArticle, _variables, context) => {
+      // Синхронизируем с сервером после успешного ответа
       const currentArticle = queryClient.getQueryData<Article>(['article', id, user?.id])
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:620',message:'Current article from cache',data:{articleId:id,userId:user?.id,currentUserReaction:currentArticle?.userReaction,updatedUserReaction:updatedArticle?.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
-      // #endregion
-      
       const articleWithPreservedFields = {
         ...updatedArticle,
         author: currentArticle?.author || updatedArticle.author,
         content: currentArticle?.content || updatedArticle.content || '',
         contentJSON: currentArticle?.contentJSON || updatedArticle.contentJSON,
-        // Убеждаемся, что userReaction правильно установлен
+        // Используем userReaction с сервера для точности
         userReaction: updatedArticle.userReaction ?? null,
+        likes: updatedArticle.likes ?? currentArticle?.likes ?? 0,
+        dislikes: updatedArticle.dislikes ?? currentArticle?.dislikes ?? 0,
       }
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:631',message:'Updating cache with preserved fields',data:{articleId:id,userId:user?.id,finalUserReaction:articleWithPreservedFields.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
-      // #endregion
-      
-      // Обновляем кеш с userId
       queryClient.setQueryData(['article', id, user?.id], articleWithPreservedFields)
-      // Также инвалидируем старый кеш без userId на случай, если он есть
-      queryClient.invalidateQueries({ queryKey: ['article', id], refetchType: 'none' })
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:638',message:'Cache updated',data:{articleId:id,userId:user?.id,userReaction:articleWithPreservedFields.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
-      // #endregion
     },
-    // Не делать автоматический refetch связанных queries после мутации
-    // Мы уже обновили кеш через setQueryData
-    gcTime: 0, // Не кэшировать мутацию
-    onError: (error: any) => {
+    gcTime: 0,
+    onError: (error: any, _variables, context) => {
+      // Откатываем оптимистичное обновление при ошибке
+      if (context?.previousArticle && user?.id) {
+        queryClient.setQueryData(['article', id, user.id], context.previousArticle)
+      }
       if (handleRateLimitError(error)) {
         return
       }
@@ -716,7 +697,6 @@ export default function ArticlePage() {
       // Инвертируем текущее состояние
       const newValue = !currentlySaved
       queryClient.setQueryData(queryKey, newValue)
-      logger.debug('[Bookmark] Optimistic update:', { articleId, currentlySaved, newValue, previousValue, userId: user?.id })
       return { previousValue, queryKey, newValue }
     },
     onSuccess: async (_data, variables, context) => {
@@ -725,7 +705,6 @@ export default function ArticlePage() {
 
       if (variables.currentlySaved === false) registerActivity('add_bookmark')
       
-      logger.debug('[Bookmark] onSuccess:', { articleId: variables.articleId, newValue, currentlySaved: variables.currentlySaved, userId: user?.id })
       
       // Инвалидируем список закладок
       await queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
@@ -774,7 +753,6 @@ export default function ArticlePage() {
   const handleBookmark = useCallback(() => {
     // Если мутация уже выполняется, игнорируем клик
     if (bookmarkMutation.isPending) {
-      logger.debug('[Bookmark] Mutation already in progress, ignoring click')
       return
     }
 
@@ -854,7 +832,6 @@ export default function ArticlePage() {
       return createComment({ articleId: id, text, parentId: parentId || null })
     },
     onSuccess: (newComment, variables) => {
-      logger.debug('[createCommentMutation] Comment created:', newComment)
 
       registerActivity('add_comment')
       
@@ -1684,7 +1661,6 @@ export default function ArticlePage() {
                           className={cn(
                             'h-6 w-6 sm:h-7 sm:w-7 rounded-none text-foreground transition hover:bg-background/70',
                             (() => {
-                              console.log('[Comment UI] Like button for comment', node.id, '- userReaction:', node.userReaction, 'likes:', node.likes, 'dislikes:', node.dislikes)
                               return node.userReaction === 'like' && 'bg-primary text-primary-foreground hover:bg-primary/90'
                             })()
                           )}
@@ -2277,12 +2253,6 @@ export default function ArticlePage() {
 
             {/* Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              {(() => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:2261',message:'Rendering reaction buttons',data:{articleId:article?.id,userId:user?.id,userReaction:article?.userReaction,likes:article?.likes,dislikes:article?.dislikes,isLikeActive:article?.userReaction === 'like',isDislikeActive:article?.userReaction === 'dislike'},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'F'})}).catch(()=>{})
-                // #endregion
-                return null
-              })()}
               <Button
                 variant={article.userReaction === 'like' ? 'default' : 'outline'}
                 size="sm"
@@ -2346,9 +2316,6 @@ export default function ArticlePage() {
               {/* Кнопки редактирования/удаления для автора статьи */}
               {(() => {
                 if (!user || !article) {
-                  if (import.meta.env.DEV) {
-                    logger.debug('[ArticlePage] No user or article:', { hasUser: !!user, hasArticle: !!article })
-                  }
                   return null
                 }
 
@@ -2394,45 +2361,6 @@ export default function ArticlePage() {
           {/* Article Content */}
           <div ref={articleContentRef}>
             {(() => {
-              // Диагностическое логирование (работает везде, не только в DEV)
-              console.log('[ArticlePage] Rendering article content:', {
-                  hasContentJSON: !!article.contentJSON,
-                  contentJSONType: typeof article.contentJSON,
-                  contentJSONPreview: article.contentJSON ? JSON.stringify(article.contentJSON).substring(0, 200) : 'null',
-                  hasContent: !!article.content,
-                  contentType: typeof article.content,
-                  articleId: article.id,
-                })
-                
-                // Проверяем наличие изображений в contentJSON
-                if (article.contentJSON) {
-                  const hasImages = JSON.stringify(article.contentJSON).includes('"type":"image"')
-                  if (hasImages) {
-                    const findImages = (content: any[]): any[] => {
-                      const images: any[] = []
-                      for (const node of content || []) {
-                        if (node.type === 'image') images.push(node)
-                        if (node.content && Array.isArray(node.content)) {
-                          images.push(...findImages(node.content))
-                        }
-                      }
-                      return images
-                    }
-                    const images = findImages(article.contentJSON.content || [])
-                    console.log('[ArticlePage] Found images in contentJSON:', {
-                      count: images.length,
-                      images: images.map(img => ({
-                        src: img.attrs?.src?.substring(0, 80),
-                        alt: img.attrs?.alt,
-                      })),
-                    })
-                  } else {
-                    console.warn('[ArticlePage] No images found in contentJSON')
-                  }
-                } else {
-                  console.warn('[ArticlePage] contentJSON is null/undefined - using fallback HTML renderer')
-                }
-              
               return article.contentJSON ? (
                 // Используем TipTap для отображения (сохраняет все атрибуты узлов)
                 <ArticleContent content={article.contentJSON} />

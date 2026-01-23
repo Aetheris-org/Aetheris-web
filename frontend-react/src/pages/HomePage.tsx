@@ -181,23 +181,6 @@ export default function HomePage() {
       typeof minViews === 'number' ? minViews : '',
     ],
     queryFn: async () => {
-      // Логирование для отладки
-        logger.debug('[HomePage] Fetching articles with filters:', {
-          page,
-          pageSize,
-          tags: selectedTags,
-        difficulty: difficultyFilter,
-        sort: sortOption,
-          search: debouncedSearchQuery,
-          category: categoryFilter,
-          author: authorFilter,
-          language: languageFilter,
-          publishedFrom,
-          publishedTo,
-          minReadMinutes,
-          minReactions,
-          minViews,
-        });
       try {
         const minReadMinutesSafe = typeof minReadMinutes === 'number' ? minReadMinutes : undefined
         const minReactionsSafe = typeof minReactions === 'number' ? minReactions : undefined
@@ -218,10 +201,8 @@ export default function HomePage() {
         minReactions: minReactionsSafe,
         minViews: minViewsSafe,
       });
-        logger.debug('[HomePage] Articles fetched successfully:', result);
         return result;
       } catch (error) {
-        logger.error('[HomePage] Error fetching articles:', error);
         throw error;
       }
     },
@@ -342,16 +323,6 @@ export default function HomePage() {
     [trendingArticles]
   )
   
-  // Логирование для отладки (только в development)
-  useEffect(() => {
-    logger.debug('[HomePage] Articles state:', {
-      isLoading,
-      hasError: !!articlesError,
-      articlesCount: articles.length,
-      totalRecords,
-      articlesData,
-    })
-  }, [isLoading, articlesError, articles.length, totalRecords, articlesData])
   const rawTotalPages = Math.ceil(totalRecords / pageSize)
   const totalPages = Math.max(1, rawTotalPages || 1)
   const hasMultiplePages = totalRecords > pageSize
@@ -1110,22 +1081,6 @@ export default function HomePage() {
         categoryOptions={categoryOptions}
         languageOptions={languageOptions}
         onApply={({ tags, difficulty, sort, category, author, language, publishedFrom: from, publishedTo: to, minReadMinutes: readMinutes, minReactions: reactions, minViews: views }) => {
-          // Логирование для отладки
-          if (import.meta.env.DEV) {
-            logger.debug('[HomePage] Filters applied:', {
-              tags,
-              difficulty,
-              sort,
-              category,
-              author,
-              language,
-              publishedFrom: from,
-              publishedTo: to,
-              minReadMinutes: readMinutes,
-              minReactions: reactions,
-              minViews: views,
-            });
-          }
           setSelectedTags(tags)
           setDifficultyFilter(difficulty)
           setSortOption(sort)
