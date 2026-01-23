@@ -1365,209 +1365,213 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
       const state = dragStateRef.current
 
-    const getEventCoordinates = (e: MouseEvent | TouchEvent): { x: number; y: number } => {
-      if ('touches' in e && e.touches.length > 0) {
-        return { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      }
-      return { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY }
-    }
-
-    const handleStart = (e: MouseEvent | TouchEvent) => {
-      const target = (e.target as HTMLElement) || (e.touches?.[0]?.target as HTMLElement)
-      if (!target) return
-      
-      const coords = getEventCoordinates(e)
-      
-      // Проверяем ресайз
-      if (target.closest('.toolbar-resize-handle')) {
-        e.preventDefault()
-        e.stopPropagation()
-        state.isResizing = true
-        state.startX = coords.x
-        state.startY = coords.y
-        state.startWidth = editorSettings.toolbarFloating.width
-        state.startHeight = editorSettings.toolbarFloating.height
-        document.body.style.userSelect = 'none'
-        document.body.style.cursor = 'nwse-resize'
-        document.body.style.touchAction = 'none'
-        return
-      }
-      
-      // Проверяем перетаскивание
-      if (target.closest('.toolbar-drag-handle')) {
-        e.preventDefault()
-        e.stopPropagation()
-        state.isDragging = true
-        state.startX = coords.x
-        state.startY = coords.y
-        // Для floating позиции используем координаты из настроек
-        if (editorSettings.toolbarPosition === 'floating') {
-          state.startLeft = editorSettings.toolbarFloating.x
-          state.startTop = editorSettings.toolbarFloating.y
-        } else {
-          // Для left/right/top/bottom позиций при перетаскивании переключаемся в floating режим
-          const rect = toolbar.getBoundingClientRect()
-          state.startLeft = rect.left
-          state.startTop = rect.top
-          // Переключаемся в floating режим для свободного перемещения
-          editorSettings.setToolbarPosition('floating')
-          editorSettings.setToolbarFloating({
-            x: rect.left,
-            y: rect.top,
-            width: rect.width,
-            height: rect.height,
-          })
+      const getEventCoordinates = (e: MouseEvent | TouchEvent): { x: number; y: number } => {
+        if (e instanceof TouchEvent && e.touches.length > 0) {
+          return { x: e.touches[0].clientX, y: e.touches[0].clientY }
         }
-        document.body.style.userSelect = 'none'
-        document.body.style.cursor = 'grabbing'
-        document.body.style.touchAction = 'none'
+        const mouseEvent = e as MouseEvent
+        return { x: mouseEvent.clientX, y: mouseEvent.clientY }
       }
-    }
 
-    const handleMouseDown = (e: MouseEvent) => {
-      handleStart(e)
-    }
-
-    const handleTouchStart = (e: TouchEvent) => {
-      handleStart(e)
-    }
-
-    let rafId: number | null = null
-    let lastUpdateTime = 0
-    const UPDATE_THROTTLE = 16 // ~60fps
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      // Проверяем состояние из ref, чтобы избежать проблем с замыканиями
-      if (!dragStateRef.current || (!dragStateRef.current.isDragging && !dragStateRef.current.isResizing)) return
-      
-      e.preventDefault()
-      e.stopPropagation()
-      
-      const now = performance.now()
-      // Throttle updates для плавности, но не пропускаем события
-      if (now - lastUpdateTime < UPDATE_THROTTLE && rafId !== null) {
-        return
-      }
-      lastUpdateTime = now
-      
-      // Отменяем предыдущий кадр если он есть
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId)
-      }
-      
-      rafId = requestAnimationFrame(() => {
-        rafId = null
-        // Проверяем состояние еще раз внутри RAF
-        if (!dragStateRef.current) return
-        const currentState = dragStateRef.current
+      const handleStart = (e: MouseEvent | TouchEvent) => {
+        const target = e instanceof TouchEvent 
+          ? (e.touches[0]?.target as HTMLElement)
+          : (e.target as HTMLElement)
+        if (!target) return
         
-        if (currentState.isDragging) {
-          const deltaX = e.clientX - currentState.startX
-          const deltaY = e.clientY - currentState.startY
-          let newX = currentState.startLeft + deltaX
-          let newY = currentState.startTop + deltaY
-          
-          // Snap to edges logic (только если включено в настройках)
-          const snapThreshold = 50 // пикселей от края для фиксации
-          const toolbarWidth = editorSettings.toolbarFloating.width
-          const toolbarHeight = editorSettings.toolbarFloating.height
-          const windowWidth = window.innerWidth
-          const windowHeight = window.innerHeight
-          
-          let newSnapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
-          
-          if (editorSettings.enableSnapToEdge) {
-            // Проверяем близость к краям
-            const distToLeft = newX
-            const distToRight = windowWidth - newX - toolbarWidth
-            const distToTop = newY
-            const distToBottom = windowHeight - newY - toolbarHeight
-            
-            // Определяем ближайший край
-            if (distToLeft < snapThreshold && distToLeft < distToRight && distToLeft < distToTop && distToLeft < distToBottom) {
-              newX = 0
-              newSnapZone = 'left'
-            } else if (distToRight < snapThreshold && distToRight < distToTop && distToRight < distToBottom) {
-              newX = windowWidth - toolbarWidth
-              newSnapZone = 'right'
-            } else if (distToTop < snapThreshold && distToTop < distToBottom) {
-              newY = 0
-              newSnapZone = 'top'
-            } else if (distToBottom < snapThreshold) {
-              newY = windowHeight - toolbarHeight
-              newSnapZone = 'bottom'
-            }
+        const coords = getEventCoordinates(e)
+        
+        // Проверяем ресайз
+        if (target.closest('.toolbar-resize-handle')) {
+          e.preventDefault()
+          e.stopPropagation()
+          state.isResizing = true
+          state.startX = coords.x
+          state.startY = coords.y
+          state.startWidth = editorSettings.toolbarFloating.width
+          state.startHeight = editorSettings.toolbarFloating.height
+          document.body.style.userSelect = 'none'
+          document.body.style.cursor = 'nwse-resize'
+          document.body.style.touchAction = 'none'
+          return
+        }
+        
+        // Проверяем перетаскивание
+        if (target.closest('.toolbar-drag-handle')) {
+          e.preventDefault()
+          e.stopPropagation()
+          state.isDragging = true
+          state.startX = coords.x
+          state.startY = coords.y
+          // Для floating позиции используем координаты из настроек
+          if (editorSettings.toolbarPosition === 'floating') {
+            state.startLeft = editorSettings.toolbarFloating.x
+            state.startTop = editorSettings.toolbarFloating.y
+          } else {
+            // Для left/right/top/bottom позиций при перетаскивании переключаемся в floating режим
+            const rect = toolbar.getBoundingClientRect()
+            state.startLeft = rect.left
+            state.startTop = rect.top
+            // Переключаемся в floating режим для свободного перемещения
+            editorSettings.setToolbarPosition('floating')
+            editorSettings.setToolbarFloating({
+              x: rect.left,
+              y: rect.top,
+              width: rect.width,
+              height: rect.height,
+            })
           }
+          document.body.style.userSelect = 'none'
+          document.body.style.cursor = 'grabbing'
+          document.body.style.touchAction = 'none'
+        }
+      }
+
+      const handleMouseDown = (e: MouseEvent) => {
+        handleStart(e)
+      }
+
+      const handleTouchStart = (e: TouchEvent) => {
+        handleStart(e)
+      }
+
+      let rafId: number | null = null
+      let lastUpdateTime = 0
+      const UPDATE_THROTTLE = 16 // ~60fps
+      
+      const handleMove = (e: MouseEvent | TouchEvent) => {
+        // Проверяем состояние из ref, чтобы избежать проблем с замыканиями
+        if (!dragStateRef.current || (!dragStateRef.current.isDragging && !dragStateRef.current.isResizing)) return
+        
+        e.preventDefault()
+        e.stopPropagation()
+        
+        const coords = getEventCoordinates(e)
+        const now = performance.now()
+        // Throttle updates для плавности, но не пропускаем события
+        if (now - lastUpdateTime < UPDATE_THROTTLE && rafId !== null) {
+          return
+        }
+        lastUpdateTime = now
+        
+        // Отменяем предыдущий кадр если он есть
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId)
+        }
+        
+        rafId = requestAnimationFrame(() => {
+          rafId = null
+          // Проверяем состояние еще раз внутри RAF
+          if (!dragStateRef.current) return
+          const currentState = dragStateRef.current
           
-          // Ограничиваем границами если не зафиксировались
-          if (newSnapZone === null) {
-            const windowWidth = window.innerWidth
-            const windowHeight = window.innerHeight
+          if (currentState.isDragging) {
+            const deltaX = coords.x - currentState.startX
+            const deltaY = coords.y - currentState.startY
+            let newX = currentState.startLeft + deltaX
+            let newY = currentState.startTop + deltaY
+            
+            // Snap to edges logic (только если включено в настройках)
+            const snapThreshold = 50 // пикселей от края для фиксации
             const toolbarWidth = editorSettings.toolbarFloating.width
             const toolbarHeight = editorSettings.toolbarFloating.height
-            newX = Math.max(0, Math.min(newX, windowWidth - toolbarWidth))
-            newY = Math.max(0, Math.min(newY, windowHeight - toolbarHeight))
-          }
-          
-          // Обновляем визуальную индикацию зоны привязки
-          if (newSnapZone !== snapZoneRef.current) {
-            snapZoneRef.current = newSnapZone
-            // Добавляем/удаляем класс для подсветки зоны на тулбаре
-            if (toolbar) {
-              toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
-              if (newSnapZone) {
-                toolbar.classList.add(`toolbar-snap-${newSnapZone}`)
+            const windowWidth = window.innerWidth
+            const windowHeight = window.innerHeight
+            
+            let newSnapZone: 'left' | 'right' | 'top' | 'bottom' | null = null
+            
+            if (editorSettings.enableSnapToEdge) {
+              // Проверяем близость к краям
+              const distToLeft = newX
+              const distToRight = windowWidth - newX - toolbarWidth
+              const distToTop = newY
+              const distToBottom = windowHeight - newY - toolbarHeight
+              
+              // Определяем ближайший край
+              if (distToLeft < snapThreshold && distToLeft < distToRight && distToLeft < distToTop && distToLeft < distToBottom) {
+                newX = 0
+                newSnapZone = 'left'
+              } else if (distToRight < snapThreshold && distToRight < distToTop && distToRight < distToBottom) {
+                newX = windowWidth - toolbarWidth
+                newSnapZone = 'right'
+              } else if (distToTop < snapThreshold && distToTop < distToBottom) {
+                newY = 0
+                newSnapZone = 'top'
+              } else if (distToBottom < snapThreshold) {
+                newY = windowHeight - toolbarHeight
+                newSnapZone = 'bottom'
               }
             }
-            // Показываем/скрываем визуальную индикацию зоны привязки на экране
-            let snapZoneIndicator = document.getElementById('toolbar-snap-zone-indicator')
-            if (newSnapZone && editorSettings.enableSnapToEdge) {
-              if (!snapZoneIndicator) {
-                snapZoneIndicator = document.createElement('div')
-                snapZoneIndicator.id = 'toolbar-snap-zone-indicator'
-                snapZoneIndicator.className = 'toolbar-snap-zone-indicator'
-                // В полноэкранном режиме рендерим в fullscreen элемент, иначе в body
-                const container = isFullscreen && editorWrapperRef.current ? editorWrapperRef.current : document.body
-                container.appendChild(snapZoneIndicator)
+            
+            // Ограничиваем границами если не зафиксировались
+            if (newSnapZone === null) {
+              const windowWidth = window.innerWidth
+              const windowHeight = window.innerHeight
+              const toolbarWidth = editorSettings.toolbarFloating.width
+              const toolbarHeight = editorSettings.toolbarFloating.height
+              newX = Math.max(0, Math.min(newX, windowWidth - toolbarWidth))
+              newY = Math.max(0, Math.min(newY, windowHeight - toolbarHeight))
+            }
+            
+            // Обновляем визуальную индикацию зоны привязки
+            if (newSnapZone !== snapZoneRef.current) {
+              snapZoneRef.current = newSnapZone
+              // Добавляем/удаляем класс для подсветки зоны на тулбаре
+              if (toolbar) {
+                toolbar.classList.remove('toolbar-snap-left', 'toolbar-snap-right', 'toolbar-snap-top', 'toolbar-snap-bottom')
+                if (newSnapZone) {
+                  toolbar.classList.add(`toolbar-snap-${newSnapZone}`)
+                }
               }
-              snapZoneIndicator.className = `toolbar-snap-zone-indicator toolbar-snap-zone-${newSnapZone}`
-              // Устанавливаем высокий z-index для полноэкранного режима
-              if (isFullscreen) {
-                snapZoneIndicator.style.zIndex = '2147483646'
+              // Показываем/скрываем визуальную индикацию зоны привязки на экране
+              let snapZoneIndicator = document.getElementById('toolbar-snap-zone-indicator')
+              if (newSnapZone && editorSettings.enableSnapToEdge) {
+                if (!snapZoneIndicator) {
+                  snapZoneIndicator = document.createElement('div')
+                  snapZoneIndicator.id = 'toolbar-snap-zone-indicator'
+                  snapZoneIndicator.className = 'toolbar-snap-zone-indicator'
+                  // В полноэкранном режиме рендерим в fullscreen элемент, иначе в body
+                  const container = isFullscreen && editorWrapperRef.current ? editorWrapperRef.current : document.body
+                  container.appendChild(snapZoneIndicator)
+                }
+                snapZoneIndicator.className = `toolbar-snap-zone-indicator toolbar-snap-zone-${newSnapZone}`
+                // Устанавливаем высокий z-index для полноэкранного режима
+                if (isFullscreen) {
+                  snapZoneIndicator.style.zIndex = '2147483646'
+                } else {
+                  snapZoneIndicator.style.zIndex = '9998'
+                }
               } else {
-                snapZoneIndicator.style.zIndex = '9998'
-              }
-            } else {
-              if (snapZoneIndicator) {
-                snapZoneIndicator.remove()
+                if (snapZoneIndicator) {
+                  snapZoneIndicator.remove()
+                }
               }
             }
+            
+            editorSettings.setToolbarFloating({
+              x: newX,
+              y: newY,
+            })
+          } else if (currentState.isResizing) {
+            const deltaX = coords.x - currentState.startX
+            const deltaY = coords.y - currentState.startY
+            const newWidth = Math.max(56, Math.min(currentState.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
+            const newHeight = Math.max(100, Math.min(currentState.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
+            editorSettings.setToolbarFloating({
+              width: newWidth,
+              height: newHeight,
+            })
           }
-          
-          editorSettings.setToolbarFloating({
-            x: newX,
-            y: newY,
-          })
-        } else if (currentState.isResizing) {
-          const deltaX = coords.x - currentState.startX
-          const deltaY = coords.y - currentState.startY
-          const newWidth = Math.max(56, Math.min(currentState.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
-          const newHeight = Math.max(100, Math.min(currentState.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
-          editorSettings.setToolbarFloating({
-            width: newWidth,
-            height: newHeight,
-          })
-        }
-      })
-    }
+        })
+      }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      handleMove(e)
-    }
+      const handleMouseMove = (e: MouseEvent) => {
+        handleMove(e)
+      }
 
-    const handleTouchMove = (e: TouchEvent) => {
-      handleMove(e)
-    }
+      const handleTouchMove = (e: TouchEvent) => {
+        handleMove(e)
+      }
 
     const handleEnd = () => {
       if (rafId) {
