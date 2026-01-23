@@ -129,7 +129,7 @@ export default function HomePage() {
   useEffect(() => {
     pageRef.current = page
   }, [page])
-  const pageSize = 10
+  const pageSize = 20
   const categoryOptions = ['all', 'Frontend', 'Backend', 'DevOps', 'AI', 'Product', 'Design']
   const languageOptions = ['all', 'en', 'ru', 'es', 'de', 'fr']
   // const _quickDestinations = useMemo( // Unused, but may be needed in future
@@ -1147,7 +1147,7 @@ export default function HomePage() {
         <Button
           variant="outline"
           size="icon"
-          className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-2"
+          className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-2"
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
