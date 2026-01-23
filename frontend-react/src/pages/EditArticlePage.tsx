@@ -3888,7 +3888,7 @@ export default function EditArticlePage() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 border-t pt-4 sm:pt-6">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-2">
             <Button
               variant="outline"
               onClick={handlePrevious}
@@ -3898,52 +3898,43 @@ export default function EditArticlePage() {
               <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t('createArticle.previous')}
             </Button>
-
-            <div className="flex items-center justify-center sm:justify-start">
-              <span className="text-xs sm:text-sm text-muted-foreground">
-                {t('createArticle.stepCounter', { current: currentStep + 1, total: steps.length })}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleSaveDraft}
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
+              disabled={isSavingDraft || isPublishing || isLoadingDraft}
+            >
+              <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {isSavingDraft ? t('settings.profile.saving') : t('createArticle.saveDraft')}
+            </Button>
+            {currentStep === steps.length - 1 ? (
               <Button
-                variant="outline"
-                onClick={handleSaveDraft}
-                className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
-                disabled={isSavingDraft || isPublishing || isLoadingDraft}
+                onClick={handlePublish}
+                disabled={isPublishing || isSavingDraft || isLoadingDraft || !canGoNext()}
+                className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
               >
-                <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                {isSavingDraft ? t('settings.profile.saving') : t('createArticle.saveDraft')}
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {isPublishing ? t('createArticle.publishing') : t('createArticle.publish')}
               </Button>
-              {currentStep === steps.length - 1 ? (
-                <Button
-                  onClick={handlePublish}
-                  disabled={isPublishing || isSavingDraft || isLoadingDraft || !canGoNext()}
-                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
-                >
-                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {isPublishing ? t('createArticle.publishing') : t('createArticle.publish')}
-                </Button>
-              ) : currentStep === steps.length - 2 ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canGoNext()}
-                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {t('createArticle.complete')}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canGoNext()}
-                  className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial"
-                >
-                  {t('createArticle.next')}
-                  <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Button>
-              )}
-            </div>
+            ) : currentStep === steps.length - 2 ? (
+              <Button
+                onClick={handleNext}
+                disabled={!canGoNext()}
+                className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {t('createArticle.complete')}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!canGoNext()}
+                className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
+              >
+                {t('createArticle.next')}
+                <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
