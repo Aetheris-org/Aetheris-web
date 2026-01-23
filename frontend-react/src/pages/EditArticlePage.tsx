@@ -146,8 +146,6 @@ export default function EditArticlePage() {
   const draftIdFromQuery = null
   const [isLoadingArticle, setIsLoadingArticle] = useState(false)
   const [articleToEdit, setArticleToEdit] = useState<any>(null)
-  // На странице редактирования всегда isEditing = true
-  const isEditing = true
 
   // Функция для загрузки медиа в редактор через R2
   const handleUploadMedia = useCallback(async (file: File, _type: 'image' | 'video' | 'audio'): Promise<string> => {
