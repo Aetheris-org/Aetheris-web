@@ -18,6 +18,7 @@ import type { LucideIcon } from 'lucide-react'
 import { getArticles, getArticle, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
 import { getCollections } from '@/api/collections'
 import type { Article } from '@/types/article'
+import type { Collection } from '@/types/collection'
 import { useAuthStore } from '@/stores/authStore'
 import { useViewModeStore } from '@/stores/viewModeStore'
 import { Input } from '@/components/ui/input'
@@ -238,16 +239,20 @@ export default function HomePage() {
     },
   })
 
-  const { data: collectionsData } = useQuery({
+  const { data: collectionsData, error: collectionsError } = useQuery({
     queryKey: ['collections-home', 3],
     queryFn: () => getCollections({ page: 1, pageSize: 3, sort: 'likes' }),
     staleTime: 5 * 60 * 1000,
     retry: false, // Не повторять запрос при ошибке (избегаем бесконечной рекурсии)
-    onError: (error) => {
-      // Тихо игнорируем ошибки коллекций, чтобы не ломать главную страницу
-      console.warn('Failed to load collections:', error)
-    },
   })
+
+  // Обрабатываем ошибки коллекций отдельно
+  useEffect(() => {
+    if (collectionsError) {
+      // Тихо игнорируем ошибки коллекций, чтобы не ломать главную страницу
+      console.warn('Failed to load collections:', collectionsError)
+    }
+  }, [collectionsError])
 
   // Debounce search query
   useEffect(() => {
@@ -1009,7 +1014,7 @@ export default function HomePage() {
                   <p className="text-xs text-muted-foreground py-2">{t('home.collectionsPanel.empty')}</p>
                 ) : (
                   <div className="space-y-2">
-                    {collectionsData.data.slice(0, 3).map((c) => (
+                    {collectionsData.data.slice(0, 3).map((c: Collection) => (
                       <button
                         key={c.id}
                         type="button"
