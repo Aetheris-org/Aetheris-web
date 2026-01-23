@@ -2165,12 +2165,9 @@ export default function ArticlePage() {
                 const created = article.createdAt ? new Date(article.createdAt).getTime() : 0
                 const updated = article.updatedAt ? new Date(article.updatedAt).getTime() : 0
                 const isEdited = updated - created > 60_000 // показываем "edited" только если прошло больше минуты
-                const editedLabel = t('article.edited')
-                const editedText = editedLabel && editedLabel !== 'article.edited' ? editedLabel : 'Edited'
                 return isEdited ? (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                    <Pencil className="h-3.5 w-3.5" />
-                    {editedText}
+                  <span className="inline-flex items-center justify-center rounded-full bg-muted p-2.5 text-muted-foreground">
+                    <Pencil className="h-5 w-5" />
                   </span>
                 ) : null
               })()}
