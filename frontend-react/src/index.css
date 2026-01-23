@@ -419,7 +419,9 @@
   }
 
 .tiptap img {
-  @apply my-6 w-full rounded-lg border border-border/60 object-cover;
+  /* НЕ forcing w-full: иначе не работает float/обтекание и ручной resize */
+  @apply my-6 max-w-full rounded-lg border border-border/60;
+  height: auto;
 }
 
 .tiptap strong {

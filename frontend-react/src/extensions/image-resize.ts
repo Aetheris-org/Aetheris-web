@@ -163,12 +163,19 @@ export const ImageResize = Extension.create({
                     const newPos = posAtCoords.pos
                     const $newPos = view.state.doc.resolve(newPos)
                     
-                    // Вычисляем позицию вставки (перед или после блока)
-                    let insertPos = $newPos.before($newPos.depth)
+                    // Вычисляем позицию вставки на уровне top-level блока.
+                    // Важно: нельзя делать before(0) — это и даёт RangeError.
+                    let insertPos = 0
+                    if ($newPos.depth >= 1) {
+                      insertPos = $newPos.before(1)
+                    }
+                    // Если курсор попал в пустой параграф, вставим прямо в него
                     if ($newPos.parent.type.name === 'paragraph' && $newPos.parent.textContent.trim() === '') {
-                      // Если пустой параграф - вставляем в него
                       insertPos = $newPos.pos
                     }
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix',hypothesisId:'A',location:'extensions/image-resize.ts:insertPos',message:'computed insertPos',data:{dropPos:newPos,dropDepth:$newPos.depth,insertPos,draggedPos},timestamp:Date.now()})}).catch(()=>{});
+                    // #endregion
                     
                     if (insertPos !== draggedPos) {
                       const { tr } = view.state
@@ -188,7 +195,9 @@ export const ImageResize = Extension.create({
                         tr.insert(finalInsertPos, node)
                         view.dispatch(tr)
                       } catch (err) {
-                        console.warn('Failed to move image:', err)
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix',hypothesisId:'A',location:'extensions/image-resize.ts:insert',message:'failed to move image',data:{err:String(err),finalInsertPos,nodeSize},timestamp:Date.now()})}).catch(()=>{});
+                        // #endregion
                       }
                     }
                   }

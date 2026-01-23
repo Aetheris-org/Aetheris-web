@@ -1256,6 +1256,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
 
       const url = await onUploadMedia(file, mediaType)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:insertMediaFromFile',message:'onUploadMedia resolved',data:{mediaType,urlPrefix:String(url).slice(0,80)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       const chain = editor.chain().focus()
 
       if (mediaType === 'image') {
@@ -1264,6 +1267,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         } else {
           chain.setImage({ src: url }).run()
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:insertMediaFromFile',message:'image inserted into editor',data:{atPosition:atPosition ?? null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (import.meta.env.DEV) {
           setTimeout(() => {
             const json = editor.getJSON()
