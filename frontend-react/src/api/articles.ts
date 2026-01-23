@@ -645,13 +645,14 @@ export async function incrementArticleViews(
 
     // Вызываем RPC функцию для инкремента просмотров
     try {
-      const { data, error } = await supabase.rpc('increment_article_views', {
+      const { error } = await supabase.rpc('increment_article_views', {
         p_article_id: articleId,
         p_user_id: userIdStr,
       });
 
       if (error) {
         logger.warn('[incrementArticleViews] RPC failed', error);
+      }
     } catch (rpcError) {
       logger.warn('[incrementArticleViews] RPC call failed - function may not exist yet', rpcError);
     }

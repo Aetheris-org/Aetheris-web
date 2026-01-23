@@ -618,7 +618,7 @@ export default function ArticlePage() {
 
       return { previousArticle: currentArticle }
     },
-    onSuccess: (updatedArticle, _variables, context) => {
+    onSuccess: (updatedArticle, _variables) => {
       // Синхронизируем с сервером после успешного ответа
       const currentArticle = queryClient.getQueryData<Article>(['article', id, user?.id])
       const articleWithPreservedFields = {
@@ -831,7 +831,7 @@ export default function ArticlePage() {
       // Используем id из URL, а не article.id, чтобы избежать рассинхронизации
       return createComment({ articleId: id, text, parentId: parentId || null })
     },
-    onSuccess: (newComment, variables) => {
+    onSuccess: (_newComment, variables) => {
 
       registerActivity('add_comment')
       
