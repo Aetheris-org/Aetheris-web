@@ -568,6 +568,11 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
       return { data: [], total: 0 };
     }
 
+    // Извлекаем total_count из первой строки результата (COUNT(*) OVER() возвращает одинаковое значение для всех строк)
+    const totalCountFromRPC = data[0]?.total_count ? Number(data[0].total_count) : 0;
+    
+    logger.debug('[getArticles] RPC total_count:', totalCountFromRPC);
+
     // Трансформируем данные
     const articles = data.map((item: any) => {
       console.log('[getArticles] Raw article data from DB:', {
@@ -621,9 +626,21 @@ export async function getArticles(params?: ArticleQueryParams): Promise<Articles
 
     const sorted = sortClientArticles(filtered, sort);
 
+    // Используем total_count из RPC, но если после клиентской фильтрации количество изменилось,
+    // используем большее значение для корректной пагинации
+    // Примечание: total_count из RPC показывает количество ДО клиентской фильтрации,
+    // но для пагинации это более точное значение, так как пагинация работает на уровне сервера
+    const finalTotal = totalCountFromRPC > 0 ? totalCountFromRPC : sorted.length;
+
+    logger.debug('[getArticles] Final total:', {
+      totalCountFromRPC,
+      filteredCount: sorted.length,
+      finalTotal
+    });
+
     return {
       data: sorted,
-      total: Number(sorted.length),
+      total: finalTotal,
     };
   } catch (error: any) {
     logger.error('Error in getArticles', error);

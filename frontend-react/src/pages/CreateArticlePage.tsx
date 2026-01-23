@@ -4562,7 +4562,6 @@ export default function CreateArticlePage() {
             <Button
               variant="outline"
               onClick={handlePrevious}
-              disabled={currentStep === 0}
               className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
             >
               <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -4580,7 +4579,7 @@ export default function CreateArticlePage() {
             {currentStep === steps.length - 1 ? (
               <Button
                 onClick={handlePublish}
-                disabled={isPublishing || isSavingDraft || isLoadingDraft || !canGoNext()}
+                disabled={isPublishing || isSavingDraft || isLoadingDraft}
                 className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
               >
                 <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -4589,7 +4588,6 @@ export default function CreateArticlePage() {
             ) : currentStep === steps.length - 2 ? (
               <Button
                 onClick={handleNext}
-                disabled={!canGoNext()}
                 className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
               >
                 <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -4598,7 +4596,6 @@ export default function CreateArticlePage() {
             ) : (
               <Button
                 onClick={handleNext}
-                disabled={!canGoNext()}
                 className="gap-1.5 sm:gap-2 h-9 sm:h-10 text-xs sm:text-sm w-full sm:w-auto"
               >
                 {t('createArticle.next')}

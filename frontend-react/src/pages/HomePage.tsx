@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Plus,
   ChevronRight,
+  ArrowUp,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { getArticles, getArticle, getTrendingArticles, searchArticles, type ArticleSortOption, type ArticleDifficulty } from '@/api/articles'
@@ -121,6 +122,7 @@ export default function HomePage() {
   const [_isSpotlightDismissed, setIsSpotlightDismissed] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchInputFocused, setSearchInputFocused] = useState(false)
+  const [showScrollToTop, setShowScrollToTop] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
   // Синхронизируем ref с состоянием
@@ -372,6 +374,17 @@ export default function HomePage() {
     if (storedValue === 'true') {
       setIsSpotlightDismissed(true)
     }
+  }, [])
+
+  // Отслеживание прокрутки для кнопки "Scroll to top"
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop
+      setShowScrollToTop(scrollY > 400) // Показываем кнопку после прокрутки на 400px
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const paginationPages = useMemo(() => {
@@ -1128,6 +1141,21 @@ export default function HomePage() {
         }}
         onClear={handleClearFilters}
       />
+
+      {/* Кнопка возврата в начало */}
+      {showScrollToTop && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-2"
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          aria-label={t('common.scrollToTop') || 'Вернуться в начало'}
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   )
 }
