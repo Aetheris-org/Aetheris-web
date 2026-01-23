@@ -1207,13 +1207,24 @@ export async function reactToArticle(
   reaction: 'like' | 'dislike'
 ): Promise<Article> {
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1205',message:'reactToArticle called',data:{articleId,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+    // #endregion
+    
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1212',message:'Not authenticated',data:{articleId,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+      // #endregion
       throw new Error('Not authenticated');
     }
 
     const validatedArticleId = normalizeArticleId(articleId);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1219',message:'Checking existing reaction',data:{articleId:validatedArticleId,userId:user.id,reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+    // #endregion
 
     // Упрощённо: прямой toggle + возврат статьи с актуальными данными
     const { data: existing, error: existingError } = await supabase
@@ -1221,25 +1232,39 @@ export async function reactToArticle(
       .select('reaction')
       .eq('article_id', validatedArticleId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1228',message:'Existing reaction check result',data:{articleId:validatedArticleId,existingReaction:existing?.reaction,error:existingError?.message,willToggle:existing?.reaction === reaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+    // #endregion
 
     if (existingError && existingError.code !== 'PGRST116') {
       logger.error('Error fetching existing article reaction', existingError);
       throw existingError;
     }
 
+    let finalUserReaction: 'like' | 'dislike' | null = null;
+
     if (existing && existing.reaction === reaction) {
+      // Удаляем реакцию (toggle off)
       const { error: deleteError } = await supabase
         .from('article_reactions')
         .delete()
         .eq('article_id', validatedArticleId)
         .eq('user_id', user.id);
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1240',message:'Deleting reaction (toggle off)',data:{articleId:validatedArticleId,reaction,error:deleteError?.message},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+      // #endregion
+
       if (deleteError) {
         logger.error('Error deleting article reaction', deleteError);
         throw deleteError;
       }
+      // После удаления userReaction = null
+      finalUserReaction = null;
     } else {
+      // Добавляем или изменяем реакцию
       const { error: upsertError } = await supabase
         .from('article_reactions')
         .upsert(
@@ -1251,10 +1276,16 @@ export async function reactToArticle(
           { onConflict: 'article_id,user_id' }
         );
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1254',message:'Upserting reaction',data:{articleId:validatedArticleId,reaction,error:upsertError?.message},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+      // #endregion
+
       if (upsertError) {
         logger.error('Error upserting article reaction', upsertError);
         throw upsertError;
       }
+      // После upsert userReaction = reaction
+      finalUserReaction = reaction;
     }
 
     // Пересчёт лайков/дизлайков и обновление агрегатов в articles
@@ -1303,21 +1334,19 @@ export async function reactToArticle(
     // чтобы UI сразу увидел актуальные лайки/дизлайки.
     const article = await getArticle(articleId);
 
-    // Определяем userReaction для текущего пользователя
-    const { data: userReactionData } = await supabase
-      .from('article_reactions')
-      .select('reaction')
-      .eq('article_id', validatedArticleId)
-      .eq('user_id', user.id)
-      .single();
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем finalUserReaction, который мы уже определили выше
+    // вместо повторного запроса к базе данных, чтобы избежать рассинхронизации
+    const userReaction = finalUserReaction;
 
-    const userReaction = userReactionData?.reaction || null;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/articles.ts:1308',message:'Returning article with updated reaction',data:{articleId:validatedArticleId,userReaction,likes:likesCount,dislikes:dislikesCount,articleUserReaction:article?.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'G'})}).catch(()=>{})
+    // #endregion
 
     return {
       ...article,
       likes: likesCount,
       dislikes: dislikesCount,
-      userReaction,
+      userReaction, // Используем finalUserReaction вместо запроса к БД
     };
   } catch (error: any) {
     logger.error('Error in reactToArticle', error);

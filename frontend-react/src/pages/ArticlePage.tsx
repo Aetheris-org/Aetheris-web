@@ -241,7 +241,16 @@ export default function ArticlePage() {
   // Включаем userId в queryKey, чтобы при изменении пользователя данные обновлялись
   const { data: article, isLoading, error } = useQuery({
     queryKey: ['article', id, user?.id],
-    queryFn: () => getArticle(id as string),
+    queryFn: async () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:243',message:'Fetching article',data:{articleId:id,userId:user?.id},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'D'})}).catch(()=>{})
+      // #endregion
+      const articleData = await getArticle(id as string)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:247',message:'Article fetched',data:{articleId:id,userId:user?.id,userReaction:articleData?.userReaction,likes:articleData?.likes,dislikes:articleData?.dislikes},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'D'})}).catch(()=>{})
+      // #endregion
+      return articleData
+    },
     enabled: !!id,
     // Статьи кэшируем на 10 минут (контент меняется редко)
     staleTime: 10 * 60 * 1000,
@@ -611,9 +620,18 @@ export default function ArticlePage() {
       return reactArticle(article.id, reaction)
     },
     onSuccess: (updatedArticle) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:613',message:'Reaction mutation success',data:{articleId:id,userId:user?.id,userReaction:updatedArticle?.userReaction,likes:updatedArticle?.likes,dislikes:updatedArticle?.dislikes},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
+      // #endregion
+      
       // Обновляем кэш статьи с новыми данными (включая userReaction)
       // Сохраняем author, content и contentJSON из текущей статьи, так как мутация не возвращает эти поля
       const currentArticle = queryClient.getQueryData<Article>(['article', id, user?.id])
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:620',message:'Current article from cache',data:{articleId:id,userId:user?.id,currentUserReaction:currentArticle?.userReaction,updatedUserReaction:updatedArticle?.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
+      // #endregion
+      
       const articleWithPreservedFields = {
         ...updatedArticle,
         author: currentArticle?.author || updatedArticle.author,
@@ -622,18 +640,19 @@ export default function ArticlePage() {
         // Убеждаемся, что userReaction правильно установлен
         userReaction: updatedArticle.userReaction ?? null,
       }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:631',message:'Updating cache with preserved fields',data:{articleId:id,userId:user?.id,finalUserReaction:articleWithPreservedFields.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
+      // #endregion
+      
       // Обновляем кеш с userId
       queryClient.setQueryData(['article', id, user?.id], articleWithPreservedFields)
       // Также инвалидируем старый кеш без userId на случай, если он есть
       queryClient.invalidateQueries({ queryKey: ['article', id], refetchType: 'none' })
-      // Не показываем toast для toggle действий, чтобы не спамить
-      if (import.meta.env.DEV) {
-        logger.debug('[ArticlePage] Reaction updated:', {
-          articleId: id,
-          userId: user?.id,
-          userReaction: updatedArticle.userReaction,
-        })
-      }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:638',message:'Cache updated',data:{articleId:id,userId:user?.id,userReaction:articleWithPreservedFields.userReaction},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'E'})}).catch(()=>{})
+      // #endregion
     },
     // Не делать автоматический refetch связанных queries после мутации
     // Мы уже обновили кеш через setQueryData
@@ -2258,6 +2277,12 @@ export default function ArticlePage() {
 
             {/* Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              {(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticlePage.tsx:2261',message:'Rendering reaction buttons',data:{articleId:article?.id,userId:user?.id,userReaction:article?.userReaction,likes:article?.likes,dislikes:article?.dislikes,isLikeActive:article?.userReaction === 'like',isDislikeActive:article?.userReaction === 'dislike'},timestamp:Date.now(),sessionId:'debug-reactions',runId:'pre-fix',hypothesisId:'F'})}).catch(()=>{})
+                // #endregion
+                return null
+              })()}
               <Button
                 variant={article.userReaction === 'like' ? 'default' : 'outline'}
                 size="sm"
