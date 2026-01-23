@@ -535,6 +535,25 @@
 
 .editor-image {
   @apply my-6 max-w-full h-auto rounded-xl border border-border/60 shadow-sm;
+}
+
+.editor-image[data-align="left"] {
+  float: left;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+  margin-left: 0;
+}
+
+.editor-image[data-align="right"] {
+  float: right;
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+  margin-right: 0;
+}
+
+.editor-image[data-align="center"] {
   display: block;
   margin-left: auto;
   margin-right: auto;

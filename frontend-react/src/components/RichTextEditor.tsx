@@ -637,12 +637,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     open: boolean
     x: number
     y: number
-    type: 'empty' | 'text'
+    type: 'empty' | 'text' | 'image'
+    imagePos?: number | null
   }>({
     open: false,
     x: 0,
     y: 0,
     type: 'empty',
+    imagePos: null,
   })
   const contextMenuRef = useRef<HTMLDivElement>(null)
 
@@ -778,21 +780,51 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 }
               },
             },
+            align: {
+              default: 'center',
+              parseHTML: (element) => {
+                const align = element.getAttribute('data-align') || element.style.float || 'center'
+                return align === 'left' || align === 'right' ? align : 'center'
+              },
+              renderHTML: (attributes) => {
+                if (!attributes.align || attributes.align === 'center') {
+                  return {}
+                }
+                return {
+                  'data-align': attributes.align,
+                }
+              },
+            },
           }
         },
         renderHTML({ HTMLAttributes, node }) {
           const hasExplicitSize = node.attrs.width || node.attrs.height
-          const baseStyle = 'display: block; margin-left: auto; margin-right: auto;'
-          const style = hasExplicitSize 
-            ? `${baseStyle} ${HTMLAttributes.style || ''}`.replace(/max-width:\s*100%[^;]*;?/gi, '').replace(/height:\s*auto[^;]*;?/gi, '')
-            : `${baseStyle} max-width: 100%; height: auto;`
+          const align = node.attrs.align || 'center'
+          
+          let baseStyle = ''
+          let displayStyle = ''
+          
+          if (align === 'left') {
+            displayStyle = 'float: left; margin-right: 1rem; margin-bottom: 0.5rem;'
+          } else if (align === 'right') {
+            displayStyle = 'float: right; margin-left: 1rem; margin-bottom: 0.5rem;'
+          } else {
+            displayStyle = 'display: block; margin-left: auto; margin-right: auto;'
+          }
+          
+          if (hasExplicitSize) {
+            baseStyle = `${displayStyle} ${HTMLAttributes.style || ''}`.replace(/max-width:\s*100%[^;]*;?/gi, '').replace(/height:\s*auto[^;]*;?/gi, '')
+          } else {
+            baseStyle = `${displayStyle} max-width: 100%; height: auto;`
+          }
           
           return [
             'img',
             {
               ...HTMLAttributes,
               class: 'editor-image',
-              style,
+              style: baseStyle,
+              'data-align': align,
             },
           ]
         },
@@ -1124,9 +1156,26 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       top: clickY 
     })
 
-    let menuType: 'empty' | 'text' = 'empty'
+    let menuType: 'empty' | 'text' | 'image' = 'empty'
+    let imagePos: number | null = null
 
-    if (posAtCoords) {
+    // Проверяем, кликнули ли на изображении
+    const target = event.target as HTMLElement
+    const img = target.closest('img') as HTMLImageElement
+    if (img && img.closest('.ProseMirror')) {
+      const pos = editor.view.posAtDOM(img, 0)
+      if (pos !== null) {
+        const $pos = editor.state.doc.resolve(pos)
+        const node = $pos.nodeAfter || $pos.nodeBefore
+        if (node && node.type.name === 'image') {
+          menuType = 'image'
+          imagePos = $pos.pos
+          editor.commands.setTextSelection($pos.pos)
+        }
+      }
+    }
+
+    if (posAtCoords && menuType !== 'image') {
       // Обновляем позицию курсора в редакторе
       const { pos } = posAtCoords
       editor.commands.setTextSelection(pos)
@@ -1152,6 +1201,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       x: clickX,
       y: clickY,
       type: menuType,
+      imagePos: menuType === 'image' ? imagePos : null,
     })
   }, [editor, disabled])
 
@@ -2493,7 +2543,77 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {contextMenu.type === 'empty' ? (
+          {contextMenu.type === 'image' ? (
+            // Меню для изображения - выравнивание
+            <>
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                {t('editor.textAlignment')}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (contextMenu.imagePos !== null && contextMenu.imagePos !== undefined && editor) {
+                    const $pos = editor.state.doc.resolve(contextMenu.imagePos)
+                    const node = $pos.nodeAfter || $pos.nodeBefore
+                    if (node && node.type.name === 'image') {
+                      const tr = editor.state.tr.setNodeMarkup($pos.pos, undefined, {
+                        ...node.attrs,
+                        align: 'left',
+                      })
+                      editor.view.dispatch(tr)
+                    }
+                  }
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <AlignLeft className="h-4 w-4" />
+                {t('editor.alignLeft')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (contextMenu.imagePos !== null && contextMenu.imagePos !== undefined && editor) {
+                    const $pos = editor.state.doc.resolve(contextMenu.imagePos)
+                    const node = $pos.nodeAfter || $pos.nodeBefore
+                    if (node && node.type.name === 'image') {
+                      const tr = editor.state.tr.setNodeMarkup($pos.pos, undefined, {
+                        ...node.attrs,
+                        align: 'center',
+                      })
+                      editor.view.dispatch(tr)
+                    }
+                  }
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <AlignCenter className="h-4 w-4" />
+                {t('editor.alignCenter')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (contextMenu.imagePos !== null && contextMenu.imagePos !== undefined && editor) {
+                    const $pos = editor.state.doc.resolve(contextMenu.imagePos)
+                    const node = $pos.nodeAfter || $pos.nodeBefore
+                    if (node && node.type.name === 'image') {
+                      const tr = editor.state.tr.setNodeMarkup($pos.pos, undefined, {
+                        ...node.attrs,
+                        align: 'right',
+                      })
+                      editor.view.dispatch(tr)
+                    }
+                  }
+                  setContextMenu(prev => ({ ...prev, open: false }))
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                <AlignRight className="h-4 w-4" />
+                {t('editor.alignRight')}
+              </button>
+            </>
+          ) : contextMenu.type === 'empty' ? (
             // Меню для пустого поля - добавление медиа
             <>
               <button

@@ -75,43 +75,66 @@ export const ImageResize = Extension.create({
               const onMouseMove = (e: MouseEvent) => {
                 const deltaX = e.clientX - startX
                 const deltaY = e.clientY - startY
+                const isShiftPressed = e.shiftKey // Shift = пропорциональное изменение
                 
                 let newWidth = startWidth
                 let newHeight = startHeight
 
                 // Вычисляем новый размер в зависимости от угла/стороны
                 switch (handle) {
-                  case 'se': // Правый нижний - увеличиваем при движении вправо-вниз
+                  case 'se': // Правый нижний
+                    if (isShiftPressed) {
+                      // Пропорциональное изменение
+                      newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
+                      newHeight = newWidth / aspectRatio
+                    } else {
+                      // Независимое изменение
+                      newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
+                      newHeight = Math.max(50, Math.min(startHeight + deltaY, view.dom.clientHeight - 100))
+                    }
+                    break
+                  case 'sw': // Левый нижний
+                    if (isShiftPressed) {
+                      newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
+                      newHeight = newWidth / aspectRatio
+                    } else {
+                      newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
+                      newHeight = Math.max(50, Math.min(startHeight + deltaY, view.dom.clientHeight - 100))
+                    }
+                    break
+                  case 'ne': // Правый верхний
+                    if (isShiftPressed) {
+                      newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
+                      newHeight = newWidth / aspectRatio
+                    } else {
+                      newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
+                      newHeight = Math.max(50, Math.min(startHeight - deltaY, view.dom.clientHeight - 100))
+                    }
+                    break
+                  case 'nw': // Левый верхний
+                    if (isShiftPressed) {
+                      newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
+                      newHeight = newWidth / aspectRatio
+                    } else {
+                      newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
+                      newHeight = Math.max(50, Math.min(startHeight - deltaY, view.dom.clientHeight - 100))
+                    }
+                    break
+                  case 'e': // Правая сторона - только ширина
                     newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
+                    // Высота не меняется при изменении только ширины
                     break
-                  case 'sw': // Левый нижний - увеличиваем при движении влево-вниз
+                  case 'w': // Левая сторона - только ширина
                     newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
+                    // Высота не меняется при изменении только ширины
                     break
-                  case 'ne': // Правый верхний - увеличиваем при движении вправо-вверх
-                    newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
-                    break
-                  case 'nw': // Левый верхний - увеличиваем при движении влево-вверх
-                    newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
-                    break
-                  case 'e': // Правая сторона
-                    newWidth = Math.max(50, Math.min(startWidth + deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
-                    break
-                  case 'w': // Левая сторона
-                    newWidth = Math.max(50, Math.min(startWidth - deltaX, view.dom.clientWidth - 100))
-                    newHeight = newWidth / aspectRatio
-                    break
-                  case 's': // Нижняя сторона
+                  case 's': // Нижняя сторона - только высота
                     newHeight = Math.max(50, Math.min(startHeight + deltaY, view.dom.clientHeight - 100))
-                    newWidth = newHeight * aspectRatio
+                    // Ширина не меняется при изменении только высоты
                     break
-                  case 'n': // Верхняя сторона
+                  case 'n': // Верхняя сторона - только высота
                     newHeight = Math.max(50, Math.min(startHeight - deltaY, view.dom.clientHeight - 100))
-                    newWidth = newHeight * aspectRatio
+                    // Ширина не меняется при изменении только высоты
                     break
                 }
 
