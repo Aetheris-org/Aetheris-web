@@ -1438,6 +1438,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       let rafId: number | null = null
       let lastUpdateTime = 0
       const UPDATE_THROTTLE = 16 // ~60fps
+      // Сохраняем последние координаты для использования в RAF
+      let lastCoords: { x: number; y: number } | null = null
       
       const handleMove = (e: MouseEvent | TouchEvent) => {
         // Проверяем состояние из ref, чтобы избежать проблем с замыканиями
@@ -1446,7 +1448,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         e.preventDefault()
         e.stopPropagation()
         
-        const coords = getEventCoordinates(e)
+        // Сохраняем координаты для использования в RAF
+        lastCoords = getEventCoordinates(e)
         const now = performance.now()
         // Throttle updates для плавности, но не пропускаем события
         if (now - lastUpdateTime < UPDATE_THROTTLE && rafId !== null) {
@@ -1462,12 +1465,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         rafId = requestAnimationFrame(() => {
           rafId = null
           // Проверяем состояние еще раз внутри RAF
-          if (!dragStateRef.current) return
+          if (!dragStateRef.current || !lastCoords) return
           const currentState = dragStateRef.current
           
           if (currentState.isDragging) {
-            const deltaX = coords.x - currentState.startX
-            const deltaY = coords.y - currentState.startY
+            const deltaX = lastCoords.x - currentState.startX
+            const deltaY = lastCoords.y - currentState.startY
             let newX = currentState.startLeft + deltaX
             let newY = currentState.startTop + deltaY
             
@@ -1553,8 +1556,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               y: newY,
             })
           } else if (currentState.isResizing) {
-            const deltaX = coords.x - currentState.startX
-            const deltaY = coords.y - currentState.startY
+            const deltaX = lastCoords.x - currentState.startX
+            const deltaY = lastCoords.y - currentState.startY
             const newWidth = Math.max(56, Math.min(currentState.startWidth + deltaX, window.innerWidth - editorSettings.toolbarFloating.x))
             const newHeight = Math.max(100, Math.min(currentState.startHeight + deltaY, window.innerHeight - editorSettings.toolbarFloating.y))
             editorSettings.setToolbarFloating({
