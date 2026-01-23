@@ -110,7 +110,7 @@ interface EditorSettingsStore extends EditorSettings {
 
 export const useEditorSettingsStore = create<EditorSettingsStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...defaultSettings,
       setToolbarPosition: (position) => set({ toolbarPosition: position }),
       setToolbarButton: (id, visible) =>
@@ -135,8 +135,8 @@ export const useEditorSettingsStore = create<EditorSettingsStore>()(
             [action]: combo,
           },
         })),
-      getHotkey: (action) => {
-        const state = useEditorSettingsStore.getState()
+      getHotkey: (action: EditorHotkeyActionId): string => {
+        const state = get()
         return state.hotkeys[action] ?? defaultHotkeys[action]
       },
       resetSettings: () => set(defaultSettings),

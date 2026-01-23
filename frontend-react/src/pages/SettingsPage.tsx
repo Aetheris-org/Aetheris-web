@@ -9338,7 +9338,7 @@ function EditorSettings() {
                 <input
                   id={`toolbar-${id}`}
                   type="checkbox"
-                  checked={visible}
+                  checked={Boolean(visible)}
                   onChange={(e) => editorSettings.setToolbarButton(id as ToolbarButtonId, e.target.checked)}
                   className="h-4 w-4"
                 />

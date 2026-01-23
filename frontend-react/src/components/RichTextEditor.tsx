@@ -91,7 +91,7 @@ import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/bloc
 // import DragHandle from '@tiptap/extension-drag-handle' // Требует дополнительные зависимости
 import { DragHandle } from '@/extensions/drag-handle' // Используем кастомную реализацию
 import { ImageResize } from '@/extensions/image-resize'
-import { useEditorSettingsStore, type EditorHotkeyActionId } from '@/stores/editorSettingsStore'
+import { useEditorSettingsStore, type EditorHotkeyActionId, type ToolbarButtonId } from '@/stores/editorSettingsStore'
 import { Settings, FolderOpen } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { formatKeyCombo, keyEventToCombo } from '@/stores/hotkeysStore'
@@ -2518,8 +2518,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                     <input
                       id={`toolbar-${id}`}
                       type="checkbox"
-                      checked={visible}
-                      onChange={(e) => editorSettings.setToolbarButton(id as any, e.target.checked)}
+                      checked={Boolean(visible)}
+                      onChange={(e) => editorSettings.setToolbarButton(id as ToolbarButtonId, e.target.checked)}
                       className="h-4 w-4"
                     />
                   </div>
