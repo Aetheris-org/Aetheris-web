@@ -805,9 +805,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           let displayStyle = ''
           
           if (align === 'left') {
-            displayStyle = 'float: left; margin-right: 1rem; margin-bottom: 0.5rem;'
+            displayStyle = 'float: left; margin-right: 1rem; margin-bottom: 0.5rem; margin-top: 0.5rem;'
           } else if (align === 'right') {
-            displayStyle = 'float: right; margin-left: 1rem; margin-bottom: 0.5rem;'
+            displayStyle = 'float: right; margin-left: 1rem; margin-bottom: 0.5rem; margin-top: 0.5rem;'
           } else {
             displayStyle = 'display: block; margin-left: auto; margin-right: auto;'
           }
@@ -825,6 +825,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
               class: 'editor-image',
               style: baseStyle,
               'data-align': align,
+              draggable: 'false', // Отключаем стандартный drag, используем свой
             },
           ]
         },

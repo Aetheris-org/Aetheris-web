@@ -535,6 +535,12 @@
 
 .editor-image {
   @apply my-6 max-w-full h-auto rounded-xl border border-border/60 shadow-sm;
+  cursor: move;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.editor-image:hover {
+  opacity: 0.9;
 }
 
 .editor-image[data-align="left"] {
@@ -543,6 +549,7 @@
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
   margin-left: 0;
+  clear: left;
 }
 
 .editor-image[data-align="right"] {
@@ -551,12 +558,25 @@
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
   margin-right: 0;
+  clear: right;
 }
 
 .editor-image[data-align="center"] {
   display: block;
   margin-left: auto;
   margin-right: auto;
+  clear: both;
+}
+
+/* Индикатор места вставки при перетаскивании */
+.image-drop-indicator {
+  position: fixed;
+  pointer-events: none;
+  border: 2px dashed hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+  border-radius: 0.5rem;
+  z-index: 10000;
+  transition: all 0.1s;
 }
 
 .toolbar-drag-handle {

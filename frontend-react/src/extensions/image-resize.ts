@@ -57,6 +57,139 @@ export const ImageResize = Extension.create({
               const handleSize = 20
               
               const handle = getResizeHandle(rect, x, y, handleSize)
+              
+              // Если клик не на handle, но на изображении - начинаем перетаскивание
+              if (!handle) {
+                // Проверяем, что клик не на краю (для resize)
+                const isOnEdge = x <= handleSize || x >= rect.width - handleSize || 
+                                y <= handleSize || y >= rect.height - handleSize
+                if (isOnEdge) return false
+                
+                // Начинаем перетаскивание изображения
+                event.preventDefault()
+                event.stopPropagation()
+                
+                const pos = view.posAtDOM(img, 0)
+                if (pos === null) return false
+                
+                const $pos = view.state.doc.resolve(pos)
+                const node = $pos.nodeAfter || $pos.nodeBefore
+                if (!node || node.type.name !== 'image') return false
+                
+                // Устанавливаем курсор для перетаскивания
+                img.style.cursor = 'move'
+                img.style.opacity = '0.7'
+                
+                const startX = event.clientX
+                const startY = event.clientY
+                const startPos = $pos.pos
+                
+                let draggedPos: number | null = startPos
+                let dropIndicator: HTMLElement | null = null
+                
+                const createDropIndicator = (x: number, y: number) => {
+                  if (!dropIndicator) {
+                    dropIndicator = document.createElement('div')
+                    dropIndicator.className = 'image-drop-indicator'
+                    dropIndicator.style.cssText = `
+                      position: fixed;
+                      pointer-events: none;
+                      border: 2px dashed hsl(var(--primary));
+                      background: hsl(var(--primary) / 0.1);
+                      border-radius: 0.5rem;
+                      z-index: 10000;
+                      transition: all 0.1s;
+                    `
+                    document.body.appendChild(dropIndicator)
+                  }
+                  
+                  const posAtCoords = view.posAtCoords({ left: x, top: y })
+                  if (posAtCoords) {
+                    const coords = view.coordsAtPos(posAtCoords.pos)
+                    dropIndicator.style.left = `${coords.left}px`
+                    dropIndicator.style.top = `${coords.top}px`
+                    dropIndicator.style.width = `${Math.max(100, img.offsetWidth)}px`
+                    dropIndicator.style.height = `${Math.max(50, img.offsetHeight)}px`
+                    dropIndicator.style.display = 'block'
+                  }
+                }
+                
+                const removeDropIndicator = () => {
+                  if (dropIndicator) {
+                    dropIndicator.remove()
+                    dropIndicator = null
+                  }
+                }
+                
+                const onMouseMove = (e: MouseEvent) => {
+                  createDropIndicator(e.clientX, e.clientY)
+                  
+                  // Визуально перемещаем изображение
+                  const deltaX = e.clientX - startX
+                  const deltaY = e.clientY - startY
+                  img.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+                }
+                
+                const onMouseUp = (e: MouseEvent) => {
+                  document.removeEventListener('mousemove', onMouseMove)
+                  document.removeEventListener('mouseup', onMouseUp)
+                  
+                  img.style.cursor = ''
+                  img.style.opacity = ''
+                  img.style.transform = ''
+                  removeDropIndicator()
+                  
+                  if (draggedPos === null) return
+                  
+                  // Находим новую позицию для вставки
+                  const posAtCoords = view.posAtCoords({ 
+                    left: e.clientX, 
+                    top: e.clientY 
+                  })
+                  
+                  if (posAtCoords) {
+                    const newPos = posAtCoords.pos
+                    const $newPos = view.state.doc.resolve(newPos)
+                    
+                    // Вычисляем позицию вставки (перед или после блока)
+                    let insertPos = $newPos.before($newPos.depth)
+                    if ($newPos.parent.type.name === 'paragraph' && $newPos.parent.textContent.trim() === '') {
+                      // Если пустой параграф - вставляем в него
+                      insertPos = $newPos.pos
+                    }
+                    
+                    if (insertPos !== draggedPos) {
+                      const { tr } = view.state
+                      const nodeSize = node.nodeSize
+                      
+                      // Вычисляем финальную позицию с учетом удаления
+                      let finalInsertPos = insertPos
+                      if (insertPos > draggedPos) {
+                        finalInsertPos = insertPos - nodeSize
+                      }
+                      
+                      // Удаляем из старой позиции
+                      tr.delete(draggedPos, draggedPos + nodeSize)
+                      
+                      // Вставляем в новую позицию
+                      try {
+                        tr.insert(finalInsertPos, node)
+                        view.dispatch(tr)
+                      } catch (err) {
+                        console.warn('Failed to move image:', err)
+                      }
+                    }
+                  }
+                  
+                  draggedPos = null
+                }
+                
+                document.addEventListener('mousemove', onMouseMove)
+                document.addEventListener('mouseup', onMouseUp)
+                
+                return true
+              }
+              
               if (!handle) return false
 
               event.preventDefault()
