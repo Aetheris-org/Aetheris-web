@@ -3903,96 +3903,70 @@ export default function CreateArticlePage() {
       </header>
 
       <div className="container pt-4 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6">
-        {/* Stepper - Compact and Modern */}
+        {/* Navigation Strip - Modern Design */}
         <div className="mb-6 sm:mb-12">
-          <div className="flex items-start justify-between gap-0.5 sm:gap-1">
-            {steps.map((step, index) => {
-              const StepIcon = step.icon
-              const isActive = currentStep === step.id
-              const isCompleted = currentStep > step.id
-              const canNavigate = true // свободная навигация между шагами
-              const stepNumber = index + 1
+          {/* Step Name - Above the navigation */}
+          <div className="mb-3 text-center">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">
+              {steps[currentStep]?.label || ''}
+            </h2>
+            {steps[currentStep]?.description && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                {steps[currentStep].description}
+              </p>
+            )}
+          </div>
 
-              return (
-                <div key={step.id} className="flex items-start flex-1 min-w-0">
-                  <div className="flex flex-col items-center flex-shrink-0 w-full">
-                    {/* Step Circle */}
-                    <button
-                      type="button"
-                      onClick={() => canNavigate && setCurrentStep(step.id)}
-                      disabled={false}
-                      className={cn(
-                        'relative flex items-center justify-center transition-all duration-200',
-                        isActive && 'cursor-default',
-                        isCompleted && 'cursor-pointer hover:scale-105',
-                        isEditing && 'cursor-pointer hover:scale-105'
-                      )}
-                      title={step.label}
-                    >
-                      <div
-                        className={cn(
-                          'relative flex h-7 w-7 sm:h-10 sm:w-10 items-center justify-center rounded-full border-2 transition-all duration-200 z-10',
-                          isActive
-                            ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                            : isCompleted
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-muted-foreground/30 bg-background text-muted-foreground'
-                        )}
-                      >
-                        {isCompleted ? (
-                          <Check className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
-                        ) : isActive ? (
-                          <StepIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
-                        ) : (
-                          <span className="text-[10px] sm:text-sm font-semibold">{stepNumber}</span>
-                        )}
-                      </div>
-                      {isActive && (
-                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '3s' }} />
-                      )}
-                    </button>
-                    {/* Step Label - Hidden on mobile, shown on desktop */}
-                    <div className="mt-1.5 sm:mt-3 text-center w-full px-0.5">
-                      <p
-                        className={cn(
-                          'hidden sm:block text-xs font-medium transition-colors leading-tight truncate',
-                          isActive
-                            ? 'text-foreground font-semibold'
-                            : isCompleted
-                              ? 'text-muted-foreground'
-                              : 'text-muted-foreground/50'
-                        )}
-                        title={step.label}
-                      >
-                        {step.label}
-                      </p>
-                      {step.description && (
-                        <p className="hidden sm:block text-[10px] text-muted-foreground/60 mt-0.5 truncate" title={step.description}>
-                          {step.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {/* Connector Line */}
-                  {index < steps.length - 1 && (
-                    <div className="flex-1 h-0.5 mx-0.5 sm:mx-2 mt-3.5 sm:mt-5 relative min-w-0">
-                      <div className="absolute inset-0 bg-border rounded-full" />
-                      <div
-                        className={cn(
-                          'absolute inset-0 rounded-full transition-all duration-500',
-                          isCompleted
-                            ? 'bg-primary'
-                            : 'bg-transparent'
-                        )}
-                        style={{
-                          width: isCompleted ? '100%' : '0%',
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          {/* Navigation Strip with Arrows and Progress Bar */}
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
+            {/* Previous Button */}
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className={cn(
+                "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
+                currentStep === 0
+                  ? "border-muted-foreground/30 bg-background text-muted-foreground/30 cursor-not-allowed"
+                  : "border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer"
+              )}
+              aria-label={t('common.previous')}
+            >
+              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
+
+            {/* Progress Bar Container */}
+            <div className="flex-1 max-w-md h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
+              <div
+                className="h-full bg-primary transition-all duration-300 rounded-full"
+                style={{
+                  width: `${((currentStep + 1) / steps.length) * 100}%`,
+                }}
+              />
+            </div>
+
+            {/* Next Button */}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={currentStep === steps.length - 1 || !canGoNext()}
+              className={cn(
+                "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
+                currentStep === steps.length - 1 || !canGoNext()
+                  ? "border-muted-foreground/30 bg-background text-muted-foreground/30 cursor-not-allowed"
+                  : "border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer"
+              )}
+              aria-label={t('common.next')}
+            >
+              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
+          </div>
+
+          {/* Current Step Indicator - Below the navigation */}
+          <div className="mt-3 text-center">
+            <span className="text-sm sm:text-base text-muted-foreground font-medium">
+              {currentStep + 1} / {steps.length}
+            </span>
           </div>
         </div>
 
