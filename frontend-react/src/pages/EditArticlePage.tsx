@@ -3207,6 +3207,16 @@ export default function EditArticlePage() {
     }
   }
 
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const progressBar = e.currentTarget
+    const rect = progressBar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const percentage = clickX / rect.width
+    const targetStep = Math.floor(percentage * steps.length)
+    const clampedStep = Math.max(0, Math.min(targetStep, steps.length - 1))
+    setCurrentStep(clampedStep)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -3268,14 +3278,32 @@ export default function EditArticlePage() {
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            {/* Progress Bar Container */}
-            <div className="flex-1 max-w-md h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
+            {/* Progress Bar Container - Clickable */}
+            <div 
+              className="flex-1 max-w-md h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative cursor-pointer group"
+              onClick={handleProgressBarClick}
+              title={t('createArticle.clickToNavigate') || 'Click to navigate to any step'}
+            >
               <div
                 className="h-full bg-primary transition-all duration-300 rounded-full"
                 style={{
                   width: `${((currentStep + 1) / steps.length) * 100}%`,
                 }}
               />
+              {/* Step Indicators */}
+              <div className="absolute inset-0 flex items-center justify-between px-0.5">
+                {steps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full transition-all duration-200",
+                      index <= currentStep
+                        ? "bg-primary"
+                        : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Next Button */}
@@ -3295,11 +3323,21 @@ export default function EditArticlePage() {
             </button>
           </div>
 
-          {/* Current Step Indicator - Below the navigation */}
+          {/* Current Step Indicator - Below the navigation (Clickable) */}
           <div className="mt-3 text-center">
-            <span className="text-sm sm:text-base text-muted-foreground font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                // Show a simple menu or allow direct navigation
+                // For now, clicking cycles through steps
+                const nextStep = (currentStep + 1) % steps.length
+                setCurrentStep(nextStep)
+              }}
+              className="text-sm sm:text-base text-muted-foreground font-medium hover:text-foreground transition-colors cursor-pointer"
+              title={t('createArticle.clickToNavigate') || 'Click to navigate'}
+            >
               {currentStep + 1} / {steps.length}
-            </span>
+            </button>
           </div>
         </div>
 
