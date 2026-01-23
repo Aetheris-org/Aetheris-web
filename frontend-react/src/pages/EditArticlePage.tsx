@@ -1342,6 +1342,16 @@ export default function EditArticlePage() {
       // Инвалидируем кэш черновиков, чтобы они сразу появились в списке
       queryClient.invalidateQueries({ queryKey: ['drafts'] })
 
+      // Помечаем черновик как намеренно сохраненный, чтобы DraftRecoveryProvider не показывал плашку
+      try {
+        const draftKeys = Object.keys(localStorage).filter(k => k.startsWith('draft_'))
+        draftKeys.forEach(k => {
+          sessionStorage.setItem(`draft_intentionally_saved_${k}`, 'true')
+        })
+      } catch (e) {
+        logger.warn('[EditArticlePage] Failed to set intentionally saved flag:', e)
+      }
+
       toast({
         title: t('createArticle.draftSaved'),
         description: t('createArticle.draftSavedDescription'),
