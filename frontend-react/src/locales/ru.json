@@ -4239,7 +4239,22 @@
     "toolbarButtonAudio": "Аудио",
     "toolbarButtonClearFormat": "Очистить форматирование",
     "selectFromFile": "Выбрать из файла",
-    "openFileExplorer": "Открыть проводник"
+    "openFileExplorer": "Открыть проводник",
+    "hotkeys": "Горячие клавиши",
+    "hotkeyBold": "Жирный текст",
+    "hotkeyItalic": "Курсив",
+    "hotkeyUnderline": "Подчёркнутый",
+    "hotkeyStrikethrough": "Зачёркнутый",
+    "hotkeyCode": "Код",
+    "hotkeyUndo": "Отменить",
+    "hotkeyRedo": "Повторить",
+    "hotkeyLink": "Ссылка",
+    "hotkeyHeading1": "Заголовок 1",
+    "hotkeyHeading2": "Заголовок 2",
+    "hotkeyHeading3": "Заголовок 3",
+    "hotkeyBulletList": "Маркированный список",
+    "hotkeyOrderedList": "Нумерованный список",
+    "hotkeyBlockquote": "Цитата"
   },
   "pricing": {
     "pageTitle": "Цены",

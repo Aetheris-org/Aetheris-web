@@ -19,6 +19,22 @@ export type ToolbarButtonId =
   | 'audio'
   | 'clearFormat'
 
+export type EditorHotkeyActionId =
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'strikethrough'
+  | 'code'
+  | 'undo'
+  | 'redo'
+  | 'link'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'bulletList'
+  | 'orderedList'
+  | 'blockquote'
+
 export interface EditorSettings {
   toolbarPosition: ToolbarPosition
   toolbarButtons: Record<ToolbarButtonId, boolean>
@@ -29,6 +45,7 @@ export interface EditorSettings {
     height: number
   }
   enableSnapToEdge: boolean
+  hotkeys: Record<EditorHotkeyActionId, string>
 }
 
 const defaultToolbarButtons: Record<ToolbarButtonId, boolean> = {
@@ -48,6 +65,26 @@ const defaultToolbarButtons: Record<ToolbarButtonId, boolean> = {
   clearFormat: true,
 }
 
+const isMac = typeof navigator !== 'undefined' && /Mac|iP(?:hone|ad|od)/.test(navigator.platform)
+const Mod = isMac ? 'Meta' : 'Ctrl'
+
+const defaultHotkeys: Record<EditorHotkeyActionId, string> = {
+  bold: `${Mod}+B`,
+  italic: `${Mod}+I`,
+  underline: `${Mod}+U`,
+  strikethrough: `${Mod}+Shift+X`,
+  code: `${Mod}+E`,
+  undo: `${Mod}+Z`,
+  redo: isMac ? `${Mod}+Shift+Z` : `${Mod}+Y`,
+  link: `${Mod}+K`,
+  heading1: `${Mod}+Alt+1`,
+  heading2: `${Mod}+Alt+2`,
+  heading3: `${Mod}+Alt+3`,
+  bulletList: `${Mod}+Shift+7`,
+  orderedList: `${Mod}+Shift+8`,
+  blockquote: `${Mod}+Shift+B`,
+}
+
 const defaultSettings: EditorSettings = {
   toolbarPosition: 'left',
   toolbarButtons: defaultToolbarButtons,
@@ -58,6 +95,7 @@ const defaultSettings: EditorSettings = {
     height: 400,
   },
   enableSnapToEdge: true,
+  hotkeys: defaultHotkeys,
 }
 
 interface EditorSettingsStore extends EditorSettings {
@@ -65,6 +103,8 @@ interface EditorSettingsStore extends EditorSettings {
   setToolbarButton: (id: ToolbarButtonId, visible: boolean) => void
   setToolbarFloating: (floating: Partial<EditorSettings['toolbarFloating']>) => void
   setEnableSnapToEdge: (enable: boolean) => void
+  setHotkey: (action: EditorHotkeyActionId, combo: string) => void
+  getHotkey: (action: EditorHotkeyActionId) => string
   resetSettings: () => void
 }
 
@@ -88,6 +128,17 @@ export const useEditorSettingsStore = create<EditorSettingsStore>()(
           },
         })),
       setEnableSnapToEdge: (enable) => set({ enableSnapToEdge: enable }),
+      setHotkey: (action, combo) =>
+        set((state) => ({
+          hotkeys: {
+            ...state.hotkeys,
+            [action]: combo,
+          },
+        })),
+      getHotkey: (action) => {
+        const state = useEditorSettingsStore.getState()
+        return state.hotkeys[action] ?? defaultHotkeys[action]
+      },
       resetSettings: () => set(defaultSettings),
     }),
     {

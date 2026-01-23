@@ -4257,7 +4257,22 @@
     "toolbarButtonAudio": "Audio",
     "toolbarButtonClearFormat": "Clear Formatting",
     "selectFromFile": "Select from File",
-    "openFileExplorer": "Open File Explorer"
+    "openFileExplorer": "Open File Explorer",
+    "hotkeys": "Hotkeys",
+    "hotkeyBold": "Bold",
+    "hotkeyItalic": "Italic",
+    "hotkeyUnderline": "Underline",
+    "hotkeyStrikethrough": "Strikethrough",
+    "hotkeyCode": "Code",
+    "hotkeyUndo": "Undo",
+    "hotkeyRedo": "Redo",
+    "hotkeyLink": "Link",
+    "hotkeyHeading1": "Heading 1",
+    "hotkeyHeading2": "Heading 2",
+    "hotkeyHeading3": "Heading 3",
+    "hotkeyBulletList": "Bullet list",
+    "hotkeyOrderedList": "Ordered list",
+    "hotkeyBlockquote": "Blockquote"
   },
   "pricing": {
     "pageTitle": "Pricing",

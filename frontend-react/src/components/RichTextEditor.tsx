@@ -91,8 +91,10 @@ import { BlockAnchor, getBlockAnchors, type AnchorData } from '@/extensions/bloc
 // import DragHandle from '@tiptap/extension-drag-handle' // Требует дополнительные зависимости
 import { DragHandle } from '@/extensions/drag-handle' // Используем кастомную реализацию
 import { ImageResize } from '@/extensions/image-resize'
-import { useEditorSettingsStore } from '@/stores/editorSettingsStore'
+import { useEditorSettingsStore, type EditorHotkeyActionId } from '@/stores/editorSettingsStore'
 import { Settings, FolderOpen } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+import { formatKeyCombo, keyEventToCombo } from '@/stores/hotkeysStore'
 
 type SlashCommandItem = {
   id: string
@@ -103,6 +105,99 @@ type SlashCommandItem = {
   hint?: string
   disabled?: boolean
   command: (props: { editor: Editor; range: Range }) => void
+}
+
+// Компонент для настройки одной горячей клавиши
+function EditorHotkeyItem({ id, labelKey }: { id: EditorHotkeyActionId; labelKey: string }) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const editorSettings = useEditorSettingsStore()
+  const [recording, setRecording] = useState(false)
+  const combo = editorSettings.getHotkey(id)
+
+  useEffect(() => {
+    if (!recording) return
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setRecording(false)
+        return
+      }
+      const newCombo = keyEventToCombo(e)
+      e.preventDefault()
+      e.stopPropagation()
+      const prev = Object.entries(editorSettings.hotkeys).find(([k, v]) => v === newCombo && v && k !== id)
+      if (prev) {
+        toast({
+          title: t('settings.hotkeys.reassigned'),
+          description: t('settings.hotkeys.reassignedDescription', { other: t(`editor.hotkey${(prev[0] as string).charAt(0).toUpperCase() + (prev[0] as string).slice(1)}`) }),
+          variant: 'default',
+        })
+      }
+      editorSettings.setHotkey(id, newCombo)
+      setRecording(false)
+    }
+    window.addEventListener('keydown', onKeyDown, { capture: true })
+    return () => window.removeEventListener('keydown', onKeyDown, { capture: true })
+  }, [recording, id, editorSettings, t, toast])
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-border/60 last:border-0">
+      <div>
+        <p className="text-sm font-medium">{t(labelKey)}</p>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn(
+          'font-mono text-xs sm:w-40 shrink-0 justify-center',
+          recording && 'ring-2 ring-primary'
+        )}
+        onClick={() => setRecording(!recording)}
+      >
+        {recording ? t('settings.hotkeys.pressKeys') : (combo ? formatKeyCombo(combo) : t('settings.hotkeys.notSet'))}
+      </Button>
+    </div>
+  )
+}
+
+// Компонент для секции настроек горячих клавиш
+function EditorHotkeySettings() {
+  const { t } = useTranslation()
+  const editorSettings = useEditorSettingsStore()
+
+  return (
+    <div className="space-y-2">
+      <Label>{t('editor.hotkeys')}</Label>
+      <div className="space-y-3">
+        <EditorHotkeyItem id="bold" labelKey="editor.hotkeyBold" />
+        <EditorHotkeyItem id="italic" labelKey="editor.hotkeyItalic" />
+        <EditorHotkeyItem id="underline" labelKey="editor.hotkeyUnderline" />
+        <EditorHotkeyItem id="strikethrough" labelKey="editor.hotkeyStrikethrough" />
+        <EditorHotkeyItem id="code" labelKey="editor.hotkeyCode" />
+        <EditorHotkeyItem id="undo" labelKey="editor.hotkeyUndo" />
+        <EditorHotkeyItem id="redo" labelKey="editor.hotkeyRedo" />
+        <EditorHotkeyItem id="link" labelKey="editor.hotkeyLink" />
+        <EditorHotkeyItem id="heading1" labelKey="editor.hotkeyHeading1" />
+        <EditorHotkeyItem id="heading2" labelKey="editor.hotkeyHeading2" />
+        <EditorHotkeyItem id="heading3" labelKey="editor.hotkeyHeading3" />
+        <EditorHotkeyItem id="bulletList" labelKey="editor.hotkeyBulletList" />
+        <EditorHotkeyItem id="orderedList" labelKey="editor.hotkeyOrderedList" />
+        <EditorHotkeyItem id="blockquote" labelKey="editor.hotkeyBlockquote" />
+      </div>
+      <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-xs text-muted-foreground mt-4">
+        <p>{t('settings.hotkeys.hint')}</p>
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => editorSettings.resetSettings()}
+        className="mt-2"
+      >
+        {t('settings.hotkeys.resetToDefaults')}
+      </Button>
+    </div>
+  )
 }
 
 type SlashCommandProps = SuggestionProps<SlashCommandItem>
@@ -2431,6 +2526,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                 ))}
               </div>
             </div>
+
+            {/* Настройки горячих клавиш */}
+            <EditorHotkeySettings />
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsEditorSettingsOpen(false)}>

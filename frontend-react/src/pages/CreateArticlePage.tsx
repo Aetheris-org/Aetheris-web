@@ -3861,25 +3861,21 @@ export default function CreateArticlePage() {
   }
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1 && canGoNext()) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
+    } else {
+      // Циклическое переключение: с последнего шага переходим на первый
+      setCurrentStep(0)
     }
   }
 
   const handlePrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
+    } else {
+      // Циклическое переключение: с первого шага переходим на последний
+      setCurrentStep(steps.length - 1)
     }
-  }
-
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const progressBar = e.currentTarget
-    const rect = progressBar.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const percentage = clickX / rect.width
-    const targetStep = Math.floor(percentage * steps.length)
-    const clampedStep = Math.max(0, Math.min(targetStep, steps.length - 1))
-    setCurrentStep(clampedStep)
   }
 
   return (
@@ -3933,78 +3929,38 @@ export default function CreateArticlePage() {
             <button
               type="button"
               onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className={cn(
-                "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
-                currentStep === 0
-                  ? "border-muted-foreground/30 bg-background text-muted-foreground/30 cursor-not-allowed"
-                  : "border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer"
-              )}
+              className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer transition-all duration-200"
               aria-label={t('common.previous')}
             >
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            {/* Progress Bar Container - Clickable */}
-            <div 
-              className="flex-1 max-w-md h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative cursor-pointer group"
-              onClick={handleProgressBarClick}
-              title={t('createArticle.clickToNavigate') || 'Click to navigate to any step'}
-            >
+            {/* Progress Bar Container */}
+            <div className="flex-1 max-w-md h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
               <div
                 className="h-full bg-primary transition-all duration-300 rounded-full"
                 style={{
                   width: `${((currentStep + 1) / steps.length) * 100}%`,
                 }}
               />
-              {/* Step Indicators */}
-              <div className="absolute inset-0 flex items-center justify-between px-0.5">
-                {steps.map((_, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full transition-all duration-200",
-                      index <= currentStep
-                        ? "bg-primary"
-                        : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
             </div>
 
             {/* Next Button */}
             <button
               type="button"
               onClick={handleNext}
-              disabled={currentStep === steps.length - 1 || !canGoNext()}
-              className={cn(
-                "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
-                currentStep === steps.length - 1 || !canGoNext()
-                  ? "border-muted-foreground/30 bg-background text-muted-foreground/30 cursor-not-allowed"
-                  : "border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer"
-              )}
+              className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-primary hover:bg-primary/10 hover:border-primary cursor-pointer transition-all duration-200"
               aria-label={t('common.next')}
             >
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
 
-          {/* Current Step Indicator - Below the navigation (Clickable) */}
+          {/* Current Step Indicator - Below the navigation */}
           <div className="mt-3 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                // Show a simple menu or allow direct navigation
-                // For now, clicking cycles through steps
-                const nextStep = (currentStep + 1) % steps.length
-                setCurrentStep(nextStep)
-              }}
-              className="text-sm sm:text-base text-muted-foreground font-medium hover:text-foreground transition-colors cursor-pointer"
-              title={t('createArticle.clickToNavigate') || 'Click to navigate'}
-            >
+            <span className="text-sm sm:text-base text-muted-foreground font-medium">
               {currentStep + 1} / {steps.length}
-            </button>
+            </span>
           </div>
         </div>
 
