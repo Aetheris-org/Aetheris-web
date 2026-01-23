@@ -422,6 +422,8 @@
   /* НЕ forcing w-full: иначе не работает float/обтекание и ручной resize */
   @apply my-6 max-w-full rounded-lg border border-border/60;
   height: auto;
+  /* Разрешаем обтекание текстом */
+  display: inline-block;
 }
 
 .tiptap strong {
@@ -546,28 +548,31 @@
 }
 
 .editor-image[data-align="left"] {
-  float: left;
-  margin-right: 1rem;
-  margin-bottom: 0.5rem;
-  margin-top: 0.5rem;
-  margin-left: 0;
+  float: left !important;
+  margin-right: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-left: 0 !important;
   clear: left;
+  display: inline-block !important;
 }
 
 .editor-image[data-align="right"] {
-  float: right;
-  margin-left: 1rem;
-  margin-bottom: 0.5rem;
-  margin-top: 0.5rem;
-  margin-right: 0;
+  float: right !important;
+  margin-left: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-right: 0 !important;
   clear: right;
+  display: inline-block !important;
 }
 
 .editor-image[data-align="center"] {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   clear: both;
+  float: none !important;
 }
 
 /* Индикатор места вставки при перетаскивании */

@@ -830,7 +830,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           ]
         },
       }).configure({
-        inline: false,
+        inline: false, // Оставляем block, но float будет работать через CSS
         allowBase64: false,
         HTMLAttributes: {
           class: 'editor-image',
@@ -2611,6 +2611,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                         align: 'left',
                       })
                       editor.view.dispatch(tr)
+                      // #region agent log
+                      const img = editor.view.dom.querySelector(`img[data-align="left"]`) as HTMLImageElement
+                      if (img) {
+                        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix-v2',hypothesisId:'B',location:'components/RichTextEditor.tsx:alignLeft',message:'align left applied',data:{float:getComputedStyle(img).float,width:getComputedStyle(img).width,display:getComputedStyle(img).display},timestamp:Date.now()})}).catch(()=>{});
+                      }
+                      // #endregion
                     }
                   }
                   setContextMenu(prev => ({ ...prev, open: false }))
@@ -2653,6 +2659,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                         align: 'right',
                       })
                       editor.view.dispatch(tr)
+                      // #region agent log
+                      const img = editor.view.dom.querySelector(`img[data-align="right"]`) as HTMLImageElement
+                      if (img) {
+                        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix-v2',hypothesisId:'B',location:'components/RichTextEditor.tsx:alignRight',message:'align right applied',data:{float:getComputedStyle(img).float,width:getComputedStyle(img).width,display:getComputedStyle(img).display},timestamp:Date.now()})}).catch(()=>{});
+                      }
+                      // #endregion
                     }
                   }
                   setContextMenu(prev => ({ ...prev, open: false }))

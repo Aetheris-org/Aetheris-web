@@ -1,5 +1,7 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from 'prosemirror-state'
+import { dropPoint } from 'prosemirror-transform'
+import { Slice } from 'prosemirror-model'
 
 const IMAGE_RESIZE_PLUGIN_KEY = new PluginKey('imageResize')
 
@@ -163,21 +165,32 @@ export const ImageResize = Extension.create({
                     const newPos = posAtCoords.pos
                     const $newPos = view.state.doc.resolve(newPos)
                     
-                    // Вычисляем позицию вставки на уровне top-level блока.
-                    // Важно: нельзя делать before(0) — это и даёт RangeError.
-                    let insertPos = 0
-                    if ($newPos.depth >= 1) {
-                      insertPos = $newPos.before(1)
+                    // Используем dropPoint для правильного определения позиции вставки (как в drag-handle)
+                    // Создаём Slice из содержимого узла изображения
+                    const slice = new Slice(node.content, 0, 0)
+                    let insertPos = dropPoint(view.state.doc, newPos, slice)
+                    
+                    // Если dropPoint не сработал, используем альтернативную логику
+                    if (insertPos === null) {
+                      // Ищем ближайший блок-узел
+                      for (let depth = $newPos.depth; depth > 0; depth--) {
+                        const parentNode = $newPos.node(depth)
+                        if (parentNode.type.isBlock) {
+                          insertPos = $newPos.before(depth)
+                          break
+                        }
+                      }
+                      // Если всё ещё null, используем позицию курсора
+                      if (insertPos === null) {
+                        insertPos = newPos
+                      }
                     }
-                    // Если курсор попал в пустой параграф, вставим прямо в него
-                    if ($newPos.parent.type.name === 'paragraph' && $newPos.parent.textContent.trim() === '') {
-                      insertPos = $newPos.pos
-                    }
+                    
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix',hypothesisId:'A',location:'extensions/image-resize.ts:insertPos',message:'computed insertPos',data:{dropPos:newPos,dropDepth:$newPos.depth,insertPos,draggedPos},timestamp:Date.now()})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'post-fix-v2',hypothesisId:'A',location:'extensions/image-resize.ts:insertPos',message:'computed insertPos with dropPoint',data:{dropPos:newPos,dropDepth:$newPos.depth,insertPos,draggedPos,usedDropPoint:insertPos !== null && insertPos !== newPos},timestamp:Date.now()})}).catch(()=>{});
                     // #endregion
                     
-                    if (insertPos !== draggedPos) {
+                    if (insertPos !== null && insertPos !== draggedPos) {
                       const { tr } = view.state
                       const nodeSize = node.nodeSize
                       
