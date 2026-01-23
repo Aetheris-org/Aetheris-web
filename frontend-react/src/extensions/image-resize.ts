@@ -57,12 +57,18 @@ export const ImageResize = Extension.create({
               const handleSize = 20
               
               const handle = getResizeHandle(rect, x, y, handleSize)
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'extensions/image-resize.ts:59',message:'image mousedown',data:{handle,relX:Math.round(x),relY:Math.round(y),w:Math.round(rect.width),h:Math.round(rect.height)},timestamp:Date.now()})}).catch(()=>{});
+              // #endregion
               
               // Если клик не на handle, но на изображении - начинаем перетаскивание
               if (!handle) {
                 // Проверяем, что клик не на краю (для resize)
                 const isOnEdge = x <= handleSize || x >= rect.width - handleSize || 
                                 y <= handleSize || y >= rect.height - handleSize
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'extensions/image-resize.ts:64',message:'drag branch candidate (handle null)',data:{isOnEdge},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if (isOnEdge) return false
                 
                 // Начинаем перетаскивание изображения
@@ -75,6 +81,9 @@ export const ImageResize = Extension.create({
                 const $pos = view.state.doc.resolve(pos)
                 const node = $pos.nodeAfter || $pos.nodeBefore
                 if (!node || node.type.name !== 'image') return false
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'extensions/image-resize.ts:76',message:'starting image drag',data:{startPos:$pos.pos,nodeSize:node.nodeSize},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 
                 // Устанавливаем курсор для перетаскивания
                 img.style.cursor = 'move'
@@ -146,6 +155,9 @@ export const ImageResize = Extension.create({
                     left: e.clientX, 
                     top: e.clientY 
                   })
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'extensions/image-resize.ts:145',message:'image drag mouseup',data:{hasPosAtCoords:!!posAtCoords,dropPos:posAtCoords?.pos ?? null,draggedPos},timestamp:Date.now()})}).catch(()=>{});
+                  // #endregion
                   
                   if (posAtCoords) {
                     const newPos = posAtCoords.pos

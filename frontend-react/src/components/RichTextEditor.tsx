@@ -1164,6 +1164,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const target = event.target as HTMLElement
     const img = target.closest('img') as HTMLImageElement
     if (img && img.closest('.ProseMirror')) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B',location:'components/RichTextEditor.tsx:handleContextMenu',message:'context menu on image',data:{float:getComputedStyle(img).float,width:getComputedStyle(img).width},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       const pos = editor.view.posAtDOM(img, 0)
       if (pos !== null) {
         const $pos = editor.state.doc.resolve(pos)
@@ -1234,6 +1237,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
   const insertMediaFromFile = useCallback(
     async (file: File, atPosition?: number) => {
       if (!editor || !onUploadMedia) return
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:insertMediaFromFile',message:'insertMediaFromFile called',data:{name:file.name,type:file.type,size:file.size,atPosition:atPosition ?? null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
 
       const fileType = file.type
       const fileName = file.name.toLowerCase()
@@ -1295,7 +1301,44 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     [insertMediaFromFile]
   )
 
-  // Drag-and-drop отключен по требованию - используем только кнопку проводника
+  // Drag-and-drop (временно для диагностики)
+  useEffect(() => {
+    if (!editor || disabled) return
+    const dom = editor.view.dom
+
+    const onDragOver = (e: DragEvent) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:dnd',message:'dragover',data:{hasFiles:!!e.dataTransfer?.types?.includes?.('Files')},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+    }
+
+    const onDrop = async (e: DragEvent) => {
+      e.preventDefault()
+      const files = Array.from(e.dataTransfer?.files ?? [])
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:dnd',message:'drop',data:{filesCount:files.length,types:files.map(f=>f.type).slice(0,3)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      const first = files[0]
+      if (!first) return
+      try {
+        const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos
+        await insertMediaFromFile(first, pos)
+      } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'components/RichTextEditor.tsx:dnd',message:'drop handler error',data:{err:String(err)},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+      }
+    }
+
+    dom.addEventListener('dragover', onDragOver)
+    dom.addEventListener('drop', onDrop)
+    return () => {
+      dom.removeEventListener('dragover', onDragOver)
+      dom.removeEventListener('drop', onDrop)
+    }
+  }, [editor, disabled, insertMediaFromFile])
 
   // Функция для открытия диалога выбора файла
   const handleInsertMedia = useCallback((type: 'image' | 'video' | 'audio') => {
