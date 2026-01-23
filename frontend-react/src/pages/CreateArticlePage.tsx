@@ -3841,25 +3841,6 @@ export default function CreateArticlePage() {
     },
   ]
 
-  const canGoNext = () => {
-    switch (currentStep) {
-      case 0:
-        return title.trim().length > 0 && excerpt.trim().length > 0
-      case 1:
-        return getPlainTextFromHtml(content).trim().length > 0
-      case 2:
-        return true // Tags and difficulty are optional
-      case 3:
-        return true // Preview image is optional
-      case 4:
-        return true // Review is always accessible
-      case 5:
-        return agreedToTerms // Guidelines requires agreement
-      default:
-        return false
-    }
-  }
-
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
