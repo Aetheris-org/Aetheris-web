@@ -475,6 +475,8 @@ export default function CreateArticlePage() {
   
   // Обработчик: Сохранить в черновик и выйти
   const handleExitSaveDraft = useCallback(async () => {
+    // Закрываем диалог сразу, чтобы не мешать сохранению
+    setShowExitDialog(false)
     try {
       // Получаем JSON из редактора
       let currentContentJSON = contentJSON
@@ -545,6 +547,17 @@ export default function CreateArticlePage() {
         logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
       }
       
+      // Очищаем localStorage после сохранения
+      try {
+        const draftKeys = Object.keys(localStorage).filter(k => k.startsWith('draft_'))
+        draftKeys.forEach(k => {
+          sessionStorage.setItem(`draft_intentionally_saved_${k}`, 'true')
+          localStorage.removeItem(k)
+        })
+      } catch (e) {
+        logger.warn('[CreateArticlePage] Failed to clear localStorage:', e)
+      }
+
       toast({
         title: t('draftRecovery.saved'),
         description: t('draftRecovery.savedDescription'),
@@ -1472,6 +1485,9 @@ export default function CreateArticlePage() {
   }
 
   const handleSaveDraft = async () => {
+    // Закрываем диалог выхода сразу, чтобы он не мешал сохранению
+    setShowExitDialog(false)
+    
     const currentUser = useAuthStore.getState().user
 
     if (!currentUser) {
@@ -1770,9 +1786,16 @@ export default function CreateArticlePage() {
         draftKeys.forEach(k => {
           sessionStorage.setItem(`draft_intentionally_saved_${k}`, 'true')
         })
+        // Очищаем localStorage после сохранения в базу
+        draftKeys.forEach(k => {
+          localStorage.removeItem(k)
+        })
       } catch (e) {
         logger.warn('[CreateArticlePage] Failed to set intentionally saved flag:', e)
       }
+
+      // Сбрасываем флаг редактирования - это предотвратит показ диалога при навигации
+      userHasEditedRef.current = false
 
       toast({
         title: t('createArticle.draftSaved'),
