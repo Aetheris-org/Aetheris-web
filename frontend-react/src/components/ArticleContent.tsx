@@ -5,6 +5,8 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import { useMemo, useEffect, useRef } from 'react'
 import { StarterKit } from '@tiptap/starter-kit'
+import { Paragraph } from '@tiptap/extension-paragraph'
+import { Heading } from '@tiptap/extension-heading'
 import { Link } from '@tiptap/extension-link'
 import { Image } from '@tiptap/extension-image'
 import { Placeholder } from '@tiptap/extension-placeholder'
@@ -31,22 +33,12 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   
   // Конвертируем Slate в ProseMirror, если нужно
   const proseMirrorContent = useMemo(() => {
-    // #region agent log
-    if (import.meta.env.DEV) console.log('[DEBUG] proseMirrorContent useMemo entry', {hasContent:!!content,contentType:typeof content,isObject:typeof content==='object',hasType:content?.type});
-    // #endregion
-    
     if (!content) {
-      // #region agent log
-      if (import.meta.env.DEV) console.log('[DEBUG] No content, returning empty doc');
-      // #endregion
       return { type: 'doc', content: [] }
     }
 
     // Если это уже ProseMirror формат (есть type: 'doc')
     if (typeof content === 'object' && content.type === 'doc') {
-      // #region agent log
-      if (import.meta.env.DEV) console.log('[DEBUG] Content is ProseMirror format', {hasContent:!!content.content,contentLength:content.content?.length,firstNodeType:content.content?.[0]?.type,firstNodeAttrs:content.content?.[0]?.attrs});
-      // #endregion
       // Очищаем контент от недопустимых marks (например, textStyle без расширения)
       const cleanContent = (nodes: any[]): any[] => {
         if (!Array.isArray(nodes)) return []
@@ -77,34 +69,35 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         content: Array.isArray(content.content) ? cleanContent(content.content) : []
       }
       
-      // #region agent log
-      if (import.meta.env.DEV) console.log('[DEBUG] Cleaned ProseMirror content', {contentLength:cleaned.content?.length,firstNodeType:cleaned.content?.[0]?.type,firstNodeContent:cleaned.content?.[0]?.content?.length});
-      // #endregion
-      
       return cleaned
     }
 
     // Если это Slate формат, конвертируем
-    // #region agent log
-    if (import.meta.env.DEV) console.log('[DEBUG] Converting Slate to ProseMirror', {contentType:typeof content,isArray:Array.isArray(content)});
-    // #endregion
-    const converted = slateToProseMirror(content)
-    // #region agent log
-    if (import.meta.env.DEV) console.log('[DEBUG] Converted Slate to ProseMirror', {contentLength:converted.content?.length,firstNodeType:converted.content?.[0]?.type,firstNodeAttrs:converted.content?.[0]?.attrs});
-    // #endregion
-    return converted
+    return slateToProseMirror(content)
   }, [content])
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         // Отключаем некоторые функции, которые не нужны для отображения
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
+        heading: false, // Используем кастомный Heading с правильными атрибутами
+        paragraph: false, // Используем кастомный Paragraph с правильными атрибутами
         codeBlock: false, // Используем CodeBlockWithCopy вместо стандартного
         link: false, // Используем кастомный Link
         underline: false, // Явно отключаем underline в StarterKit, используем отдельное расширение
+      }),
+      // Настраиваем Paragraph с правильными HTML атрибутами для стилизации
+      Paragraph.configure({
+        HTMLAttributes: {
+          class: 'article-paragraph',
+        },
+      }),
+      // Настраиваем Heading с правильными HTML атрибутами для стилизации
+      Heading.configure({
+        levels: [1, 2, 3, 4, 5, 6],
+        HTMLAttributes: {
+          class: 'article-heading',
+        },
       }),
       // Добавляем расширения для форматирования, которые используются в редакторе
       TextStyle,
@@ -172,6 +165,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           'whitespace-normal',
           className
         ),
+        style: 'white-space: normal;',
       },
     },
   })
@@ -185,14 +179,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     const currentContentStr = JSON.stringify(currentContent)
     const newContentStr = JSON.stringify(proseMirrorContent)
     
-    // #region agent log
-    if (import.meta.env.DEV) console.log('[DEBUG] Checking content update', {hasEditor:!!editor,hasContent:!!proseMirrorContent,contentChanged:currentContentStr!==newContentStr,currentNodes:currentContent.content?.length,newNodes:proseMirrorContent.content?.length});
-    // #endregion
-    
     if (currentContentStr !== newContentStr) {
-      // #region agent log
-      if (import.meta.env.DEV) console.log('[DEBUG] Setting editor content', {newContentLength:proseMirrorContent.content?.length,firstNodeType:proseMirrorContent.content?.[0]?.type,firstNodeAttrs:proseMirrorContent.content?.[0]?.attrs});
-      // #endregion
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
         const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
@@ -222,15 +209,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       }
       
       editor.commands.setContent(proseMirrorContent, { emitUpdate: false })
-      
-      // #region agent log
-      setTimeout(() => {
-        const afterContent = editor.getJSON()
-        const domParagraphs = editorRef.current?.querySelectorAll('p')
-        const domHeadings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        if (import.meta.env.DEV) console.log('[DEBUG] After setContent - DOM check', {jsonNodes:afterContent.content?.length,domParagraphs:domParagraphs?.length,domHeadings:domHeadings?.length,firstPText:domParagraphs?.[0]?.textContent?.substring(0,50),firstPClasses:domParagraphs?.[0]?.className,firstHText:domHeadings?.[0]?.textContent?.substring(0,50),firstHClasses:domHeadings?.[0]?.className});
-      }, 300);
-      // #endregion
     }
   }, [editor, proseMirrorContent])
 

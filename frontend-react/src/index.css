@@ -281,7 +281,10 @@
   /* Стили для параграфов - применяются везде */
   .tiptap p,
   .tiptap.article-content p,
-  .article-content.tiptap p {
+  .article-content.tiptap p,
+  .tiptap .article-paragraph,
+  .tiptap.article-content .article-paragraph,
+  .article-content.tiptap .article-paragraph {
     margin-bottom: 1rem !important;
     white-space: normal !important;
     line-height: 1.7 !important;
@@ -298,7 +301,10 @@
   /* Стили для заголовков - применяются везде с правильными размерами */
   .tiptap h1,
   .tiptap.article-content h1,
-  .article-content.tiptap h1 {
+  .article-content.tiptap h1,
+  .tiptap h1.article-heading,
+  .tiptap.article-content h1.article-heading,
+  .article-content.tiptap h1.article-heading {
     margin-top: 2rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.875rem !important; /* 30px */
@@ -317,7 +323,10 @@
 
   .tiptap h2,
   .tiptap.article-content h2,
-  .article-content.tiptap h2 {
+  .article-content.tiptap h2,
+  .tiptap h2.article-heading,
+  .tiptap.article-content h2.article-heading,
+  .article-content.tiptap h2.article-heading {
     margin-top: 1.5rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.5rem !important; /* 24px */
@@ -336,7 +345,10 @@
 
   .tiptap h3,
   .tiptap.article-content h3,
-  .article-content.tiptap h3 {
+  .article-content.tiptap h3,
+  .tiptap h3.article-heading,
+  .tiptap.article-content h3.article-heading,
+  .article-content.tiptap h3.article-heading {
     margin-top: 1.25rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.25rem !important; /* 20px */
@@ -354,7 +366,10 @@
 
   .tiptap h4,
   .tiptap.article-content h4,
-  .article-content.tiptap h4 {
+  .article-content.tiptap h4,
+  .tiptap h4.article-heading,
+  .tiptap.article-content h4.article-heading,
+  .article-content.tiptap h4.article-heading {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1.125rem !important; /* 18px */
@@ -372,7 +387,10 @@
 
   .tiptap h5,
   .tiptap.article-content h5,
-  .article-content.tiptap h5 {
+  .article-content.tiptap h5,
+  .tiptap h5.article-heading,
+  .tiptap.article-content h5.article-heading,
+  .article-content.tiptap h5.article-heading {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1rem !important; /* 16px */
@@ -390,7 +408,10 @@
 
   .tiptap h6,
   .tiptap.article-content h6,
-  .article-content.tiptap h6 {
+  .article-content.tiptap h6,
+  .tiptap h6.article-heading,
+  .tiptap.article-content h6.article-heading,
+  .article-content.tiptap h6.article-heading {
     margin-top: 0.75rem !important;
     margin-bottom: 0.5rem !important;
     font-size: 0.875rem !important; /* 14px */

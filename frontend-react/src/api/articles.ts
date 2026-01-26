@@ -191,9 +191,6 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
 
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
-  // #region agent log
-  if (import.meta.env.DEV) console.log('[DEBUG] transformArticle entry', {hasContent:!!article.content,contentType:typeof article.content,isArray:Array.isArray(article.content),articleId:article.id});
-  // #endregion
   
   const rawContent = article.content ?? { document: [] };
 
@@ -215,13 +212,7 @@ export function transformArticle(article: any, _userId?: string): Article {
         );
         
       if (isSlateFormat) {
-        // #region agent log
-        if (import.meta.env.DEV) console.log('[DEBUG] Converting Slate array to ProseMirror', {arrayLength:parsed.length,firstBlockType:parsed[0]?.type});
-        // #endregion
         contentJSON = slateToProseMirror(parsed);
-        // #region agent log
-        if (import.meta.env.DEV) console.log('[DEBUG] Converted Slate to ProseMirror', {contentLength:contentJSON.content?.length,firstNodeType:contentJSON.content?.[0]?.type,firstNodeAttrs:contentJSON.content?.[0]?.attrs});
-        // #endregion
       } else {
         // Не Slate - оборачиваем как есть
         contentJSON = { type: 'doc', content: parsed };
