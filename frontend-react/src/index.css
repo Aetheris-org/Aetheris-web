@@ -279,19 +279,26 @@
   }
 
   /* Стили для параграфов - применяются везде */
-  .tiptap p {
+  .tiptap p,
+  .tiptap.article-content p,
+  .article-content.tiptap p {
     margin-bottom: 1rem !important;
     white-space: normal !important;
     line-height: 1.7 !important;
     display: block !important;
+    margin-top: 0 !important;
   }
 
-  .tiptap p:last-child {
+  .tiptap p:last-child,
+  .tiptap.article-content p:last-child,
+  .article-content.tiptap p:last-child {
     margin-bottom: 0 !important;
   }
 
   /* Стили для заголовков - применяются везде с правильными размерами */
-  .tiptap h1 {
+  .tiptap h1,
+  .tiptap.article-content h1,
+  .article-content.tiptap h1 {
     margin-top: 2rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.875rem !important; /* 30px */
@@ -302,11 +309,15 @@
     letter-spacing: -0.025em !important;
   }
 
-  .tiptap h1:first-child {
+  .tiptap h1:first-child,
+  .tiptap.article-content h1:first-child,
+  .article-content.tiptap h1:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap h2 {
+  .tiptap h2,
+  .tiptap.article-content h2,
+  .article-content.tiptap h2 {
     margin-top: 1.5rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.5rem !important; /* 24px */
@@ -317,11 +328,15 @@
     letter-spacing: -0.025em !important;
   }
 
-  .tiptap h2:first-child {
+  .tiptap h2:first-child,
+  .tiptap.article-content h2:first-child,
+  .article-content.tiptap h2:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap h3 {
+  .tiptap h3,
+  .tiptap.article-content h3,
+  .article-content.tiptap h3 {
     margin-top: 1.25rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.25rem !important; /* 20px */
@@ -331,11 +346,15 @@
     display: block !important;
   }
 
-  .tiptap h3:first-child {
+  .tiptap h3:first-child,
+  .tiptap.article-content h3:first-child,
+  .article-content.tiptap h3:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap h4 {
+  .tiptap h4,
+  .tiptap.article-content h4,
+  .article-content.tiptap h4 {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1.125rem !important; /* 18px */
@@ -345,11 +364,15 @@
     display: block !important;
   }
 
-  .tiptap h4:first-child {
+  .tiptap h4:first-child,
+  .tiptap.article-content h4:first-child,
+  .article-content.tiptap h4:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap h5 {
+  .tiptap h5,
+  .tiptap.article-content h5,
+  .article-content.tiptap h5 {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1rem !important; /* 16px */
@@ -359,11 +382,15 @@
     display: block !important;
   }
 
-  .tiptap h5:first-child {
+  .tiptap h5:first-child,
+  .tiptap.article-content h5:first-child,
+  .article-content.tiptap h5:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap h6 {
+  .tiptap h6,
+  .tiptap.article-content h6,
+  .article-content.tiptap h6 {
     margin-top: 0.75rem !important;
     margin-bottom: 0.5rem !important;
     font-size: 0.875rem !important; /* 14px */
@@ -373,13 +400,19 @@
     display: block !important;
   }
 
-  .tiptap h6:first-child {
+  .tiptap h6:first-child,
+  .tiptap.article-content h6:first-child,
+  .article-content.tiptap h6:first-child {
     margin-top: 0 !important;
   }
 
   /* Стили для списков */
   .tiptap ul,
-  .tiptap ol {
+  .tiptap ol,
+  .tiptap.article-content ul,
+  .tiptap.article-content ol,
+  .article-content.tiptap ul,
+  .article-content.tiptap ol {
     margin-top: 1rem !important;
     margin-bottom: 1rem !important;
     padding-left: 1.5rem !important;
@@ -387,22 +420,30 @@
     display: block !important;
   }
 
-  .tiptap ul {
+  .tiptap ul,
+  .tiptap.article-content ul,
+  .article-content.tiptap ul {
     list-style-type: disc !important;
   }
 
-  .tiptap ol {
+  .tiptap ol,
+  .tiptap.article-content ol,
+  .article-content.tiptap ol {
     list-style-type: decimal !important;
   }
 
-  .tiptap li {
+  .tiptap li,
+  .tiptap.article-content li,
+  .article-content.tiptap li {
     margin-bottom: 0.5rem !important;
     white-space: normal !important;
     line-height: 1.7 !important;
     display: list-item !important;
   }
 
-  .tiptap li:last-child {
+  .tiptap li:last-child,
+  .tiptap.article-content li:last-child,
+  .article-content.tiptap li:last-child {
     margin-bottom: 0 !important;
   }
 

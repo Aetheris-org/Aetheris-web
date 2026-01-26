@@ -8,6 +8,11 @@ import { StarterKit } from '@tiptap/starter-kit'
 import { Link } from '@tiptap/extension-link'
 import { Image } from '@tiptap/extension-image'
 import { Placeholder } from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
+import TextAlign from '@tiptap/extension-text-align'
+import Highlight from '@tiptap/extension-highlight'
 import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
 import { Callout } from '@/extensions/callout'
 import { BlockAnchor } from '@/extensions/block-anchor'
@@ -32,7 +37,27 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
 
     // Если это уже ProseMirror формат (есть type: 'doc')
     if (typeof content === 'object' && content.type === 'doc') {
-      return content
+      // Очищаем контент от недопустимых marks (например, textStyle без расширения)
+      const cleanContent = (nodes: any[]): any[] => {
+        return nodes.map((node: any) => {
+          if (node.type === 'text' && node.marks) {
+            // Фильтруем marks, оставляя только допустимые
+            const allowedMarks = ['bold', 'italic', 'code', 'underline', 'strikethrough', 'link', 'highlight']
+            node.marks = node.marks.filter((mark: any) => allowedMarks.includes(mark.type))
+          }
+          if (node.content && Array.isArray(node.content)) {
+            node.content = cleanContent(node.content)
+          }
+          return node
+        })
+      }
+      
+      const cleaned = {
+        ...content,
+        content: content.content ? cleanContent(content.content) : []
+      }
+      
+      return cleaned
     }
 
     // Если это Slate формат, конвертируем
@@ -48,6 +73,17 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         },
         codeBlock: false, // Используем CodeBlockWithCopy вместо стандартного
         link: false, // Используем кастомный Link
+        underline: false, // Используем отдельное расширение Underline
+      }),
+      // Добавляем расширения для форматирования, которые используются в редакторе
+      TextStyle,
+      Color,
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Highlight.configure({
+        multicolor: true,
       }),
       Link.configure({
         openOnClick: false,
@@ -106,6 +142,15 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           className
         ),
       },
+    },
+    onError: ({ editor, transaction }) => {
+      // Логируем ошибки парсинга, но не прерываем работу
+      if (import.meta.env.DEV) {
+        logger.warn('[ArticleContent] Editor error:', {
+          error: transaction.getMeta('error'),
+          content: editor.getJSON(),
+        })
+      }
     },
   })
 
