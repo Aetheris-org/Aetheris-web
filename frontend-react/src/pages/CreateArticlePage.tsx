@@ -1553,23 +1553,12 @@ export default function CreateArticlePage() {
       if (editorRef.current) {
         try {
           editorJSON = editorRef.current.getJSON()
-          // #region agent log
-          const headingsInEditor = editorJSON?.content?.filter((n: any) => n.type === 'heading') || []
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:2564',message:'Editor JSON before publish',data:{totalBlocks:editorJSON?.content?.length||0,headingsCount:headingsInEditor.length,headingLevels:headingsInEditor.map((h:any)=>h.attrs?.level),blockTypes:editorJSON?.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
         } catch (error) {
           logger.warn('[CreateArticlePage] Failed to get JSON for save draft:', error)
         }
       }
       
       const finalContentJSON = editorJSON || contentJSON
-      
-      // #region agent log
-      if (finalContentJSON && finalContentJSON.type === 'doc') {
-        const headingsInFinal = finalContentJSON.content?.filter((n: any) => n.type === 'heading') || []
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:2570',message:'Final content JSON before conversion',data:{totalBlocks:finalContentJSON.content?.length||0,headingsCount:headingsInFinal.length,headingLevels:headingsInFinal.map((h:any)=>h.attrs?.level),blockTypes:finalContentJSON.content?.map((n:any)=>n.type)||[],source:editorJSON?'editor':'contentJSON'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      }
-      // #endregion
       
       // Если нет JSON контента, создаем минимальный документ
       let contentDocument: any[] = []
@@ -3008,9 +2997,6 @@ export default function CreateArticlePage() {
           if (node.attrs) {
             if (node.type === 'heading' && node.attrs.level) {
               result.level = node.attrs.level
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3007',message:'Converting heading to Slate',data:{proseMirrorType:node.type,slateType,level:node.attrs.level,hasChildren:children.length>0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-              // #endregion
             }
             if (node.attrs.textAlign) {
               result.textAlign = node.attrs.textAlign
@@ -3066,19 +3052,10 @@ export default function CreateArticlePage() {
       let contentDocument: any[] = []
       if (finalContent && typeof finalContent === 'object') {
         if (finalContent.type === 'doc' && Array.isArray(finalContent.content)) {
-          // #region agent log
-          const headingsBefore = finalContent.content.filter((n: any) => n.type === 'heading')
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3063',message:'Before ProseMirror to Slate conversion',data:{totalBlocks:finalContent.content.length,headingsCount:headingsBefore.length,headingLevels:headingsBefore.map((h:any)=>h.attrs?.level),blockTypes:finalContent.content.map((n:any)=>n.type)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           // Извлекаем массив блоков из ProseMirror doc и преобразуем в Slate
           contentDocument = finalContent.content
             .map(convertProseMirrorToSlate)
             .filter((block: any) => block !== null)
-          
-          // #region agent log
-          const headingsAfter = contentDocument.filter((b: any) => b.type === 'heading')
-          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3072',message:'After ProseMirror to Slate conversion',data:{totalBlocks:contentDocument.length,headingsCount:headingsAfter.length,headingLevels:headingsAfter.map((h:any)=>h.level),blockTypes:contentDocument.map((b:any)=>b.type)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           
           logger.debug('[CreateArticlePage] Converted ProseMirror to Slate:', {
             contentLength: contentDocument.length,
@@ -3614,26 +3591,6 @@ export default function CreateArticlePage() {
 
       const isEditMode = Boolean(editingTargetId)
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          location:'CreateArticlePage.tsx:2233',
-          message:'Determining edit mode parameters',
-          data:{
-            editArticleIdRefCurrent: editArticleIdRef.current,
-            articleToEditId: articleToEdit?.id,
-            editArticleId: editArticleId,
-            editingTargetId: editingTargetId,
-            isEditMode: isEditMode
-          },
-          sessionId:'debug-article-edit',
-          runId:'publish-logic'
-        })
-      }).catch(()=>{})
-      // #endregion
-
       if (isEditMode) {
         if (!editingTargetId) {
           toast({
@@ -3644,43 +3601,12 @@ export default function CreateArticlePage() {
           setIsPublishing(false)
           return
         }
-
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            location:'CreateArticlePage.tsx:2272',
-            message:'Calling updateArticle for existing article',
-            data:{
-              editingTargetId: editingTargetId,
-              articleDataKeys: Object.keys(articleData),
-              publishedAt: articleToEdit?.publishedAt
-            },
-            sessionId:'debug-article-edit',
-            runId:'publish-logic'
-          })
-        }).catch(()=>{})
-        // #endregion
         publishedArticle = await updateArticle(editingTargetId!, {
           ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
         })
         wasUpdated = true
       } else if (draftId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            location:'CreateArticlePage.tsx:2277',
-            message:'Updating article from draft',
-            data:{draftId: draftId},
-            sessionId:'debug-article-edit',
-            runId:'publish-logic'
-          })
-        }).catch(()=>{})
-        // #endregion
         // Обновляем по draftId (обратная совместимость)
         publishedArticle = await updateArticle(String(draftId), {
                 ...articleData,
@@ -3688,25 +3614,7 @@ export default function CreateArticlePage() {
         })
         wasUpdated = true
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            location:'CreateArticlePage.tsx:2284',
-            message:'Creating new article',
-            data:{
-              articleDataKeys: Object.keys(articleData),
-              hasDraftId: Boolean(draftId),
-              isEditMode: isEditMode
-            },
-            sessionId:'debug-article-edit',
-            runId:'publish-logic'
-          })
-        }).catch(()=>{})
-        // #endregion
         // Создаем новую статью
-        // Creating article logging removed for cleaner console
         publishedArticle = await createArticle({
             ...articleData,
             publishedAt: new Date().toISOString(),
@@ -4054,10 +3962,6 @@ export default function CreateArticlePage() {
                         try {
                           const json = editorRef.current.getJSON()
                           if (json && json.type === 'doc') {
-                            // #region agent log
-                            const headings = json.content?.filter((n: any) => n.type === 'heading') || []
-                            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:4087',message:'Updating contentJSON on editor change',data:{totalBlocks:json.content?.length||0,headingsCount:headings.length,headingLevels:headings.map((h:any)=>h.attrs?.level),blockTypes:json.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-                            // #endregion
                             setContentJSON(json)
                             if (import.meta.env.DEV) {
                               const codeBlocks = json.content?.filter((node: any) => node.type === 'codeBlock') || []

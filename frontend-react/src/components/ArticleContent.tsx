@@ -108,12 +108,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       },
     },
     onCreate: ({ editor }) => {
-      // #region agent log
-      const json = editor.getJSON()
-      const headings = json.content?.filter((n: any) => n.type === 'heading') || []
-      const paragraphs = json.content?.filter((n: any) => n.type === 'paragraph') || []
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:116',message:'Editor created - content structure',data:{headingsCount:headings.length,paragraphsCount:paragraphs.length,headingLevels:headings.map((h:any)=>h.attrs?.level),contentTypes:json.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+      // Editor created
     },
   })
 
@@ -127,10 +122,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     const newContentStr = JSON.stringify(proseMirrorContent)
     
     if (currentContentStr !== newContentStr) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:127',message:'Content update - checking structure',data:{contentTypes:proseMirrorContent.content?.map((n:any)=>n.type)||[],headingsCount:proseMirrorContent.content?.filter((n:any)=>n.type==='heading').length||0,paragraphsCount:proseMirrorContent.content?.filter((n:any)=>n.type==='paragraph').length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
         const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
@@ -272,33 +263,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     
     // Проверяем наличие элементов с blockId после рендеринга
     const checkAnchors = () => {
-      // #region agent log
-      const headings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6') || []
-      const paragraphs = editorRef.current?.querySelectorAll('p') || []
-      const headingStyles = Array.from(headings).slice(0, 3).map((h: Element) => {
-        const styles = window.getComputedStyle(h as HTMLElement)
-        return {
-          tag: h.tagName,
-          fontSize: styles.fontSize,
-          fontWeight: styles.fontWeight,
-          marginTop: styles.marginTop,
-          marginBottom: styles.marginBottom,
-          classes: h.className,
-        }
-      })
-      const paragraphStyles = Array.from(paragraphs).slice(0, 3).map((p: Element) => {
-        const styles = window.getComputedStyle(p as HTMLElement)
-        return {
-          fontSize: styles.fontSize,
-          fontWeight: styles.fontWeight,
-          marginTop: styles.marginTop,
-          marginBottom: styles.marginBottom,
-          classes: p.className,
-        }
-      })
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:264',message:'DOM structure and styles check',data:{headingsCount:headings.length,paragraphsCount:paragraphs.length,headingStyles,paragraphStyles,editorClasses:editorRef.current?.querySelector('.tiptap')?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
       if (import.meta.env.DEV) {
         const allAnchors = editorRef.current?.querySelectorAll('[id], [data-block-id]')
         if (allAnchors && allAnchors.length > 0) {
