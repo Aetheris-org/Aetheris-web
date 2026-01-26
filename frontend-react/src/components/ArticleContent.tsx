@@ -39,22 +39,32 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     if (typeof content === 'object' && content.type === 'doc') {
       // Очищаем контент от недопустимых marks (например, textStyle без расширения)
       const cleanContent = (nodes: any[]): any[] => {
+        if (!Array.isArray(nodes)) return []
         return nodes.map((node: any) => {
-          if (node.type === 'text' && node.marks) {
-            // Фильтруем marks, оставляя только допустимые
-            const allowedMarks = ['bold', 'italic', 'code', 'underline', 'strikethrough', 'link', 'highlight']
-            node.marks = node.marks.filter((mark: any) => allowedMarks.includes(mark.type))
+          if (!node || typeof node !== 'object') return node
+          
+          const cleanedNode = { ...node }
+          
+          // Очищаем marks у текстовых узлов
+          if (cleanedNode.type === 'text' && Array.isArray(cleanedNode.marks)) {
+            const allowedMarks = ['bold', 'italic', 'code', 'underline', 'strikethrough', 'link', 'highlight', 'textStyle', 'color']
+            cleanedNode.marks = cleanedNode.marks.filter((mark: any) => 
+              mark && typeof mark === 'object' && allowedMarks.includes(mark.type)
+            )
           }
-          if (node.content && Array.isArray(node.content)) {
-            node.content = cleanContent(node.content)
+          
+          // Рекурсивно очищаем дочерние узлы
+          if (cleanedNode.content && Array.isArray(cleanedNode.content)) {
+            cleanedNode.content = cleanContent(cleanedNode.content)
           }
-          return node
-        })
+          
+          return cleanedNode
+        }).filter((node: any) => node !== null && node !== undefined)
       }
       
       const cleaned = {
         ...content,
-        content: content.content ? cleanContent(content.content) : []
+        content: Array.isArray(content.content) ? cleanContent(content.content) : []
       }
       
       return cleaned
@@ -142,15 +152,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           className
         ),
       },
-    },
-    onError: ({ editor, transaction }) => {
-      // Логируем ошибки парсинга, но не прерываем работу
-      if (import.meta.env.DEV) {
-        logger.warn('[ArticleContent] Editor error:', {
-          error: transaction.getMeta('error'),
-          content: editor.getJSON(),
-        })
-      }
     },
   })
 
