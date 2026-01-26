@@ -5,8 +5,6 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import { useMemo, useEffect, useRef } from 'react'
 import { StarterKit } from '@tiptap/starter-kit'
-import { Paragraph } from '@tiptap/extension-paragraph'
-import { Heading } from '@tiptap/extension-heading'
 import { Link } from '@tiptap/extension-link'
 import { Image } from '@tiptap/extension-image'
 import { Placeholder } from '@tiptap/extension-placeholder'
@@ -79,25 +77,12 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Отключаем некоторые функции, которые не нужны для отображения
-        heading: false, // Используем кастомный Heading с правильными атрибутами
-        paragraph: false, // Используем кастомный Paragraph с правильными атрибутами
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
         codeBlock: false, // Используем CodeBlockWithCopy вместо стандартного
         link: false, // Используем кастомный Link
         underline: false, // Явно отключаем underline в StarterKit, используем отдельное расширение
-      }),
-      // Настраиваем Paragraph с правильными HTML атрибутами для стилизации
-      Paragraph.configure({
-        HTMLAttributes: {
-          class: 'article-paragraph',
-        },
-      }),
-      // Настраиваем Heading с правильными HTML атрибутами для стилизации
-      Heading.configure({
-        levels: [1, 2, 3, 4, 5, 6],
-        HTMLAttributes: {
-          class: 'article-heading',
-        },
       }),
       // Добавляем расширения для форматирования, которые используются в редакторе
       TextStyle,
@@ -161,11 +146,8 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       attributes: {
         class: cn(
           'tiptap article-content',
-          'text-foreground leading-relaxed break-words',
-          'whitespace-normal',
           className
         ),
-        style: 'white-space: normal;',
       },
     },
   })
@@ -435,8 +417,58 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     return null
   }
 
+  // Проверяем, что контент действительно есть
+  useEffect(() => {
+    if (editor && editorRef.current) {
+      const checkContent = () => {
+        const paragraphs = editorRef.current?.querySelectorAll('p')
+        const headings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6')
+        const editorContent = editor.getJSON()
+        
+        if (import.meta.env.DEV) {
+          console.log('[ArticleContent] Content check:', {
+            hasEditor: !!editor,
+            hasRef: !!editorRef.current,
+            paragraphsCount: paragraphs?.length || 0,
+            headingsCount: headings?.length || 0,
+            jsonNodes: editorContent.content?.length || 0,
+            firstNodeType: editorContent.content?.[0]?.type,
+          })
+          
+          if (paragraphs && paragraphs.length > 0) {
+            const firstP = paragraphs[0]
+            console.log('[ArticleContent] First paragraph styles:', {
+              marginBottom: window.getComputedStyle(firstP).marginBottom,
+              marginTop: window.getComputedStyle(firstP).marginTop,
+              display: window.getComputedStyle(firstP).display,
+              whiteSpace: window.getComputedStyle(firstP).whiteSpace,
+              className: firstP.className,
+            })
+          }
+          
+          if (headings && headings.length > 0) {
+            const firstH = headings[0]
+            console.log('[ArticleContent] First heading styles:', {
+              marginBottom: window.getComputedStyle(firstH).marginBottom,
+              marginTop: window.getComputedStyle(firstH).marginTop,
+              fontSize: window.getComputedStyle(firstH).fontSize,
+              fontWeight: window.getComputedStyle(firstH).fontWeight,
+              display: window.getComputedStyle(firstH).display,
+              className: firstH.className,
+            })
+          }
+        }
+      }
+      
+      // Проверяем сразу и после небольшой задержки
+      checkContent()
+      const timeoutId = setTimeout(checkContent, 500)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [editor, proseMirrorContent])
+
   return (
-    <div ref={editorRef}>
+    <div ref={editorRef} className="article-content-wrapper">
       <EditorContent editor={editor} />
     </div>
   )
