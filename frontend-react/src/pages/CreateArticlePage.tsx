@@ -2708,7 +2708,7 @@ export default function CreateArticlePage() {
       
       if (!finalContentJSON) {
         logger.error('[CreateArticlePage] No content JSON available - editor not initialized and no saved JSON')
-          toast({
+        toast({
           title: t('createArticle.editorNotReady'),
           description: t('createArticle.editorNotReadyDescription'),
           variant: 'destructive',
@@ -3599,24 +3599,7 @@ export default function CreateArticlePage() {
       }
 
       // Article data logging removed for cleaner console
-      if (false && import.meta.env.DEV) {
-        // Article data logging removed for cleaner console
       
-      logger.debug('[CreateArticlePage] Article data prepared:', {
-        title: articleData.title,
-        contentLength: keystoneContent.length,
-        excerpt: articleData.excerpt,
-        excerptLength: articleData.excerpt.length,
-        tags: articleData.tags,
-        difficulty: articleData.difficulty,
-        category: articleData.category,
-        hasCategory: !!articleData.category,
-        previewImage: articleData.previewImage,
-        hasPreviewImage: !!articleData.previewImage,
-        previewImageUrl: previewImageUrl,
-        existingPreviewImageId: existingPreviewImageId,
-      })
-
       let publishedArticle
       let wasUpdated = false
 
@@ -3679,10 +3662,10 @@ export default function CreateArticlePage() {
           })
         }).catch(()=>{})
         // #endregion
-        publishedArticle = await updateArticle(editingTargetId, {
-                ...articleData,
+        publishedArticle = await updateArticle(editingTargetId!, {
+          ...articleData,
           publishedAt: articleToEdit?.publishedAt || new Date().toISOString(),
-              })
+        })
         wasUpdated = true
       } else if (draftId) {
         // #region agent log
