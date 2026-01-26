@@ -142,25 +142,16 @@ export default function CreateArticlePage() {
   
   // Логирование категории при инициализации
   useEffect(() => {
-    console.log('[CreateArticlePage] Initial category:', {
-      categoryFromUrl,
-      categoryState: category,
-      searchParamsCategory: searchParams.get('category'),
-      fullSearchParams: Object.fromEntries(searchParams.entries())
-    })
   }, []) // Только при монтировании
   
   // Обновляем category при изменении URL параметра
   useEffect(() => {
     const newCategory = searchParams.get('category') || null
     if (newCategory !== category) {
-      console.log('[CreateArticlePage] Category updated from URL:', { 
-        newCategory, 
-        oldCategory: category,
-        searchParamsCategory: searchParams.get('category')
-      })
       setCategory(newCategory)
-      logger.debug('[CreateArticlePage] Category updated from URL:', { newCategory, oldCategory: category })
+      if (import.meta.env.DEV) {
+        logger.debug('[CreateArticlePage] Category updated from URL:', { newCategory, oldCategory: category })
+      }
     }
   }, [searchParams, category])
   // Фиксируем edit-id и не даём ему сбрасываться, если параметр пропал
@@ -1562,12 +1553,23 @@ export default function CreateArticlePage() {
       if (editorRef.current) {
         try {
           editorJSON = editorRef.current.getJSON()
+          // #region agent log
+          const headingsInEditor = editorJSON?.content?.filter((n: any) => n.type === 'heading') || []
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:2564',message:'Editor JSON before publish',data:{totalBlocks:editorJSON?.content?.length||0,headingsCount:headingsInEditor.length,headingLevels:headingsInEditor.map((h:any)=>h.attrs?.level),blockTypes:editorJSON?.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+          // #endregion
         } catch (error) {
           logger.warn('[CreateArticlePage] Failed to get JSON for save draft:', error)
         }
       }
       
       const finalContentJSON = editorJSON || contentJSON
+      
+      // #region agent log
+      if (finalContentJSON && finalContentJSON.type === 'doc') {
+        const headingsInFinal = finalContentJSON.content?.filter((n: any) => n.type === 'heading') || []
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:2570',message:'Final content JSON before conversion',data:{totalBlocks:finalContentJSON.content?.length||0,headingsCount:headingsInFinal.length,headingLevels:headingsInFinal.map((h:any)=>h.attrs?.level),blockTypes:finalContentJSON.content?.map((n:any)=>n.type)||[],source:editorJSON?'editor':'contentJSON'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      }
+      // #endregion
       
       // Если нет JSON контента, создаем минимальный документ
       let contentDocument: any[] = []
@@ -3596,22 +3598,9 @@ export default function CreateArticlePage() {
         articleData.cover_url = previewImageUrl // поле в таблице
       }
 
-      console.log('[CreateArticlePage] Article data prepared:', {
-        title: articleData.title,
-        contentLength: keystoneContent.length,
-        excerpt: articleData.excerpt,
-        excerptLength: articleData.excerpt.length,
-        tags: articleData.tags,
-        difficulty: articleData.difficulty,
-        category: articleData.category,
-        categoryState: category,
-        categoryFromUrl: categoryFromUrl,
-        hasCategory: !!articleData.category,
-        previewImage: articleData.previewImage,
-        hasPreviewImage: !!articleData.previewImage,
-        previewImageUrl: previewImageUrl,
-        existingPreviewImageId: existingPreviewImageId,
-      })
+      // Article data logging removed for cleaner console
+      if (false && import.meta.env.DEV) {
+        // Article data logging removed for cleaner console
       
       logger.debug('[CreateArticlePage] Article data prepared:', {
         title: articleData.title,
@@ -3734,11 +3723,7 @@ export default function CreateArticlePage() {
         }).catch(()=>{})
         // #endregion
         // Создаем новую статью
-        console.log('[CreateArticlePage] Creating article with category:', {
-          category: articleData.category,
-          categoryFromUrl,
-          articleDataKeys: Object.keys(articleData),
-        })
+        // Creating article logging removed for cleaner console
         publishedArticle = await createArticle({
             ...articleData,
             publishedAt: new Date().toISOString(),
@@ -4086,6 +4071,10 @@ export default function CreateArticlePage() {
                         try {
                           const json = editorRef.current.getJSON()
                           if (json && json.type === 'doc') {
+                            // #region agent log
+                            const headings = json.content?.filter((n: any) => n.type === 'heading') || []
+                            fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:4087',message:'Updating contentJSON on editor change',data:{totalBlocks:json.content?.length||0,headingsCount:headings.length,headingLevels:headings.map((h:any)=>h.attrs?.level),blockTypes:json.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                            // #endregion
                             setContentJSON(json)
                             if (import.meta.env.DEV) {
                               const codeBlocks = json.content?.filter((node: any) => node.type === 'codeBlock') || []
