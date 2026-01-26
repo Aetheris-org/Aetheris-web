@@ -417,96 +417,122 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     return null
   }
 
-  // Применяем стили напрямую к элементам после рендеринга
+  // Применяем стили напрямую к элементам после рендеринга с использованием MutationObserver
   useEffect(() => {
-    if (editor && editorRef.current) {
-      const applyStyles = () => {
-        const tiptapElement = editorRef.current?.querySelector('.tiptap')
-        if (!tiptapElement) return
+    if (!editor || !editorRef.current) return
 
-        // Применяем стили к параграфам
-        const paragraphs = tiptapElement.querySelectorAll('p')
-        paragraphs.forEach((p) => {
-          const el = p as HTMLElement
-          el.style.marginBottom = '1rem'
-          el.style.marginTop = '0'
-          el.style.whiteSpace = 'normal'
-          el.style.lineHeight = '1.7'
-          el.style.display = 'block'
-        })
-        
-        // Применяем стили к заголовкам
-        const headings = tiptapElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        headings.forEach((h) => {
-          const el = h as HTMLElement
-          const tagName = el.tagName.toLowerCase()
-          
-          // Общие стили для всех заголовков
-          el.style.whiteSpace = 'normal'
-          el.style.display = 'block'
-          
-          // Специфичные стили по уровню
-          if (tagName === 'h1') {
-            el.style.marginTop = '2rem'
-            el.style.marginBottom = '1rem'
-            el.style.fontSize = '1.875rem'
-            el.style.fontWeight = '700'
-            el.style.lineHeight = '1.2'
-            el.style.letterSpacing = '-0.025em'
-          } else if (tagName === 'h2') {
-            el.style.marginTop = '1.5rem'
-            el.style.marginBottom = '1rem'
-            el.style.fontSize = '1.5rem'
-            el.style.fontWeight = '600'
-            el.style.lineHeight = '1.3'
-            el.style.letterSpacing = '-0.025em'
-          } else if (tagName === 'h3') {
-            el.style.marginTop = '1.25rem'
-            el.style.marginBottom = '1rem'
-            el.style.fontSize = '1.25rem'
-            el.style.fontWeight = '600'
-            el.style.lineHeight = '1.4'
-          } else if (tagName === 'h4') {
-            el.style.marginTop = '1rem'
-            el.style.marginBottom = '0.75rem'
-            el.style.fontSize = '1.125rem'
-            el.style.fontWeight = '600'
-            el.style.lineHeight = '1.4'
-          } else if (tagName === 'h5') {
-            el.style.marginTop = '1rem'
-            el.style.marginBottom = '0.75rem'
-            el.style.fontSize = '1rem'
-            el.style.fontWeight = '600'
-            el.style.lineHeight = '1.5'
-          } else if (tagName === 'h6') {
-            el.style.marginTop = '0.75rem'
-            el.style.marginBottom = '0.5rem'
-            el.style.fontSize = '0.875rem'
-            el.style.fontWeight = '600'
-            el.style.lineHeight = '1.5'
-          }
-          
-          // Убираем margin-top у первого заголовка
-          if (h === headings[0]) {
-            el.style.marginTop = '0'
-          }
-        })
-        
-        // Убираем margin-bottom у последнего параграфа
-        if (paragraphs.length > 0) {
-          const lastP = paragraphs[paragraphs.length - 1] as HTMLElement
-          lastP.style.marginBottom = '0'
-        }
+    const applyStyles = () => {
+      // Ищем элемент .tiptap в разных местах
+      let tiptapElement = editorRef.current?.querySelector('.tiptap')
+      if (!tiptapElement) {
+        // Если не нашли, проверяем сам editorRef
+        tiptapElement = editorRef.current
       }
       
-      // Применяем стили сразу и после задержки
-      applyStyles()
-      const timeoutId = setTimeout(applyStyles, 100)
-      const timeoutId2 = setTimeout(applyStyles, 500)
-      return () => {
-        clearTimeout(timeoutId)
-        clearTimeout(timeoutId2)
+      if (!tiptapElement) {
+        console.warn('[ArticleContent] TipTap element not found!')
+        return
       }
+
+      // Применяем стили к параграфам
+      const paragraphs = tiptapElement.querySelectorAll('p')
+      paragraphs.forEach((p, index) => {
+        const el = p as HTMLElement
+        el.style.setProperty('margin-bottom', '1rem', 'important')
+        el.style.setProperty('margin-top', '0', 'important')
+        el.style.setProperty('white-space', 'normal', 'important')
+        el.style.setProperty('line-height', '1.7', 'important')
+        el.style.setProperty('display', 'block', 'important')
+        
+        // Убираем margin-bottom у последнего параграфа
+        if (index === paragraphs.length - 1) {
+          el.style.setProperty('margin-bottom', '0', 'important')
+        }
+      })
+      
+      // Применяем стили к заголовкам
+      const headings = tiptapElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      headings.forEach((h, index) => {
+        const el = h as HTMLElement
+        const tagName = el.tagName.toLowerCase()
+        
+        // Общие стили для всех заголовков
+        el.style.setProperty('white-space', 'normal', 'important')
+        el.style.setProperty('display', 'block', 'important')
+        
+        // Специфичные стили по уровню
+        if (tagName === 'h1') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '2rem', 'important')
+          el.style.setProperty('margin-bottom', '1rem', 'important')
+          el.style.setProperty('font-size', '1.875rem', 'important')
+          el.style.setProperty('font-weight', '700', 'important')
+          el.style.setProperty('line-height', '1.2', 'important')
+          el.style.setProperty('letter-spacing', '-0.025em', 'important')
+        } else if (tagName === 'h2') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '1.5rem', 'important')
+          el.style.setProperty('margin-bottom', '1rem', 'important')
+          el.style.setProperty('font-size', '1.5rem', 'important')
+          el.style.setProperty('font-weight', '600', 'important')
+          el.style.setProperty('line-height', '1.3', 'important')
+          el.style.setProperty('letter-spacing', '-0.025em', 'important')
+        } else if (tagName === 'h3') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '1.25rem', 'important')
+          el.style.setProperty('margin-bottom', '1rem', 'important')
+          el.style.setProperty('font-size', '1.25rem', 'important')
+          el.style.setProperty('font-weight', '600', 'important')
+          el.style.setProperty('line-height', '1.4', 'important')
+        } else if (tagName === 'h4') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '1rem', 'important')
+          el.style.setProperty('margin-bottom', '0.75rem', 'important')
+          el.style.setProperty('font-size', '1.125rem', 'important')
+          el.style.setProperty('font-weight', '600', 'important')
+          el.style.setProperty('line-height', '1.4', 'important')
+        } else if (tagName === 'h5') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '1rem', 'important')
+          el.style.setProperty('margin-bottom', '0.75rem', 'important')
+          el.style.setProperty('font-size', '1rem', 'important')
+          el.style.setProperty('font-weight', '600', 'important')
+          el.style.setProperty('line-height', '1.5', 'important')
+        } else if (tagName === 'h6') {
+          el.style.setProperty('margin-top', index === 0 ? '0' : '0.75rem', 'important')
+          el.style.setProperty('margin-bottom', '0.5rem', 'important')
+          el.style.setProperty('font-size', '0.875rem', 'important')
+          el.style.setProperty('font-weight', '600', 'important')
+          el.style.setProperty('line-height', '1.5', 'important')
+        }
+      })
+      
+      console.log('[ArticleContent] Applied styles:', {
+        paragraphs: paragraphs.length,
+        headings: headings.length,
+      })
+    }
+    
+    // Применяем стили сразу
+    applyStyles()
+    
+    // Применяем стили через интервалы
+    const timeouts: NodeJS.Timeout[] = []
+    for (let i = 0; i < 10; i++) {
+      timeouts.push(setTimeout(applyStyles, i * 100))
+    }
+    
+    // Используем MutationObserver для отслеживания изменений DOM
+    const observer = new MutationObserver(() => {
+      applyStyles()
+    })
+    
+    if (editorRef.current) {
+      observer.observe(editorRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+      })
+    }
+    
+    return () => {
+      timeouts.forEach(clearTimeout)
+      observer.disconnect()
     }
   }, [editor, proseMirrorContent])
 
