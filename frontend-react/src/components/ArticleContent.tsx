@@ -109,6 +109,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         class: cn(
           'tiptap prose prose-neutral dark:prose-invert max-w-none',
           'text-foreground leading-relaxed break-words',
+          'whitespace-normal', // Принудительно нормализуем whitespace
           className
         ),
       },

@@ -271,43 +271,103 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
+    white-space: normal;
   }
 
   .tiptap:focus-visible {
     @apply outline-none;
   }
 
-  .tiptap p {
+  .tiptap p,
+  .prose.tiptap p,
+  .tiptap.prose p {
     @apply mb-4;
+    white-space: normal;
+    line-height: 1.7;
   }
 
-  .tiptap p:last-child {
+  .tiptap p:last-child,
+  .prose.tiptap p:last-child,
+  .tiptap.prose p:last-child {
     @apply mb-0;
   }
 
-  .tiptap h1 {
-    @apply mt-8 text-3xl font-bold tracking-tight first:mt-0;
+  .tiptap h1,
+  .prose.tiptap h1,
+  .tiptap.prose h1 {
+    @apply mt-8 text-3xl font-bold tracking-tight first:mt-0 mb-4;
+    line-height: 1.2;
+    white-space: normal;
   }
 
-  .tiptap h2 {
-    @apply mt-6 text-2xl font-semibold tracking-tight first:mt-0;
+  .tiptap h2,
+  .prose.tiptap h2,
+  .tiptap.prose h2 {
+    @apply mt-6 text-2xl font-semibold tracking-tight first:mt-0 mb-4;
+    line-height: 1.3;
+    white-space: normal;
   }
 
-  .tiptap h3 {
-    @apply mt-5 text-xl font-semibold tracking-tight first:mt-0;
+  .tiptap h3,
+  .prose.tiptap h3,
+  .tiptap.prose h3 {
+    @apply mt-5 text-xl font-semibold tracking-tight first:mt-0 mb-4;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .tiptap h4,
+  .prose.tiptap h4,
+  .tiptap.prose h4 {
+    @apply mt-4 text-lg font-semibold tracking-tight first:mt-0 mb-3;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .tiptap h5,
+  .prose.tiptap h5,
+  .tiptap.prose h5 {
+    @apply mt-4 text-base font-semibold tracking-tight first:mt-0 mb-3;
+    line-height: 1.5;
+    white-space: normal;
+  }
+
+  .tiptap h6,
+  .prose.tiptap h6,
+  .tiptap.prose h6 {
+    @apply mt-3 text-sm font-semibold tracking-tight first:mt-0 mb-2;
+    line-height: 1.5;
+    white-space: normal;
   }
 
   .tiptap ul,
-  .tiptap ol {
+  .tiptap ol,
+  .prose.tiptap ul,
+  .prose.tiptap ol,
+  .tiptap.prose ul,
+  .tiptap.prose ol {
     @apply my-4 ml-6 space-y-2;
+    white-space: normal;
   }
 
-  .tiptap ul {
+  .tiptap ul,
+  .prose.tiptap ul,
+  .tiptap.prose ul {
     @apply list-disc;
   }
 
-  .tiptap ol {
+  .tiptap ol,
+  .prose.tiptap ol,
+  .tiptap.prose ol {
     @apply list-decimal;
+  }
+
+  .tiptap li,
+  .prose.tiptap li,
+  .tiptap.prose li {
+    @apply mb-2;
+    white-space: normal;
+    line-height: 1.7;
   }
 
   .tiptap blockquote {
@@ -697,6 +757,124 @@
 
 /* Дополнительные стили для prose элементов */
 @layer components {
+  /* Критичные стили для форматирования текста - должны перекрывать стили prose */
+  .prose.tiptap p,
+  .tiptap.prose p {
+    margin-bottom: 1rem !important;
+    white-space: normal !important;
+    line-height: 1.7 !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h1,
+  .tiptap.prose h1 {
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h1:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap h2,
+  .tiptap.prose h2 {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h2:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap h3,
+  .tiptap.prose h3 {
+    margin-top: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h3:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap h4,
+  .tiptap.prose h4 {
+    margin-top: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h4:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap h5,
+  .tiptap.prose h5 {
+    margin-top: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h5:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap h6,
+  .tiptap.prose h6 {
+    margin-top: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap h6:first-child {
+    margin-top: 0 !important;
+  }
+
+  .prose.tiptap ul,
+  .prose.tiptap ol,
+  .tiptap.prose ul,
+  .tiptap.prose ol {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    padding-left: 1.5rem !important;
+    white-space: normal !important;
+    display: block !important;
+  }
+
+  .prose.tiptap li,
+  .tiptap.prose li {
+    margin-bottom: 0.5rem !important;
+    white-space: normal !important;
+    line-height: 1.7 !important;
+    display: list-item !important;
+  }
+
   /* Code blocks - минималистичный дизайн с акцентным цветом */
   .prose pre {
     @apply overflow-x-auto p-4 text-sm m-0;
