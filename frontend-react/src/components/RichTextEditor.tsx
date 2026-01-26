@@ -704,6 +704,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           levels: [1, 2, 3],
         },
         link: false, // Отключаем Link из StarterKit, используем свой
+        underline: false, // Явно отключаем underline в StarterKit, используем отдельное расширение
       }),
       Placeholder.configure({
         placeholder,

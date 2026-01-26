@@ -192,7 +192,7 @@ const computeReadTimeMinutes = (article: any): number | undefined => {
 // Трансформация данных из Supabase в формат Article
 export function transformArticle(article: any, _userId?: string): Article {
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'articles.ts:194',message:'transformArticle entry',data:{hasContent:!!article.content,contentType:typeof article.content,isArray:Array.isArray(article.content),articleId:article.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+  if (import.meta.env.DEV) console.log('[DEBUG] transformArticle entry', {hasContent:!!article.content,contentType:typeof article.content,isArray:Array.isArray(article.content),articleId:article.id});
   // #endregion
   
   const rawContent = article.content ?? { document: [] };
@@ -216,11 +216,11 @@ export function transformArticle(article: any, _userId?: string): Article {
         
       if (isSlateFormat) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'articles.ts:214',message:'Converting Slate array to ProseMirror',data:{arrayLength:parsed.length,firstBlockType:parsed[0]?.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        if (import.meta.env.DEV) console.log('[DEBUG] Converting Slate array to ProseMirror', {arrayLength:parsed.length,firstBlockType:parsed[0]?.type});
         // #endregion
         contentJSON = slateToProseMirror(parsed);
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'articles.ts:217',message:'Converted Slate to ProseMirror',data:{contentLength:contentJSON.content?.length,firstNodeType:contentJSON.content?.[0]?.type,firstNodeAttrs:contentJSON.content?.[0]?.attrs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        if (import.meta.env.DEV) console.log('[DEBUG] Converted Slate to ProseMirror', {contentLength:contentJSON.content?.length,firstNodeType:contentJSON.content?.[0]?.type,firstNodeAttrs:contentJSON.content?.[0]?.attrs});
         // #endregion
       } else {
         // Не Slate - оборачиваем как есть

@@ -32,12 +32,12 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   // Конвертируем Slate в ProseMirror, если нужно
   const proseMirrorContent = useMemo(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:33',message:'proseMirrorContent useMemo entry',data:{hasContent:!!content,contentType:typeof content,isObject:typeof content==='object',hasType:content?.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    if (import.meta.env.DEV) console.log('[DEBUG] proseMirrorContent useMemo entry', {hasContent:!!content,contentType:typeof content,isObject:typeof content==='object',hasType:content?.type});
     // #endregion
     
     if (!content) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:36',message:'No content, returning empty doc',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      if (import.meta.env.DEV) console.log('[DEBUG] No content, returning empty doc');
       // #endregion
       return { type: 'doc', content: [] }
     }
@@ -45,7 +45,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     // Если это уже ProseMirror формат (есть type: 'doc')
     if (typeof content === 'object' && content.type === 'doc') {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:40',message:'Content is ProseMirror format',data:{hasContent:!!content.content,contentLength:content.content?.length,firstNodeType:content.content?.[0]?.type,firstNodeAttrs:content.content?.[0]?.attrs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      if (import.meta.env.DEV) console.log('[DEBUG] Content is ProseMirror format', {hasContent:!!content.content,contentLength:content.content?.length,firstNodeType:content.content?.[0]?.type,firstNodeAttrs:content.content?.[0]?.attrs});
       // #endregion
       // Очищаем контент от недопустимых marks (например, textStyle без расширения)
       const cleanContent = (nodes: any[]): any[] => {
@@ -78,7 +78,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       }
       
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:68',message:'Cleaned ProseMirror content',data:{contentLength:cleaned.content?.length,firstNodeType:cleaned.content?.[0]?.type,firstNodeContent:cleaned.content?.[0]?.content?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      if (import.meta.env.DEV) console.log('[DEBUG] Cleaned ProseMirror content', {contentLength:cleaned.content?.length,firstNodeType:cleaned.content?.[0]?.type,firstNodeContent:cleaned.content?.[0]?.content?.length});
       // #endregion
       
       return cleaned
@@ -86,11 +86,11 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
 
     // Если это Slate формат, конвертируем
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:74',message:'Converting Slate to ProseMirror',data:{contentType:typeof content,isArray:Array.isArray(content)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    if (import.meta.env.DEV) console.log('[DEBUG] Converting Slate to ProseMirror', {contentType:typeof content,isArray:Array.isArray(content)});
     // #endregion
     const converted = slateToProseMirror(content)
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:77',message:'Converted Slate to ProseMirror',data:{contentLength:converted.content?.length,firstNodeType:converted.content?.[0]?.type,firstNodeAttrs:converted.content?.[0]?.attrs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    if (import.meta.env.DEV) console.log('[DEBUG] Converted Slate to ProseMirror', {contentLength:converted.content?.length,firstNodeType:converted.content?.[0]?.type,firstNodeAttrs:converted.content?.[0]?.attrs});
     // #endregion
     return converted
   }, [content])
@@ -104,8 +104,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         },
         codeBlock: false, // Используем CodeBlockWithCopy вместо стандартного
         link: false, // Используем кастомный Link
-        // НЕ отключаем underline здесь - StarterKit не включает его по умолчанию в новых версиях
-        // Если все же есть дублирование, используем только отдельное расширение
+        underline: false, // Явно отключаем underline в StarterKit, используем отдельное расширение
       }),
       // Добавляем расширения для форматирования, которые используются в редакторе
       TextStyle,
@@ -187,12 +186,12 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     const newContentStr = JSON.stringify(proseMirrorContent)
     
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:162',message:'Checking content update',data:{hasEditor:!!editor,hasContent:!!proseMirrorContent,contentChanged:currentContentStr!==newContentStr,currentNodes:currentContent.content?.length,newNodes:proseMirrorContent.content?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    if (import.meta.env.DEV) console.log('[DEBUG] Checking content update', {hasEditor:!!editor,hasContent:!!proseMirrorContent,contentChanged:currentContentStr!==newContentStr,currentNodes:currentContent.content?.length,newNodes:proseMirrorContent.content?.length});
     // #endregion
     
     if (currentContentStr !== newContentStr) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:167',message:'Setting editor content',data:{newContentLength:proseMirrorContent.content?.length,firstNodeType:proseMirrorContent.content?.[0]?.type,firstNodeAttrs:proseMirrorContent.content?.[0]?.attrs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      if (import.meta.env.DEV) console.log('[DEBUG] Setting editor content', {newContentLength:proseMirrorContent.content?.length,firstNodeType:proseMirrorContent.content?.[0]?.type,firstNodeAttrs:proseMirrorContent.content?.[0]?.attrs});
       // #endregion
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
@@ -229,7 +228,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         const afterContent = editor.getJSON()
         const domParagraphs = editorRef.current?.querySelectorAll('p')
         const domHeadings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleContent.tsx:200',message:'After setContent - DOM check',data:{jsonNodes:afterContent.content?.length,domParagraphs:domParagraphs?.length,domHeadings:domHeadings?.length,firstPText:domParagraphs?.[0]?.textContent?.substring(0,50),firstPClasses:domParagraphs?.[0]?.className,firstHText:domHeadings?.[0]?.textContent?.substring(0,50),firstHClasses:domHeadings?.[0]?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        if (import.meta.env.DEV) console.log('[DEBUG] After setContent - DOM check', {jsonNodes:afterContent.content?.length,domParagraphs:domParagraphs?.length,domHeadings:domHeadings?.length,firstPText:domParagraphs?.[0]?.textContent?.substring(0,50),firstPClasses:domParagraphs?.[0]?.className,firstHText:domHeadings?.[0]?.textContent?.substring(0,50),firstHClasses:domHeadings?.[0]?.className});
       }, 300);
       // #endregion
     }
