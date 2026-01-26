@@ -100,9 +100,9 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     editorProps: {
       attributes: {
         class: cn(
-          'tiptap prose prose-neutral dark:prose-invert max-w-none',
+          'tiptap article-content',
           'text-foreground leading-relaxed break-words',
-          'whitespace-normal', // Принудительно нормализуем whitespace
+          'whitespace-normal',
           className
         ),
       },
