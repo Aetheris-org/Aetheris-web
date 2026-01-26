@@ -278,9 +278,11 @@
     @apply outline-none;
   }
 
-  /* Стили для параграфов - применяются везде */
-  .tiptap.article-content p,
-  .article-content.tiptap p {
+  /* Стили для параграфов - применяются везде с максимальной специфичностью */
+  .article-content-wrapper .tiptap.article-content p,
+  .article-content-wrapper .article-content.tiptap p,
+  .article-content-wrapper .tiptap p,
+  div.article-content-wrapper > div > .tiptap p {
     margin-bottom: 1rem !important;
     white-space: normal !important;
     line-height: 1.7 !important;
@@ -295,8 +297,10 @@
   }
 
   /* Стили для заголовков - применяются везде с правильными размерами */
-  .tiptap.article-content h1,
-  .article-content.tiptap h1 {
+  .article-content-wrapper .tiptap.article-content h1,
+  .article-content-wrapper .article-content.tiptap h1,
+  .article-content-wrapper .tiptap h1,
+  div.article-content-wrapper > div > .tiptap h1 {
     margin-top: 2rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.875rem !important; /* 30px */
@@ -307,13 +311,16 @@
     letter-spacing: -0.025em !important;
   }
 
-  .tiptap.article-content h1:first-child,
-  .article-content.tiptap h1:first-child {
+  .article-content-wrapper .tiptap.article-content h1:first-child,
+  .article-content-wrapper .article-content.tiptap h1:first-child,
+  .article-content-wrapper .tiptap h1:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap.article-content h2,
-  .article-content.tiptap h2 {
+  .article-content-wrapper .tiptap.article-content h2,
+  .article-content-wrapper .article-content.tiptap h2,
+  .article-content-wrapper .tiptap h2,
+  div.article-content-wrapper > div > .tiptap h2 {
     margin-top: 1.5rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.5rem !important; /* 24px */
@@ -324,13 +331,16 @@
     letter-spacing: -0.025em !important;
   }
 
-  .tiptap.article-content h2:first-child,
-  .article-content.tiptap h2:first-child {
+  .article-content-wrapper .tiptap.article-content h2:first-child,
+  .article-content-wrapper .article-content.tiptap h2:first-child,
+  .article-content-wrapper .tiptap h2:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap.article-content h3,
-  .article-content.tiptap h3 {
+  .article-content-wrapper .tiptap.article-content h3,
+  .article-content-wrapper .article-content.tiptap h3,
+  .article-content-wrapper .tiptap h3,
+  div.article-content-wrapper > div > .tiptap h3 {
     margin-top: 1.25rem !important;
     margin-bottom: 1rem !important;
     font-size: 1.25rem !important; /* 20px */
@@ -340,13 +350,16 @@
     display: block !important;
   }
 
-  .tiptap.article-content h3:first-child,
-  .article-content.tiptap h3:first-child {
+  .article-content-wrapper .tiptap.article-content h3:first-child,
+  .article-content-wrapper .article-content.tiptap h3:first-child,
+  .article-content-wrapper .tiptap h3:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap.article-content h4,
-  .article-content.tiptap h4 {
+  .article-content-wrapper .tiptap.article-content h4,
+  .article-content-wrapper .article-content.tiptap h4,
+  .article-content-wrapper .tiptap h4,
+  div.article-content-wrapper > div > .tiptap h4 {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1.125rem !important; /* 18px */
@@ -356,13 +369,16 @@
     display: block !important;
   }
 
-  .tiptap.article-content h4:first-child,
-  .article-content.tiptap h4:first-child {
+  .article-content-wrapper .tiptap.article-content h4:first-child,
+  .article-content-wrapper .article-content.tiptap h4:first-child,
+  .article-content-wrapper .tiptap h4:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap.article-content h5,
-  .article-content.tiptap h5 {
+  .article-content-wrapper .tiptap.article-content h5,
+  .article-content-wrapper .article-content.tiptap h5,
+  .article-content-wrapper .tiptap h5,
+  div.article-content-wrapper > div > .tiptap h5 {
     margin-top: 1rem !important;
     margin-bottom: 0.75rem !important;
     font-size: 1rem !important; /* 16px */
@@ -372,13 +388,16 @@
     display: block !important;
   }
 
-  .tiptap.article-content h5:first-child,
-  .article-content.tiptap h5:first-child {
+  .article-content-wrapper .tiptap.article-content h5:first-child,
+  .article-content-wrapper .article-content.tiptap h5:first-child,
+  .article-content-wrapper .tiptap h5:first-child {
     margin-top: 0 !important;
   }
 
-  .tiptap.article-content h6,
-  .article-content.tiptap h6 {
+  .article-content-wrapper .tiptap.article-content h6,
+  .article-content-wrapper .article-content.tiptap h6,
+  .article-content-wrapper .tiptap h6,
+  div.article-content-wrapper > div > .tiptap h6 {
     margin-top: 0.75rem !important;
     margin-bottom: 0.5rem !important;
     font-size: 0.875rem !important; /* 14px */
@@ -388,8 +407,9 @@
     display: block !important;
   }
 
-  .tiptap.article-content h6:first-child,
-  .article-content.tiptap h6:first-child {
+  .article-content-wrapper .tiptap.article-content h6:first-child,
+  .article-content-wrapper .article-content.tiptap h6:first-child,
+  .article-content-wrapper .tiptap h6:first-child {
     margin-top: 0 !important;
   }
 

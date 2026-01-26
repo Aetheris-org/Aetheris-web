@@ -417,53 +417,96 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     return null
   }
 
-  // Проверяем, что контент действительно есть
+  // Применяем стили напрямую к элементам после рендеринга
   useEffect(() => {
     if (editor && editorRef.current) {
-      const checkContent = () => {
-        const paragraphs = editorRef.current?.querySelectorAll('p')
-        const headings = editorRef.current?.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        const editorContent = editor.getJSON()
+      const applyStyles = () => {
+        const tiptapElement = editorRef.current?.querySelector('.tiptap')
+        if (!tiptapElement) return
+
+        // Применяем стили к параграфам
+        const paragraphs = tiptapElement.querySelectorAll('p')
+        paragraphs.forEach((p) => {
+          const el = p as HTMLElement
+          el.style.marginBottom = '1rem'
+          el.style.marginTop = '0'
+          el.style.whiteSpace = 'normal'
+          el.style.lineHeight = '1.7'
+          el.style.display = 'block'
+        })
         
-        if (import.meta.env.DEV) {
-          console.log('[ArticleContent] Content check:', {
-            hasEditor: !!editor,
-            hasRef: !!editorRef.current,
-            paragraphsCount: paragraphs?.length || 0,
-            headingsCount: headings?.length || 0,
-            jsonNodes: editorContent.content?.length || 0,
-            firstNodeType: editorContent.content?.[0]?.type,
-          })
+        // Применяем стили к заголовкам
+        const headings = tiptapElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
+        headings.forEach((h) => {
+          const el = h as HTMLElement
+          const tagName = el.tagName.toLowerCase()
           
-          if (paragraphs && paragraphs.length > 0) {
-            const firstP = paragraphs[0]
-            console.log('[ArticleContent] First paragraph styles:', {
-              marginBottom: window.getComputedStyle(firstP).marginBottom,
-              marginTop: window.getComputedStyle(firstP).marginTop,
-              display: window.getComputedStyle(firstP).display,
-              whiteSpace: window.getComputedStyle(firstP).whiteSpace,
-              className: firstP.className,
-            })
+          // Общие стили для всех заголовков
+          el.style.whiteSpace = 'normal'
+          el.style.display = 'block'
+          
+          // Специфичные стили по уровню
+          if (tagName === 'h1') {
+            el.style.marginTop = '2rem'
+            el.style.marginBottom = '1rem'
+            el.style.fontSize = '1.875rem'
+            el.style.fontWeight = '700'
+            el.style.lineHeight = '1.2'
+            el.style.letterSpacing = '-0.025em'
+          } else if (tagName === 'h2') {
+            el.style.marginTop = '1.5rem'
+            el.style.marginBottom = '1rem'
+            el.style.fontSize = '1.5rem'
+            el.style.fontWeight = '600'
+            el.style.lineHeight = '1.3'
+            el.style.letterSpacing = '-0.025em'
+          } else if (tagName === 'h3') {
+            el.style.marginTop = '1.25rem'
+            el.style.marginBottom = '1rem'
+            el.style.fontSize = '1.25rem'
+            el.style.fontWeight = '600'
+            el.style.lineHeight = '1.4'
+          } else if (tagName === 'h4') {
+            el.style.marginTop = '1rem'
+            el.style.marginBottom = '0.75rem'
+            el.style.fontSize = '1.125rem'
+            el.style.fontWeight = '600'
+            el.style.lineHeight = '1.4'
+          } else if (tagName === 'h5') {
+            el.style.marginTop = '1rem'
+            el.style.marginBottom = '0.75rem'
+            el.style.fontSize = '1rem'
+            el.style.fontWeight = '600'
+            el.style.lineHeight = '1.5'
+          } else if (tagName === 'h6') {
+            el.style.marginTop = '0.75rem'
+            el.style.marginBottom = '0.5rem'
+            el.style.fontSize = '0.875rem'
+            el.style.fontWeight = '600'
+            el.style.lineHeight = '1.5'
           }
           
-          if (headings && headings.length > 0) {
-            const firstH = headings[0]
-            console.log('[ArticleContent] First heading styles:', {
-              marginBottom: window.getComputedStyle(firstH).marginBottom,
-              marginTop: window.getComputedStyle(firstH).marginTop,
-              fontSize: window.getComputedStyle(firstH).fontSize,
-              fontWeight: window.getComputedStyle(firstH).fontWeight,
-              display: window.getComputedStyle(firstH).display,
-              className: firstH.className,
-            })
+          // Убираем margin-top у первого заголовка
+          if (h === headings[0]) {
+            el.style.marginTop = '0'
           }
+        })
+        
+        // Убираем margin-bottom у последнего параграфа
+        if (paragraphs.length > 0) {
+          const lastP = paragraphs[paragraphs.length - 1] as HTMLElement
+          lastP.style.marginBottom = '0'
         }
       }
       
-      // Проверяем сразу и после небольшой задержки
-      checkContent()
-      const timeoutId = setTimeout(checkContent, 500)
-      return () => clearTimeout(timeoutId)
+      // Применяем стили сразу и после задержки
+      applyStyles()
+      const timeoutId = setTimeout(applyStyles, 100)
+      const timeoutId2 = setTimeout(applyStyles, 500)
+      return () => {
+        clearTimeout(timeoutId)
+        clearTimeout(timeoutId2)
+      }
     }
   }, [editor, proseMirrorContent])
 
