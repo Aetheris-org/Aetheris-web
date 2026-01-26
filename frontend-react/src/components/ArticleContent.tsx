@@ -107,9 +107,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         ),
       },
     },
-    onCreate: ({ editor }) => {
-      // Editor created
-    },
   })
 
   // Обновляем контент редактора при изменении proseMirrorContent
