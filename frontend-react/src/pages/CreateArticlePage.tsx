@@ -3006,6 +3006,9 @@ export default function CreateArticlePage() {
           if (node.attrs) {
             if (node.type === 'heading' && node.attrs.level) {
               result.level = node.attrs.level
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3007',message:'Converting heading to Slate',data:{proseMirrorType:node.type,slateType,level:node.attrs.level,hasChildren:children.length>0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+              // #endregion
             }
             if (node.attrs.textAlign) {
               result.textAlign = node.attrs.textAlign
@@ -3061,10 +3064,19 @@ export default function CreateArticlePage() {
       let contentDocument: any[] = []
       if (finalContent && typeof finalContent === 'object') {
         if (finalContent.type === 'doc' && Array.isArray(finalContent.content)) {
+          // #region agent log
+          const headingsBefore = finalContent.content.filter((n: any) => n.type === 'heading')
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3063',message:'Before ProseMirror to Slate conversion',data:{totalBlocks:finalContent.content.length,headingsCount:headingsBefore.length,headingLevels:headingsBefore.map((h:any)=>h.attrs?.level),blockTypes:finalContent.content.map((n:any)=>n.type)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
           // Извлекаем массив блоков из ProseMirror doc и преобразуем в Slate
           contentDocument = finalContent.content
             .map(convertProseMirrorToSlate)
             .filter((block: any) => block !== null)
+          
+          // #region agent log
+          const headingsAfter = contentDocument.filter((b: any) => b.type === 'heading')
+          fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CreateArticlePage.tsx:3072',message:'After ProseMirror to Slate conversion',data:{totalBlocks:contentDocument.length,headingsCount:headingsAfter.length,headingLevels:headingsAfter.map((h:any)=>h.level),blockTypes:contentDocument.map((b:any)=>b.type)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
           
           logger.debug('[CreateArticlePage] Converted ProseMirror to Slate:', {
             contentLength: contentDocument.length,

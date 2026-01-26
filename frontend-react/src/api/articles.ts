@@ -210,12 +210,20 @@ export function transformArticle(article: any, _userId?: string): Article {
           block && typeof block === 'object' && block.type && Array.isArray(block.children) && !block.content
         );
         
-        if (isSlateFormat) {
-          contentJSON = slateToProseMirror(parsed);
-        } else {
-          // Не Slate - оборачиваем как есть
-          contentJSON = { type: 'doc', content: parsed };
-        }
+      if (isSlateFormat) {
+        // #region agent log
+        const headingsBefore = parsed.filter((b: any) => b.type === 'heading')
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'articles.ts:213',message:'Before Slate to ProseMirror conversion (from DB)',data:{totalBlocks:parsed.length,headingsCount:headingsBefore.length,headingLevels:headingsBefore.map((h:any)=>h.level),blockTypes:parsed.map((b:any)=>b.type)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+        contentJSON = slateToProseMirror(parsed);
+        // #region agent log
+        const headingsAfter = contentJSON.content?.filter((n: any) => n.type === 'heading') || []
+        fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'articles.ts:217',message:'After Slate to ProseMirror conversion (from DB)',data:{totalBlocks:contentJSON.content?.length||0,headingsCount:headingsAfter.length,headingLevels:headingsAfter.map((h:any)=>h.attrs?.level),blockTypes:contentJSON.content?.map((n:any)=>n.type)||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+      } else {
+        // Не Slate - оборачиваем как есть
+        contentJSON = { type: 'doc', content: parsed };
+      }
       } else {
         contentJSON = parsed;
       }

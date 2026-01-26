@@ -153,6 +153,9 @@ function convertSlateToProseMirror(node: SlateNode): any {
   switch (type) {
     case 'heading': {
       const level = node.level || 1
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ebafe3e3-0264-4f10-b0b2-c1951d9e2325',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'slate-to-prosemirror.ts:154',message:'Converting Slate heading to ProseMirror',data:{level,childrenCount:children.length,hasBlockId:!!node.blockId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       // Извлекаем blockId из маркера
       const headingAnchor = extractBlockIdFromChildren(children)
       const headingResult: any = {
