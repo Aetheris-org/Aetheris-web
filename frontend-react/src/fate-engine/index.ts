@@ -5,7 +5,8 @@
 
 // Core
 export { createEditor } from './core/Editor'
-export type { FateEditor, FateEditorOptions, FateEditorState } from './types'
+export type { FateEditor, FateEditorOptions, FateEditorState } from './core/Editor'
+export type { FateSchema } from './core/Schema'
 
 // Nodes
 export * from './nodes'

@@ -67,7 +67,7 @@ function updateDOM(dom: HTMLElement, state: FateEditorState): void {
   dom.innerHTML = docToHTML(state.doc)
 }
 
-function parseDOM(dom: HTMLElement, currentState: FateEditorState): FateEditorState {
+function parseDOM(_dom: HTMLElement, currentState: FateEditorState): FateEditorState {
   // Парсим DOM обратно в состояние
   // В упрощенной версии возвращаем текущее состояние
   return currentState

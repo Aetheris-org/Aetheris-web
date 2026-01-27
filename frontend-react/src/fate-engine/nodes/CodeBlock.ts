@@ -46,7 +46,8 @@ lowlight.register('sql', sql)
 lowlight.register('bash', bash)
 lowlight.register('shell', shell)
 
-function detectLanguage(code: string): string {
+// Функция для автоматического определения языка (используется в toDOM)
+function _detectLanguage(code: string): string {
   if (!code || !code.trim()) return 'plaintext'
   
   const trimmed = code.trim()

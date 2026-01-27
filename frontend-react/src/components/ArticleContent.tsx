@@ -28,18 +28,28 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   
   // Конвертируем Slate или ProseMirror в Fate Engine формат
-  const fateContent = useMemo(() => {
+  const fateContent = useMemo((): { type: 'doc'; content: any[] } => {
     if (!content) {
       return { type: 'doc', content: [] }
     }
 
     // Если это уже ProseMirror формат (есть type: 'doc')
-    if (typeof content === 'object' && content.type === 'doc') {
-      return prosemirrorToFate(content)
+    if (typeof content === 'object' && content !== null && content.type === 'doc') {
+      const converted = prosemirrorToFate(content)
+      // Убеждаемся, что тип точно 'doc'
+      if (converted.type === 'doc') {
+        return converted
+      }
+      return { type: 'doc', content: converted.content || [] }
     }
 
     // Если это Slate формат, конвертируем
-    return slateToFate(content)
+    const converted = slateToFate(content)
+    // Убеждаемся, что тип точно 'doc'
+    if (converted.type === 'doc') {
+      return converted
+    }
+    return { type: 'doc', content: converted.content || [] }
   }, [content])
 
   const editor = useEditor({

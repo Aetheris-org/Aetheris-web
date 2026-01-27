@@ -6,8 +6,8 @@
 import type {
   FateEditorState,
   FateDocument,
-  FateSchema,
 } from '../types'
+import type { FateSchema } from './Schema'
 
 export interface StateOptions {
   editable?: boolean
@@ -18,7 +18,7 @@ export interface StateOptions {
 }
 
 export function createState(
-  schema: FateSchema,
+  _schema: FateSchema,
   doc: FateDocument,
   options: StateOptions = {}
 ): FateEditorState {

@@ -41,11 +41,17 @@ export interface FateEditorOptions {
   onBlur?: () => void
 }
 
+export interface FateGlobalAttribute {
+  types: string[]
+  attributes: Record<string, FateAttributeSpec>
+}
+
 export interface FateExtension {
   name: string
   priority?: number
   addNodes?: () => FateNodeDefinition[]
   addMarks?: () => FateMarkDefinition[]
+  addGlobalAttributes?: () => FateGlobalAttribute[]
   addCommands?: () => Record<string, (...args: any[]) => any>
   addKeyboardShortcuts?: () => Record<string, () => boolean>
   addPlugins?: () => FatePlugin[]

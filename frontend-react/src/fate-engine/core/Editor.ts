@@ -23,13 +23,11 @@ export class FateEditorImpl implements IFateEditor {
   private _state: FateEditorState
   private _view: any
   private _extensions: FateExtension[]
-  private _options: FateEditorOptions
   private _commands: Record<string, (...args: any[]) => boolean> = {}
   private _isEditable: boolean = true
   private _isFocused: boolean = false
 
   constructor(options: FateEditorOptions) {
-    this._options = options
     this._extensions = options.extensions || []
     this._isEditable = options.editable !== false
 

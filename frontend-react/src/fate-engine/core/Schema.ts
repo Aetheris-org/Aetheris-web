@@ -15,6 +15,9 @@ export interface FateSchema {
   marks: Record<string, FateMarkDefinition>
 }
 
+// Экспортируем тип для использования в других модулях
+export type { FateSchema }
+
 export function createSchema(extensions: FateExtension[]): FateSchema {
   const nodes: Record<string, FateNodeDefinition> = {}
   const marks: Record<string, FateMarkDefinition> = {}
