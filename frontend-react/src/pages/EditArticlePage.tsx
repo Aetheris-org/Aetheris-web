@@ -2156,10 +2156,32 @@ export default function EditArticlePage() {
             const hasBold = node.marks.some((m: any) => m.type === 'bold')
             const hasItalic = node.marks.some((m: any) => m.type === 'italic')
             const hasCode = node.marks.some((m: any) => m.type === 'code')
+            const hasUnderline = node.marks.some((m: any) => m.type === 'underline')
+            const hasStrikethrough = node.marks.some((m: any) => m.type === 'strikethrough')
             
             if (hasBold) result.bold = true
             if (hasItalic) result.italic = true
             if (hasCode) result.code = true
+            if (hasUnderline) result.underline = true
+            if (hasStrikethrough) result.strikethrough = true
+            
+            // Обрабатываем размер шрифта из textStyle mark
+            const textStyleMark = node.marks.find((m: any) => m.type === 'textStyle')
+            if (textStyleMark && textStyleMark.attrs && textStyleMark.attrs.fontSize) {
+              result.fontSize = textStyleMark.attrs.fontSize
+            }
+            
+            // Обрабатываем цвет из textStyle mark
+            const colorMark = node.marks.find((m: any) => m.type === 'textStyle' && m.attrs && m.attrs.color)
+            if (colorMark && colorMark.attrs && colorMark.attrs.color) {
+              result.color = colorMark.attrs.color
+            }
+            
+            // Обрабатываем highlight
+            const highlightMark = node.marks.find((m: any) => m.type === 'highlight')
+            if (highlightMark && highlightMark.attrs && highlightMark.attrs.color) {
+              result.highlight = highlightMark.attrs.color
+            }
             
             // Обрабатываем ссылки (включая якорные ссылки href="#anchor-id")
             // KeystoneJS не поддерживает url в текстовых узлах напрямую

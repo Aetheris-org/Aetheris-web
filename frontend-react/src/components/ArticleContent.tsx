@@ -564,6 +564,18 @@ function extractText(node: any, withMarks: boolean = false): string {
           if (color) {
             text = `<span style="color: ${escapeHtmlSimple(color)}">${text}</span>`
           }
+        } else if (mark.type === 'textStyle') {
+          // Обрабатываем textStyle mark (fontSize и color)
+          const styleAttrs: string[] = []
+          if (mark.attrs?.fontSize) {
+            styleAttrs.push(`font-size: ${escapeHtmlSimple(mark.attrs.fontSize)}`)
+          }
+          if (mark.attrs?.color) {
+            styleAttrs.push(`color: ${escapeHtmlSimple(mark.attrs.color)}`)
+          }
+          if (styleAttrs.length > 0) {
+            text = `<span style="${styleAttrs.join('; ')}">${text}</span>`
+          }
         }
       })
     }

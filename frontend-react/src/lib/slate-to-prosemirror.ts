@@ -140,6 +140,25 @@ function convertSlateToProseMirror(node: SlateNode): any {
     if (node.underline) marks.push({ type: 'underline' })
     if (node.strikethrough) marks.push({ type: 'strikethrough' })
     if (node.url) marks.push({ type: 'link', attrs: { href: node.url } })
+    
+    // Обрабатываем fontSize, color и highlight через textStyle mark
+    const textStyleAttrs: any = {}
+    if (node.fontSize) {
+      textStyleAttrs.fontSize = node.fontSize
+    }
+    if (node.color) {
+      textStyleAttrs.color = node.color
+    }
+    
+    // Если есть fontSize или color, создаем textStyle mark
+    if (Object.keys(textStyleAttrs).length > 0) {
+      marks.push({ type: 'textStyle', attrs: textStyleAttrs })
+    }
+    
+    // Обрабатываем highlight отдельным mark
+    if (node.highlight) {
+      marks.push({ type: 'highlight', attrs: { color: node.highlight } })
+    }
 
     if (marks.length > 0) {
       result.marks = marks
