@@ -5,7 +5,6 @@
 
 import type { FateNodeDefinition } from '../types'
 import { createLowlight, common } from 'lowlight'
-import hljs from 'highlight.js'
 import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
 import python from 'highlight.js/lib/languages/python'
