@@ -42,8 +42,19 @@ export function useEditor(options: FateEditorOptions = {}): FateEditor | null {
   useEffect(() => {
     if (!editor) return
 
-    if (options.content !== undefined) {
-      editor.setContent(options.content)
+    // Используем setTimeout, чтобы избежать обновления во время рендеринга
+    const timeoutId = setTimeout(() => {
+      try {
+        if (options.content !== undefined) {
+          editor.setContent(options.content)
+        }
+      } catch (error) {
+        console.error('[FateEngine] Error updating editor content:', error)
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timeoutId)
     }
   }, [editor, options.content])
 

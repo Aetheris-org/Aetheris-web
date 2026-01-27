@@ -18,10 +18,12 @@ export function EditorContent({ editor, className }: EditorContentProps) {
   useEffect(() => {
     if (!editor) {
       setHtmlContent('')
+      setError(null)
       return
     }
 
-    const updateContent = () => {
+    // Используем setTimeout, чтобы избежать обновления состояния во время рендеринга
+    const timeoutId = setTimeout(() => {
       try {
         // Получаем HTML из редактора
         const html = editor.getHTML()
@@ -32,18 +34,10 @@ export function EditorContent({ editor, className }: EditorContentProps) {
         setError(err instanceof Error ? err : new Error('Unknown error'))
         setHtmlContent('')
       }
-    }
-
-    // Обновляем сразу
-    updateContent()
-
-    // Используем requestAnimationFrame для обновления после рендеринга
-    const rafId = requestAnimationFrame(() => {
-      updateContent()
-    })
+    }, 0)
 
     return () => {
-      cancelAnimationFrame(rafId)
+      clearTimeout(timeoutId)
     }
   }, [editor])
 

@@ -117,15 +117,25 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   useEffect(() => {
     if (editor) {
       // Проверяем, что редактор правильно инициализирован
-      try {
-        const hasView = editor.view && editor.view.dom
-        if (!hasView) {
-          console.warn('[ArticleContent] Editor view not available')
-          setError(new Error('Editor view not available'))
+      // Используем setTimeout, чтобы избежать обновления состояния во время рендеринга
+      const timeoutId = setTimeout(() => {
+        try {
+          const hasView = editor.view && editor.view.dom
+          if (!hasView) {
+            console.warn('[ArticleContent] Editor view not available')
+            setError(new Error('Editor view not available'))
+          } else {
+            // Очищаем ошибку, если редактор работает
+            setError(null)
+          }
+        } catch (err) {
+          console.error('[ArticleContent] Error checking editor state:', err)
+          setError(err instanceof Error ? err : new Error('Editor check failed'))
         }
-      } catch (err) {
-        console.error('[ArticleContent] Error checking editor state:', err)
-        setError(err instanceof Error ? err : new Error('Editor check failed'))
+      }, 0)
+
+      return () => {
+        clearTimeout(timeoutId)
       }
     }
   }, [editor])
@@ -134,12 +144,15 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   useEffect(() => {
     if (!editor || !fateContent) return
     
-    const currentContent = editor.getJSON()
-    // Сравниваем контент, чтобы не обновлять без необходимости
-    const currentContentStr = JSON.stringify(currentContent)
-    const newContentStr = JSON.stringify(fateContent)
-    
-    if (currentContentStr !== newContentStr) {
+    // Используем setTimeout, чтобы избежать обновления во время рендеринга
+    const timeoutId = setTimeout(() => {
+      try {
+        const currentContent = editor.getJSON()
+        // Сравниваем контент, чтобы не обновлять без необходимости
+        const currentContentStr = JSON.stringify(currentContent)
+        const newContentStr = JSON.stringify(fateContent)
+        
+        if (currentContentStr !== newContentStr) {
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
         const hasImages = JSON.stringify(fateContent).includes('"type":"image"')
@@ -168,20 +181,21 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         }
       }
       
-      try {
-        editor.setContent(fateContent)
-        // Принудительно обновляем HTML после установки контента
-        // Это нужно для EditorContent, который использует getHTML()
-        setTimeout(() => {
-          if (editor) {
-            // Триггерим обновление через изменение состояния
-            const currentState = editor.state
-            editor.view.update(currentState)
+          try {
+            editor.setContent(fateContent)
+          } catch (err) {
+            console.error('[ArticleContent] Error setting content:', err)
+            setError(err instanceof Error ? err : new Error('Failed to set content'))
           }
-        }, 0)
+        }
       } catch (err) {
-        console.error('[ArticleContent] Error setting content:', err)
+        console.error('[ArticleContent] Error in content update effect:', err)
+        setError(err instanceof Error ? err : new Error('Content update failed'))
       }
+    }, 0)
+
+    return () => {
+      clearTimeout(timeoutId)
     }
   }, [editor, fateContent])
 
