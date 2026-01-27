@@ -1,23 +1,21 @@
 /**
- * Компонент для отображения контента статьи через TipTap Editor
- * Использует TipTap в режиме только для чтения для правильного отображения всех блоков
+ * Компонент для отображения контента статьи через Fate Engine
+ * Использует Fate Engine в режиме только для чтения для правильного отображения всех блоков
  */
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent } from '@/fate-engine/react'
 import { useMemo, useEffect, useRef } from 'react'
-import { StarterKit } from '@tiptap/starter-kit'
-import { Link } from '@tiptap/extension-link'
-import { Image } from '@tiptap/extension-image'
-import { Placeholder } from '@tiptap/extension-placeholder'
-import Underline from '@tiptap/extension-underline'
-import { TextStyle } from '@tiptap/extension-text-style'
-import { Color } from '@tiptap/extension-color'
-import TextAlign from '@tiptap/extension-text-align'
-import Highlight from '@tiptap/extension-highlight'
-import { CodeBlockWithCopy } from '@/extensions/code-block-with-copy'
-import { Callout } from '@/extensions/callout'
-import { BlockAnchor } from '@/extensions/block-anchor'
-import { Column, Columns } from '@/extensions/columns'
-import { slateToProseMirror } from '@/lib/slate-to-prosemirror'
+import { StarterKit } from '@/fate-engine/extensions/StarterKit'
+import { Link } from '@/fate-engine/marks/Link'
+import { Image } from '@/fate-engine/nodes/Image'
+import { Underline } from '@/fate-engine/marks/Underline'
+import { TextStyle } from '@/fate-engine/marks/TextStyle'
+import { Color } from '@/fate-engine/marks/Color'
+import { TextAlign } from '@/fate-engine/extensions/TextAlign'
+import { Highlight } from '@/fate-engine/marks/Highlight'
+import { CodeBlock } from '@/fate-engine/nodes/CodeBlock'
+import { Callout } from '@/fate-engine/nodes/Callout'
+import { Column, Columns } from '@/fate-engine/nodes/Columns'
+import { slateToFate, prosemirrorToFate } from '@/fate-engine/utils/converter'
 import { cn } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 
@@ -29,142 +27,72 @@ interface ArticleContentProps {
 export function ArticleContent({ content, className }: ArticleContentProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   
-  // Конвертируем Slate в ProseMirror, если нужно
-  const proseMirrorContent = useMemo(() => {
+  // Конвертируем Slate или ProseMirror в Fate Engine формат
+  const fateContent = useMemo(() => {
     if (!content) {
       return { type: 'doc', content: [] }
     }
 
     // Если это уже ProseMirror формат (есть type: 'doc')
     if (typeof content === 'object' && content.type === 'doc') {
-      // Очищаем контент от недопустимых marks (например, textStyle без расширения)
-      const cleanContent = (nodes: any[]): any[] => {
-        if (!Array.isArray(nodes)) return []
-        return nodes.map((node: any) => {
-          if (!node || typeof node !== 'object') return node
-          
-          const cleanedNode = { ...node }
-          
-          // Очищаем marks у текстовых узлов
-          if (cleanedNode.type === 'text' && Array.isArray(cleanedNode.marks)) {
-            const allowedMarks = ['bold', 'italic', 'code', 'underline', 'strikethrough', 'link', 'highlight', 'textStyle', 'color']
-            cleanedNode.marks = cleanedNode.marks.filter((mark: any) => 
-              mark && typeof mark === 'object' && allowedMarks.includes(mark.type)
-            )
-          }
-          
-          // Рекурсивно очищаем дочерние узлы
-          if (cleanedNode.content && Array.isArray(cleanedNode.content)) {
-            cleanedNode.content = cleanContent(cleanedNode.content)
-          }
-          
-          return cleanedNode
-        }).filter((node: any) => node !== null && node !== undefined)
-      }
-      
-      const cleaned = {
-        ...content,
-        content: Array.isArray(content.content) ? cleanContent(content.content) : []
-      }
-      
-      return cleaned
+      return prosemirrorToFate(content)
     }
 
     // Если это Slate формат, конвертируем
-    return slateToProseMirror(content)
+    return slateToFate(content)
   }, [content])
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
+      StarterKit({
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
-        codeBlock: false, // Используем CodeBlockWithCopy вместо стандартного
-        link: false, // Используем кастомный Link
-        underline: false, // Явно отключаем underline в StarterKit, используем отдельное расширение
+        bold: true,
+        italic: true,
+        underline: true,
+        strikethrough: true,
+        code: true,
+        hardBreak: true,
+        horizontalRule: true,
       }),
-      // Добавляем расширения для форматирования, которые используются в редакторе
+      Link,
+      Image,
+      CodeBlock,
+      Callout,
+      Column,
+      Columns,
       TextStyle,
       Color,
       Underline,
-      TextAlign.configure({
+      Highlight,
+      TextAlign({
         types: ['heading', 'paragraph'],
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary underline hover:text-primary/80 cursor-pointer',
-          style: 'color: hsl(var(--primary));',
-        },
-      }),
-      Image.extend({
-        addAttributes() {
-          return {
-            ...this.parent?.(),
-            src: {
-              default: null,
-            },
-            alt: {
-              default: null,
-            },
-          }
-        },
-      }).configure({
-        inline: false,
-        allowBase64: false,
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg my-4',
-        },
-      }),
-      CodeBlockWithCopy,
-      Callout,
-      BlockAnchor.configure({
-        types: [
-          'paragraph',
-          'heading',
-          'callout',
-          'columns',
-          'column',
-          'blockquote',
-          'codeBlock',
-          'image',
-        ],
-      }),
-      Column,
-      Columns,
-      Placeholder.configure({
-        placeholder: '',
+        alignments: ['left', 'center', 'right', 'justify'],
       }),
     ],
-    content: proseMirrorContent,
+    content: fateContent,
     editable: false, // Режим только для чтения
-    editorProps: {
-      attributes: {
-        class: cn(
-          'tiptap article-content',
-          className
-        ),
-      },
+    onCreate: ({ doc }: { doc: any }) => {
+      if (import.meta.env.DEV) {
+        logger.debug('[ArticleContent] Fate Engine editor created', { content: doc })
+      }
     },
   })
 
-  // Обновляем контент редактора при изменении proseMirrorContent
+  // Обновляем контент редактора при изменении fateContent
   useEffect(() => {
-    if (!editor || !proseMirrorContent) return
+    if (!editor || !fateContent) return
     
     const currentContent = editor.getJSON()
     // Сравниваем контент, чтобы не обновлять без необходимости
     const currentContentStr = JSON.stringify(currentContent)
-    const newContentStr = JSON.stringify(proseMirrorContent)
+    const newContentStr = JSON.stringify(fateContent)
     
     if (currentContentStr !== newContentStr) {
       if (import.meta.env.DEV) {
         // Логируем наличие изображений в контенте для отладки
-        const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
+        const hasImages = JSON.stringify(fateContent).includes('"type":"image"')
         if (hasImages) {
           // Находим все узлы изображений для детального логирования
           const findImages = (content: any[]): any[] => {
@@ -179,7 +107,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
             }
             return images
           }
-          const images = findImages(proseMirrorContent.content || [])
+          const images = findImages(fateContent.content || [])
           logger.debug('[ArticleContent] Content contains images:', {
             count: images.length,
             images: images.map(img => ({
@@ -190,9 +118,9 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         }
       }
       
-      editor.commands.setContent(proseMirrorContent, { emitUpdate: false })
+      editor.setContent(fateContent)
     }
-  }, [editor, proseMirrorContent])
+  }, [editor, fateContent])
 
   // Проверка и обработка изображений, видео и аудио после рендеринга
   useEffect(() => {
@@ -236,10 +164,10 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         })
       } else if (import.meta.env.DEV) {
         // Если в JSON есть изображения, но в DOM их нет - это проблема
-        const hasImages = JSON.stringify(proseMirrorContent).includes('"type":"image"')
+        const hasImages = JSON.stringify(fateContent).includes('"type":"image"')
         if (hasImages) {
           logger.warn('[ArticleContent] Images in JSON but not in DOM!', {
-            proseMirrorContent: JSON.stringify(proseMirrorContent).substring(0, 500),
+            fateContent: JSON.stringify(fateContent).substring(0, 500),
           })
           
           // Попробуем найти изображения в редакторе через JSON
@@ -289,10 +217,10 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       })
     }
 
-    // Запускаем после небольшой задержки, чтобы дать TipTap время отрендерить
+    // Запускаем после небольшой задержки, чтобы дать Fate Engine время отрендерить
     const timeoutId = setTimeout(handleMediaElements, 200)
     return () => clearTimeout(timeoutId)
-  }, [editor, proseMirrorContent])
+  }, [editor, fateContent])
 
   // В опубликованных статьях добавляем только кратковременную подсветку при клике на якорную ссылку
   // Постоянные индикаторы не нужны - только эффект при навигации
@@ -316,10 +244,10 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       }
     }
     
-    // Проверяем после небольшой задержки, чтобы дать TipTap время отрендерить контент
+    // Проверяем после небольшой задержки, чтобы дать Fate Engine время отрендерить контент
     const timeoutId = setTimeout(checkAnchors, 500)
     return () => clearTimeout(timeoutId)
-  }, [editor, proseMirrorContent])
+  }, [editor, fateContent])
 
   // Обработка кликов по якорным ссылкам (href="#anchor-id")
   // Добавляем кратковременную подсветку блока-якоря при клике
@@ -343,7 +271,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         }
         
         // Ищем элемент с id или data-block-id равным anchorId
-        // Ищем внутри всего документа, так как TipTap может рендерить контент в разных местах
+        // Ищем внутри всего документа, так как Fate Engine может рендерить контент в разных местах
         const anchorElement = document.querySelector(
           `[id="${anchorId}"], [data-block-id="${anchorId}"]`
         ) as HTMLElement | null
@@ -422,20 +350,20 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     if (!editor || !editorRef.current) return
 
     const applyStyles = () => {
-      // Ищем элемент .tiptap в разных местах
-      let tiptapElement = editorRef.current?.querySelector('.tiptap')
-      if (!tiptapElement) {
+      // Ищем элемент .fate-editor в разных местах
+      let fateElement = editorRef.current?.querySelector('.fate-editor')
+      if (!fateElement) {
         // Если не нашли, проверяем сам editorRef
-        tiptapElement = editorRef.current
+        fateElement = editorRef.current
       }
       
-      if (!tiptapElement) {
-        console.warn('[ArticleContent] TipTap element not found!')
+      if (!fateElement) {
+        console.warn('[ArticleContent] Fate Engine element not found!')
         return
       }
 
       // Применяем стили к параграфам
-      const paragraphs = tiptapElement.querySelectorAll('p')
+      const paragraphs = fateElement.querySelectorAll('p')
       paragraphs.forEach((p, index) => {
         const el = p as HTMLElement
         el.style.setProperty('margin-bottom', '1rem', 'important')
@@ -451,7 +379,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       })
       
       // Применяем стили к заголовкам
-      const headings = tiptapElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      const headings = fateElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
       headings.forEach((h, index) => {
         const el = h as HTMLElement
         const tagName = el.tagName.toLowerCase()
@@ -534,11 +462,11 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       timeouts.forEach(clearTimeout)
       observer.disconnect()
     }
-  }, [editor, proseMirrorContent])
+  }, [editor, fateContent])
 
   return (
     <div ref={editorRef} className="article-content-wrapper">
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className={cn('fate-editor article-content', className)} />
     </div>
   )
 }
