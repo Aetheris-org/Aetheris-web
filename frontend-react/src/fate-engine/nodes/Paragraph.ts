@@ -18,7 +18,7 @@ export const Paragraph: FateNodeDefinition = {
     return ['p', 0]
   },
   addCommands: () => ({
-    setParagraph: () => ({ state, dispatch }: any) => {
+    setParagraph: () => () => {
       // Команда для установки параграфа
       return true
     },

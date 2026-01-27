@@ -18,15 +18,15 @@ export const Blockquote: FateNodeDefinition = {
     return ['blockquote', 0]
   },
   addCommands: () => ({
-    setBlockquote: () => ({ state, dispatch }: any) => {
+    setBlockquote: () => () => {
       // Команда для установки цитаты
       return true
     },
-    toggleBlockquote: () => ({ state, dispatch }: any) => {
+    toggleBlockquote: () => () => {
       // Команда для переключения цитаты
       return true
     },
-    liftBlockquote: () => ({ state, dispatch }: any) => {
+    liftBlockquote: () => () => {
       // Команда для снятия цитаты
       return true
     },

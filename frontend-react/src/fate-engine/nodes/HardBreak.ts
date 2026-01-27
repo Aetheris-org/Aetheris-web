@@ -19,7 +19,7 @@ export const HardBreak: FateNodeDefinition = {
     return ['br']
   },
   addCommands: () => ({
-    setHardBreak: () => ({ state, dispatch }: any) => {
+    setHardBreak: () => () => {
       // Команда для вставки переноса строки
       return true
     },

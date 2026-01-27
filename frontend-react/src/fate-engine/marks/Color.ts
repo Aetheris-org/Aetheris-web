@@ -21,8 +21,9 @@ export const Color: FateMarkDefinition = {
   parseDOM: [
     {
       style: 'color',
-      getAttrs: (value: string) => {
-        return { color: value }
+      getAttrs: (dom: HTMLElement) => {
+        const color = dom.style.color || dom.getAttribute('data-color')
+        return color ? { color } : null
       },
     },
     {
@@ -49,11 +50,11 @@ export const Color: FateMarkDefinition = {
     ]
   },
   addCommands: () => ({
-    setColor: (color: string) => ({ state, dispatch }: any) => {
+    setColor: (_color: string) => () => {
       // Команда для установки цвета
       return true
     },
-    unsetColor: () => ({ state, dispatch }: any) => {
+    unsetColor: () => () => {
       // Команда для снятия цвета
       return true
     },

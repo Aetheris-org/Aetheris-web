@@ -115,7 +115,7 @@ export const Image: FateNodeDefinition = {
     return ['img', attrs]
   },
   addCommands: () => ({
-    setImage: (attrs: { src: string; alt?: string; title?: string }) => ({ state, dispatch }: any) => {
+    setImage: (_attrs: { src: string; alt?: string; title?: string }) => () => {
       // Команда для вставки изображения
       return true
     },

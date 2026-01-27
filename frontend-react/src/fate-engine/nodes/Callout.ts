@@ -113,11 +113,11 @@ export const Callout: FateNodeDefinition = {
     return [aside, proseDiv]
   },
   addCommands: () => ({
-    insertCallout: (variant: CalloutVariant = 'info') => ({ state, dispatch }: any) => {
+    insertCallout: (_variant: CalloutVariant = 'info') => () => {
       // Команда для вставки callout
       return true
     },
-    setCalloutVariant: (variant: CalloutVariant) => ({ state, dispatch }: any) => {
+    setCalloutVariant: (_variant: CalloutVariant) => () => {
       // Команда для изменения варианта callout
       return true
     },

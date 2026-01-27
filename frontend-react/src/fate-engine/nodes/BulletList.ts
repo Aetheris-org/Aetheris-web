@@ -17,11 +17,11 @@ export const BulletList: FateNodeDefinition = {
     return ['ul', 0]
   },
   addCommands: () => ({
-    toggleBulletList: () => ({ state, dispatch }: any) => {
+    toggleBulletList: () => () => {
       // Команда для переключения маркированного списка
       return true
     },
-    wrapInBulletList: () => ({ state, dispatch }: any) => {
+    wrapInBulletList: () => () => {
       // Команда для оборачивания в маркированный список
       return true
     },

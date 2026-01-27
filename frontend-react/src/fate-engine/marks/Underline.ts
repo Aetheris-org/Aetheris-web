@@ -13,8 +13,9 @@ export const Underline: FateMarkDefinition = {
     },
     {
       style: 'text-decoration',
-      getAttrs: (value: string) => {
-        return value === 'underline' && null
+      getAttrs: (dom: HTMLElement) => {
+        const style = dom.style.textDecoration
+        return style === 'underline' ? {} : null
       },
     },
   ],
@@ -22,15 +23,15 @@ export const Underline: FateMarkDefinition = {
     return ['u', 0]
   },
   addCommands: () => ({
-    toggleUnderline: () => ({ state, dispatch }: any) => {
+    toggleUnderline: () => () => {
       // Команда для переключения подчеркивания
       return true
     },
-    setUnderline: () => ({ state, dispatch }: any) => {
+    setUnderline: () => () => {
       // Команда для установки подчеркивания
       return true
     },
-    unsetUnderline: () => ({ state, dispatch }: any) => {
+    unsetUnderline: () => () => {
       // Команда для снятия подчеркивания
       return true
     },

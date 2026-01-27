@@ -18,22 +18,25 @@ export const Strikethrough: FateMarkDefinition = {
       tag: 'del',
     },
     {
-      style: 'text-decoration=line-through',
+      style: 'text-decoration',
+      getAttrs: (dom: HTMLElement) => {
+        return dom.style.textDecoration === 'line-through' ? {} : null
+      },
     },
   ],
   toDOM: () => {
     return ['s', 0]
   },
   addCommands: () => ({
-    toggleStrikethrough: () => ({ state, dispatch }: any) => {
+    toggleStrikethrough: () => () => {
       // Команда для переключения зачеркивания
       return true
     },
-    setStrikethrough: () => ({ state, dispatch }: any) => {
+    setStrikethrough: () => () => {
       // Команда для установки зачеркивания
       return true
     },
-    unsetStrikethrough: () => ({ state, dispatch }: any) => {
+    unsetStrikethrough: () => () => {
       // Команда для снятия зачеркивания
       return true
     },

@@ -17,15 +17,15 @@ export const Code: FateMarkDefinition = {
     return ['code', 0]
   },
   addCommands: () => ({
-    toggleCode: () => ({ state, dispatch }: any) => {
+    toggleCode: () => () => {
       // Команда для переключения инлайн кода
       return true
     },
-    setCode: () => ({ state, dispatch }: any) => {
+    setCode: () => () => {
       // Команда для установки инлайн кода
       return true
     },
-    unsetCode: () => ({ state, dispatch }: any) => {
+    unsetCode: () => () => {
       // Команда для снятия инлайн кода
       return true
     },

@@ -27,8 +27,9 @@ export const Highlight: FateMarkDefinition = {
     },
     {
       style: 'background-color',
-      getAttrs: (value: string) => {
-        return { color: value }
+      getAttrs: (dom: HTMLElement) => {
+        const color = dom.style.backgroundColor || dom.getAttribute('data-color')
+        return color ? { color } : null
       },
     },
   ],
@@ -45,15 +46,15 @@ export const Highlight: FateMarkDefinition = {
     ]
   },
   addCommands: () => ({
-    setHighlight: (attrs?: { color?: string }) => ({ state, dispatch }: any) => {
+    setHighlight: (_attrs?: { color?: string }) => () => {
       // Команда для установки подсветки
       return true
     },
-    toggleHighlight: (attrs?: { color?: string }) => ({ state, dispatch }: any) => {
+    toggleHighlight: (_attrs?: { color?: string }) => () => {
       // Команда для переключения подсветки
       return true
     },
-    unsetHighlight: () => ({ state, dispatch }: any) => {
+    unsetHighlight: () => () => {
       // Команда для снятия подсветки
       return true
     },

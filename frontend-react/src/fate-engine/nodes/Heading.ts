@@ -22,12 +22,12 @@ export const Heading: FateNodeDefinition = {
     },
   },
   parseDOM: [
-    { tag: 'h1', attrs: { level: 1 } },
-    { tag: 'h2', attrs: { level: 2 } },
-    { tag: 'h3', attrs: { level: 3 } },
-    { tag: 'h4', attrs: { level: 4 } },
-    { tag: 'h5', attrs: { level: 5 } },
-    { tag: 'h6', attrs: { level: 6 } },
+    { tag: 'h1', getAttrs: () => ({ level: 1 }) },
+    { tag: 'h2', getAttrs: () => ({ level: 2 }) },
+    { tag: 'h3', getAttrs: () => ({ level: 3 }) },
+    { tag: 'h4', getAttrs: () => ({ level: 4 }) },
+    { tag: 'h5', getAttrs: () => ({ level: 5 }) },
+    { tag: 'h6', getAttrs: () => ({ level: 6 }) },
   ],
   toDOM: (node) => {
     const level = node.attrs?.level || 1
@@ -35,11 +35,11 @@ export const Heading: FateNodeDefinition = {
     return [tag, 0]
   },
   addCommands: () => ({
-    setHeading: (attrs: { level: number }) => ({ state, dispatch }: any) => {
+    setHeading: (_attrs: { level: number }) => () => {
       // Команда для установки заголовка
       return true
     },
-    toggleHeading: (attrs: { level: number }) => ({ state, dispatch }: any) => {
+    toggleHeading: (_attrs: { level: number }) => () => {
       // Команда для переключения заголовка
       return true
     },

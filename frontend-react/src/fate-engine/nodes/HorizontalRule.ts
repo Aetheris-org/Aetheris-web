@@ -17,7 +17,7 @@ export const HorizontalRule: FateNodeDefinition = {
     return ['hr']
   },
   addCommands: () => ({
-    setHorizontalRule: () => ({ state, dispatch }: any) => {
+    setHorizontalRule: () => () => {
       // Команда для вставки горизонтальной линии
       return true
     },

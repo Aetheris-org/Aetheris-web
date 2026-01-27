@@ -21,8 +21,9 @@ export const FontSize: FateMarkDefinition = {
   parseDOM: [
     {
       style: 'font-size',
-      getAttrs: (value: string) => {
-        return { fontSize: value }
+      getAttrs: (dom: HTMLElement) => {
+        const fontSize = dom.style.fontSize || dom.getAttribute('data-font-size')
+        return fontSize ? { fontSize } : null
       },
     },
     {
@@ -49,11 +50,11 @@ export const FontSize: FateMarkDefinition = {
     ]
   },
   addCommands: () => ({
-    setFontSize: (fontSize: string) => ({ state, dispatch }: any) => {
+    setFontSize: (_fontSize: string) => () => {
       // Команда для установки размера шрифта
       return true
     },
-    unsetFontSize: () => ({ state, dispatch }: any) => {
+    unsetFontSize: () => () => {
       // Команда для снятия размера шрифта
       return true
     },

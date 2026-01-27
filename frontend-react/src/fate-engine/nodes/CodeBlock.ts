@@ -195,11 +195,11 @@ export const CodeBlock: FateNodeDefinition = {
     return [wrapper, code]
   },
   addCommands: () => ({
-    setCodeBlock: (attrs?: { language?: string }) => ({ state, dispatch }: any) => {
+    setCodeBlock: (_attrs?: { language?: string }) => () => {
       // Команда для установки блока кода
       return true
     },
-    toggleCodeBlock: (attrs?: { language?: string }) => ({ state, dispatch }: any) => {
+    toggleCodeBlock: (_attrs?: { language?: string }) => () => {
       // Команда для переключения блока кода
       return true
     },

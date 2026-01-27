@@ -64,6 +64,8 @@ export interface FateNodeDefinition {
   draggable?: boolean
   isolating?: boolean
   defining?: boolean
+  selectable?: boolean
+  code?: boolean
   attrs?: Record<string, FateAttributeSpec>
   parseDOM?: FateParseRule[]
   toDOM?: (node: FateNode) => any
@@ -92,6 +94,8 @@ export interface FateParseRule {
   getAttrs?: (dom: HTMLElement) => Record<string, any> | false | null
   priority?: number
   skip?: boolean
+  preserveWhitespace?: 'full' | 'preserve'
+  attrs?: Record<string, any>
 }
 
 export interface FatePlugin {
@@ -128,7 +132,7 @@ export interface FateEditorView {
 }
 
 export interface FateCommandChain {
-  [key: string]: (...args: any[]) => FateCommandChain
+  [key: string]: (...args: any[]) => FateCommandChain | boolean
   run: () => boolean
 }
 

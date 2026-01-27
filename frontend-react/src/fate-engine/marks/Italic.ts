@@ -15,22 +15,25 @@ export const Italic: FateMarkDefinition = {
       tag: 'i',
     },
     {
-      style: 'font-style=italic',
+      style: 'font-style',
+      getAttrs: (dom: HTMLElement) => {
+        return dom.style.fontStyle === 'italic' ? {} : null
+      },
     },
   ],
   toDOM: () => {
     return ['em', 0]
   },
   addCommands: () => ({
-    toggleItalic: () => ({ state, dispatch }: any) => {
+    toggleItalic: () => () => {
       // Команда для переключения курсива
       return true
     },
-    setItalic: () => ({ state, dispatch }: any) => {
+    setItalic: () => () => {
       // Команда для установки курсива
       return true
     },
-    unsetItalic: () => ({ state, dispatch }: any) => {
+    unsetItalic: () => () => {
       // Команда для снятия курсива
       return true
     },

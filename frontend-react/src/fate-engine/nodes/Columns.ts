@@ -116,14 +116,14 @@ export const Columns: FateNodeDefinition = {
     ]
   },
   addCommands: () => ({
-    insertColumns: (preset: ColumnPresetKey = 'twoEqual') => ({ state, dispatch }: any) => {
+    insertColumns: (preset: ColumnPresetKey = 'twoEqual') => () => {
       // Команда для вставки колонок
-      const layout = COLUMN_LAYOUTS[preset].widths
+      const _layout = COLUMN_LAYOUTS[preset].widths
       return true
     },
-    setColumnsLayout: (preset: ColumnPresetKey) => ({ state, dispatch }: any) => {
+    setColumnsLayout: (preset: ColumnPresetKey) => () => {
       // Команда для изменения макета колонок
-      const layout = COLUMN_LAYOUTS[preset].widths
+      const _layout = COLUMN_LAYOUTS[preset].widths
       return true
     },
   }),

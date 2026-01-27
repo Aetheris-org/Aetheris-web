@@ -49,15 +49,15 @@ export const Link: FateMarkDefinition = {
     return ['a', attrs, 0]
   },
   addCommands: () => ({
-    setLink: (attrs: { href: string; target?: string }) => ({ state, dispatch }: any) => {
+    setLink: (_attrs: { href: string; target?: string }) => () => {
       // Команда для установки ссылки
       return true
     },
-    unsetLink: () => ({ state, dispatch }: any) => {
+    unsetLink: () => () => {
       // Команда для снятия ссылки
       return true
     },
-    toggleLink: (attrs: { href: string; target?: string }) => ({ state, dispatch }: any) => {
+    toggleLink: (_attrs: { href: string; target?: string }) => () => {
       // Команда для переключения ссылки
       return true
     },

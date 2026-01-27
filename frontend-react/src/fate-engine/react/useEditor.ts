@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { createEditor, type FateEditor, type FateEditorOptions } from '../core/Editor'
+import { createEditor } from '../core/Editor'
+import type { FateEditor, FateEditorOptions } from '../types'
 
 export function useEditor(options: FateEditorOptions = {}): FateEditor | null {
   const [editor, setEditor] = useState<FateEditor | null>(null)

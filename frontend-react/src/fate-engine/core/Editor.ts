@@ -4,19 +4,22 @@
  */
 
 import type {
-  FateEditor,
+  FateEditor as IFateEditor,
   FateEditorOptions,
   FateEditorState,
   FateDocument,
   FateExtension,
   FateNode,
 } from '../types'
+
+// Экспортируем типы для использования в других модулях
+export type { FateEditor, FateEditorOptions, FateEditorState } from '../types'
 import { createEditorView } from './EditorView'
 import { createSchema } from './Schema'
 import { createState } from './State'
 import { logger } from '@/lib/logger'
 
-export class FateEditorImpl implements FateEditor {
+export class FateEditorImpl implements IFateEditor {
   private _state: FateEditorState
   private _view: any
   private _extensions: FateExtension[]
@@ -291,6 +294,6 @@ export class FateEditorImpl implements FateEditor {
   }
 }
 
-export function createEditor(options: FateEditorOptions): FateEditor {
-  return new FateEditorImpl(options)
+export function createEditor(options: FateEditorOptions): IFateEditor {
+  return new FateEditorImpl(options) as IFateEditor
 }

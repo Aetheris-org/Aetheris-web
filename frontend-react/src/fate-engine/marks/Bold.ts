@@ -13,12 +13,12 @@ export const Bold: FateMarkDefinition = {
     },
     {
       tag: 'b',
-      getAttrs: () => ({ style: 'font-weight' }),
     },
     {
       style: 'font-weight',
-      getAttrs: (value: string) => {
-        return /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null
+      getAttrs: (dom: HTMLElement) => {
+        const fontWeight = dom.style.fontWeight
+        return /^(bold(er)?|[5-9]\d{2,})$/.test(fontWeight) ? {} : null
       },
     },
   ],
@@ -26,15 +26,15 @@ export const Bold: FateMarkDefinition = {
     return ['strong', 0]
   },
   addCommands: () => ({
-    toggleBold: () => ({ state, dispatch }: any) => {
+    toggleBold: () => () => {
       // Команда для переключения жирного текста
       return true
     },
-    setBold: () => ({ state, dispatch }: any) => {
+    setBold: () => () => {
       // Команда для установки жирного текста
       return true
     },
-    unsetBold: () => ({ state, dispatch }: any) => {
+    unsetBold: () => () => {
       // Команда для снятия жирного текста
       return true
     },

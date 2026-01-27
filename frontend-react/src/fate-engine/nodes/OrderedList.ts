@@ -32,11 +32,11 @@ export const OrderedList: FateNodeDefinition = {
     return ['ol', attrs, 0]
   },
   addCommands: () => ({
-    toggleOrderedList: () => ({ state, dispatch }: any) => {
+    toggleOrderedList: () => () => {
       // Команда для переключения нумерованного списка
       return true
     },
-    wrapInOrderedList: () => ({ state, dispatch }: any) => {
+    wrapInOrderedList: () => () => {
       // Команда для оборачивания в нумерованный список
       return true
     },

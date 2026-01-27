@@ -38,14 +38,14 @@ export function TextAlign(options: TextAlignOptions = {}): FateExtension {
       },
     ],
     addCommands: () => ({
-      setTextAlign: (alignment: string) => ({ state, dispatch }: any) => {
+      setTextAlign: (alignment: string) => () => {
         if (!alignments.includes(alignment)) {
           return false
         }
         // Команда для установки выравнивания
         return true
       },
-      unsetTextAlign: () => ({ state, dispatch }: any) => {
+      unsetTextAlign: () => () => {
         // Команда для снятия выравнивания
         return true
       },
