@@ -3,7 +3,7 @@
  * Аналог EditorContent из TipTap
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FateEditor } from '../types'
 
 interface EditorContentProps {

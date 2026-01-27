@@ -277,8 +277,6 @@ function getNodeAttrs(node: any): string {
   // Специальная обработка для заголовков
   if (node.type === 'heading' && node.attrs?.level) {
     const level = Math.min(Math.max(node.attrs.level, 1), 6)
-    // Обновляем тег для заголовка
-    const headingTag = `h${level}`
     // Возвращаем атрибуты без level, так как он уже использован для тега
     const otherAttrs: string[] = []
     if (node.attrs.blockId) {
