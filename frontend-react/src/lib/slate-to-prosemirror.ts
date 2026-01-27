@@ -416,65 +416,101 @@ function convertChildren(children: SlateNode[]): any[] {
     return []
   }
 
-  return children
-    .map((child: any) => {
-      // Текстовый узел
-      if (child.text !== undefined && !child.type) {
-        let text = child.text || ''
-        
-        // Извлекаем маркер ссылки [LINK:href]
-        let linkHref: string | null = null
-        const linkMatch = text.match(/^\u200B\u200B\u200B\[LINK:([^\]]+)\]\u200B\u200B\u200B/)
-        if (linkMatch) {
-          linkHref = linkMatch[1]
-          // Удаляем маркер из текста
-          text = text.replace(/^\u200B\u200B\u200B\[LINK:[^\]]+\]\u200B\u200B\u200B\s?/, '')
-        }
-        
-        // TipTap не допускает пустые текстовые узлы
-        // Если текст пустой или содержит только пробелы после удаления маркеров, пропускаем
+  // Сначала обрабатываем все children, включая развертывание массивов
+  const processedChildren: any[] = []
+  
+  children.forEach((child: any) => {
+    // Текстовый узел
+    if (child.text !== undefined && !child.type) {
+      let text = child.text || ''
+      
+      // Извлекаем маркер ссылки [LINK:href]
+      let linkHref: string | null = null
+      const linkMatch = text.match(/^\u200B\u200B\u200B\[LINK:([^\]]+)\]\u200B\u200B\u200B/)
+      if (linkMatch) {
+        linkHref = linkMatch[1]
+        // Удаляем маркер из текста
+        text = text.replace(/^\u200B\u200B\u200B\[LINK:[^\]]+\]\u200B\u200B\u200B\s?/, '')
+      }
+      
+      // Обрабатываем переносы строк в тексте
+      // Разбиваем текст по переносам строк и создаем hardBreak узлы
+      const lines = text.split('\n')
+      if (lines.length > 1) {
+        // Если есть переносы строк, создаем узлы с hardBreak между ними
+        lines.forEach((line, index) => {
+          // Добавляем текстовый узел для строки (если она не пустая или есть ссылка)
+          const trimmedLine = line.trim()
+          if (trimmedLine || linkHref) {
+            const textNode: any = {
+              type: 'text',
+              text: trimmedLine || (linkHref ? ' ' : ''),
+            }
+            
+            const marks: any[] = []
+            if (child.bold) marks.push({ type: 'bold' })
+            if (child.italic) marks.push({ type: 'italic' })
+            if (child.code) marks.push({ type: 'code' })
+            if (child.underline) marks.push({ type: 'underline' })
+            if (child.strikethrough) marks.push({ type: 'strikethrough' })
+            if (linkHref) {
+              marks.push({ type: 'link', attrs: { href: linkHref } })
+            }
+            
+            if (marks.length > 0) {
+              textNode.marks = marks
+            }
+            
+            processedChildren.push(textNode)
+          }
+          
+          // Добавляем hardBreak после каждой строки, кроме последней
+          if (index < lines.length - 1) {
+            processedChildren.push({ type: 'hardBreak' })
+          }
+        })
+      } else {
+        // Если переносов строк нет, обрабатываем как обычно
         const trimmedText = text.trim()
-        if (!trimmedText && !linkHref) {
-          return null
-        }
+        if (trimmedText || linkHref) {
+          const result: any = {
+            type: 'text',
+            text: trimmedText || (linkHref ? ' ' : ''),
+          }
 
-        const result: any = {
-          type: 'text',
-          text: trimmedText || (linkHref ? ' ' : ''),
-        }
+          const marks: any[] = []
+          if (child.bold) marks.push({ type: 'bold' })
+          if (child.italic) marks.push({ type: 'italic' })
+          if (child.code) marks.push({ type: 'code' })
+          if (child.underline) marks.push({ type: 'underline' })
+          if (child.strikethrough) marks.push({ type: 'strikethrough' })
+          if (linkHref) {
+            marks.push({ type: 'link', attrs: { href: linkHref } })
+          }
 
-        const marks: any[] = []
-        if (child.bold) marks.push({ type: 'bold' })
-        if (child.italic) marks.push({ type: 'italic' })
-        if (child.code) marks.push({ type: 'code' })
-        if (child.underline) marks.push({ type: 'underline' })
-        if (child.strikethrough) marks.push({ type: 'strikethrough' })
-        // Восстанавливаем ссылку из маркера
-        if (linkHref) {
-          marks.push({ type: 'link', attrs: { href: linkHref } })
-        }
+          if (marks.length > 0) {
+            result.marks = marks
+          }
 
-        if (marks.length > 0) {
-          result.marks = marks
+          processedChildren.push(result)
         }
-
-        return result
       }
-
+    } else if (child.type) {
       // Блок
-      if (child.type) {
-        return convertSlateToProseMirror(child)
+      const converted = convertSlateToProseMirror(child)
+      if (converted) {
+        processedChildren.push(converted)
       }
-
-      return null
-    })
-    .filter((node: any) => {
-      // Фильтруем null и пустые текстовые узлы
-      if (!node) return false
-      if (node.type === 'text' && (!node.text || !node.text.trim())) {
-        return false
-      }
-      return true
-    })
+    }
+  })
+  
+  // Фильтруем null и пустые текстовые узлы
+  return processedChildren.filter((node: any) => {
+    if (!node) return false
+    if (node.type === 'text' && (!node.text || !node.text.trim())) {
+      return false
+    }
+    return true
+  })
 }
 

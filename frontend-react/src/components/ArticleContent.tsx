@@ -231,9 +231,11 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       paragraphs.forEach((p, index) => {
         const el = p as HTMLElement
         el.setAttribute('data-styled', 'true')
+        // Важно: margin-bottom для создания отступов между параграфами
         el.style.setProperty('margin-bottom', '1rem', 'important')
         el.style.setProperty('margin-top', '0', 'important')
-        el.style.setProperty('white-space', 'normal', 'important')
+        // white-space: pre-wrap сохраняет переносы строк и пробелы, но переносит длинные строки
+        el.style.setProperty('white-space', 'pre-wrap', 'important')
         el.style.setProperty('line-height', '1.7', 'important')
         el.style.setProperty('display', 'block', 'important')
         
@@ -364,10 +366,17 @@ function docToSimpleHTML(doc: { type: 'doc'; content: any[] }): string {
       if (!node || typeof node !== 'object') return ''
       
       if (node.type === 'paragraph') {
-        const text = extractText(node, true) // С метками
+        const text = extractText(node, true) // С метками (включая hardBreak)
         const textAlign = node.attrs?.textAlign
         const alignAttr = textAlign ? ` style="text-align: ${escapeHtmlSimple(textAlign)}"` : ''
-        return `<p${alignAttr}>${text}</p>`
+        // Если текст пустой, все равно создаем параграф для сохранения структуры
+        // Это важно для сохранения отступов между параграфами
+        return `<p${alignAttr}>${text || '<br>'}</p>`
+      }
+      
+      // Обрабатываем hardBreak отдельно (на случай, если он на верхнем уровне)
+      if (node.type === 'hardBreak' || node.type === 'hard_break') {
+        return '<br>'
       }
       if (node.type === 'heading') {
         const level = Math.min(Math.max(node.attrs?.level || 1, 1), 6)
@@ -466,7 +475,14 @@ function extractText(node: any, withMarks: boolean = false): string {
     
     return text
   }
+  
+  // Обрабатываем hardBreak (перенос строки)
+  if (node.type === 'hardBreak' || node.type === 'hard_break') {
+    return '<br>'
+  }
+  
   if (node.content && Array.isArray(node.content)) {
+    // Объединяем дочерние элементы, сохраняя структуру
     return node.content.map((child: any) => extractText(child, withMarks)).join('')
   }
   return ''
