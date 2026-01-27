@@ -2,19 +2,7 @@
  * Компонент для отображения контента статьи через Fate Engine
  * Использует Fate Engine в режиме только для чтения для правильного отображения всех блоков
  */
-import { useEditor, EditorContent } from '@/fate-engine/react'
-import { useMemo, useEffect, useRef, useState } from 'react'
-import { StarterKit } from '@/fate-engine/extensions/StarterKit'
-import { Link } from '@/fate-engine/marks/Link'
-import { Image } from '@/fate-engine/nodes/Image'
-import { Underline } from '@/fate-engine/marks/Underline'
-import { TextStyle } from '@/fate-engine/marks/TextStyle'
-import { Color } from '@/fate-engine/marks/Color'
-import { TextAlign } from '@/fate-engine/extensions/TextAlign'
-import { Highlight } from '@/fate-engine/marks/Highlight'
-import { CodeBlock } from '@/fate-engine/nodes/CodeBlock'
-import { Callout } from '@/fate-engine/nodes/Callout'
-import { Column, Columns } from '@/fate-engine/nodes/Columns'
+import { useMemo, useEffect, useRef } from 'react'
 import { slateToFate, prosemirrorToFate } from '@/fate-engine/utils/converter'
 import { cn } from '@/lib/utils'
 import { logger } from '@/lib/logger'
@@ -26,7 +14,6 @@ interface ArticleContentProps {
 
 export function ArticleContent({ content, className }: ArticleContentProps) {
   const editorRef = useRef<HTMLDivElement>(null)
-  const [error, setError] = useState<Error | null>(null)
   
   // Конвертируем Slate или ProseMirror в Fate Engine формат
   const fateContent = useMemo((): { type: 'doc'; content: any[] } => {
@@ -46,7 +33,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           return { type: 'doc', content: converted?.content || [] }
         } catch (err) {
           console.error('[ArticleContent] Error converting ProseMirror to Fate:', err)
-          setError(err instanceof Error ? err : new Error('Conversion error'))
           return { type: 'doc', content: [] }
         }
       }
@@ -61,147 +47,21 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         return { type: 'doc', content: converted?.content || [] }
       } catch (err) {
         console.error('[ArticleContent] Error converting Slate to Fate:', err)
-        setError(err instanceof Error ? err : new Error('Conversion error'))
         return { type: 'doc', content: [] }
       }
     } catch (err) {
       console.error('[ArticleContent] Error in fateContent useMemo:', err)
-      setError(err instanceof Error ? err : new Error('Unknown error'))
       return { type: 'doc', content: [] }
     }
   }, [content])
 
   // Создаем редактор - всегда вызываем хук на верхнем уровне
-  const editor = useEditor({
-    extensions: [
-      StarterKit({
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-        bold: true,
-        italic: true,
-        underline: true,
-        strikethrough: true,
-        code: true,
-        hardBreak: true,
-        horizontalRule: true,
-      }),
-      Link,
-      Image,
-      CodeBlock,
-      Callout,
-      Column,
-      Columns,
-      TextStyle,
-      Color,
-      Underline,
-      Highlight,
-      TextAlign({
-        types: ['heading', 'paragraph'],
-        alignments: ['left', 'center', 'right', 'justify'],
-      }),
-    ],
-    content: fateContent,
-    editable: false, // Режим только для чтения
-    onCreate: ({ doc }: { doc: any }) => {
-      if (import.meta.env.DEV) {
-        logger.debug('[ArticleContent] Fate Engine editor created', { content: doc })
-      }
-    },
-    onUpdate: () => {
-      // В режиме только для чтения обновления не нужны
-    },
-  })
-
-  // Отслеживаем ошибки при инициализации редактора
-  useEffect(() => {
-    if (editor) {
-      // Проверяем, что редактор правильно инициализирован
-      // Используем setTimeout, чтобы избежать обновления состояния во время рендеринга
-      const timeoutId = setTimeout(() => {
-        try {
-          const hasView = editor.view && editor.view.dom
-          if (!hasView) {
-            console.warn('[ArticleContent] Editor view not available')
-            setError(new Error('Editor view not available'))
-          } else {
-            // Очищаем ошибку, если редактор работает
-            setError(null)
-          }
-        } catch (err) {
-          console.error('[ArticleContent] Error checking editor state:', err)
-          setError(err instanceof Error ? err : new Error('Editor check failed'))
-        }
-      }, 0)
-
-      return () => {
-        clearTimeout(timeoutId)
-      }
-    }
-  }, [editor])
-
-  // Обновляем контент редактора при изменении fateContent
-  useEffect(() => {
-    if (!editor || !fateContent) return
-    
-    // Используем setTimeout, чтобы избежать обновления во время рендеринга
-    const timeoutId = setTimeout(() => {
-      try {
-        const currentContent = editor.getJSON()
-        // Сравниваем контент, чтобы не обновлять без необходимости
-        const currentContentStr = JSON.stringify(currentContent)
-        const newContentStr = JSON.stringify(fateContent)
-        
-        if (currentContentStr !== newContentStr) {
-      if (import.meta.env.DEV) {
-        // Логируем наличие изображений в контенте для отладки
-        const hasImages = JSON.stringify(fateContent).includes('"type":"image"')
-        if (hasImages) {
-          // Находим все узлы изображений для детального логирования
-          const findImages = (content: any[]): any[] => {
-            const images: any[] = []
-            for (const node of content || []) {
-              if (node.type === 'image') {
-                images.push(node)
-              }
-              if (node.content && Array.isArray(node.content)) {
-                images.push(...findImages(node.content))
-              }
-            }
-            return images
-          }
-          const images = findImages(fateContent.content || [])
-          logger.debug('[ArticleContent] Content contains images:', {
-            count: images.length,
-            images: images.map(img => ({
-              src: img.attrs?.src?.substring(0, 100),
-              alt: img.attrs?.alt,
-            })),
-          })
-        }
-      }
-      
-          try {
-            editor.setContent(fateContent)
-          } catch (err) {
-            console.error('[ArticleContent] Error setting content:', err)
-            setError(err instanceof Error ? err : new Error('Failed to set content'))
-          }
-        }
-      } catch (err) {
-        console.error('[ArticleContent] Error in content update effect:', err)
-        setError(err instanceof Error ? err : new Error('Content update failed'))
-      }
-    }, 0)
-
-    return () => {
-      clearTimeout(timeoutId)
-    }
-  }, [editor, fateContent])
+  // ВРЕМЕННО ОТКЛЮЧАЕМ РЕДАКТОР - используем только fallback рендеринг
+  // Это предотвращает React error #310 и зависание страницы
 
   // Проверка и обработка изображений, видео и аудио после рендеринга
   useEffect(() => {
-    if (!editor || !editorRef.current) return
+    if (!editorRef.current) return
 
     const handleMediaElements = () => {
       // Проверяем изображения
@@ -220,10 +80,12 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           
           // Проверяем, что src установлен и валиден
           if (!img.src || img.src === window.location.href) {
-            logger.warn('[ArticleContent] Image has invalid or missing src:', {
-              src: img.getAttribute('src'),
-              alt: img.alt,
-            })
+            if (import.meta.env.DEV) {
+              logger.warn('[ArticleContent] Image has invalid or missing src:', {
+                src: img.getAttribute('src'),
+                alt: img.alt,
+              })
+            }
           }
           
           if (import.meta.env.DEV && img.src) {
@@ -246,31 +108,6 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           logger.warn('[ArticleContent] Images in JSON but not in DOM!', {
             fateContent: JSON.stringify(fateContent).substring(0, 500),
           })
-          
-          // Попробуем найти изображения в редакторе через JSON
-          const json = editor.getJSON()
-          const findImagesInJSON = (content: any[]): any[] => {
-            const images: any[] = []
-            for (const node of content || []) {
-              if (node.type === 'image') {
-                images.push(node)
-              }
-              if (node.content && Array.isArray(node.content)) {
-                images.push(...findImagesInJSON(node.content))
-              }
-            }
-            return images
-          }
-          const imagesInJSON = findImagesInJSON(json.content || [])
-          
-          if (imagesInJSON.length > 0) {
-            logger.warn('[ArticleContent] Images found in editor JSON but not rendered in DOM:', {
-              count: imagesInJSON.length,
-              images: imagesInJSON.map(img => ({
-                src: img.attrs?.src?.substring(0, 100),
-              })),
-            })
-          }
         }
       }
 
@@ -294,17 +131,17 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       })
     }
 
-    // Запускаем после небольшой задержки, чтобы дать Fate Engine время отрендерить
+    // Запускаем после небольшой задержки
     const timeoutId = setTimeout(handleMediaElements, 200)
     return () => clearTimeout(timeoutId)
-  }, [editor, fateContent])
+  }, [fateContent])
 
   // В опубликованных статьях добавляем только кратковременную подсветку при клике на якорную ссылку
   // Постоянные индикаторы не нужны - только эффект при навигации
 
   // Отладочная информация: проверяем, что blockId правильно применены
   useEffect(() => {
-    if (!editor || !editorRef.current) return
+    if (!editorRef.current) return
     
     // Проверяем наличие элементов с blockId после рендеринга
     const checkAnchors = () => {
@@ -321,15 +158,15 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       }
     }
     
-    // Проверяем после небольшой задержки, чтобы дать Fate Engine время отрендерить контент
+    // Проверяем после небольшой задержки
     const timeoutId = setTimeout(checkAnchors, 500)
     return () => clearTimeout(timeoutId)
-  }, [editor, fateContent])
+  }, [fateContent])
 
   // Обработка кликов по якорным ссылкам (href="#anchor-id")
   // Добавляем кратковременную подсветку блока-якоря при клике
   useEffect(() => {
-    if (!editor || !editorRef.current) return
+    if (!editorRef.current) return
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement
@@ -348,28 +185,9 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         }
         
         // Ищем элемент с id или data-block-id равным anchorId
-        // Ищем внутри всего документа, так как Fate Engine может рендерить контент в разных местах
         const anchorElement = document.querySelector(
           `[id="${anchorId}"], [data-block-id="${anchorId}"]`
         ) as HTMLElement | null
-        
-        if (import.meta.env.DEV) {
-          logger.debug('[ArticleContent] Found anchor element:', anchorElement)
-          if (!anchorElement) {
-            // Проверяем, какие элементы с id или data-block-id есть в документе
-            const allAnchors = document.querySelectorAll('[id], [data-block-id]')
-            const anchorsInfo = Array.from(allAnchors).map(el => ({
-              id: el.id,
-              dataBlockId: el.getAttribute('data-block-id'),
-              tagName: el.tagName,
-              className: el.className,
-              textContent: el.textContent?.substring(0, 50),
-            }))
-            logger.debug('[ArticleContent] All anchors in document:', anchorsInfo)
-            logger.debug('[ArticleContent] Looking for anchorId:', anchorId)
-            logger.debug('[ArticleContent] Editor content:', editor.getJSON())
-          }
-        }
         
         if (anchorElement) {
           // Прокручиваем к элементу
@@ -386,22 +204,22 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
             anchorElement.classList.remove('anchor-highlight')
           }, 2000)
         } else {
-          // Если не нашли, попробуем найти внутри редактора
-          const editorElement = editorRef.current
-          const anchorInEditor = editorElement?.querySelector(
+          // Если не нашли, попробуем найти внутри контейнера
+          const containerElement = editorRef.current
+          const anchorInContainer = containerElement?.querySelector(
             `[id="${anchorId}"], [data-block-id="${anchorId}"]`
           ) as HTMLElement | null
           
-          if (anchorInEditor) {
-            anchorInEditor.scrollIntoView({ 
+          if (anchorInContainer) {
+            anchorInContainer.scrollIntoView({ 
               behavior: 'smooth', 
               block: 'center' 
             })
             
-            anchorInEditor.classList.add('anchor-highlight')
+            anchorInContainer.classList.add('anchor-highlight')
             
             setTimeout(() => {
-              anchorInEditor.classList.remove('anchor-highlight')
+              anchorInContainer.classList.remove('anchor-highlight')
             }, 2000)
           } else if (import.meta.env.DEV) {
             logger.warn('[ArticleContent] Anchor element not found:', anchorId)
@@ -410,32 +228,23 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       }
     }
 
-    const editorElement = editorRef.current
-    editorElement?.addEventListener('click', handleClick)
+    const containerElement = editorRef.current
+    containerElement?.addEventListener('click', handleClick)
     
     return () => {
-      editorElement?.removeEventListener('click', handleClick)
+      containerElement?.removeEventListener('click', handleClick)
     }
-  }, [editor])
-
-  if (!editor) {
-    return null
-  }
+  }, [])
 
   // Применяем стили напрямую к элементам после рендеринга с использованием MutationObserver
   useEffect(() => {
-    if (!editor || !editorRef.current) return
+    if (!editorRef.current) return
 
     const applyStyles = () => {
-      // Ищем элемент .fate-editor в разных местах
-      let fateElement = editorRef.current?.querySelector('.fate-editor')
-      if (!fateElement) {
-        // Если не нашли, проверяем сам editorRef
-        fateElement = editorRef.current
-      }
+      // Используем сам контейнер
+      const fateElement = editorRef.current
       
       if (!fateElement) {
-        console.warn('[ArticleContent] Fate Engine element not found!')
         return
       }
 
@@ -539,7 +348,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       timeouts.forEach(clearTimeout)
       observer.disconnect()
     }
-  }, [editor, fateContent])
+  }, [fateContent])
 
   // Функция для рендеринга fallback (простой HTML)
   const renderFallback = () => {
@@ -581,39 +390,13 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
   }
 
-  // Проверяем, можно ли использовать редактор
-  const canUseEditor = editor && 
-                       editor.view && 
-                       editor.view.dom && 
-                       !error &&
-                       typeof editor.getHTML === 'function'
-
-  // По умолчанию используем fallback для надежности
-  // Редактор используем только если он полностью готов
-  if (!canUseEditor) {
-    return (
-      <div ref={editorRef} className="article-content-wrapper">
-        {renderFallback()}
-      </div>
-    )
-  }
-
-  // Пытаемся использовать редактор, но с обработкой ошибок
-  try {
-    return (
-      <div ref={editorRef} className="article-content-wrapper">
-        <EditorContent editor={editor} className={cn('fate-editor article-content', className)} />
-      </div>
-    )
-  } catch (renderError) {
-    console.error('[ArticleContent] Error rendering editor:', renderError)
-    // Fallback на простой HTML даже если редактор есть
-    return (
-      <div ref={editorRef} className="article-content-wrapper">
-        {renderFallback()}
-      </div>
-    )
-  }
+  // ВРЕМЕННО: Всегда используем fallback рендеринг
+  // Редактор отключен до исправления проблем с хуками
+  return (
+    <div ref={editorRef} className="article-content-wrapper">
+      {renderFallback()}
+    </div>
+  )
 }
 
 // Простая функция для конвертации документа в HTML (fallback)
