@@ -3,7 +3,7 @@
  * Аналог EditorContent из TipTap
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FateEditor } from '../types'
 
 interface EditorContentProps {
@@ -12,33 +12,62 @@ interface EditorContentProps {
 }
 
 export function EditorContent({ editor, className }: EditorContentProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [htmlContent, setHtmlContent] = useState<string>('')
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!editor || !containerRef.current) return
-
-    const view = editor.view
-    if (view.dom && containerRef.current) {
-      // Очищаем контейнер
-      containerRef.current.innerHTML = ''
-      // Добавляем DOM редактора
-      containerRef.current.appendChild(view.dom)
+    if (!editor) {
+      setHtmlContent('')
+      return
     }
 
+    const updateContent = () => {
+      try {
+        // Получаем HTML из редактора
+        const html = editor.getHTML()
+        setHtmlContent(html || '')
+        setError(null)
+      } catch (err) {
+        console.error('[FateEngine] Error getting HTML from editor:', err)
+        setError(err instanceof Error ? err : new Error('Unknown error'))
+        setHtmlContent('')
+      }
+    }
+
+    // Обновляем сразу
+    updateContent()
+
+    // Используем requestAnimationFrame для обновления после рендеринга
+    const rafId = requestAnimationFrame(() => {
+      updateContent()
+    })
+
     return () => {
-      // Очистка при размонтировании
+      cancelAnimationFrame(rafId)
     }
   }, [editor])
 
+  if (error) {
+    return (
+      <div className={className} style={{ padding: '1rem', color: 'red' }}>
+        <p>Ошибка при отображении контента: {error.message}</p>
+      </div>
+    )
+  }
+
   if (!editor) {
-    return null
+    return (
+      <div className={className} style={{ minHeight: '400px' }}>
+        <p>Загрузка редактора...</p>
+      </div>
+    )
   }
 
   return (
     <div
-      ref={containerRef}
       className={className}
       style={{ minHeight: '400px' }}
+      dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   )
 }

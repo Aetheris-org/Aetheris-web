@@ -3,7 +3,7 @@
  * Использует Fate Engine в режиме только для чтения для правильного отображения всех блоков
  */
 import { useEditor, EditorContent } from '@/fate-engine/react'
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import { StarterKit } from '@/fate-engine/extensions/StarterKit'
 import { Link } from '@/fate-engine/marks/Link'
 import { Image } from '@/fate-engine/nodes/Image'
@@ -26,32 +26,52 @@ interface ArticleContentProps {
 
 export function ArticleContent({ content, className }: ArticleContentProps) {
   const editorRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<Error | null>(null)
   
   // Конвертируем Slate или ProseMirror в Fate Engine формат
   const fateContent = useMemo((): { type: 'doc'; content: any[] } => {
-    if (!content) {
+    try {
+      if (!content) {
+        return { type: 'doc', content: [] }
+      }
+
+      // Если это уже ProseMirror формат (есть type: 'doc')
+      if (typeof content === 'object' && content !== null && content.type === 'doc') {
+        try {
+          const converted = prosemirrorToFate(content)
+          // Убеждаемся, что тип точно 'doc'
+          if (converted && converted.type === 'doc') {
+            return converted
+          }
+          return { type: 'doc', content: converted?.content || [] }
+        } catch (err) {
+          console.error('[ArticleContent] Error converting ProseMirror to Fate:', err)
+          setError(err instanceof Error ? err : new Error('Conversion error'))
+          return { type: 'doc', content: [] }
+        }
+      }
+
+      // Если это Slate формат, конвертируем
+      try {
+        const converted = slateToFate(content)
+        // Убеждаемся, что тип точно 'doc'
+        if (converted && converted.type === 'doc') {
+          return converted
+        }
+        return { type: 'doc', content: converted?.content || [] }
+      } catch (err) {
+        console.error('[ArticleContent] Error converting Slate to Fate:', err)
+        setError(err instanceof Error ? err : new Error('Conversion error'))
+        return { type: 'doc', content: [] }
+      }
+    } catch (err) {
+      console.error('[ArticleContent] Error in fateContent useMemo:', err)
+      setError(err instanceof Error ? err : new Error('Unknown error'))
       return { type: 'doc', content: [] }
     }
-
-    // Если это уже ProseMirror формат (есть type: 'doc')
-    if (typeof content === 'object' && content !== null && content.type === 'doc') {
-      const converted = prosemirrorToFate(content)
-      // Убеждаемся, что тип точно 'doc'
-      if (converted.type === 'doc') {
-        return converted
-      }
-      return { type: 'doc', content: converted.content || [] }
-    }
-
-    // Если это Slate формат, конвертируем
-    const converted = slateToFate(content)
-    // Убеждаемся, что тип точно 'doc'
-    if (converted.type === 'doc') {
-      return converted
-    }
-    return { type: 'doc', content: converted.content || [] }
   }, [content])
 
+  // Создаем редактор - всегда вызываем хук на верхнем уровне
   const editor = useEditor({
     extensions: [
       StarterKit({
@@ -88,7 +108,27 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         logger.debug('[ArticleContent] Fate Engine editor created', { content: doc })
       }
     },
+    onUpdate: () => {
+      // В режиме только для чтения обновления не нужны
+    },
   })
+
+  // Отслеживаем ошибки при инициализации редактора
+  useEffect(() => {
+    if (editor) {
+      // Проверяем, что редактор правильно инициализирован
+      try {
+        const hasView = editor.view && editor.view.dom
+        if (!hasView) {
+          console.warn('[ArticleContent] Editor view not available')
+          setError(new Error('Editor view not available'))
+        }
+      } catch (err) {
+        console.error('[ArticleContent] Error checking editor state:', err)
+        setError(err instanceof Error ? err : new Error('Editor check failed'))
+      }
+    }
+  }, [editor])
 
   // Обновляем контент редактора при изменении fateContent
   useEffect(() => {
@@ -128,7 +168,20 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         }
       }
       
-      editor.setContent(fateContent)
+      try {
+        editor.setContent(fateContent)
+        // Принудительно обновляем HTML после установки контента
+        // Это нужно для EditorContent, который использует getHTML()
+        setTimeout(() => {
+          if (editor) {
+            // Триггерим обновление через изменение состояния
+            const currentState = editor.state
+            editor.view.update(currentState)
+          }
+        }, 0)
+      } catch (err) {
+        console.error('[ArticleContent] Error setting content:', err)
+      }
     }
   }, [editor, fateContent])
 
@@ -474,10 +527,204 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
   }, [editor, fateContent])
 
-  return (
-    <div ref={editorRef} className="article-content-wrapper">
-      <EditorContent editor={editor} className={cn('fate-editor article-content', className)} />
-    </div>
-  )
+  // Функция для рендеринга fallback (простой HTML)
+  const renderFallback = () => {
+    if (!fateContent || !fateContent.content || fateContent.content.length === 0) {
+      return (
+        <div className={cn('prose prose-neutral dark:prose-invert max-w-none article-content', className)}>
+          <p className="text-muted-foreground">Нет контента для отображения</p>
+        </div>
+      )
+    }
+    
+    try {
+      // Простой рендеринг через dangerouslySetInnerHTML как временное решение
+      const html = docToSimpleHTML(fateContent)
+      if (!html || html.trim() === '') {
+        return (
+          <div className={cn('prose prose-neutral dark:prose-invert max-w-none article-content', className)}>
+            <p className="text-muted-foreground">Контент пуст</p>
+          </div>
+        )
+      }
+      return (
+        <div 
+          className={cn('prose prose-neutral dark:prose-invert max-w-none article-content', className)} 
+          dangerouslySetInnerHTML={{ __html: html }} 
+        />
+      )
+    } catch (fallbackError) {
+      console.error('[ArticleContent] Error in fallback rendering:', fallbackError)
+      // Даже при ошибке показываем что-то, чтобы страница не была пустой
+      return (
+        <div className={cn('prose prose-neutral dark:prose-invert max-w-none article-content', className)}>
+          <p className="text-muted-foreground">Ошибка при отображении контента</p>
+          {import.meta.env.DEV && fallbackError instanceof Error && (
+            <p className="text-xs text-red-500 mt-2">{fallbackError.message}</p>
+          )}
+        </div>
+      )
+    }
+  }
+
+  // Проверяем, можно ли использовать редактор
+  const canUseEditor = editor && 
+                       editor.view && 
+                       editor.view.dom && 
+                       !error &&
+                       typeof editor.getHTML === 'function'
+
+  // По умолчанию используем fallback для надежности
+  // Редактор используем только если он полностью готов
+  if (!canUseEditor) {
+    return (
+      <div ref={editorRef} className="article-content-wrapper">
+        {renderFallback()}
+      </div>
+    )
+  }
+
+  // Пытаемся использовать редактор, но с обработкой ошибок
+  try {
+    return (
+      <div ref={editorRef} className="article-content-wrapper">
+        <EditorContent editor={editor} className={cn('fate-editor article-content', className)} />
+      </div>
+    )
+  } catch (renderError) {
+    console.error('[ArticleContent] Error rendering editor:', renderError)
+    // Fallback на простой HTML даже если редактор есть
+    return (
+      <div ref={editorRef} className="article-content-wrapper">
+        {renderFallback()}
+      </div>
+    )
+  }
+}
+
+// Простая функция для конвертации документа в HTML (fallback)
+function docToSimpleHTML(doc: { type: 'doc'; content: any[] }): string {
+  if (!doc || !doc.content) return ''
+  
+  try {
+    return doc.content.map((node: any) => {
+      if (!node || typeof node !== 'object') return ''
+      
+      if (node.type === 'paragraph') {
+        const text = extractText(node, true) // С метками
+        const textAlign = node.attrs?.textAlign
+        const alignAttr = textAlign ? ` style="text-align: ${escapeHtmlSimple(textAlign)}"` : ''
+        return `<p${alignAttr}>${text}</p>`
+      }
+      if (node.type === 'heading') {
+        const level = Math.min(Math.max(node.attrs?.level || 1, 1), 6)
+        const text = extractText(node, true) // С метками
+        const blockId = node.attrs?.blockId
+        const textAlign = node.attrs?.textAlign
+        const idAttr = blockId ? ` id="${escapeHtmlSimple(blockId)}" data-block-id="${escapeHtmlSimple(blockId)}"` : ''
+        const alignAttr = textAlign ? ` style="text-align: ${escapeHtmlSimple(textAlign)}"` : ''
+        return `<h${level}${idAttr}${alignAttr}>${text}</h${level}>`
+      }
+      if (node.type === 'image') {
+        const src = node.attrs?.src || ''
+        const alt = node.attrs?.alt || ''
+        if (!src) return ''
+        return `<img src="${escapeHtmlSimple(src)}" alt="${escapeHtmlSimple(alt)}" class="max-w-full h-auto rounded-lg my-4" />`
+      }
+      if (node.type === 'bulletList' || node.type === 'orderedList') {
+        const tag = node.type === 'bulletList' ? 'ul' : 'ol'
+        const items = node.content?.map((item: any) => {
+          if (item.type === 'listItem') {
+            const text = extractText(item, true) // С метками
+            return `<li>${text}</li>`
+          }
+          return ''
+        }).filter(Boolean).join('') || ''
+        return `<${tag}>${items}</${tag}>`
+      }
+      if (node.type === 'blockquote') {
+        const text = extractText(node, true) // С метками
+        return `<blockquote>${text}</blockquote>`
+      }
+      if (node.type === 'codeBlock') {
+        const text = extractText(node)
+        const language = node.attrs?.language || 'plaintext'
+        return `<pre class="code-block-wrapper"><code class="language-${escapeHtmlSimple(language)}">${escapeHtmlSimple(text)}</code></pre>`
+      }
+      if (node.type === 'callout') {
+        const variant = node.attrs?.variant || 'info'
+        const text = extractText(node, true) // С метками
+        return `<aside class="callout-block" data-variant="${escapeHtmlSimple(variant)}">${text}</aside>`
+      }
+      if (node.type === 'horizontalRule') {
+        return '<hr>'
+      }
+      return ''
+    }).filter(Boolean).join('')
+  } catch (error) {
+    console.error('[ArticleContent] Error in docToSimpleHTML:', error)
+    return ''
+  }
+}
+
+function extractText(node: any, withMarks: boolean = false): string {
+  if (!node || typeof node !== 'object') return ''
+  
+  if (node.type === 'text') {
+    let text = String(node.text || '')
+    
+    // Сначала экранируем HTML в тексте
+    text = escapeHtmlSimple(text)
+    
+    // Если нужно с метками, применяем их (после экранирования)
+    if (withMarks && node.marks && Array.isArray(node.marks)) {
+      // Применяем метки в обратном порядке (внутренние сначала)
+      const sortedMarks = [...node.marks].reverse()
+      
+      sortedMarks.forEach((mark: any) => {
+        if (!mark || typeof mark !== 'object') return
+        
+        if (mark.type === 'bold') {
+          text = `<strong>${text}</strong>`
+        } else if (mark.type === 'italic') {
+          text = `<em>${text}</em>`
+        } else if (mark.type === 'underline') {
+          text = `<u>${text}</u>`
+        } else if (mark.type === 'strikethrough') {
+          text = `<s>${text}</s>`
+        } else if (mark.type === 'code') {
+          text = `<code>${text}</code>`
+        } else if (mark.type === 'link') {
+          const href = mark.attrs?.href || '#'
+          const target = mark.attrs?.target || ''
+          const targetAttr = target ? ` target="${escapeHtmlSimple(target)}"` : ''
+          text = `<a href="${escapeHtmlSimple(href)}"${targetAttr}>${text}</a>`
+        } else if (mark.type === 'highlight') {
+          const color = mark.attrs?.color || '#fef08a'
+          text = `<mark style="background-color: ${escapeHtmlSimple(color)}">${text}</mark>`
+        } else if (mark.type === 'color') {
+          const color = mark.attrs?.color
+          if (color) {
+            text = `<span style="color: ${escapeHtmlSimple(color)}">${text}</span>`
+          }
+        }
+      })
+    }
+    
+    return text
+  }
+  if (node.content && Array.isArray(node.content)) {
+    return node.content.map((child: any) => extractText(child, withMarks)).join('')
+  }
+  return ''
+}
+
+function escapeHtmlSimple(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 

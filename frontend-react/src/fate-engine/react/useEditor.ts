@@ -16,11 +16,25 @@ export function useEditor(options: FateEditorOptions = {}): FateEditor | null {
   }, [options])
 
   useEffect(() => {
-    const instance = createEditor(optionsRef.current)
-    setEditor(instance)
+    // Проверяем, что мы в браузере
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
 
-    return () => {
-      instance.destroy()
+    try {
+      const instance = createEditor(optionsRef.current)
+      setEditor(instance)
+
+      return () => {
+        try {
+          instance.destroy()
+        } catch (error) {
+          console.error('[FateEngine] Error destroying editor:', error)
+        }
+      }
+    } catch (error) {
+      console.error('[FateEngine] Error creating editor:', error)
+      setEditor(null)
     }
   }, [])
 
