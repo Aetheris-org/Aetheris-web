@@ -1403,7 +1403,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     { label: t('editor.ctxCode'), aria: t('editor.ctxCode'), icon: Code, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive('code'), disabled: !editor.can().chain().focus().toggleCode().run() },
   ] : []
 
-  const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '32px'] as const
+  // Расширенный список размеров шрифта с большим разнообразием
+  const fontSizeOptions = [
+    '8px', '10px', '12px', '14px', '16px', '18px', 
+    '20px', '22px', '24px', '28px', '32px', '36px', 
+    '40px', '48px', '56px', '64px', '72px', '80px'
+  ] as const
   const alignOptions = [
     { id: 'left', icon: AlignLeft, cmd: 'left' as const },
     { id: 'center', icon: AlignCenter, cmd: 'center' as const },
@@ -2125,11 +2130,33 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                       <CaseSensitive className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="start" className="w-36 p-2">
-                  <div className="grid grid-cols-2 gap-1">
-                    <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>{t('editor.fontSizeDefault')}</button>
+                <DropdownMenuContent side="right" align="start" className="w-48 p-1.5 max-h-[400px] overflow-y-auto">
+                  <div className="flex flex-col gap-0.5">
+                    <button 
+                      type="button" 
+                      onClick={() => editor.chain().focus().unsetFontSize().run()} 
+                      className={cn(
+                        'flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
+                        !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary font-medium'
+                      )}
+                    >
+                      <span>{t('editor.fontSizeDefault')}</span>
+                      <span className="text-xs text-muted-foreground ml-2">16px</span>
+                    </button>
                     {fontSizeOptions.map((sz) => (
-                      <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
+                      <button 
+                        key={sz} 
+                        type="button" 
+                        onClick={() => editor.chain().focus().setFontSize(sz).run()} 
+                        className={cn(
+                          'flex items-center justify-between rounded-md px-3 py-2 text-left transition-colors hover:bg-muted',
+                          editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary font-medium'
+                        )} 
+                        style={{ fontSize: sz }}
+                      >
+                        <span className="flex-1">{sz}</span>
+                        <span className="text-xs text-muted-foreground ml-2 opacity-60" style={{ fontSize: '11px' }}>Aa</span>
+                      </button>
                     ))}
                   </div>
                 </DropdownMenuContent>
@@ -2266,11 +2293,35 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
                         <CaseSensitive className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="top" align="center" className="w-36 p-2">
-                      <button type="button" onClick={() => editor.chain().focus().unsetFontSize().run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary')}>{t('editor.fontSizeDefault')}</button>
-                      {fontSizeOptions.map((sz) => (
-                        <button key={sz} type="button" onClick={() => editor.chain().focus().setFontSize(sz).run()} className={cn('rounded px-2 py-1.5 text-left text-sm hover:bg-muted', editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary')} style={{ fontSize: sz }}>{sz}</button>
-                      ))}
+                    <DropdownMenuContent side="top" align="center" className="w-48 p-1.5 max-h-[400px] overflow-y-auto">
+                      <div className="flex flex-col gap-0.5">
+                        <button 
+                          type="button" 
+                          onClick={() => editor.chain().focus().unsetFontSize().run()} 
+                          className={cn(
+                            'flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
+                            !editor.getAttributes('textStyle').fontSize && 'bg-primary/10 text-primary font-medium'
+                          )}
+                        >
+                          <span>{t('editor.fontSizeDefault')}</span>
+                          <span className="text-xs text-muted-foreground ml-2">16px</span>
+                        </button>
+                        {fontSizeOptions.map((sz) => (
+                          <button 
+                            key={sz} 
+                            type="button" 
+                            onClick={() => editor.chain().focus().setFontSize(sz).run()} 
+                            className={cn(
+                              'flex items-center justify-between rounded-md px-3 py-2 text-left transition-colors hover:bg-muted',
+                              editor.getAttributes('textStyle').fontSize === sz && 'bg-primary/10 text-primary font-medium'
+                            )} 
+                            style={{ fontSize: sz }}
+                          >
+                            <span className="flex-1">{sz}</span>
+                            <span className="text-xs text-muted-foreground ml-2 opacity-60" style={{ fontSize: '11px' }}>Aa</span>
+                          </button>
+                        ))}
+                      </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <DropdownMenu>
