@@ -433,12 +433,12 @@ function convertChildren(children: SlateNode[]): any[] {
         text = text.replace(/^\u200B\u200B\u200B\[LINK:[^\]]+\]\u200B\u200B\u200B\s?/, '')
       }
       
-      // Обрабатываем переносы строк в тексте
-      // Разбиваем текст по переносам строк и создаем hardBreak узлы
-      const lines = text.split('\n')
-      if (lines.length > 1) {
-        // Если есть переносы строк, создаем узлы с hardBreak между ними
-        lines.forEach((line, index) => {
+        // Обрабатываем переносы строк в тексте
+        // Разбиваем текст по переносам строк и создаем hardBreak узлы
+        const lines = text.split('\n')
+        if (lines.length > 1) {
+          // Если есть переносы строк, создаем узлы с hardBreak между ними
+          lines.forEach((line: string, index: number) => {
           // Добавляем текстовый узел для строки (если она не пустая или есть ссылка)
           const trimmedLine = line.trim()
           if (trimmedLine || linkHref) {
