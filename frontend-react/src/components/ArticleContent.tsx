@@ -71,7 +71,7 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       if (!container) return
 
       // Проверяем изображения только один раз
-      const images = container.querySelectorAll(`img:not([${processedKey}])`)
+      const images = container.querySelectorAll<HTMLImageElement>(`img:not([${processedKey}])`)
       images.forEach(img => {
         img.setAttribute(processedKey, 'true')
         
