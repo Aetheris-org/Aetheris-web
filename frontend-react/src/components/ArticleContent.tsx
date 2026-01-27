@@ -59,71 +59,57 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   // ВРЕМЕННО ОТКЛЮЧАЕМ РЕДАКТОР - используем только fallback рендеринг
   // Это предотвращает React error #310 и зависание страницы
 
-  // Проверка и обработка изображений, видео и аудио после рендеринга
+  // Проверка и обработка изображений, видео и аудио после рендеринга (один раз)
   useEffect(() => {
     if (!editorRef.current) return
 
+    // Используем флаг, чтобы не обрабатывать элементы повторно
+    const processedKey = 'data-media-processed'
+    
     const handleMediaElements = () => {
-      // Проверяем изображения
-      const images = editorRef.current?.querySelectorAll('img')
-      if (images && images.length > 0) {
-        images.forEach(img => {
-          // Убеждаемся, что изображения имеют правильные стили
-          if (!img.classList.contains('max-w-full')) {
-            img.classList.add('max-w-full', 'h-auto', 'rounded-lg', 'my-4')
-          }
-          
-          // Принудительно устанавливаем стили для гарантированного отображения
-          img.style.maxWidth = '100%'
-          img.style.height = 'auto'
-          img.style.display = img.src ? 'block' : 'none'
-          
-          // Проверяем, что src установлен и валиден
-          if (!img.src || img.src === window.location.href) {
-            if (import.meta.env.DEV) {
-              logger.warn('[ArticleContent] Image has invalid or missing src:', {
-                src: img.getAttribute('src'),
-                alt: img.alt,
-              })
-            }
-          }
-          
-          if (import.meta.env.DEV && img.src) {
-            logger.debug('[ArticleContent] Found image in DOM:', {
-              src: img.src.substring(0, 100),
+      const container = editorRef.current
+      if (!container) return
+
+      // Проверяем изображения только один раз
+      const images = container.querySelectorAll(`img:not([${processedKey}])`)
+      images.forEach(img => {
+        img.setAttribute(processedKey, 'true')
+        
+        // Убеждаемся, что изображения имеют правильные стили
+        if (!img.classList.contains('max-w-full')) {
+          img.classList.add('max-w-full', 'h-auto', 'rounded-lg', 'my-4')
+        }
+        
+        // Принудительно устанавливаем стили для гарантированного отображения
+        img.style.maxWidth = '100%'
+        img.style.height = 'auto'
+        img.style.display = img.src ? 'block' : 'none'
+        
+        // Проверяем, что src установлен и валиден
+        if (!img.src || img.src === window.location.href) {
+          if (import.meta.env.DEV) {
+            logger.warn('[ArticleContent] Image has invalid or missing src:', {
+              src: img.getAttribute('src'),
               alt: img.alt,
-              width: img.width,
-              height: img.height,
-              naturalWidth: img.naturalWidth,
-              naturalHeight: img.naturalHeight,
-              display: window.getComputedStyle(img).display,
-              visibility: window.getComputedStyle(img).visibility,
             })
           }
-        })
-      } else if (import.meta.env.DEV) {
-        // Если в JSON есть изображения, но в DOM их нет - это проблема
-        const hasImages = JSON.stringify(fateContent).includes('"type":"image"')
-        if (hasImages) {
-          logger.warn('[ArticleContent] Images in JSON but not in DOM!', {
-            fateContent: JSON.stringify(fateContent).substring(0, 500),
-          })
         }
-      }
+      })
 
-      // Находим все элементы video и audio внутри редактора
-      const videoWrappers = editorRef.current?.querySelectorAll('.editor-video-wrapper')
-      const audioWrappers = editorRef.current?.querySelectorAll('.editor-audio-wrapper')
+      // Находим все элементы video и audio
+      const videoWrappers = container.querySelectorAll(`.editor-video-wrapper:not([${processedKey}])`)
+      const audioWrappers = container.querySelectorAll(`.editor-audio-wrapper:not([${processedKey}])`)
       
-      // Убеждаемся, что video и audio элементы правильно отображаются
-      videoWrappers?.forEach(wrapper => {
+      videoWrappers.forEach(wrapper => {
+        wrapper.setAttribute(processedKey, 'true')
         const video = wrapper.querySelector('video')
         if (video && !video.hasAttribute('controls')) {
           video.setAttribute('controls', '')
         }
       })
       
-      audioWrappers?.forEach(wrapper => {
+      audioWrappers.forEach(wrapper => {
+        wrapper.setAttribute(processedKey, 'true')
         const audio = wrapper.querySelector('audio')
         if (audio && !audio.hasAttribute('controls')) {
           audio.setAttribute('controls', '')
@@ -131,35 +117,31 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
       })
     }
 
-    // Запускаем после небольшой задержки
-    const timeoutId = setTimeout(handleMediaElements, 200)
+    // Запускаем один раз с задержкой
+    const timeoutId = setTimeout(handleMediaElements, 300)
     return () => clearTimeout(timeoutId)
   }, [fateContent])
 
   // В опубликованных статьях добавляем только кратковременную подсветку при клике на якорную ссылку
   // Постоянные индикаторы не нужны - только эффект при навигации
 
-  // Отладочная информация: проверяем, что blockId правильно применены
+  // Отладочная информация: проверяем, что blockId правильно применены (только в DEV режиме, один раз)
   useEffect(() => {
-    if (!editorRef.current) return
+    if (!import.meta.env.DEV || !editorRef.current) return
     
-    // Проверяем наличие элементов с blockId после рендеринга
-    const checkAnchors = () => {
-      if (import.meta.env.DEV) {
-        const allAnchors = editorRef.current?.querySelectorAll('[id], [data-block-id]')
-        if (allAnchors && allAnchors.length > 0) {
-          logger.debug('[ArticleContent] Anchors found after render:', Array.from(allAnchors).map(el => ({
-            id: el.id,
-            dataBlockId: el.getAttribute('data-block-id'),
-            tagName: el.tagName,
-            textContent: el.textContent?.substring(0, 50),
-          })))
-        }
+    // Проверяем наличие элементов с blockId после рендеринга (один раз)
+    const timeoutId = setTimeout(() => {
+      const allAnchors = editorRef.current?.querySelectorAll('[id], [data-block-id]')
+      if (allAnchors && allAnchors.length > 0) {
+        logger.debug('[ArticleContent] Anchors found after render:', Array.from(allAnchors).map(el => ({
+          id: el.id,
+          dataBlockId: el.getAttribute('data-block-id'),
+          tagName: el.tagName,
+          textContent: el.textContent?.substring(0, 50),
+        })))
       }
-    }
+    }, 500)
     
-    // Проверяем после небольшой задержки
-    const timeoutId = setTimeout(checkAnchors, 500)
     return () => clearTimeout(timeoutId)
   }, [fateContent])
 
@@ -236,59 +218,58 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
   }, [])
 
-  // Применяем стили напрямую к элементам после рендеринга с использованием MutationObserver
+  // Применяем стили один раз после рендеринга (оптимизировано для предотвращения бесконечных циклов)
   useEffect(() => {
     if (!editorRef.current) return
 
     const applyStyles = () => {
-      // Используем сам контейнер
       const fateElement = editorRef.current
-      
-      if (!fateElement) {
-        return
-      }
+      if (!fateElement) return
 
-      // Применяем стили к параграфам
-      const paragraphs = fateElement.querySelectorAll('p')
+      // Применяем стили только к элементам, которые еще не стилизованы
+      const paragraphs = fateElement.querySelectorAll('p:not([data-styled])')
       paragraphs.forEach((p, index) => {
         const el = p as HTMLElement
+        el.setAttribute('data-styled', 'true')
         el.style.setProperty('margin-bottom', '1rem', 'important')
         el.style.setProperty('margin-top', '0', 'important')
         el.style.setProperty('white-space', 'normal', 'important')
         el.style.setProperty('line-height', '1.7', 'important')
         el.style.setProperty('display', 'block', 'important')
         
-        // Убираем margin-bottom у последнего параграфа
-        if (index === paragraphs.length - 1) {
+        // Проверяем, является ли это последним параграфом среди всех параграфов
+        const allParagraphs = fateElement.querySelectorAll('p')
+        if (index === allParagraphs.length - 1) {
           el.style.setProperty('margin-bottom', '0', 'important')
         }
       })
       
-      // Применяем стили к заголовкам
-      const headings = fateElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
-      headings.forEach((h, index) => {
+      // Применяем стили к заголовкам, которые еще не стилизованы
+      const headings = fateElement.querySelectorAll('h1:not([data-styled]), h2:not([data-styled]), h3:not([data-styled]), h4:not([data-styled]), h5:not([data-styled]), h6:not([data-styled])')
+      headings.forEach((h) => {
         const el = h as HTMLElement
+        el.setAttribute('data-styled', 'true')
         const tagName = el.tagName.toLowerCase()
         
-        // Общие стили для всех заголовков
+        // Находим индекс среди всех заголовков
+        const allHeadings = fateElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
+        const index = Array.from(allHeadings).indexOf(el)
+        
         el.style.setProperty('white-space', 'normal', 'important')
         el.style.setProperty('display', 'block', 'important')
         
-        // Специфичные стили по уровню
         if (tagName === 'h1') {
           el.style.setProperty('margin-top', index === 0 ? '0' : '2rem', 'important')
           el.style.setProperty('margin-bottom', '1rem', 'important')
           el.style.setProperty('font-size', '1.875rem', 'important')
           el.style.setProperty('font-weight', '700', 'important')
           el.style.setProperty('line-height', '1.2', 'important')
-          el.style.setProperty('letter-spacing', '-0.025em', 'important')
         } else if (tagName === 'h2') {
           el.style.setProperty('margin-top', index === 0 ? '0' : '1.5rem', 'important')
           el.style.setProperty('margin-bottom', '1rem', 'important')
           el.style.setProperty('font-size', '1.5rem', 'important')
           el.style.setProperty('font-weight', '600', 'important')
           el.style.setProperty('line-height', '1.3', 'important')
-          el.style.setProperty('letter-spacing', '-0.025em', 'important')
         } else if (tagName === 'h3') {
           el.style.setProperty('margin-top', index === 0 ? '0' : '1.25rem', 'important')
           el.style.setProperty('margin-bottom', '1rem', 'important')
@@ -315,38 +296,13 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           el.style.setProperty('line-height', '1.5', 'important')
         }
       })
-      
-      console.log('[ArticleContent] Applied styles:', {
-        paragraphs: paragraphs.length,
-        headings: headings.length,
-      })
     }
     
-    // Применяем стили сразу
-    applyStyles()
-    
-    // Применяем стили через интервалы
-    const timeouts: NodeJS.Timeout[] = []
-    for (let i = 0; i < 10; i++) {
-      timeouts.push(setTimeout(applyStyles, i * 100))
-    }
-    
-    // Используем MutationObserver для отслеживания изменений DOM
-    const observer = new MutationObserver(() => {
-      applyStyles()
-    })
-    
-    if (editorRef.current) {
-      observer.observe(editorRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-      })
-    }
+    // Применяем стили один раз с задержкой (только для новых элементов)
+    const timeoutId = setTimeout(applyStyles, 150)
     
     return () => {
-      timeouts.forEach(clearTimeout)
-      observer.disconnect()
+      clearTimeout(timeoutId)
     }
   }, [fateContent])
 
