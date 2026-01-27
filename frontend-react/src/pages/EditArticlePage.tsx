@@ -2380,7 +2380,7 @@ export default function EditArticlePage() {
               const paragraphs: any[] = []
               let currentParagraphChildren: any[] = []
               
-              children.forEach((child: any, index: number) => {
+              children.forEach((child: any) => {
                 if (child && typeof child === 'object' && (child.type === 'hardBreak' || child.type === 'hard_break')) {
                   // При встрече hardBreak, завершаем текущий параграф и начинаем новый
                   if (currentParagraphChildren.length > 0) {
