@@ -28,6 +28,19 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           const converted = prosemirrorToFate(content)
           // Убеждаемся, что тип точно 'doc'
           if (converted && converted.type === 'doc') {
+            // Отладочная информация
+            if (import.meta.env.DEV) {
+              const paragraphCount = converted.content?.filter((n: any) => n.type === 'paragraph').length || 0
+              logger.debug('[ArticleContent] Converted ProseMirror to Fate:', {
+                totalNodes: converted.content?.length || 0,
+                paragraphs: paragraphCount,
+                sample: converted.content?.slice(0, 3).map((n: any) => ({
+                  type: n.type,
+                  hasText: !!n.content?.some((c: any) => c.type === 'text'),
+                  hasHardBreak: !!n.content?.some((c: any) => c.type === 'hardBreak'),
+                })),
+              })
+            }
             return converted
           }
           return { type: 'doc', content: converted?.content || [] }
@@ -42,6 +55,19 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         const converted = slateToFate(content)
         // Убеждаемся, что тип точно 'doc'
         if (converted && converted.type === 'doc') {
+          // Отладочная информация
+          if (import.meta.env.DEV) {
+            const paragraphCount = converted.content?.filter((n: any) => n.type === 'paragraph').length || 0
+            logger.debug('[ArticleContent] Converted Slate to Fate:', {
+              totalNodes: converted.content?.length || 0,
+              paragraphs: paragraphCount,
+              sample: converted.content?.slice(0, 3).map((n: any) => ({
+                type: n.type,
+                hasText: !!n.content?.some((c: any) => c.type === 'text'),
+                hasHardBreak: !!n.content?.some((c: any) => c.type === 'hardBreak'),
+              })),
+            })
+          }
           return converted
         }
         return { type: 'doc', content: converted?.content || [] }
@@ -319,6 +345,22 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
     }
     
     try {
+      // Отладочная информация в DEV режиме
+      if (import.meta.env.DEV) {
+        const paragraphCount = fateContent.content.filter((n: any) => n.type === 'paragraph').length
+        const hardBreakCount = JSON.stringify(fateContent).match(/"type":"hardBreak"/g)?.length || 0
+        logger.debug('[ArticleContent] Rendering content:', {
+          totalNodes: fateContent.content.length,
+          paragraphs: paragraphCount,
+          hardBreaks: hardBreakCount,
+          structure: fateContent.content.map((n: any) => ({
+            type: n.type,
+            hasContent: !!n.content,
+            contentLength: n.content?.length || 0,
+          })),
+        })
+      }
+      
       // Простой рендеринг через dangerouslySetInnerHTML как временное решение
       const html = docToSimpleHTML(fateContent)
       if (!html || html.trim() === '') {
@@ -328,6 +370,16 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
           </div>
         )
       }
+      
+      if (import.meta.env.DEV) {
+        logger.debug('[ArticleContent] Generated HTML:', {
+          htmlLength: html.length,
+          paragraphCount: (html.match(/<p/g) || []).length,
+          brCount: (html.match(/<br/g) || []).length,
+          preview: html.substring(0, 200),
+        })
+      }
+      
       return (
         <div 
           className={cn('prose prose-neutral dark:prose-invert max-w-none article-content', className)} 
@@ -353,6 +405,47 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
   return (
     <div ref={editorRef} className="article-content-wrapper">
       {renderFallback()}
+      {/* Отладочная информация в DEV режиме */}
+      {import.meta.env.DEV && (
+        <details className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs">
+          <summary className="cursor-pointer font-semibold text-yellow-600 dark:text-yellow-400">
+            🔍 Отладочная информация (DEV)
+          </summary>
+          <div className="mt-2 space-y-2 text-yellow-700 dark:text-yellow-300">
+            <div>
+              <strong>Структура контента:</strong>
+              <pre className="mt-1 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2">
+                {JSON.stringify(
+                  {
+                    totalNodes: fateContent.content?.length || 0,
+                    paragraphs: fateContent.content?.filter((n: any) => n.type === 'paragraph').length || 0,
+                    nodes: fateContent.content?.slice(0, 5).map((n: any) => ({
+                      type: n.type,
+                      hasContent: !!n.content,
+                      contentLength: n.content?.length || 0,
+                      hasHardBreak: JSON.stringify(n).includes('hardBreak'),
+                    })) || [],
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+            <div>
+              <strong>Исходный контент (первые 500 символов):</strong>
+              <pre className="mt-1 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2">
+                {JSON.stringify(content, null, 2).substring(0, 500)}
+              </pre>
+            </div>
+            <div>
+              <strong>Сгенерированный HTML (первые 300 символов):</strong>
+              <pre className="mt-1 max-h-40 overflow-auto rounded bg-yellow-50 dark:bg-yellow-950 p-2">
+                {docToSimpleHTML(fateContent).substring(0, 300)}
+              </pre>
+            </div>
+          </div>
+        </details>
+      )}
     </div>
   )
 }
@@ -371,6 +464,7 @@ function docToSimpleHTML(doc: { type: 'doc'; content: any[] }): string {
         const alignAttr = textAlign ? ` style="text-align: ${escapeHtmlSimple(textAlign)}"` : ''
         // Если текст пустой, все равно создаем параграф для сохранения структуры
         // Это важно для сохранения отступов между параграфами
+        // Каждый параграф рендерится отдельно, что создает визуальный отступ
         return `<p${alignAttr}>${text || '<br>'}</p>`
       }
       
@@ -483,6 +577,7 @@ function extractText(node: any, withMarks: boolean = false): string {
   
   if (node.content && Array.isArray(node.content)) {
     // Объединяем дочерние элементы, сохраняя структуру
+    // Важно: не используем join('') с разделителями, чтобы hardBreak узлы правильно обрабатывались
     return node.content.map((child: any) => extractText(child, withMarks)).join('')
   }
   return ''
