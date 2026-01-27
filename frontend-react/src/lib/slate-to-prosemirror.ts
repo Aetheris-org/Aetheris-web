@@ -64,9 +64,19 @@ export function slateToProseMirror(slateContent: any): any {
   }
 
   // Преобразуем каждый блок Slate в ProseMirror узел
-  const content = blocks
-    .map(convertSlateToProseMirror)
-    .filter((node: any) => node !== null)
+  // Важно: разворачиваем массивы параграфов, если convertSlateToProseMirror вернул массив
+  const content: any[] = []
+  blocks.forEach((block) => {
+    const converted = convertSlateToProseMirror(block)
+    if (converted) {
+      // Если вернулся массив (несколько параграфов), разворачиваем его
+      if (Array.isArray(converted)) {
+        content.push(...converted.filter((node: any) => node !== null))
+      } else {
+        content.push(converted)
+      }
+    }
+  })
 
   return {
     type: 'doc',
@@ -388,6 +398,36 @@ function convertSlateToProseMirror(node: SlateNode): any {
         return child
       })
 
+      // ВАЖНО: Если в параграфе несколько текстовых узлов, разделяем их на отдельные параграфы
+      // Это нужно для правильного отображения переносов строк
+      const textNodes = processedChildren.filter((child: any) => 
+        child && typeof child === 'object' && child.text !== undefined && !child.type
+      )
+      
+      // Если есть несколько текстовых узлов, создаем отдельные параграфы для каждого
+      if (textNodes.length > 1) {
+        const paragraphs: any[] = []
+        textNodes.forEach((textNode: any, index: number) => {
+          // Создаем отдельный параграф для каждого текстового узла
+          const paragraphContent = convertChildren([textNode])
+          if (paragraphContent.length > 0 || index === 0) {
+            const paragraph: any = {
+              type: 'paragraph',
+              content: paragraphContent.length > 0 ? paragraphContent : [],
+            }
+            // Добавляем blockId только к первому параграфу
+            if (blockId && index === 0) {
+              paragraph.attrs = { blockId }
+            }
+            paragraphs.push(paragraph)
+          }
+        })
+        
+        // Возвращаем массив параграфов (будет обработан специально)
+        return paragraphs.length > 0 ? paragraphs : { type: 'paragraph', content: [] }
+      }
+
+      // Если только один текстовый узел или нет текстовых узлов, обрабатываем как обычно
       const convertedContent = convertChildren(processedChildren)
       
       // Если после конвертации контент пустой, создаем пустой paragraph

@@ -260,8 +260,9 @@ export function ArticleContent({ content, className }: ArticleContentProps) {
         // Важно: margin-bottom для создания отступов между параграфами
         el.style.setProperty('margin-bottom', '1rem', 'important')
         el.style.setProperty('margin-top', '0', 'important')
-        // white-space: pre-wrap сохраняет переносы строк и пробелы, но переносит длинные строки
-        el.style.setProperty('white-space', 'pre-wrap', 'important')
+        // white-space: normal - параграфы уже разделены, не нужно pre-wrap
+        // pre-wrap может конфликтовать с margin-bottom между параграфами
+        el.style.setProperty('white-space', 'normal', 'important')
         el.style.setProperty('line-height', '1.7', 'important')
         el.style.setProperty('display', 'block', 'important')
         

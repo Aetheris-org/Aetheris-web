@@ -2988,6 +2988,82 @@ export default function CreateArticlePage() {
             slateType = typeMapping[node.type]
           }
 
+          // ВАЖНО: Для параграфов, если есть несколько текстовых узлов или hardBreak,
+          // разделяем их на отдельные параграфы для правильного сохранения структуры
+          if (node.type === 'paragraph') {
+            const textNodes = children.filter((child: any) => 
+              child && typeof child === 'object' && child.text !== undefined && !child.type
+            )
+            
+            // Если есть несколько текстовых узлов, создаем отдельные параграфы
+            if (textNodes.length > 1) {
+              const paragraphs: any[] = []
+              textNodes.forEach((textNode: any, index: number) => {
+                const paragraph: any = {
+                  type: 'paragraph',
+                  children: [textNode],
+                }
+                // Добавляем blockId только к первому параграфу
+                if (node.attrs?.blockId && index === 0) {
+                  paragraph.blockId = node.attrs.blockId
+                }
+                // Добавляем textAlign ко всем параграфам (если есть)
+                if (node.attrs?.textAlign) {
+                  paragraph.textAlign = node.attrs.textAlign
+                }
+                paragraphs.push(paragraph)
+              })
+              
+              // Возвращаем массив параграфов (будет обработан специально в вызывающем коде)
+              return paragraphs.length > 0 ? paragraphs : { type: 'paragraph', children: [{ text: '' }] }
+            }
+            
+            // Если есть hardBreak в children, разделяем параграф на несколько
+            const hasHardBreak = children.some((child: any) => 
+              child && typeof child === 'object' && (child.type === 'hardBreak' || child.type === 'hard_break')
+            )
+            
+            if (hasHardBreak) {
+              const paragraphs: any[] = []
+              let currentParagraphChildren: any[] = []
+              
+              children.forEach((child: any, index: number) => {
+                if (child && typeof child === 'object' && (child.type === 'hardBreak' || child.type === 'hard_break')) {
+                  // При встрече hardBreak, завершаем текущий параграф и начинаем новый
+                  if (currentParagraphChildren.length > 0) {
+                    paragraphs.push({
+                      type: 'paragraph',
+                      children: currentParagraphChildren,
+                      ...(node.attrs?.textAlign && { textAlign: node.attrs.textAlign }),
+                    })
+                  }
+                  currentParagraphChildren = []
+                } else {
+                  currentParagraphChildren.push(child)
+                }
+              })
+              
+              // Добавляем последний параграф
+              if (currentParagraphChildren.length > 0) {
+                paragraphs.push({
+                  type: 'paragraph',
+                  children: currentParagraphChildren,
+                  ...(node.attrs?.textAlign && { textAlign: node.attrs.textAlign }),
+                })
+              } else if (paragraphs.length === 0) {
+                // Если все было hardBreak, создаем пустой параграф
+                paragraphs.push({ type: 'paragraph', children: [{ text: '' }] })
+              }
+              
+              // Добавляем blockId только к первому параграфу
+              if (node.attrs?.blockId && paragraphs.length > 0) {
+                paragraphs[0].blockId = node.attrs.blockId
+              }
+              
+              return paragraphs.length > 0 ? paragraphs : { type: 'paragraph', children: [{ text: '' }] }
+            }
+          }
+
           const result: any = {
             type: slateType,
             children: children.length > 0 ? children : [{ text: '' }],
@@ -3053,9 +3129,20 @@ export default function CreateArticlePage() {
       if (finalContent && typeof finalContent === 'object') {
         if (finalContent.type === 'doc' && Array.isArray(finalContent.content)) {
           // Извлекаем массив блоков из ProseMirror doc и преобразуем в Slate
-          contentDocument = finalContent.content
-            .map(convertProseMirrorToSlate)
-            .filter((block: any) => block !== null)
+          // Важно: разворачиваем массивы параграфов, если convertProseMirrorToSlate вернул массив
+          const convertedBlocks: any[] = []
+          finalContent.content.forEach((node: any) => {
+            const converted = convertProseMirrorToSlate(node)
+            if (converted) {
+              // Если вернулся массив (несколько параграфов), разворачиваем его
+              if (Array.isArray(converted)) {
+                convertedBlocks.push(...converted.filter((block: any) => block !== null))
+              } else {
+                convertedBlocks.push(converted)
+              }
+            }
+          })
+          contentDocument = convertedBlocks
           
           logger.debug('[CreateArticlePage] Converted ProseMirror to Slate:', {
             contentLength: contentDocument.length,
@@ -3063,9 +3150,20 @@ export default function CreateArticlePage() {
           })
         } else if (Array.isArray(finalContent)) {
           // Уже массив блоков - проверяем формат и преобразуем если нужно
-          contentDocument = finalContent
-            .map(convertProseMirrorToSlate)
-            .filter((block: any) => block !== null)
+          // Важно: разворачиваем массивы параграфов, если convertProseMirrorToSlate вернул массив
+          const convertedBlocks: any[] = []
+          finalContent.forEach((node: any) => {
+            const converted = convertProseMirrorToSlate(node)
+            if (converted) {
+              // Если вернулся массив (несколько параграфов), разворачиваем его
+              if (Array.isArray(converted)) {
+                convertedBlocks.push(...converted.filter((block: any) => block !== null))
+              } else {
+                convertedBlocks.push(converted)
+              }
+            }
+          })
+          contentDocument = convertedBlocks
           
           logger.debug('[CreateArticlePage] Converted array to Slate:', {
             contentLength: contentDocument.length,
