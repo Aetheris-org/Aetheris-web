@@ -23,6 +23,7 @@ export class FateEditorImpl implements IFateEditor {
   private _state: FateEditorState
   private _view: any
   private _extensions: FateExtension[]
+  private _schema: ReturnType<typeof createSchema>
   private _commands: Record<string, (...args: any[]) => boolean> = {}
   private _isEditable: boolean = true
   private _isFocused: boolean = false
@@ -32,11 +33,11 @@ export class FateEditorImpl implements IFateEditor {
     this._isEditable = options.editable !== false
 
     // Создаем схему из расширений
-    const schema = createSchema(this._extensions)
+    this._schema = createSchema(this._extensions)
 
     // Создаем начальное состояние
     const initialContent = this._parseContent(options.content)
-    this._state = createState(schema, initialContent, {
+    this._state = createState(this._schema, initialContent, {
       editable: this._isEditable,
     })
 
@@ -180,7 +181,7 @@ export class FateEditorImpl implements IFateEditor {
 
   setContent(content: FateDocument | string): void {
     const parsed = this._parseContent(content)
-    this._state = createState(this._state.doc, parsed, {
+    this._state = createState(this._schema, parsed, {
       editable: this._isEditable,
     })
     this._view.update(this._state)

@@ -46,30 +46,6 @@ lowlight.register('sql', sql)
 lowlight.register('bash', bash)
 lowlight.register('shell', shell)
 
-// Функция для автоматического определения языка (используется в toDOM)
-function _detectLanguage(code: string): string {
-  if (!code || !code.trim()) return 'plaintext'
-  
-  const trimmed = code.trim()
-  if (trimmed.length < 10) return 'plaintext'
-  
-  try {
-    const result = hljs.highlightAuto(trimmed, [
-      'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp',
-      'html', 'css', 'json', 'xml', 'sql', 'bash', 'shell', 'php',
-      'ruby', 'go', 'rust', 'kotlin', 'swift', 'scala', 'r', 'matlab'
-    ])
-    
-    if (result.language && result.relevance && result.relevance >= 1) {
-      return result.language
-    }
-    
-    return 'plaintext'
-  } catch (err) {
-    return 'plaintext'
-  }
-}
-
 function getLanguageLabel(language: string): string {
   const labels: Record<string, string> = {
     javascript: 'JavaScript',
